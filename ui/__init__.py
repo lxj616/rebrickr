@@ -24,6 +24,8 @@ import bpy
 from bpy.types import Panel
 from bpy.props import *
 from ..functions import *
+from ..lib import common_utilities
+from ..lib.common_utilities import bversion
 props = bpy.props
 
 class ActionsPanel(Panel):
@@ -39,11 +41,38 @@ class ActionsPanel(Panel):
         layout = self.layout
         scn = context.scene
 
+        # if bversion() < '002.076.00':
+        #     col = layout.column(align=True)
+        #     col.label('ERROR: upgrade needed', icon='ERROR')
+        #     col.label('LEGOizer requires Blender 2.76+')
+        #     return
+
+        col = layout.column(align=True)
+        col.label("Source Object:")
+
+        if context.mode == 'OBJECT':
+            row = col.row(align=True)
+            scene = context.scene
+            row.prop_search(scn, "source_object", scene, "objects", text='')
+
+            # sub = row.row(align=True)
+            # sub.scale_x = 0.1
+            # sub.operator("cgcookie.eye_dropper", icon='EYEDROPPER').target_prop = 'source_object'
+
         col = layout.column(align=True)
         row = col.row(align=True)
+        groupExistsBool = groupExists("LEGOizer_bricks")
+        # remove 'LEGOizer_bricks' group if empty
+        if groupExistsBool and len(bpy.data.groups["LEGOizer_bricks"].objects) == 0:
+            bpy.data.groups.remove(bpy.data.groups["LEGOizer_bricks"], do_unlink=True)
+        row.active = not groupExistsBool
         row.operator("scene.legoizer_legoize", text="LEGOize Active Mesh", icon="EDIT")
         row = col.row(align=True)
-        row.operator("scene.legoizer_merge", text="Finalize LEGOized Mesh", icon="EDIT")
+        row.active = groupExistsBool
+        row.operator("scene.legoizer_merge", text="Merge Bricks", icon="EDIT")
+        row = col.row(align=True)
+        row.active = groupExistsBool
+        row.operator("scene.legoizer_commit", text="Commit LEGOized Mesh", icon="EDIT")
 
 
 class SettingsPanel(Panel):
@@ -60,6 +89,8 @@ class SettingsPanel(Panel):
         scn = context.scene
 
         col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop(scn, "resolution")
         row = col.row(align=True)
         row.prop(scn, "preHollow")
         if scn.preHollow:

@@ -52,11 +52,16 @@ def register():
         min=1, max=10,
         default=1)
 
-    bpy.types.Scene.voxelResolution = IntProperty(
-        name="Voxelization Resolution",
+    bpy.types.Scene.resolution = IntProperty(
+        name="Resolution",
         description="Resolution of the final LEGO model",
-        min=1, max=10,
-        default=1)
+        min=1, max=500,
+        default=10)
+
+    bpy.types.Scene.source_object = StringProperty(
+        name="Source Object",
+        description="Source Object",
+        default="")
 
     # session properties
 
@@ -72,7 +77,9 @@ def register():
 def unregister():
     Scn = bpy.types.Scene
 
+    del Scn.voxelResolution
     del Scn.shellThickness
+    del Scn.preHollow
 
     bpy.utils.unregister_module(__name__)
 

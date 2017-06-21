@@ -25,35 +25,31 @@ import time
 from ..functions import *
 props = bpy.props
 
-class mergeBricks(bpy.types.Operator):
-    """Reduces poly count by merging bricks"""                                  # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.legoizer_merge"                                          # unique identifier for buttons and menu items to reference.
-    bl_label = "Merge Bricks"                                                          # display name in the interface.
-    bl_options = {"REGISTER", "UNDO"}                                           # enable undo for the operator.
+class commitLegoizedMesh(bpy.types.Operator):
+    """Commit Edits on LEGOized Mesh """               # blender will use this as a tooltip for menu items and buttons.
+    bl_idname = "scene.legoizer_commit"                                        # unique identifier for buttons and menu items to reference.
+    bl_label = "Commit LEGOized Mesh"                                         # display name in the interface.
+    bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
-        # set up variables
-        scn = context.scene
-
         # get start time
         startTime = time.time()
 
+        # set up variables
+        scn = context.scene
+
         # make sure 'LEGOizer_bricks' group exists
         if not groupExists("LEGOizer_bricks"):
-            self.report({"WARNING"}, "LEGOized Model already created. To create a new LEGOized model, first press 'Commit LEGOized Mesh'.")
-            return {"CANCELLED"}
+            self.report({"WARNING"}, "No LEGOized Model found")
+            return{"CANCELLED"}
 
-        sourceGroup = bpy.data.groups["LEGOizer_source"]
+        # remove 'LEGOizer_bricks' group
         brickGroup = bpy.data.groups["LEGOizer_bricks"]
-
-        # delete objects in brickGroup
-        selectOnly(list(brickGroup.objects))
-        bpy.ops.object.delete()
-
-        # remove 'LEGOizer_*' groups
-        bpy.data.groups.remove(sourceGroup, do_unlink=True)
         bpy.data.groups.remove(brickGroup, do_unlink=True)
 
+        sourceGroup = bpy.data.groups["LEGOizer_source"]
+        sourceGroup.objects[0].draw_type = 'WIRE'
+        bpy.data.groups.remove(sourceGroup, do_unlink=True)
 
         # STOPWATCH CHECK
         stopWatch("Time Elapsed", time.time()-startTime)

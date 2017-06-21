@@ -21,7 +21,6 @@ def run(z, bm):
         p0 = edge.verts[0].co
         p1 = edge.verts[1].co
         if (p0.z < -0.001 and p1.z > 0.001) or (p0.z > 0.001 and p1.z < -0.001):
-            vector = p1 - p0
             t = abs(p0.z) / abs(p1.z - p0.z)
             pos = (p1 * t) + (p0 * (1-t))
             crossBMesh.verts.new(pos)
@@ -75,6 +74,7 @@ def run(z, bm):
                             except:
                                 continue
 
+    crossBMesh.transform(Matrix.Translation(Vector((0, 0, z))))
     bm.transform(Matrix.Translation(Vector((0, 0, z))))
     return crossBMesh
 
@@ -83,7 +83,7 @@ def equal(vec1, vec2):
         return True
     return False
 
-def draw(crossBMesh, x, y, z):
+def drawBMesh(crossBMesh):
     # create mesh and object
     # note: neither are linked to the scene, yet, so they won't show
     # in the 3d view
@@ -97,13 +97,10 @@ def draw(crossBMesh, x, y, z):
                             # other objects)
     crossBMesh.to_mesh(crossMesh)         # push bmesh data into me
 
-    bpy.context.active_object.location.z = z
-
-def slices(drawSlices, numSlices):
-    obj = bpy.context.object.data
+def slices(obj, drawSlices, numSlices):
     bm = bmesh.new()
-    bm.from_mesh(obj)
-    bm.transform(bpy.context.object.matrix_world)
+    bm.from_mesh(obj.data)
+    bm.transform(obj.matrix_world)
     bm.verts.ensure_lookup_table()
     zMax = max(v.co.z for v in bm.verts)
     zMin = min(v.co.z for v in bm.verts)
@@ -113,13 +110,10 @@ def slices(drawSlices, numSlices):
     y = -6
     slices = []
     for i in range(numSlices):
+        BMResult = run(z, bm)
+        slices.append(BMResult)
         if drawSlices:
-            BMResult = run(z, bm)
-            draw(BMResult, 0, 0, z)
-            slices.append(BMResult)
-        else:
-            BMResult = run(z, bm)
-            slices.append(BMResult)
+            drawMesh(BMResult)
         z += ran/(numSlices - 1)
         y += 3
         if i == 4:

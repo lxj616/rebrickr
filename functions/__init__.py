@@ -21,7 +21,7 @@ Created by Christopher Gearhart
 
 # system imports
 import bpy
-from .crossSection import slices
+from .crossSection import slices, drawBMesh
 
 def stopWatch(text, value):
     '''From seconds to Days;Hours:Minutes;Seconds'''
@@ -61,3 +61,32 @@ def writeBinvox(obj):
     subprocess.call()
 
     return binvoxPath
+
+def groupExists(groupName):
+    """ check if group exists in blender's memory """
+
+    groupExists = False
+    for group in bpy.data.groups:
+        if group.name == groupName:
+            groupExists = True
+    return groupExists
+
+def deselectAll():
+    bpy.ops.object.select_all(action='DESELECT')
+
+def selectOnly(objList, active=None):
+    """ selects objs in list and deselects the rest """
+    # if single object passed, put it in a list
+    if type(objList) != list:
+        objList = [objList]
+    deselectAll()
+    # select objects in list
+    for obj in objList:
+        obj.select = True
+    # set active object
+    if active:
+        try:
+            bpy.context.scene.objects.active = active
+        except:
+            print("argument passed to 'active' parameter not valid (" + str(active) + ")")
+    # return bpy.context.selected_objects

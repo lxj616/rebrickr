@@ -37,9 +37,26 @@ class legoize(bpy.types.Operator):
 
         # set up variables
         scn = context.scene
-        self.objToLegoize = context.active_object
 
-        crossSectionDict = slices(True, 10)
+        # make sure 'LEGOizer_bricks' group doesn't exist
+        if groupExists("LEGOizer_bricks"):
+            self.report({"WARNING"}, "LEGOized Model already created. To create a new LEGOized model, first press 'Commit LEGOized Mesh'.")
+            return {"CANCELLED"}
+
+        # get object to LEGOize
+        if bpy.data.objects.find(scn.source_object) == -1:
+            self.objToLegoize = context.active_object
+        else:
+            self.objToLegoize = bpy.data.objects[scn.source_object]
+
+        if self.objToLegoize == None:
+            self.report({"WARNING"}, "Please select a mesh to LEGOize")
+            return{"CANCELLED"}
+
+        selectOnly(self.objToLegoize)
+        bpy.ops.group.create(name="LEGOizer_source")
+
+        crossSectionDict = slices(self.objToLegoize, False, scn.resolution)
         CS_slices = crossSectionDict["slices"] # list of bmesh slices
 
         # set brick dimensions
@@ -50,10 +67,22 @@ class legoize(bpy.types.Operator):
         stud_diameter = brick_scale*4.8
         stud_radius = stud_diameter/2
 
+        # deselect all
+        deselectAll()
+
         # for each layer, assemble bricks
         for bm in CS_slices:
-            # TODO: Write this code!
+            drawBMesh(bm)
             continue
+
+        # add assembled bricks to new group
+        self.groupName = "LEGOizer_bricks"
+        if not groupExists(self.groupName):
+            bpy.ops.group.create(name=self.groupName)
+        else:
+            self.report({"ERROR"}, "Could not create group; it already exists!")
+            return{"CANCELLED"}
+
 
         # STOPWATCH CHECK
         stopWatch("Time Elapsed", time.time()-startTime)
