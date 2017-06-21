@@ -1,0 +1,53 @@
+#!/bin/bash
+
+echo "Running voxelization file..."
+
+# FILEPATHS
+basePath="/media/sf_sharedFiles/"
+scaled_output_folder="${basePath}binvox/scaled_obj_files/"
+final_output_folder="${basePath}"
+binvox_path="${basePath}binvox/binvox"
+scaleMesh_path="${basePath}binvox/scaleMesh.py"
+backups_path="${basePath}binvox/binvox_backups"
+blender_root_directory_path="/home/chris/Downloads/blender-2.78/"
+
+prepareDirectories() {
+    mkdir -p ${scaled_output_folder}
+    mkdir -p ${final_output_folder}
+    mkdir -p ${backups_path}
+
+    #clear out scaled_output_folder
+    rm ${scaled_output_folder}*
+
+    #move old binvox files to storage
+    find ${basePath}*.binvox -type f -mtime +1 -exec mv {} ${backups_path} \;
+    find ${backups_path}* -type f -mtime +14 -exec rm {} \;
+}
+
+scaleMesh() {
+    clear
+    cd ${blender_root_directory_path} && ./blender --background --python ${scaleMesh_path}
+}
+
+voxelize() {
+    clear
+    echo "running voxelize function"; echo
+
+    cd ${scaled_output_folder}
+    new_scaled_file="$(ls -c1 |head -n1)"
+    original_filename="${new_scaled_file%_scaled.*}"
+
+    scaledObjPath="${scaled_output_folder}${original_filename}_scaled.obj" #append base path to the inputted object path
+
+    echo "Voxelization Resolution"
+    printf "Please enter the resolution that you want => "
+    read resolution
+
+    "${binvox_path}" -pb -d ${resolution} "${scaledObjPath}"
+    mv ${scaled_output_folder}*.binvox ${final_output_folder}${original_filename}${resolution}.binvox
+}
+
+# MAIN
+prepareDirectories;
+scaleMesh;
+voxelize;
