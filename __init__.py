@@ -46,6 +46,42 @@ def register():
         description="Hollow out LEGO model with user defined shell thickness",
         default=True)
 
+    bpy.types.Scene.logoDetail = EnumProperty(
+        name="Logo Detailing",
+        description="Choose whether to construct or deconstruct the LEGO bricks",
+        items=[("On All Bricks", "On All Bricks", "Include LEGO Logo on all bricks"),
+            #   ("On Exposed Bricks", "On Exposed Bricks", "Include LEGO Logo only on bricks with studs exposed"),
+              ("None", "None", "Don't include LEGO Logo on bricks")],
+        default="None")
+
+    bpy.types.Scene.lastLogoDetail = StringProperty(
+        default="None")
+
+    bpy.types.Scene.logoResolution = FloatProperty(
+        name="Logo Resolution",
+        description="Resolution of the LEGO Logo",
+        min=0.1, max=1,
+        step=1,
+        precision=2,
+        default=0.5)
+
+    bpy.types.Scene.lastLogoResolution = FloatProperty(
+        default=0.5)
+
+    bpy.types.Scene.undersideDetail = EnumProperty(
+        name="Underside Detailing",
+        description="Choose whether to construct or deconstruct the LEGO bricks",
+        items=[("High Detail", "High Detail", "Draw intricate details on brick underside"),
+              ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
+              ("Flat", "Flat", "draw single face on brick underside")],
+        default="Flat")
+
+    bpy.types.Scene.studVerts = IntProperty(
+        name="Stud Verts",
+        description="Number of vertices on LEGO stud",
+        min=3, max=64,
+        default=16)
+
     bpy.types.Scene.shellThickness = IntProperty(
         name="Shell Thickness",
         description="Thickness of the LEGO shell",
@@ -58,13 +94,16 @@ def register():
         min=1, max=500,
         default=10)
 
+    bpy.types.Scene.lastResolution = IntProperty(
+        default=0)
+
     bpy.types.Scene.source_object = StringProperty(
         name="Source Object",
-        description="Source Object",
+        description="Source object to legoize (defaults to active object)",
         default="")
 
     # session properties
-
+    props.addon_name = "legoizer"
     # FILEPATHS
     addonsPath = bpy.utils.user_resource('SCRIPTS', "addons")
     props.obj_exports_folder = "%(addonsPath)s/legoizer/binvox/obj_exports/" % locals()
@@ -77,8 +116,13 @@ def register():
 def unregister():
     Scn = bpy.types.Scene
 
-    del Scn.voxelResolution
+    del Scn.source_object
+    del Scn.lastResolution
+    del Scn.resolution
     del Scn.shellThickness
+    del Scn.studVerts
+    del Scn.undersideDetail
+    del Scn.logoDetail
     del Scn.preHollow
 
     bpy.utils.unregister_module(__name__)

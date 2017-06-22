@@ -25,31 +25,25 @@ import time
 from ..functions import *
 props = bpy.props
 
-class commitLegoizedMesh(bpy.types.Operator):
-    """Commit Edits on LEGOized Mesh """               # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.legoizer_commit"                                        # unique identifier for buttons and menu items to reference.
-    bl_label = "Commit LEGOized Mesh"                                         # display name in the interface.
-    bl_options = {"REGISTER", "UNDO"}
+class legoizerMergeBricks(bpy.types.Operator):
+    """Reduces poly count by merging bricks"""                                  # blender will use this as a tooltip for menu items and buttons.
+    bl_idname = "scene.legoizer_merge"                                          # unique identifier for buttons and menu items to reference.
+    bl_label = "Merge Bricks"                                                          # display name in the interface.
+    bl_options = {"REGISTER", "UNDO"}                                           # enable undo for the operator.
 
     def execute(self, context):
-        # get start time
-        startTime = time.time()
-
         # set up variables
         scn = context.scene
 
+        # get start time
+        startTime = time.time()
+
         # make sure 'LEGOizer_bricks' group exists
         if not groupExists("LEGOizer_bricks"):
-            self.report({"WARNING"}, "No LEGOized Model found")
-            return{"CANCELLED"}
+            self.report({"WARNING"}, "LEGOized Model already created. To create a new LEGOized model, first press 'Commit LEGOized Mesh'.")
+            return {"CANCELLED"}
 
-        # remove 'LEGOizer_bricks' group
-        brickGroup = bpy.data.groups["LEGOizer_bricks"]
-        bpy.data.groups.remove(brickGroup, do_unlink=True)
-
-        sourceGroup = bpy.data.groups["LEGOizer_source"]
-        sourceGroup.objects[0].draw_type = 'WIRE'
-        bpy.data.groups.remove(sourceGroup, do_unlink=True)
+        # TODO: Write merge bricks code
 
         # STOPWATCH CHECK
         stopWatch("Time Elapsed", time.time()-startTime)

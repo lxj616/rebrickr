@@ -26,19 +26,11 @@ from ..functions import *
 from mathutils import Matrix, Vector
 props = bpy.props
 
-class legoizerLegoize(bpy.types.Operator):
+class legoizerUpdate(bpy.types.Operator):
     """Select objects layer by layer and shift by given values"""               # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.legoizer_legoize"                                        # unique identifier for buttons and menu items to reference.
+    bl_idname = "scene.legoizer_update"                                        # unique identifier for buttons and menu items to reference.
     bl_label = "Create Build Animation"                                         # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
-
-    def getObjectToLegoize(self):
-        scn = bpy.context.scene
-        if bpy.data.objects.find(scn.source_object) == -1:
-            objToLegoize = bpy.context.active_object
-        else:
-            objToLegoize = bpy.data.objects[scn.source_object]
-        return objToLegoize
 
     def execute(self, context):
         # get start time
@@ -46,52 +38,46 @@ class legoizerLegoize(bpy.types.Operator):
 
         # set up variables
         scn = context.scene
-        scn.lastResolution = scn.resolution
-        scn.lastLogoResolution = scn.logoResolution
-        scn.lastLogoDetail = scn.logoDetail
 
-        # make sure 'LEGOizer_bricks' group doesn't exist
-        if groupExists("LEGOizer_bricks"):
-            self.report({"WARNING"}, "LEGOized Model already created. To create a new LEGOized model, first press 'Commit LEGOized Mesh'.")
+        # make sure 'LEGOizer_bricks' group exists
+        if not groupExists("LEGOizer_bricks"):
+            self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
             return {"CANCELLED"}
 
-        # get object to LEGOize
-        source = self.getObjectToLegoize()
-        if source == None:
-            self.report({"WARNING"}, "Please select a mesh to LEGOize")
-            return{"CANCELLED"}
-
-        # create 'LEGOizer_source' group with source object
-        select(source)
-        bpy.ops.group.create(name="LEGOizer_source")
+        # get relevant bricks from groups
+        refBrick = bpy.data.groups["LEGOizer_refBrick"].objects[0]
+        source = bpy.data.groups["LEGOizer_source"].objects[0]
+        bricks = list(bpy.data.groups["LEGOizer_bricks"].objects)
 
         # get cross section
         crossSectionDict = slices(source, False, scn.resolution)
         CS_slices = crossSectionDict["slices"] # list of bmesh slices
 
+        # update refLogo
         refLogo = None
-        if scn.logoDetail != "None":
+        if scn.logoDetail != "None" and (scn.lastLogoDetail != scn.logoDetail or scn.lastLogoResolution != scn.logoResolution):
+            if groupExists("LEGOizer_refLogo"):
+                refLogoGroup = bpy.data.groups["LEGOizer_refLogo"]
+                delete(refLogoGroup.objects[0])
+                bpy.data.groups.remove(group=refLogoGroup, do_unlink=True)
             # import refLogo and add to group
             refLogo = importLogo()
             select(refLogo)
             bpy.ops.group.create(name="LEGOizer_refLogo")
             hide(refLogo)
 
-        # make 1x1 refBrick
+        # update refBrick
+        unhide(refBrick)
         dimensions = getBrickDimensions(crossSectionDict["sliceHeight"])
-        refBrick = make1x1(dimensions, refLogo)
-        # add refBrick to group
-        bpy.context.scene.objects.link(refBrick)
-        select(refBrick)
-        bpy.ops.group.create(name="LEGOizer_refBrick")
+        make1x1(dimensions, refLogo, name=refBrick.name)
+        hide(refBrick)
 
-        # hide all
-        selectAll()
-        bpy.ops.group.create(name="LEGOizer_hidden")
-        hidden = hide(bpy.data.objects.values())
+        # if resolution has changed
+        if scn.resolution != scn.lastResolution:
+            delete(bricks)
+            makeBricks(CS_slices, refBrick, dimensions, source)
 
-        # make bricks
-        makeBricks(CS_slices, refBrick, dimensions, source)
+        scn.lastResolution = scn.resolution
 
         # STOPWATCH CHECK
         stopWatch("Time Elapsed", time.time()-startTime)
