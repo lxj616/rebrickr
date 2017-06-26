@@ -40,7 +40,7 @@ class legoizerCommit(bpy.types.Operator):
 
         # make sure 'LEGOizer_bricks' group exists
         if not groupExists("LEGOizer_bricks"):
-            self.report({"WARNING"}, "No LEGOized Model found")
+            self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
             return{"CANCELLED"}
 
         # clean up 'LEGOizer_hidden' group

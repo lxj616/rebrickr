@@ -60,6 +60,9 @@ class legoizerLegoize(bpy.types.Operator):
         if source == None:
             self.report({"WARNING"}, "Please select a mesh to LEGOize")
             return{"CANCELLED"}
+        if source.type != "MESH":
+            self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
+            return{"CANCELLED"}
 
         # create 'LEGOizer_source' group with source object
         select(source)

@@ -89,7 +89,7 @@ def register():
         default=1)
 
     bpy.types.Scene.resolution = IntProperty(
-        name="Resolution",
+        name="Model Resolution",
         description="Resolution of the final LEGO model",
         min=1, max=500,
         default=10)

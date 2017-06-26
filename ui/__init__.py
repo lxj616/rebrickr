@@ -67,9 +67,6 @@ class ActionsPanel(Panel):
             bpy.data.groups.remove(bpy.data.groups["LEGOizer_bricks"], do_unlink=True)
         row.active = not groupExistsBool
         row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD")
-        row = col.row(align=True)
-        row.active = groupExistsBool
-        row.operator("scene.legoizer_merge", text="Merge Bricks", icon="MOD_REMESH")
 
 
 class SettingsPanel(Panel):
@@ -97,9 +94,10 @@ class SettingsPanel(Panel):
         col = layout.column(align=True)
         row = col.row(align=True)
         row.prop(scn, "logoDetail", text="Logo")
-        col = layout.column(align=True)
-        row = col.row(align=True)
-        row.prop(scn, "logoResolution", text="Logo Resolution")
+        if scn.logoDetail != "None":
+            col = layout.column(align=True)
+            row = col.row(align=True)
+            row.prop(scn, "logoResolution", text="Logo Resolution")
         col = layout.column(align=True)
         row = col.row(align=True)
         row.prop(scn, "undersideDetail", text="Underside")
@@ -111,6 +109,9 @@ class SettingsPanel(Panel):
         row = col.row(align=True)
         row.active = groupExistsBool
         row.operator("scene.legoizer_update", text="Update Model", icon="FILE_REFRESH")
+        row = col.row(align=True)
+        row.active = groupExistsBool
+        row.operator("scene.legoizer_merge", text="Merge Bricks", icon="MOD_REMESH")
         row = col.row(align=True)
         row.active = groupExistsBool
         row.operator("scene.legoizer_commit", text="Commit Model", icon="MOD_DECIM")

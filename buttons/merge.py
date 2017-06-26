@@ -28,7 +28,7 @@ props = bpy.props
 class legoizerMergeBricks(bpy.types.Operator):
     """Reduces poly count by merging bricks"""                                  # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "scene.legoizer_merge"                                          # unique identifier for buttons and menu items to reference.
-    bl_label = "Merge Bricks"                                                          # display name in the interface.
+    bl_label = "Merge Bricks"                                                   # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}                                           # enable undo for the operator.
 
     def execute(self, context):
@@ -40,10 +40,11 @@ class legoizerMergeBricks(bpy.types.Operator):
 
         # make sure 'LEGOizer_bricks' group exists
         if not groupExists("LEGOizer_bricks"):
-            self.report({"WARNING"}, "LEGOized Model already created. To create a new LEGOized model, first press 'Commit LEGOized Mesh'.")
+            self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
             return {"CANCELLED"}
 
         # TODO: Write merge bricks code
+        merge(bricks)
 
         # STOPWATCH CHECK
         stopWatch("Time Elapsed", time.time()-startTime)
