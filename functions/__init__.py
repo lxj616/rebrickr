@@ -25,28 +25,9 @@ import bmesh
 import math
 from .crossSection import slices, drawBMesh
 from .meshGenerate import *
+from .common_functions import stopWatch, groupExists, deselectAll, selectAll, hide, unhide, select, delete
 from mathutils import Vector
 props = bpy.props
-
-def stopWatch(text, value):
-    '''From seconds to Days;Hours:Minutes;Seconds'''
-
-    valueD = (((value/365)/24)/60)
-    Days = int(valueD)
-
-    valueH = (valueD-Days)*365
-    Hours = int(valueH)
-
-    valueM = (valueH - Hours)*24
-    Minutes = int(valueM)
-
-    valueS = (valueM - Minutes)*60
-    Seconds = int(valueS)
-
-    # valueMs = (valueS - Seconds)*60
-    # Miliseconds = int(valueMs)
-    #
-    print(str(text) + ": " + str(Days) + ";" + str(Hours) + ":" + str(Minutes) + ";" + str(Seconds)) # + ";;" + str(Miliseconds))
 
 def writeBinvox(obj):
     ''' creates binvox file and returns filepath '''
@@ -67,65 +48,11 @@ def writeBinvox(obj):
 
     return binvoxPath
 
-def groupExists(groupName):
-    """ check if group exists in blender's memory """
-
-    groupExists = False
-    for group in bpy.data.groups:
-        if group.name == groupName:
-            groupExists = True
-    return groupExists
-
-def deselectAll():
-    bpy.ops.object.select_all(action='DESELECT')
-def selectAll():
-    bpy.ops.object.select_all(action='SELECT')
-
 def confirmList(objList):
     """ if single object passed, convert to list """
     if type(objList) != list:
         objList = [objList]
     return objList
-
-def hide(objList):
-    objList = confirmList(objList)
-    for obj in objList:
-        obj.hide = True
-def unhide(objList):
-    objList = confirmList(objList)
-    for obj in objList:
-        obj.hide = False
-
-def select(objList=[], active=None, action="select", exclusive=True):
-    """ selects objs in list and deselects the rest """
-    objList = confirmList(objList)
-    try:
-        if action == "select":
-            # deselect all if selection is exclusive
-            if exclusive and len(objList) > 0:
-                deselectAll()
-            # select objects in list
-            for obj in objList:
-                obj.select = True
-        elif action == "deselect":
-            # deselect objects in list
-            for obj in objList:
-                obj.select = False
-
-        # set active object
-        if active:
-            try:
-                bpy.context.scene.objects.active = active
-            except:
-                print("argument passed to 'active' parameter not valid (" + str(active) + ")")
-    except:
-        return False
-    return True
-
-def delete(objs):
-    if select(objs):
-        unhide(objs)
-        bpy.ops.object.delete()
 
 def getBrickDimensions(height):
     scale = height/9.6
