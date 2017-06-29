@@ -282,6 +282,33 @@ def makeTorus():
     # return bmesh
     return bme
 
+# R = resolution, s = scale
+def makeSimple2DLattice(R, s):
+    # TODO: Raise exception if R is less than 2
+    # create new bmesh object
+    bme = bmesh.new()
+
+    # divide scale by 2
+    s = s/2
+
+    # initialize incrementor and accumulator
+    inc = s/R
+    acc = -s
+    for i in range(R):
+        # create and connect verts along x axis
+        t = bme.verts.new(( acc,  s, 0))
+        b = bme.verts.new(( acc, -s, 0))
+        e1 = bme.edges.new((t, b))
+        # create and connect verts along y axis
+        r = bme.verts.new((  s, acc, 0))
+        l = bme.verts.new(( -s, acc, 0))
+        e2 = bme.edges.new((r, l))
+        # increment accumulator
+        acc += inc
+
+    # return bmesh
+    return bme
+
 def newObjFromBmesh(layer, bme, meshName, objName=False):
 
     # if only one name given, use it for both names

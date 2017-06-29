@@ -46,7 +46,7 @@ class legoizerCommit(bpy.types.Operator):
         # clean up 'LEGOizer_hidden' group
         hiddenGroup = bpy.data.groups["LEGOizer_hidden"]
         unhide(list(hiddenGroup.objects))
-        select(list(hiddenGroup.objects), action="deselect")
+        select(list(hiddenGroup.objects), deselect=True)
         bpy.data.groups.remove(hiddenGroup, do_unlink=True)
 
         # clean up 'LEGOizer_bricks' group
