@@ -23,6 +23,7 @@ Created by Christopher Gearhart
 import bpy
 from bpy.types import Panel
 from bpy.props import *
+from .committed_models_list import *
 from ..functions import *
 from ..lib import common_utilities
 from ..lib.common_utilities import bversion
@@ -47,26 +48,46 @@ class ActionsPanel(Panel):
         #     col.label('LEGOizer requires Blender 2.76+')
         #     return
 
-        col = layout.column(align=True)
-        col.label("Source Object:")
+        rows = 3
+        row = layout.row()
+        row.template_list("UL_items", "", scn, "cmlist", scn, "cmlist_index", rows=rows)
 
-        if context.mode == 'OBJECT':
+        col = row.column(align=True)
+        col.operator("cmlist.list_action", icon='ZOOMIN', text="").action = 'ADD'
+        col.operator("cmlist.list_action", icon='ZOOMOUT', text="").action = 'REMOVE'
+        col.separator()
+        col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
+        col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
+
+        # row = layout.row()
+        # col = row.column(align=True)
+        # col.operator("cmlist.print_list", icon="WORDWRAP_ON")
+        # col.operator("cmlist.select_item", icon="UV_SYNC_SELECT")
+        # col.operator("cmlist.clear_list", icon="X")
+        if scn.cmlist_index != -1:
+            col = layout.column(align=True)
+            col.label("Source Object:")
             row = col.row(align=True)
-            scene = context.scene
-            row.prop_search(scn, "source_object", scene, "objects", text='')
+            row.prop_search(scn.cmlist[scn.cmlist_index], "source_object", scn, "objects", text='')
 
             # sub = row.row(align=True)
             # sub.scale_x = 0.1
             # sub.operator("cgcookie.eye_dropper", icon='EYEDROPPER').target_prop = 'source_object'
 
-        col = layout.column(align=True)
-        row = col.row(align=True)
-        groupExistsBool = groupExists("LEGOizer_bricks")
-        # remove 'LEGOizer_bricks' group if empty
-        if groupExistsBool and len(bpy.data.groups["LEGOizer_bricks"].objects) == 0:
-            bpy.data.groups.remove(bpy.data.groups["LEGOizer_bricks"], do_unlink=True)
-        row.active = not groupExistsBool
-        row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD")
+            col = layout.column(align=True)
+            row = col.row(align=True)
+            n = scn.cmlist[scn.cmlist_index].source_object
+            LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
+            groupExistsBool = groupExists(LEGOizer_bricks)
+            # remove 'LEGOizer_[source name]_bricks' group if empty
+            if groupExistsBool and len(bpy.data.groups[LEGOizer_bricks].objects) == 0:
+                bpy.data.groups.remove(bpy.data.groups[LEGOizer_bricks], do_unlink=True)
+            if not groupExistsBool:
+                row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD")
+            else:
+                row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL")
+        else:
+            layout.operator("cmlist.list_action", icon='ZOOMIN', text="New Source Object").action = 'ADD'
 
 
 class SettingsPanel(Panel):
@@ -77,6 +98,13 @@ class SettingsPanel(Panel):
     bl_context     = "objectmode"
     bl_category    = "LEGOizer"
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
+
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        return True
 
     def draw(self, context):
         layout = self.layout
@@ -104,18 +132,13 @@ class SettingsPanel(Panel):
         col = layout.column(align=True)
         row = col.row(align=True)
         row.prop(scn, "studVerts")
-        groupExistsBool = groupExists("LEGOizer_bricks")
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.active = groupExistsBool
         row.operator("scene.legoizer_update", text="Update Model", icon="FILE_REFRESH")
         row = col.row(align=True)
-        row.active = groupExistsBool
         row.operator("scene.legoizer_merge", text="Merge Bricks", icon="MOD_REMESH")
         row = col.row(align=True)
-        row.active = groupExistsBool
         row.operator("scene.legoizer_commit", text="Commit Model", icon="MOD_DECIM")
-
 
 
 class AdvancedPanel(Panel):
@@ -127,6 +150,13 @@ class AdvancedPanel(Panel):
     bl_category    = "LEGOizer"
     bl_options     = {"DEFAULT_CLOSED"}
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
+
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        return True
 
     def draw(self, context):
         layout = self.layout

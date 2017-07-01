@@ -31,6 +31,18 @@ class legoizerMergeBricks(bpy.types.Operator):
     bl_label = "Merge Bricks"                                                   # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}                                           # enable undo for the operator.
 
+    @classmethod
+    def poll(cls, context):
+        """ ensures operator can execute (if not, returns false) """
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        n = scn.cmlist[scn.cmlist_index].source_object
+        if groupExists("LEGOizer_%(n)s_bricks" % locals()):
+            return True
+        return False
+
+
     def execute(self, context):
         # set up variables
         scn = context.scene
@@ -38,13 +50,11 @@ class legoizerMergeBricks(bpy.types.Operator):
         # get start time
         startTime = time.time()
 
-        # make sure 'LEGOizer_bricks' group exists
-        if not groupExists("LEGOizer_bricks"):
-            self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
-            return {"CANCELLED"}
-
         # TODO: Write merge bricks code
+        bricks = []
         merge(bricks)
+
+        scn.cmlist[scn.cmlist_index].changesToCommit = True
 
         # STOPWATCH CHECK
         stopWatch("Time Elapsed", time.time()-startTime)

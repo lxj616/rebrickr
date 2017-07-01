@@ -91,16 +91,16 @@ def register():
     bpy.types.Scene.resolution = IntProperty(
         name="Model Resolution",
         description="Resolution of the final LEGO model",
-        min=1, max=500,
+        min=3, max=500,
         default=10)
 
     bpy.types.Scene.lastResolution = IntProperty(
         default=0)
 
-    bpy.types.Scene.source_object = StringProperty(
-        name="Source Object",
-        description="Source object to legoize (defaults to active object)",
-        default="")
+    # other things (UI List)
+    bpy.types.Scene.cmlist = CollectionProperty(type=CustomProp)
+    bpy.types.Scene.cmlist_index = IntProperty(default=-1)
+
 
     # session properties
     props.addon_name = "legoizer"
@@ -116,7 +116,9 @@ def register():
 def unregister():
     Scn = bpy.types.Scene
 
-    del Scn.source_object
+    del bpy.types.Scene.cmlist_index
+    del bpy.types.Scene.cmlist
+    del scn.cmlist[scn.cmlist_index].source_object
     del Scn.lastResolution
     del Scn.resolution
     del Scn.shellThickness

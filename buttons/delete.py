@@ -25,27 +25,28 @@ import time
 from ..functions import *
 props = bpy.props
 
-class legoizerCommit(bpy.types.Operator):
-    """Commit Edits on LEGOized Mesh """                                        # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.legoizer_commit"                                         # unique identifier for buttons and menu items to reference.
-    bl_label = "Commit Edits to LEGO Sculpt"                                    # display name in the interface.
+class legoizerDelete(bpy.types.Operator):
+    """ Delete LEGOized model """                                               # blender will use this as a tooltip for menu items and buttons.
+    bl_idname = "scene.legoizer_delete"                                         # unique identifier for buttons and menu items to reference.
+    bl_label = "Delete LEGOized model from Blender"                             # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
-        if scn.cmlist_index == -1 or not scn.cmlist[scn.cmlist_index].changesToCommit:
+        if scn.cmlist_index == -1:
+            return False
+        n = scn.cmlist[scn.cmlist_index].source_object
+        if not groupExists("LEGOizer_%(n)s_bricks" % locals()):
             return False
         return True
 
-    def addSource(self):
+    def removeSource(self):
         scn = bpy.context.scene
-        name = scn.cmlist[scn.cmlist_index].source_object
-        success = addItemToCMList(name)
-        if success:
-            info = '%s added to list' % (name)
-            self.report({'INFO'}, info)
+        item = scn.cmlist.remove(scn.cmlist.find(scn.cmlist[scn.cmlist_index].source_object))
+        info = '%s removed from list' % (scn.cmlist[scn.cmlist_index].source_object)
+        self.report({'INFO'}, info)
 
     def execute(self, context):
         # get start time
@@ -54,29 +55,25 @@ class legoizerCommit(bpy.types.Operator):
         # set up variables
         scn = context.scene
 
-        # make sure 'LEGOizer_[source name]_bricks' group exists
+        # clean up LEGOizer_bricks group
         n = scn.cmlist[scn.cmlist_index].source_object
         LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
-        if not groupExists(LEGOizer_bricks):
-            self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
-            return{"CANCELLED"}
-
-        # # clean up LEGOizer_bricks group
-        # brickGroup = bpy.data.groups[LEGOizer_bricks]
-        # bpy.data.groups.remove(brickGroup, do_unlink=True)
+        brickGroup = bpy.data.groups[LEGOizer_bricks]
+        delete(list(brickGroup.objects))
+        bpy.data.groups.remove(brickGroup, do_unlink=True)
 
         # clean up 'LEGOizer_[source name]' group
         sourceGroup = bpy.data.groups["LEGOizer_%(n)s" % locals()]
-        sourceGroup.objects[0].draw_type = 'WIRE'
-        sourceGroup.objects[0].hide_render = True
-        # bpy.data.groups.remove(sourceGroup, do_unlink=True)
+        sourceGroup.objects[0].draw_type = 'SOLID'
+        sourceGroup.objects[0].hide_render = False
+        bpy.data.groups.remove(sourceGroup, do_unlink=True)
 
-        # # clean up 'LEGOizer_[source name]_refBrick' group
-        # refBrickGroup = bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()]
-        # refBrick = refBrickGroup.objects[0]
-        # delete(refBrick)
-        # bpy.data.groups.remove(refBrickGroup, do_unlink=True)
-        #
+        # clean up 'LEGOizer_refBrick' group
+        refBrickGroup = bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()]
+        refBrick = refBrickGroup.objects[0]
+        delete(refBrick)
+        bpy.data.groups.remove(refBrickGroup, do_unlink=True)
+
         # # clean up 'LEGOizer_refLogo' group
         # if groupExists("LEGOizer_refLogo"):
         #     refLogoGroup = bpy.data.groups["LEGOizer_refLogo"]
@@ -84,7 +81,7 @@ class legoizerCommit(bpy.types.Operator):
         #     delete(refLogo)
         #     bpy.data.groups.remove(refLogoGroup, do_unlink=True)
 
-        self.addSource()
+        self.removeSource()
 
         scn.cmlist[scn.cmlist_index].changesToCommit = False
 

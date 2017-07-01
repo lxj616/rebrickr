@@ -19,3 +19,8 @@ Blender add-on for automated generation of LEGO Bricks from object (Blender vers
       * Add functionality for only rendering LEGO text on exposed studs
       * Add functionality to Pre Hollow/Shell Thickness
       * Fix functionality for generating LEGO bricks on shell of source object
+    * Priority 2:
+      * Apply closest LEGO color based on color of nearest vertex
+    * Priority 3:
+      * New feature: frame-by-frame generation of LEGO models (like the explosions in the LEGO Movie)
+      * Allow for custom object to generate model from

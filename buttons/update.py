@@ -32,6 +32,17 @@ class legoizerUpdate(bpy.types.Operator):
     bl_label = "Create Build Animation"                                         # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
+    @classmethod
+    def poll(cls, context):
+        """ ensures operator can execute (if not, returns false) """
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        n = scn.cmlist[scn.cmlist_index].source_object
+        if not groupExists("LEGOizer_%(n)s_bricks" % locals()):
+            return False
+        return True
+
     def execute(self, context):
         # get start time
         startTime = time.time()
@@ -39,15 +50,18 @@ class legoizerUpdate(bpy.types.Operator):
         # set up variables
         scn = context.scene
 
-        # make sure 'LEGOizer_bricks' group exists
-        if not groupExists("LEGOizer_bricks"):
+        # make sure 'LEGOizer_[source name]_bricks' group exists
+        n = scn.cmlist[scn.cmlist_index].source_object
+        LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
+        if not groupExists(LEGOizer_bricks):
             self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
             return {"CANCELLED"}
 
         # get relevant bricks from groups
-        refBrick = bpy.data.groups["LEGOizer_refBrick"].objects[0]
-        source = bpy.data.groups["LEGOizer_source"].objects[0]
-        bricks = list(bpy.data.groups["LEGOizer_bricks"].objects)
+        refBrick = bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()].objects[0]
+        n = scn.cmlist[scn.cmlist_index].source_object
+        source = bpy.data.groups["LEGOizer_%(n)s" % locals()].objects[0]
+        bricks = list(bpy.data.groups[LEGOizer_bricks].objects)
 
         # get cross section
         crossSectionDict = slices(source, False, scn.resolution)
@@ -78,6 +92,8 @@ class legoizerUpdate(bpy.types.Operator):
             makeBricks(CS_slices, refBrick, dimensions, source)
 
         scn.lastResolution = scn.resolution
+
+        scn.cmlist[scn.cmlist_index].changesToCommit = True
 
         # STOPWATCH CHECK
         stopWatch("Time Elapsed", time.time()-startTime)

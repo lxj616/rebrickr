@@ -52,7 +52,7 @@ class  CGC_EyeDropper(ModalOperator):
         settings = common_utilities.get_settings()
 
         if self.ob and self.ob.type == 'MESH':
-            bpy.types.Scene.source_object = self.ob.name
+            bpy.types.scene.cmlist[context.scene.cmlist_index].source_object = self.ob.name
                 settings.__setattr__(self.target_prop, self.ob.name)
         return
 
@@ -84,7 +84,7 @@ class  CGC_EyeDropper(ModalOperator):
             return ''
 
         if eventd['press'] == 'LEFTMOUSE':
-            context.scene.source_object = self.ob.name
+            context.scene.cmlist[context.scene.cmlist_index].source_object = self.ob.name
             return 'finish'
 
         return ''
