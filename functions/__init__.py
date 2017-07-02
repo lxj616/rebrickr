@@ -67,9 +67,16 @@ def getBrickSettings():
 def make1x1(dimensions, refLogo, name='brick1x1'):
     """ create unlinked 1x1 LEGO Brick at origin """
     settings = getBrickSettings()
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
 
     bm = bmesh.new()
-    cubeBM = makeCube(sX=dimensions["width"], sY=dimensions["width"], sZ=dimensions["height"])
+    if cm.undersideDetail == "Low Detail":
+        cubeBM = makeLowDetailBlock(sX=dimensions["width"], sY=dimensions["width"], sZ=dimensions["height"], thick=dimensions["thickness"])
+    elif cm.undersideDetail == "High Detail":
+        cubeBM = makeHighDetailBlock(sX=dimensions["width"], sY=dimensions["width"], sZ=dimensions["height"], thick=dimensions["thickness"])
+    else:
+        cubeBM = makeCube(sX=dimensions["width"], sY=dimensions["width"], sZ=dimensions["height"])
     cylinderBM = makeCylinder(r=dimensions["stud_radius"], N=settings["numStudVerts"], h=dimensions["stud_height"], co=(0,0,dimensions["stud_offset"]))
     if refLogo:
         logoBM = bmesh.new()
@@ -81,15 +88,15 @@ def make1x1(dimensions, refLogo, name='brick1x1'):
         # add logoBM mesh to bm mesh
         logoMesh = bpy.data.meshes.new('LEGOizer_tempMesh')
         logoObj = bpy.data.objects.new('LEGOizer_tempObj', logoMesh)
-        bpy.context.scene.objects.link(logoObj)
+        scn.objects.link(logoObj)
         logoBM.to_mesh(logoMesh)
         select(logoObj, active=logoObj)
-        if bpy.context.scene.logoResolution < 1:
+        if cm.logoResolution < 1:
             bpy.ops.object.modifier_add(type='DECIMATE')
-            logoObj.modifiers['Decimate'].ratio = bpy.context.scene.logoResolution
+            logoObj.modifiers['Decimate'].ratio = cm.logoResolution
             bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
         bm.from_mesh(logoMesh)
-        bpy.context.scene.objects.unlink(logoObj)
+        scn.objects.unlink(logoObj)
         bpy.data.objects.remove(logoObj)
         bpy.data.meshes.remove(logoMesh)
 
@@ -124,6 +131,7 @@ def getBrickDimensions(height, gap_percentage):
     brick_dimensions["stud_diameter"] = scale*4.8
     brick_dimensions["stud_radius"] = scale*2.4
     brick_dimensions["stud_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"] / 2)
+    brick_dimensions["thickness"] = scale*1.6
     brick_dimensions["logo_width"] = scale*3.74
     brick_dimensions["logo_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"])
     return brick_dimensions

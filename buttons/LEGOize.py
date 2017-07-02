@@ -113,26 +113,23 @@ class legoizerLegoize(bpy.types.Operator):
         # get cross section
         source_details = bounds(source)
         dimensions = getBrickDimensions(cm.brickHeight, cm.gap)
-        numSlices_x = math.ceil(source_details.x.distance/(dimensions["width"] + dimensions["gap"]))
-        CS_slices_x = slices(source, numSlices_x, (dimensions["width"] + dimensions["gap"]), axis="y", drawSlices=False) # get list of horizontal bmesh slices
-        numSlices_y = math.ceil(source_details.y.distance/(dimensions["width"] + dimensions["gap"]))
-        CS_slices_y = slices(source, numSlices_y, (dimensions["width"] + dimensions["gap"]), axis="y", drawSlices=False) # get list of horizontal bmesh slices
-        numSlices_z = math.ceil(source_details.z.distance/(dimensions["height"] + dimensions["gap"]))
-        CS_slices_z = slices(source, numSlices_z, (dimensions["height"] + dimensions["gap"]), axis="z", drawSlices=False) # get list of horizontal bmesh slices
-        lengths = [len(CS_slices_x), len(CS_slices_y), len(CS_slices_z)]
-        m = lengths.index(min(lengths))
+        sizes = [source_details.x.distance, source_details.y.distance, source_details.z.distance]
+        m = sizes.index(min(sizes))
         if m == 0:
             axis = "x"
-            CS_slices = CS_slices_x
             lScale = (0, source_details.y.distance, source_details.z.distance)
+            numSlices = math.ceil(source_details.x.distance/(dimensions["width"] + dimensions["gap"]))
+            CS_slices = slices(source, numSlices, (dimensions["width"] + dimensions["gap"]), axis=axis, drawSlices=False) # get list of horizontal bmesh slices
         if m == 1:
             axis = "y"
-            CS_slices = CS_slices_y
             lScale = (source_details.x.distance, 0, source_details.z.distance)
+            numSlices = math.ceil(source_details.y.distance/(dimensions["width"] + dimensions["gap"]))
+            CS_slices = slices(source, numSlices, (dimensions["width"] + dimensions["gap"]), axis=axis, drawSlices=False) # get list of horizontal bmesh slices
         if m == 2:
             axis = "z"
-            CS_slices = CS_slices_z
             lScale = (source_details.x.distance, source_details.y.distance, 0)
+            numSlices = math.ceil(source_details.z.distance/(dimensions["height"] + dimensions["gap"]))
+            CS_slices = slices(source, numSlices, (dimensions["height"] + dimensions["gap"]), axis=axis, drawSlices=False) # get list of horizontal bmesh slices
 
         if groupExists("LEGOizer_refLogo"):
             refLogo = bpy.data.groups["LEGOizer_refLogo"].objects[0]
