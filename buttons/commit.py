@@ -41,7 +41,7 @@ class legoizerCommit(bpy.types.Operator):
 
     def addSource(self):
         scn = bpy.context.scene
-        name = scn.cmlist[scn.cmlist_index].source_object
+        name = scn.cmlist[scn.cmlist_index].source_name
         success = addItemToCMList(name)
         if success:
             info = '%s added to list' % (name)
@@ -55,7 +55,7 @@ class legoizerCommit(bpy.types.Operator):
         scn = context.scene
 
         # make sure 'LEGOizer_[source name]_bricks' group exists
-        n = scn.cmlist[scn.cmlist_index].source_object
+        n = scn.cmlist[scn.cmlist_index].source_name
         LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
         if not groupExists(LEGOizer_bricks):
             self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
@@ -84,7 +84,7 @@ class legoizerCommit(bpy.types.Operator):
         #     delete(refLogo)
         #     bpy.data.groups.remove(refLogoGroup, do_unlink=True)
 
-        self.addSource()
+        # self.addSource()
 
         scn.cmlist[scn.cmlist_index].changesToCommit = False
 

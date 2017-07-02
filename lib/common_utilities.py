@@ -130,29 +130,29 @@ def check_source_target_objects(scene):
 
     if not settings: return #sometimes...there are no settings to get.
     
-    if settings.source_object not in bpy.context.scene.objects:
-        settings.source_object = ''
+    if settings.source_name not in bpy.context.scene.objects:
+        settings.source_name = ''
     if settings.target_object not in bpy.context.scene.objects:
         settings.target_object = ''
 
-def get_source_object():
+def get_source_name():
     settings = get_settings()
 
-    default_source_object_to_active()
+    default_source_name_to_active()
 
-    source_object = bpy.data.objects[settings.source_object]
+    source_name = bpy.data.objects[settings.source_name]
 
-    return source_object
+    return source_name
 
-def update_source_object():
+def update_source_name():
     settings = get_settings()
-    settings.source_object = bpy.context.active_object.name
+    settings.source_name = bpy.context.active_object.name
 
-def default_source_object_to_active():
+def default_source_name_to_active():
     if not bpy.context.active_object: return
     settings = get_settings()
-    if settings.source_object: return
-    settings.source_object = bpy.context.active_object.name
+    if settings.source_name: return
+    settings.source_name = bpy.context.active_object.name
 
 def default_target_object_to_active():
     if not bpy.context.active_object: return

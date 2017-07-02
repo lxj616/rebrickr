@@ -2,10 +2,22 @@ import bpy
 import bmesh
 from mathutils import Matrix, Vector
 
-def run(z, bm):
+def run(bm, x=None, y=None, z=None):
+    # initialize values based on plane being tested
+    if x != None:
+        translationMatrix1 = Matrix.Translation(Vector((-x, 0, 0)))
+        translationMatrix2 = Matrix.Translation(Vector(( x, 0, 0)))
+    elif y != None:
+        translationMatrix1 = Matrix.Translation(Vector((0, -y, 0)))
+        translationMatrix2 = Matrix.Translation(Vector((0,  y, 0)))
+    else:
+        translationMatrix1 = Matrix.Translation(Vector((0, 0, -z)))
+        translationMatrix2 = Matrix.Translation(Vector((0, 0,  z)))
+
+
     # create new bmesh object
     crossBMesh = bmesh.new()
-    bm.transform(Matrix.Translation(Vector((0, 0, -z))))
+    bm.transform(translationMatrix1)
 
     # ensure lookup tables for indexing
     bm.verts.ensure_lookup_table()
@@ -13,26 +25,43 @@ def run(z, bm):
 
     i = 0
     crossD = {}
-    # if vertex from source on z plane, create equivalent vert in bmesh
+    # if vertex from source on plane, create equivalent vert in bmesh
     for vert in bm.verts:
-        if(abs(vert.co.z) <= 0.001):
+        if (z != None and abs(vert.co.z) <= 0.001) or (y != None and abs(vert.co.y) <= 0.001) or (x != None and abs(vert.co.x) <= 0.001):
             bmv = crossBMesh.verts.new(vert.co)
             bmv.normal = vert.normal
             crossD[i] = {'faces': vert.link_faces, 'edges': vert.link_edges, 'type': 'vert'}
             i += 1
-    # if edge from source intersects z plane, create vert at intersection in bmesh
+    # if edge from source intersects plane, create vert at intersection in bmesh
     for edge in bm.edges:
         v0 = edge.verts[0]
         v1 = edge.verts[1]
         p0 = v0.co
         p1 = v1.co
-        if (p0.z < -0.001 and p1.z > 0.001) or (p0.z > 0.001 and p1.z < -0.001):
-            t = abs(p0.z) / abs(p1.z - p0.z)
-            pos = (p1 * t) + (p0 * (1-t))
-            bmv = crossBMesh.verts.new(pos)
-            bmv.normal = (v0.normal + v1.normal) / 2
-            crossD[i] = {'faces': edge.link_faces, 'edges': vert.link_edges, 'type': 'edge'}
-            i += 1
+        if z != None:
+            if (p0.z < -0.001 and p1.z > 0.001) or (p0.z > 0.001 and p1.z < -0.001):
+                t = abs(p0.z) / abs(p1.z - p0.z)
+                pos = (p1 * t) + (p0 * (1-t))
+                bmv = crossBMesh.verts.new(pos)
+                bmv.normal = (v0.normal + v1.normal) / 2
+                crossD[i] = {'faces': edge.link_faces, 'edges': vert.link_edges, 'type': 'edge'}
+                i += 1
+        elif y != None:
+            if (p0.y < -0.001 and p1.y > 0.001) or (p0.y > 0.001 and p1.y < -0.001):
+                t = abs(p0.y) / abs(p1.y - p0.y)
+                pos = (p1 * t) + (p0 * (1-t))
+                bmv = crossBMesh.verts.new(pos)
+                bmv.normal = (v0.normal + v1.normal) / 2
+                crossD[i] = {'faces': edge.link_faces, 'edges': vert.link_edges, 'type': 'edge'}
+                i += 1
+        else:
+            if (p0.x < -0.001 and p1.x > 0.001) or (p0.x > 0.001 and p1.x < -0.001):
+                t = abs(p0.x) / abs(p1.x - p0.x)
+                pos = (p1 * t) + (p0 * (1-t))
+                bmv = crossBMesh.verts.new(pos)
+                bmv.normal = (v0.normal + v1.normal) / 2
+                crossD[i] = {'faces': edge.link_faces, 'edges': vert.link_edges, 'type': 'edge'}
+                i += 1
 
     crossBMesh.verts.ensure_lookup_table()
     crossBMesh.edges.ensure_lookup_table()
@@ -81,8 +110,8 @@ def run(z, bm):
                             except:
                                 continue
 
-    crossBMesh.transform(Matrix.Translation(Vector((0, 0, z))))
-    bm.transform(Matrix.Translation(Vector((0, 0, z))))
+    crossBMesh.transform(translationMatrix2)
+    bm.transform(translationMatrix2)
     return crossBMesh
 
 def equal(vec1, vec2):
@@ -103,27 +132,42 @@ def drawBMesh(BMesh, name="drawnBMesh"):
     BMesh.to_mesh(m)         # push bmesh data into m
     return obj
 
-def slices(obj, drawSlices, numSlices):
+def slices(obj, numSlices, brickHeight, axis="z", drawSlices=False):
+    if axis not in "xyz":
+        return []
+    if numSlices <= 1:
+        return []
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     bm.transform(obj.matrix_world)
     bm.verts.ensure_lookup_table()
-    zMax = max(v.co.z for v in bm.verts)
-    zMin = min(v.co.z for v in bm.verts)
-    ran = zMax - zMin
-    z = zMin
-    x = -6
-    y = -6
+    if axis == "z":
+        Max = max(v.co.z for v in bm.verts)
+        Min = min(v.co.z for v in bm.verts)
+        z = Min
+    elif axis == "y":
+        Max = max(v.co.y for v in bm.verts)
+        Min = min(v.co.y for v in bm.verts)
+        y = Min
+    else:
+        Max = max(v.co.x for v in bm.verts)
+        Min = min(v.co.x for v in bm.verts)
+        x = Min
+    ran = Max - Min
     slices = []
     for i in range(numSlices):
-        BMResult = run(z, bm)
-        slices.append(BMResult)
-        if drawSlices:
-            drawMesh(BMResult)
-        z += ran/(numSlices - 1)
-        y += 3
-        if i == 4:
-            x = -3
-            y = -6
+        if axis == "z":
+            BMResult = run(bm, z=z)
+            z += brickHeight
+        elif axis == "y":
+            BMResult = run(bm, y=y)
+            y += brickHeight
+        else:
+            BMResult = run(bm, x=x)
+            x += brickHeight
+        if len(BMResult.verts) > 0:
+            slices.append(BMResult)
+            if drawSlices:
+                drawBMesh(BMResult)
 
-    return {"slices":slices, "sliceHeight":ran/(numSlices - 1)}
+    return slices

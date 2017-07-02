@@ -29,11 +29,11 @@ from ..lib import common_utilities
 from ..lib.common_utilities import bversion
 props = bpy.props
 
-class ActionsPanel(Panel):
+class LegoModelsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
-    bl_label       = "Actions"
-    bl_idname      = "VIEW3D_PT_tools_LEGOizer_actions"
+    bl_label       = "LEGO Models"
+    bl_idname      = "VIEW3D_PT_tools_LEGOizer_lego_models"
     bl_context     = "objectmode"
     bl_category    = "LEGOizer"
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
@@ -65,29 +65,29 @@ class ActionsPanel(Panel):
         # col.operator("cmlist.select_item", icon="UV_SYNC_SELECT")
         # col.operator("cmlist.clear_list", icon="X")
         if scn.cmlist_index != -1:
+            cm = scn.cmlist[scn.cmlist_index]
+            n = cm.source_name
+            LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
+            groupExistsBool = groupExists(LEGOizer_bricks)
             col = layout.column(align=True)
             col.label("Source Object:")
             row = col.row(align=True)
-            row.prop_search(scn.cmlist[scn.cmlist_index], "source_object", scn, "objects", text='')
+            if not groupExistsBool:
+                row.prop_search(cm, "source_name", scn, "objects", text='')
+            else:
+                row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL")
 
             # sub = row.row(align=True)
             # sub.scale_x = 0.1
-            # sub.operator("cgcookie.eye_dropper", icon='EYEDROPPER').target_prop = 'source_object'
+            # sub.operator("cgcookie.eye_dropper", icon='EYEDROPPER').target_prop = 'source_name'
 
             col = layout.column(align=True)
             row = col.row(align=True)
-            n = scn.cmlist[scn.cmlist_index].source_object
-            LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
-            groupExistsBool = groupExists(LEGOizer_bricks)
             # remove 'LEGOizer_[source name]_bricks' group if empty
             if groupExistsBool and len(bpy.data.groups[LEGOizer_bricks].objects) == 0:
                 bpy.data.groups.remove(bpy.data.groups[LEGOizer_bricks], do_unlink=True)
-            if not groupExistsBool:
-                row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD")
-            else:
-                row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL")
         else:
-            layout.operator("cmlist.list_action", icon='ZOOMIN', text="New Source Object").action = 'ADD'
+            layout.operator("cmlist.list_action", icon='ZOOMIN', text="New LEGO Model").action = 'ADD'
 
 
 class SettingsPanel(Panel):
@@ -109,36 +109,45 @@ class SettingsPanel(Panel):
     def draw(self, context):
         layout = self.layout
         scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
 
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(scn, "resolution")
+        row.prop(cm, "brickHeight")
+        row = col.row(align=True)
+        row.prop(cm, "gap")
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(scn, "preHollow")
-        if scn.preHollow:
+        row.prop(cm, "preHollow")
+        if cm.preHollow:
             row = col.row(align=True)
-            row.prop(scn, "shellThickness")
+            row.prop(cm, "shellThickness")
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(scn, "logoDetail", text="Logo")
-        if scn.logoDetail != "None":
+        row.prop(cm, "logoDetail", text="Logo")
+        if cm.logoDetail != "None":
             col = layout.column(align=True)
             row = col.row(align=True)
-            row.prop(scn, "logoResolution", text="Logo Resolution")
+            row.prop(cm, "logoResolution", text="Logo Resolution")
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(scn, "undersideDetail", text="Underside")
+        row.prop(cm, "undersideDetail", text="Underside")
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(scn, "studVerts")
+        row.prop(cm, "studVerts")
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.operator("scene.legoizer_update", text="Update Model", icon="FILE_REFRESH")
+        n = cm.source_name
+        LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
+        groupExistsBool = groupExists(LEGOizer_bricks)
+        if not groupExistsBool:
+            row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD")
+        else:
+            row.operator("scene.legoizer_update", text="Update Model", icon="FILE_REFRESH")
         row = col.row(align=True)
         row.operator("scene.legoizer_merge", text="Merge Bricks", icon="MOD_REMESH")
         row = col.row(align=True)
-        row.operator("scene.legoizer_commit", text="Commit Model", icon="MOD_DECIM")
+        row.operator("scene.legoizer_commit", text="Commit Model", icon="FILE_TICK")
 
 
 class AdvancedPanel(Panel):

@@ -22,6 +22,7 @@
 # system imports
 import bpy
 import time
+import math
 from ..functions import *
 from mathutils import Matrix, Vector
 props = bpy.props
@@ -32,12 +33,21 @@ class legoizerLegoize(bpy.types.Operator):
     bl_label = "Create Build Animation"                                         # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
+    @classmethod
+    def poll(cls, context):
+        """ ensures operator can execute (if not, returns false) """
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        if bpy.data.objects[cm.source_name].type == 'MESH':
+            return True
+        return False
+
     def getObjectToLegoize(self):
         scn = bpy.context.scene
-        if bpy.data.objects.find(scn.cmlist[scn.cmlist_index].source_object) == -1:
+        if bpy.data.objects.find(scn.cmlist[scn.cmlist_index].source_name) == -1:
             objToLegoize = bpy.context.active_object
         else:
-            objToLegoize = bpy.data.objects[scn.cmlist[scn.cmlist_index].source_object]
+            objToLegoize = bpy.data.objects[scn.cmlist[scn.cmlist_index].source_name]
         return objToLegoize
 
     def unhide(self, context):
@@ -53,9 +63,14 @@ class legoizerLegoize(bpy.types.Operator):
         if event.type in {"RET", "NUMPAD_ENTER"} and event.shift:
             self.report({"INFO"}, "changes committed")
             self.unhide(context)
+            n = context.scene.cmlist[context.scene.cmlist_index].source_name
+            sourceGroup = bpy.data.groups["LEGOizer_%(n)s" % locals()]
+            sourceGroup.objects[0].draw_type = 'WIRE'
+            sourceGroup.objects[0].hide_render = True
+
             return{"FINISHED"}
 
-        if not context.scene.cmlist[context.scene.cmlist_index].changesToCommit:
+        if context.scene.cmlist_index == -1 or not context.scene.cmlist[context.scene.cmlist_index].changesToCommit:
             self.unhide(context)
             return{"FINISHED"}
         return {"PASS_THROUGH"}
@@ -70,12 +85,13 @@ class legoizerLegoize(bpy.types.Operator):
 
         # set up variables
         scn = context.scene
-        scn.lastResolution = scn.resolution
-        scn.lastLogoResolution = scn.logoResolution
-        scn.lastLogoDetail = scn.logoDetail
+        cm = scn.cmlist[scn.cmlist_index]
+        cm.lastBrickHeight = cm.brickHeight
+        cm.lastLogoResolution = cm.logoResolution
+        cm.lastLogoDetail = cm.logoDetail
 
         # make sure 'LEGOizer_[source name]_bricks' group doesn't exist
-        n = scn.cmlist[scn.cmlist_index].source_object
+        n = cm.source_name
         if groupExists("LEGOizer_%(n)s_bricks" % locals()):
             self.report({"WARNING"}, "LEGOized Model already created. To create a new LEGOized model, first press 'Commit LEGOized Mesh'.")
             return {"CANCELLED"}
@@ -95,14 +111,34 @@ class legoizerLegoize(bpy.types.Operator):
         bpy.ops.group.create(name="LEGOizer_%(n)s" % locals())
 
         # get cross section
-        crossSectionDict = slices(source, False, scn.resolution)
-        CS_slices = crossSectionDict["slices"] # list of bmesh slices
+        source_details = bounds(source)
+        dimensions = getBrickDimensions(cm.brickHeight, cm.gap)
+        numSlices_x = math.ceil(source_details.x.distance/(dimensions["width"] + dimensions["gap"]))
+        CS_slices_x = slices(source, numSlices_x, (dimensions["width"] + dimensions["gap"]), axis="y", drawSlices=False) # get list of horizontal bmesh slices
+        numSlices_y = math.ceil(source_details.y.distance/(dimensions["width"] + dimensions["gap"]))
+        CS_slices_y = slices(source, numSlices_y, (dimensions["width"] + dimensions["gap"]), axis="y", drawSlices=False) # get list of horizontal bmesh slices
+        numSlices_z = math.ceil(source_details.z.distance/(dimensions["height"] + dimensions["gap"]))
+        CS_slices_z = slices(source, numSlices_z, (dimensions["height"] + dimensions["gap"]), axis="z", drawSlices=False) # get list of horizontal bmesh slices
+        lengths = [len(CS_slices_x), len(CS_slices_y), len(CS_slices_z)]
+        m = lengths.index(min(lengths))
+        if m == 0:
+            axis = "x"
+            CS_slices = CS_slices_x
+            lScale = (0, source_details.y.distance, source_details.z.distance)
+        if m == 1:
+            axis = "y"
+            CS_slices = CS_slices_y
+            lScale = (source_details.x.distance, 0, source_details.z.distance)
+        if m == 2:
+            axis = "z"
+            CS_slices = CS_slices_z
+            lScale = (source_details.x.distance, source_details.y.distance, 0)
 
         if groupExists("LEGOizer_refLogo"):
             refLogo = bpy.data.groups["LEGOizer_refLogo"].objects[0]
         else:
             refLogo = None
-            if scn.logoDetail != "None":
+            if cm.logoDetail != "None":
                 # import refLogo and add to group
                 refLogo = importLogo()
                 select(refLogo)
@@ -110,7 +146,6 @@ class legoizerLegoize(bpy.types.Operator):
                 hide(refLogo)
 
         # make 1x1 refBrick
-        dimensions = getBrickDimensions(crossSectionDict["sliceHeight"])
         refBrick = make1x1(dimensions, refLogo, "%(n)s_brick1x1" % locals())
         # add refBrick to group
         bpy.context.scene.objects.link(refBrick)
@@ -123,7 +158,9 @@ class legoizerLegoize(bpy.types.Operator):
         hidden = hide(bpy.data.objects.values())
 
         # make bricks
-        makeBricks(CS_slices, refBrick, dimensions, source)
+        R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
+        slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
+        makeBricks(slicesDict, refBrick, source_details)
 
         # STOPWATCH CHECK
         stopWatch("Time Elapsed", time.time()-startTime)

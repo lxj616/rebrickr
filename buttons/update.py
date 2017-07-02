@@ -38,7 +38,7 @@ class legoizerUpdate(bpy.types.Operator):
         scn = context.scene
         if scn.cmlist_index == -1:
             return False
-        n = scn.cmlist[scn.cmlist_index].source_object
+        n = scn.cmlist[scn.cmlist_index].source_name
         if not groupExists("LEGOizer_%(n)s_bricks" % locals()):
             return False
         return True
@@ -51,7 +51,8 @@ class legoizerUpdate(bpy.types.Operator):
         scn = context.scene
 
         # make sure 'LEGOizer_[source name]_bricks' group exists
-        n = scn.cmlist[scn.cmlist_index].source_object
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
         LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
         if not groupExists(LEGOizer_bricks):
             self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
@@ -59,17 +60,36 @@ class legoizerUpdate(bpy.types.Operator):
 
         # get relevant bricks from groups
         refBrick = bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()].objects[0]
-        n = scn.cmlist[scn.cmlist_index].source_object
         source = bpy.data.groups["LEGOizer_%(n)s" % locals()].objects[0]
         bricks = list(bpy.data.groups[LEGOizer_bricks].objects)
 
         # get cross section
-        crossSectionDict = slices(source, False, scn.resolution)
-        CS_slices = crossSectionDict["slices"] # list of bmesh slices
+        source_details = bounds(source)
+        dimensions = getBrickDimensions(cm.brickHeight, cm.gap)
+        numSlices_x = math.ceil(source_details.x.distance/(dimensions["width"] + dimensions["gap"]))
+        CS_slices_x = slices(source, numSlices_x, (dimensions["width"] + dimensions["gap"]), axis="y", drawSlices=False) # get list of horizontal bmesh slices
+        numSlices_y = math.ceil(source_details.y.distance/(dimensions["width"] + dimensions["gap"]))
+        CS_slices_y = slices(source, numSlices_y, (dimensions["width"] + dimensions["gap"]), axis="y", drawSlices=False) # get list of horizontal bmesh slices
+        numSlices_z = math.ceil(source_details.z.distance/(dimensions["height"] + dimensions["gap"]))
+        CS_slices_z = slices(source, numSlices_z, (dimensions["height"] + dimensions["gap"]), axis="z", drawSlices=False) # get list of horizontal bmesh slices
+        lengths = [len(CS_slices_x), len(CS_slices_y), len(CS_slices_z)]
+        m = lengths.index(min(lengths))
+        if m == 0:
+            axis = "x"
+            CS_slices = CS_slices_x
+            lScale = (0, source_details.y.distance, source_details.z.distance)
+        if m == 1:
+            axis = "y"
+            CS_slices = CS_slices_y
+            lScale = (source_details.x.distance, 0, source_details.z.distance)
+        if m == 2:
+            axis = "z"
+            CS_slices = CS_slices_z
+            lScale = (source_details.x.distance, source_details.y.distance, 0)
 
         # update refLogo
         refLogo = None
-        if scn.logoDetail != "None" and (scn.lastLogoDetail != scn.logoDetail or scn.lastLogoResolution != scn.logoResolution):
+        if cm.logoDetail != "None" and (cm.lastLogoDetail != cm.logoDetail or cm.lastLogoResolution != cm.logoResolution):
             if groupExists("LEGOizer_refLogo"):
                 refLogoGroup = bpy.data.groups["LEGOizer_refLogo"]
                 delete(refLogoGroup.objects[0])
@@ -82,18 +102,19 @@ class legoizerUpdate(bpy.types.Operator):
 
         # update refBrick
         unhide(refBrick)
-        dimensions = getBrickDimensions(crossSectionDict["sliceHeight"])
         make1x1(dimensions, refLogo, name=refBrick.name)
         hide(refBrick)
 
         # if resolution has changed
-        if scn.resolution != scn.lastResolution:
+        if cm.brickHeight != cm.lastBrickHeight:
             delete(bricks)
-            makeBricks(CS_slices, refBrick, dimensions, source)
+            R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
+            slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
+            makeBricks(slicesDict, refBrick, source_details)
 
-        scn.lastResolution = scn.resolution
+        cm.lastBrickHeight = cm.brickHeight
 
-        scn.cmlist[scn.cmlist_index].changesToCommit = True
+        cm.changesToCommit = True
 
         # STOPWATCH CHECK
         stopWatch("Time Elapsed", time.time()-startTime)

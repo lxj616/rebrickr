@@ -54,11 +54,72 @@ def confirmList(objList):
         objList = [objList]
     return objList
 
-def getBrickDimensions(height):
+def getBrickSettings():
+    """ returns dictionary containing brick detail settings """
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    settings = {}
+    settings["underside"] = cm.undersideDetail
+    settings["logo"] = cm.logoDetail
+    settings["numStudVerts"] = cm.studVerts
+    return settings
+
+def make1x1(dimensions, refLogo, name='brick1x1'):
+    """ create unlinked 1x1 LEGO Brick at origin """
+    settings = getBrickSettings()
+
+    bm = bmesh.new()
+    cubeBM = makeCube(sX=dimensions["width"], sY=dimensions["width"], sZ=dimensions["height"])
+    cylinderBM = makeCylinder(r=dimensions["stud_radius"], N=settings["numStudVerts"], h=dimensions["stud_height"], co=(0,0,dimensions["stud_offset"]))
+    if refLogo:
+        logoBM = bmesh.new()
+        logoBM.from_mesh(refLogo.data)
+        lw = dimensions["logo_width"]
+        bmesh.ops.scale(logoBM, vec=Vector((lw, lw, lw)), verts=logoBM.verts)
+        bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(1.0, 0.0, 0.0), matrix=Matrix.Rotation(math.radians(90.0), 3, 'X'))
+        bmesh.ops.translate(logoBM, vec=Vector((0, 0, dimensions["logo_offset"])), verts=logoBM.verts)
+        # add logoBM mesh to bm mesh
+        logoMesh = bpy.data.meshes.new('LEGOizer_tempMesh')
+        logoObj = bpy.data.objects.new('LEGOizer_tempObj', logoMesh)
+        bpy.context.scene.objects.link(logoObj)
+        logoBM.to_mesh(logoMesh)
+        select(logoObj, active=logoObj)
+        if bpy.context.scene.logoResolution < 1:
+            bpy.ops.object.modifier_add(type='DECIMATE')
+            logoObj.modifiers['Decimate'].ratio = bpy.context.scene.logoResolution
+            bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
+        bm.from_mesh(logoMesh)
+        bpy.context.scene.objects.unlink(logoObj)
+        bpy.data.objects.remove(logoObj)
+        bpy.data.meshes.remove(logoMesh)
+
+    # add cubeBM and cylinderBM meshes to bm mesh
+    cube = bpy.data.meshes.new('legoizer_cube')
+    cylinder = bpy.data.meshes.new('legoizer_cylinder')
+    cubeBM.to_mesh(cube)
+    cylinderBM.to_mesh(cylinder)
+    bm.from_mesh(cube)
+    bm.from_mesh(cylinder)
+    bpy.data.meshes.remove(cube)
+    bpy.data.meshes.remove(cylinder)
+
+    # create apply mesh data to 'legoizer_brick1x1' data
+    if bpy.data.objects.find(name) == -1:
+        brick1x1Mesh = bpy.data.meshes.new(name + 'Mesh')
+        brick1x1 = bpy.data.objects.new(name, brick1x1Mesh)
+    else:
+        brick1x1 = bpy.data.objects[name]
+    bm.to_mesh(brick1x1.data)
+
+    # return 'legoizer_brick1x1' object
+    return brick1x1
+
+def getBrickDimensions(height, gap_percentage):
     scale = height/9.6
     brick_dimensions = {}
     brick_dimensions["height"] = scale*9.6
     brick_dimensions["width"] = scale*8
+    brick_dimensions["gap"] = scale*9.6*gap_percentage
     brick_dimensions["stud_height"] = scale*1.8
     brick_dimensions["stud_diameter"] = scale*4.8
     brick_dimensions["stud_radius"] = scale*2.4
@@ -127,48 +188,44 @@ def add_vertex_to_intersection(e1, e2):
         bm.verts.new(iv)
         bmesh.update_edit_mesh(me)
 
-def ccw(A,B,C):
+def ccwz(A,B,C):
     return (C.y-A.y)*(B.x-A.x) > (B.y-A.y)*(C.x-A.x)
+def ccwy(A,B,C):
+    return (C.z-A.z)*(B.x-A.x) > (B.z-A.z)*(C.x-A.x)
+def ccwx(A,B,C):
+    return (C.z-A.z)*(B.y-A.y) > (B.z-A.z)*(C.y-A.y)
 
-def intersect(A,B,C,D):
-    return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D)
+def intersect(A,B,C,D,axis):
+    if axis == "z":
+        return ccwz(A,C,D) != ccwz(B,C,D) and ccwz(A,B,C) != ccwz(A,B,D)
+    if axis == "y":
+        return ccwy(A,C,D) != ccwy(B,C,D) and ccwy(A,B,C) != ccwy(A,B,D)
+    if axis == "x":
+        return ccwx(A,C,D) != ccwx(B,C,D) and ccwx(A,B,C) != ccwx(A,B,D)
 
-def getIntersectedEdgeVerts(bm_tester, bm_subject):
-    intersectedEdgeVertInts = []
+def getIntersectedEdgeVerts(bm_tester, bm_subject, axis="z"):
+    intersectedEdgeVerts = []
     for e1 in bm_tester.edges:
         for e2 in bm_subject.edges:
             v1 = e1.verts[0].co
             v2 = e1.verts[1].co
             v3 = e2.verts[0].co
             v4 = e2.verts[1].co
-            if intersect(v1, v2, v3, v4):
+            if intersect(v1, v2, v3, v4, axis):
                 for v in e2.verts:
-                    co = []
-                    # convert co float values to ints
-                    for i in v.co.to_tuple():
-                        co.append(int(i*100000))
-                    intersectedEdgeVertInts.append(tuple(co))
-    # remove duplicates in intersectedEdgeVerts
-    uniquify(intersectedEdgeVertInts)
-    # convert co int values back to floats
-    uniquifiedEdgeVertFloats = []
-    for co in intersectedEdgeVertInts:
-        co = list(co)
-        for i in range(len(co)):
-            co[i] = co[i]/100000
-        uniquifiedEdgeVertFloats.append(tuple(co))
-    return uniquifiedEdgeVertFloats
+                    intersectedEdgeVerts.append(v.co.to_tuple())
+    return intersectedEdgeVerts
 
-def addItemToCMList(name):
+def addItemToCMList(name="New Model"):
     scn = bpy.context.scene
-    for item in scn.cmlist:
-        if scn.cmlist[scn.cmlist_index].source_object == item.name:
-            return False
     item = scn.cmlist.add()
     item.id = len(scn.cmlist)
-    item.name = name # assign name of selected object
-    item.source_object = name
     scn.cmlist_index = (len(scn.cmlist)-1)
+    if bpy.context.active_object == None:
+        item.source_name = ""
+    else:
+        item.source_name = bpy.context.active_object.name # assign name of selected object
+    item.name = name
     return True
 
 def importLogo():
@@ -183,7 +240,7 @@ def importLogo():
 def merge(bricks):
     return
 
-def makeBricks(slices, refBrick, dimensions, source):
+def makeBricks(slicesList, refBrick, source_details):
     """ Make bricks """
     scn = bpy.context.scene
     # initialize temporary object
@@ -208,28 +265,38 @@ def makeBricks(slices, refBrick, dimensions, source):
     #         pass
     #
     # bpy.data.objects.remove(tempObj)
-
-    # get source details
-    source_details = bounds(source)
-    res = max([source_details.x.distance, source_details.y.distance])
-    lScale = res // dimensions["width"]
-    # for each slice
     coList = []
-    for bm in slices:
-        # drawBMesh(bm) # draw the slice (for testing purposes)
-        bm.verts.ensure_lookup_table()
-        z = bm.verts[0].co.z
-        # create lattice bmesh
-        # TODO: lattice BM can be created outside of for loop and transformed each time, if that's more efficient
-        latticeBM = make2DLattice(int(lScale), res - (lScale % 1), (source_details.x.mid, source_details.y.mid, z))
-        # drawBMesh(latticeBM) # draw the slice (for testing purposes)
-        coListNew = getIntersectedEdgeVerts(bm, latticeBM)
-        print("len(coListNew): " + str(len(coListNew)))
-        coList += coListNew
+    for sl in slicesList:
+        slices = sl["slices"]
+        lScale = sl["lScale"]
+        R = sl["R"]
+        axis = sl["axis"]
+
+        # for each slice
+        for bm in slices:
+            # drawBMesh(bm) # draw the slice (for testing purposes)
+            # create lattice bmesh
+            # TODO: lattice BM can be created outside of for loop and transformed each time, if that's more efficient
+            bm.verts.ensure_lookup_table()
+            if axis == "z":
+                offset = (source_details.x.mid, source_details.y.mid, bm.verts[0].co.z)
+            elif axis == "y":
+                offset = (source_details.x.mid, bm.verts[0].co.y, source_details.z.mid)
+            else:
+                offset = ( bm.verts[0].co.x, source_details.y.mid, source_details.z.mid)
+            latticeBM = makeLattice(R, lScale, offset)
+            # drawBMesh(latticeBM) # draw the lattice (for testing purposes)
+            coListNew = getIntersectedEdgeVerts(bm, latticeBM, axis)
+            print("len(coListNew): " + str(len(coListNew)))
+            coList += coListNew
+
+    # uniquify coList
+    coList = uniquify(coList, lambda x: (round(x[0], 2), round(x[1], 2), round(x[2], 2)))
 
     # make bricks at determined locations
     bricks = []
-    # coList = [(0.1,0.1,0.1),(-0.1,-0.1,-0.1)]
+    if len(coList) == 0:
+        coList.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
     for i,co in enumerate(coList):
         brickMesh = bpy.data.meshes.new('LEGOizer_brickMesh_' + str(i+1))
         brick = bpy.data.objects.new('LEGOizer_brick_' + str(i+1), brickMesh)
@@ -240,7 +307,7 @@ def makeBricks(slices, refBrick, dimensions, source):
     bpy.context.scene.update()
     # add bricks to LEGOizer_bricks group
     select(bricks, active=bricks[0])
-    n = scn.cmlist[scn.cmlist_index].source_object
+    n = scn.cmlist[scn.cmlist_index].source_name
     LEGOizer_bricks = 'LEGOizer_%(n)s_bricks' % locals()
     if not groupExists(LEGOizer_bricks):
         bpy.ops.group.create(name=LEGOizer_bricks)

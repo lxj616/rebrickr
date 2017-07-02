@@ -64,32 +64,34 @@ class Uilist_actions(bpy.types.Operator):
 
         else:
             if self.action == 'DOWN' and idx < len(scn.cmlist) - 1:
-                item_next = scn.cmlist[idx+1].name
+                item_next = scn.cmlist[idx+1].source_name
                 scn.cmlist_index += 1
                 info = 'Item %d selected' % (scn.cmlist_index + 1)
                 self.report({'INFO'}, info)
 
             elif self.action == 'UP' and idx >= 1:
-                item_prev = scn.cmlist[idx-1].name
+                item_prev = scn.cmlist[idx-1].source_name
                 scn.cmlist_index -= 1
                 info = 'Item %d selected' % (scn.cmlist_index + 1)
                 self.report({'INFO'}, info)
 
             elif self.action == 'REMOVE':
-                info = 'Item %s removed from list' % (scn.cmlist[scn.cmlist_index].name)
-                scn.cmlist_index -= 1
-                self.report({'INFO'}, info)
-                scn.cmlist.remove(idx)
+                cm = scn.cmlist[scn.cmlist_index]
+                sn = cm.source_name
+                n = cm.name
+                if not groupExists("LEGOizer_%(sn)s_bricks" % locals()):
+                    info = 'Item %(n)s removed from list' % locals()
+                    scn.cmlist_index -= 1
+                    self.report({'INFO'}, info)
+                    scn.cmlist.remove(idx)
+                else:
+                    self.report({"WARNING"}, 'Please delete the LEGOized model before attempting to remove this item.' % locals())
 
         if self.action == 'ADD':
             name = get_activeSceneObject()
-            success = addItemToCMList(name)
-            if success:
-                info = '%s added to list' % (name)
-                self.report({'INFO'}, info)
-            else:
-                info = '%s already in the list' % (name)
-                self.report({'INFO'}, info)
+            addItemToCMList(name)
+            info = '%s added to list' % (name)
+            self.report({'INFO'}, info)
 
         return {"FINISHED"}
 
@@ -105,7 +107,7 @@ class UL_items(UIList):
         if self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
         split = layout.split(0.9)
-        split.prop(item, "name", text="", emboss=False, translate=False, icon='OBJECT_DATAMODE')
+        split.prop(item, "name", text="", emboss=False, translate=False, icon='MOD_BUILD')
 
     def invoke(self, context, event):
         pass
@@ -119,8 +121,8 @@ class Uilist_printAllItems(bpy.types.Operator):
 
     def execute(self, context):
         scn = context.scene
-        for i in scn.custom:
-            print (i.name, i.id)
+        for i in scn.cmlist:
+            print (i.source_name, i.id)
         return{'FINISHED'}
 
 # select button
@@ -132,7 +134,7 @@ class Uilist_selectAllItems(bpy.types.Operator):
     def execute(self, context):
         scn = context.scene
         bpy.ops.object.select_all(action='DESELECT')
-        obj = bpy.data.objects[scn.custom[scn.cmlist_index].name]
+        obj = bpy.data.objects[scn.cmlist[scn.cmlist_index].source_name]
         obj.select = True
 
         return{'FINISHED'}
@@ -159,17 +161,103 @@ class Uilist_clearAllItems(bpy.types.Operator):
 
         return{'FINISHED'}
 
+# def setName(self, context):
+#     scn = bpy.context.scene
+#     cm = scn.cmlist[scn.cmlist_index]
+#     cm.name = cm.source_name
+#     return None
+
+def uniquifyName(self, context):
+    """ if LEGO model exists with name, add '.###' to the end """
+    scn = context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    name = cm.name
+    while scn.cmlist.keys().count(name) > 1:
+        if name[-4] == ".":
+            try:
+                num = int(name[-3:])+1
+            except:
+                num = 1
+            name = name[:-3] + "%03d" % (num)
+        else:
+            name = name + ".001"
+    cm.name = name
+
+
 # Create custom property group
 class CustomProp(bpy.types.PropertyGroup):
-    '''name = StringProperty() '''
+    name = StringProperty(update=uniquifyName)
     id = IntProperty()
-    source_object = StringProperty(
-        name="Source Object",
-        description="Source object to legoize (defaults to active object)",
+
+    source_name = StringProperty(
+        name="Source Object Name",
+        description="Name of the source object to legoize (defaults to active object)",
         default="")
+        # update=setName)
 
     changesToCommit = BoolProperty(
         default=False)
+
+    preHollow = BoolProperty(
+        name="Pre Hollow",
+        description="Hollow out LEGO model with user defined shell thickness",
+        default=True)
+
+    logoDetail = EnumProperty(
+        name="Logo Detailing",
+        description="Choose whether to construct or deconstruct the LEGO bricks",
+        items=[("On All Bricks", "On All Bricks", "Include LEGO Logo on all bricks"),
+            #   ("On Exposed Bricks", "On Exposed Bricks", "Include LEGO Logo only on bricks with studs exposed"),
+              ("None", "None", "Don't include LEGO Logo on bricks")],
+        default="None")
+
+    lastLogoDetail = StringProperty(
+        default="None")
+
+    logoResolution = FloatProperty(
+        name="Logo Resolution",
+        description="Resolution of the LEGO Logo",
+        min=0.1, max=1,
+        step=1,
+        precision=2,
+        default=0.5)
+
+    lastLogoResolution = FloatProperty(
+        default=0.5)
+
+    undersideDetail = EnumProperty(
+        name="Underside Detailing",
+        description="Choose whether to construct or deconstruct the LEGO bricks",
+        items=[("High Detail", "High Detail", "Draw intricate details on brick underside"),
+              ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
+              ("Flat", "Flat", "draw single face on brick underside")],
+        default="Flat")
+
+    studVerts = IntProperty(
+        name="Stud Verts",
+        description="Number of vertices on LEGO stud",
+        min=3, max=64,
+        default=16)
+
+    shellThickness = IntProperty(
+        name="Shell Thickness",
+        description="Thickness of the LEGO shell",
+        min=1, max=10,
+        default=1)
+
+    brickHeight = FloatProperty(
+        name="Brick Height",
+        description="Height of the bricks in the final LEGO model",
+        min=.001, max=10,
+        default=.1)
+    gap = FloatProperty(
+        name="Gap Between Bricks",
+        description="Height of the bricks in the final LEGO model",
+        min=.001, max=1,
+        default=.01)
+
+    lastBrickHeight = IntProperty(
+        default=0)
 
 # -------------------------------------------------------------------
 # register
