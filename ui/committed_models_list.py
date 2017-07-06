@@ -259,6 +259,18 @@ class CustomProp(bpy.types.PropertyGroup):
     lastBrickHeight = IntProperty(
         default=0)
 
+    # ADVANCED SETTINGS
+    calculationAxis = EnumProperty(
+        name="Calculation Axis",
+        description="PLACEHOLDER", # TODO: Fill in placeholders on this line and the next four
+        items=[("Auto", "Auto", "PLACEHOLDER"),
+              ("X Axis", "X Axis", "PLACEHOLDER"),
+              ("Y Axis", "Y Axis", "PLACEHOLDER"),
+              ("Z Axis", "Z Axis", "PLACEHOLDER")],
+        default="Auto")
+
+    logoMesh = None
+
 # -------------------------------------------------------------------
 # register
 # -------------------------------------------------------------------

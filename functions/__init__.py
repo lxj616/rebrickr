@@ -27,6 +27,7 @@ from .crossSection import slices, drawBMesh
 from .mesh_generate import *
 from .common_functions import *
 from mathutils import Vector, geometry
+from mathutils.bvhtree import BVHTree
 props = bpy.props
 
 def writeBinvox(obj):
@@ -64,20 +65,16 @@ def getBrickSettings():
     settings["numStudVerts"] = cm.studVerts
     return settings
 
-def make1x1(dimensions, refLogo, name='brick1x1'):
+def make1x1(dimensions, refLogo, scale="1x2", name='brick1x1'):
     """ create unlinked 1x1 LEGO Brick at origin """
     settings = getBrickSettings()
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
 
     bm = bmesh.new()
-    if cm.undersideDetail == "Low Detail":
-        cubeBM = makeLowDetailBlock(sX=dimensions["width"], sY=dimensions["width"], sZ=dimensions["height"], thick=dimensions["thickness"])
-    elif cm.undersideDetail == "High Detail":
-        cubeBM = makeHighDetailBlock(sX=dimensions["width"], sY=dimensions["width"], sZ=dimensions["height"], thick=dimensions["thickness"])
-    else:
-        cubeBM = makeCube(sX=dimensions["width"], sY=dimensions["width"], sZ=dimensions["height"])
-    cylinderBM = makeCylinder(r=dimensions["stud_radius"], N=settings["numStudVerts"], h=dimensions["stud_height"], co=(0,0,dimensions["stud_offset"]))
+    brickBM = makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=settings["numStudVerts"], detail=cm.undersideDetail)
+    studInset = dimensions["thickness"] * 0.9
+    cylinderBM = makeCylinder(r=dimensions["stud_radius"], N=settings["numStudVerts"], h=dimensions["stud_height"]+studInset, co=(0,0,dimensions["stud_offset"]-(studInset/2)), botFace=False)
     if refLogo:
         logoBM = bmesh.new()
         logoBM.from_mesh(refLogo.data)
@@ -88,22 +85,21 @@ def make1x1(dimensions, refLogo, name='brick1x1'):
         # add logoBM mesh to bm mesh
         logoMesh = bpy.data.meshes.new('LEGOizer_tempMesh')
         logoObj = bpy.data.objects.new('LEGOizer_tempObj', logoMesh)
-        scn.objects.link(logoObj)
         logoBM.to_mesh(logoMesh)
-        select(logoObj, active=logoObj)
         if cm.logoResolution < 1:
+            scn.objects.link(logoObj)
+            select(logoObj, active=logoObj)
             bpy.ops.object.modifier_add(type='DECIMATE')
             logoObj.modifiers['Decimate'].ratio = cm.logoResolution
             bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
         bm.from_mesh(logoMesh)
-        scn.objects.unlink(logoObj)
-        bpy.data.objects.remove(logoObj)
-        bpy.data.meshes.remove(logoMesh)
+        bpy.data.objects.remove(logoObj, do_unlink=True)
+        bpy.data.meshes.remove(logoMesh, do_unlink=True)
 
-    # add cubeBM and cylinderBM meshes to bm mesh
+    # add brick mesh to bm mesh
     cube = bpy.data.meshes.new('legoizer_cube')
     cylinder = bpy.data.meshes.new('legoizer_cylinder')
-    cubeBM.to_mesh(cube)
+    brickBM.to_mesh(cube)
     cylinderBM.to_mesh(cylinder)
     bm.from_mesh(cube)
     bm.from_mesh(cylinder)
@@ -132,6 +128,7 @@ def getBrickDimensions(height, gap_percentage):
     brick_dimensions["stud_radius"] = scale*2.4
     brick_dimensions["stud_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"] / 2)
     brick_dimensions["thickness"] = scale*1.6
+    brick_dimensions["tube_thickness"] = scale * 0.855
     brick_dimensions["logo_width"] = scale*3.74
     brick_dimensions["logo_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"])
     return brick_dimensions
@@ -224,6 +221,143 @@ def getIntersectedEdgeVerts(bm_tester, bm_subject, axis="z"):
                     intersectedEdgeVerts.append(v.co.to_tuple())
     return intersectedEdgeVerts
 
+def are_inside(verts, bm):
+    """
+    input:
+        points
+        - a list of vectors (can also be tuples/lists)
+        bm
+        - a manifold bmesh with verts and (edge/faces) for which the
+          normals are calculated already. (add bm.normal_update() otherwise)
+    returns:
+        a list
+        - a mask lists with True if the point is inside the bmesh, False otherwise
+    """
+
+    rpoints = []
+    addp = rpoints.append
+    bvh = BVHTree.FromBMesh(bm, epsilon=0.0001)
+
+    # return points on polygons
+    for vert in verts:
+        point = vert.co
+        fco, normal, _, _ = bvh.find_nearest(point)
+        if fco == None:
+            print(":(")
+            addp(False)
+            continue
+        else:
+            print("YAYYYYYYY")
+        p2 = fco - Vector(point)
+        v = p2.dot(normal)
+        addp(not v < 0.0)  # addp(v >= 0.0) ?
+
+    return rpoints
+def get_points_inside(verts, bm):
+    """
+    input:
+        points
+        - a list of vectors (can also be tuples/lists)
+        bm
+        - a manifold bmesh with verts and (edge/faces) for which the
+          normals are calculated already. (add bm.normal_update() otherwise)
+    returns:
+        a list
+        - a mask lists with True if the point is inside the bmesh, False otherwise
+    """
+
+    rpoints = []
+    addp = rpoints.append
+    bvh = BVHTree.FromBMesh(bm, epsilon=0.0001)
+
+    # return points on polygons
+    for vert in verts:
+        point = vert.co
+        fco, normal, _, _ = bvh.find_nearest(point)
+        p2 = fco - Vector(point)
+        v = p2.dot(normal)
+        if not v < 0.0:
+            addp(vert)
+
+    return rpoints
+
+def is_inside1(p, obj, max_dist=1.84467e+19):
+    mat = obj.matrix_local.inverted()
+    try:
+        point, normal, face = obj.closest_point_on_mesh(p, max_dist)
+    except:
+        junkBool, point, normal, face = obj.closest_point_on_mesh(p, max_dist)
+    p2 = point-p
+    v = p2.dot(normal)
+    return not(v < 0.0)
+
+def is_inside(ray_origin, ray_destination, obj):
+
+    # the matrix multiplations and inversions are only needed if you
+    # have unapplied transforms, else they could be dropped. but it's handy
+    # to have the algorithm take them into account, for generality.
+    mat = obj.matrix_local.inverted()
+    f = obj.ray_cast(mat * ray_origin, mat * ray_destination)
+    try:
+        junk, loc, normal, face_idx = f
+    except:
+        loc, normal, face_idx = f
+
+    if face_idx == -1:
+        return False
+
+    max_expected_intersections = 1000
+    fudge_distance = 0.0001
+    direction = (ray_destination - loc)
+    dir_len = direction.length
+    amount = fudge_distance / dir_len
+
+    i = 1
+    while (face_idx != -1):
+
+        loc = loc.lerp(direction, amount)
+        f = obj.ray_cast(mat * loc, mat * ray_destination)
+        try:
+            junk, loc, normal, face_idx = f
+        except:
+            loc, normal, face_idx = f
+        if face_idx == -1:
+            break
+        i += 1
+        if i > max_expected_intersections:
+            break
+
+    if i > 2:
+        print(i)
+    return (i % 2) != 0
+
+def getInsideVerts(bm_slice, bm_lattice, ignoredVerts, boundingObj=False):
+    insideVerts = []
+    if len(bm_slice.verts) > 2:
+        # points_inside = are_inside(bm_lattice.verts, bm_slice)
+        # bm_lattice.verts.ensure_lookup_table()
+        # for i in range(len(bm_lattice.verts)):
+        #     if points_inside[i] and bm_lattice.verts[i] not in ignoredVerts:
+        #         insideVerts.append(v.co.to_tuple())
+
+        # print("numVertsBefore: " + str(len(bm_lattice.verts)))
+        # bm_source.faces.new(bm_slice.verts)
+        # points_inside = get_points_inside(bm_lattice.verts, bm_slice)
+        # for v in points_inside:
+        #     if v not in ignoredVerts:
+        #         insideVerts.append(v.co.to_tuple())
+
+        for v in bm_lattice.verts:
+            if v not in ignoredVerts:
+                if is_inside(v.co, Vector((0,0,-2)), boundingObj):
+                    # print("yes!")
+                    insideVerts.append(v.co.to_tuple())
+                else:
+                    # print("no :(")
+                    pass
+    return insideVerts
+
+
 def addItemToCMList(name="New Model"):
     scn = bpy.context.scene
     item = scn.cmlist.add()
@@ -245,10 +379,43 @@ def importLogo():
     logoObj = bpy.context.selected_objects[0]
     return logoObj
 
+def getCrossSection(source, source_details, dimensions):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    if cm.calculationAxis == "Auto":
+        sizes = [source_details.x.distance, source_details.y.distance, source_details.z.distance]
+        m = sizes.index(min(sizes))
+    elif cm.calculationAxis == "X Axis":
+        m = 0
+    elif cm.calculationAxis == "Y Axis":
+        m = 1
+    elif cm.calculationAxis == "Z Axis":
+        m = 2
+    else:
+        print("ERROR: Could not get axis for calculation")
+        m = 0
+    if m == 0:
+        axis = "x"
+        lScale = (0, source_details.y.distance, source_details.z.distance)
+        numSlices = math.ceil(source_details.x.distance/(dimensions["width"] + dimensions["gap"]))
+        CS_slices = slices(source, numSlices, (dimensions["width"] + dimensions["gap"]), axis=axis, drawSlices=False) # get list of horizontal bmesh slices
+    if m == 1:
+        axis = "y"
+        lScale = (source_details.x.distance, 0, source_details.z.distance)
+        numSlices = math.ceil(source_details.y.distance/(dimensions["width"] + dimensions["gap"]))
+        CS_slices = slices(source, numSlices, (dimensions["width"] + dimensions["gap"]), axis=axis, drawSlices=False) # get list of horizontal bmesh slices
+    if m == 2:
+        axis = "z"
+        lScale = (source_details.x.distance, source_details.y.distance, 0)
+        numSlices = math.ceil(source_details.z.distance/(dimensions["height"] + dimensions["gap"]))
+        CS_slices = slices(source, numSlices, (dimensions["height"] + dimensions["gap"]), axis=axis, drawSlices=False) # get list of horizontal bmesh slices
+
+    return axis, lScale, CS_slices
+
 def merge(bricks):
     return
 
-def makeBricks(slicesList, refBrick, source_details):
+def makeBricks(slicesList, refBrick, source, source_details, preHollow=False):
     """ Make bricks """
     scn = bpy.context.scene
     # initialize temporary object
@@ -274,6 +441,7 @@ def makeBricks(slicesList, refBrick, source_details):
     #
     # bpy.data.objects.remove(tempObj)
     coList = []
+    moreCOs = []
     for sl in slicesList:
         slices = sl["slices"]
         lScale = sl["lScale"]
@@ -295,8 +463,35 @@ def makeBricks(slicesList, refBrick, source_details):
             latticeBM = makeLattice(R, lScale, offset)
             # drawBMesh(latticeBM) # draw the lattice (for testing purposes)
             coListNew = getIntersectedEdgeVerts(bm, latticeBM, axis)
+            insideVerts = getInsideVerts(bm, latticeBM, coListNew, source)
+            try:
+                if lastcoList and lastInsideVerts:
+                    pass
+            except:
+                lastcoList = coListNew
+                lastInsideVerts = insideVerts
+            if preHollow and len(lastcoList) != 0:
+                print(len(insideVerts))
+                # bmJunk = bmesh.new()
+                # for co in insideVerts:
+                #     v2 = bmJunk.verts.new((co))
+                #     if axis == "z":
+                #         v2.co.z = lastcoList[0][2]
+                #     if axis == "y":
+                #         v2.co.y = lastcoList[0][1]
+                #     else:
+                #         v2.co.x = lastcoList[0][0]
+                #
+                #     if v2.co.to_tuple() not in lastcoList and v2.co.to_tuple() not in lastInsideVerts:
+                #         print("yes!")
+                #         coListNew.append(co)
+            else:
+                coList += insideVerts
             print("len(coListNew): " + str(len(coListNew)))
             coList += coListNew
+            lastcoList = coListNew
+            lastInsideVerts = insideVerts
+        coList += insideVerts
 
     # uniquify coList
     coList = uniquify(coList, lambda x: (round(x[0], 2), round(x[1], 2), round(x[2], 2)))

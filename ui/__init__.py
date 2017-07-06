@@ -56,8 +56,9 @@ class LegoModelsPanel(Panel):
         col.operator("cmlist.list_action", icon='ZOOMIN', text="").action = 'ADD'
         col.operator("cmlist.list_action", icon='ZOOMOUT', text="").action = 'REMOVE'
         col.separator()
-        col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
-        col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
+        # col.operator("cmlist.list_action", icon='')
+        # col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
+        # col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
 
         # row = layout.row()
         # col = row.column(align=True)
@@ -141,9 +142,9 @@ class SettingsPanel(Panel):
         LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
         groupExistsBool = groupExists(LEGOizer_bricks)
         if not groupExistsBool:
-            row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD")
+            row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD").action = "CREATE"
         else:
-            row.operator("scene.legoizer_update", text="Update Model", icon="FILE_REFRESH")
+            row.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH").action = "UPDATE"
         row = col.row(align=True)
         row.operator("scene.legoizer_merge", text="Merge Bricks", icon="MOD_REMESH")
         row = col.row(align=True)
@@ -170,6 +171,8 @@ class AdvancedPanel(Panel):
     def draw(self, context):
         layout = self.layout
         scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
 
         col = layout.column(align=True)
         row = col.row(align=True)
+        row.prop(cm, "calculationAxis", text="")

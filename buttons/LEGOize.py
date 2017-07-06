@@ -37,17 +37,31 @@ class legoizerLegoize(bpy.types.Operator):
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
         cm = scn.cmlist[scn.cmlist_index]
         if bpy.data.objects[cm.source_name].type == 'MESH':
             return True
         return False
 
+    action = bpy.props.EnumProperty(
+        items=(
+            ("CREATE", "Create", ""),
+            ("UPDATE", "Update", ""),
+        )
+    )
+
     def getObjectToLegoize(self):
         scn = bpy.context.scene
-        if bpy.data.objects.find(scn.cmlist[scn.cmlist_index].source_name) == -1:
-            objToLegoize = bpy.context.active_object
+        if self.action == "CREATE":
+            if bpy.data.objects.find(scn.cmlist[scn.cmlist_index].source_name) == -1:
+                objToLegoize = bpy.context.active_object
+            else:
+                objToLegoize = bpy.data.objects[scn.cmlist[scn.cmlist_index].source_name]
         else:
-            objToLegoize = bpy.data.objects[scn.cmlist[scn.cmlist_index].source_name]
+            cm = scn.cmlist[scn.cmlist_index]
+            n = cm.source_name
+            objToLegoize = bpy.data.groups["LEGOizer_%(n)s" % locals()].objects[0]
         return objToLegoize
 
     def unhide(self, context):
@@ -75,94 +89,114 @@ class legoizerLegoize(bpy.types.Operator):
             return{"FINISHED"}
         return {"PASS_THROUGH"}
 
+    def isValid(self, LEGOizer_bricks, source):
+        if self.action == "CREATE":
+            # verify function can run
+            if groupExists("LEGOizer_hidden"):
+                self.report({"INFO"}, "Commit changes to last LEGOized model by pressing SHIFT-ENTER.")
+            if groupExists(LEGOizer_bricks):
+                self.report({"WARNING"}, "LEGOized Model already created. To create a new LEGOized model, first press 'Commit LEGOized Mesh'.")
+                return False
+            # verify source exists and is of type mesh
+            if source == None:
+                self.report({"WARNING"}, "Please select a mesh to LEGOize")
+                return False
+            if source.type != "MESH":
+                self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
+                return False
+
+        if self.action == "UPDATE":
+            # make sure 'LEGOizer_[source name]_bricks' group exists
+            if not groupExists(LEGOizer_bricks):
+                self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
+                return False
+
+        return True
+
     def execute(self, context):
         # get start time
         startTime = time.time()
 
-        # check if another model has to be committed
-        if groupExists("LEGOizer_hidden"):
-            self.report({"INFO"}, "Commit changes to last LEGOized model by pressing SHIFT-ENTER.")
-
         # set up variables
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        cm.lastBrickHeight = cm.brickHeight
-        cm.lastLogoResolution = cm.logoResolution
-        cm.lastLogoDetail = cm.logoDetail
-
-        # make sure 'LEGOizer_[source name]_bricks' group doesn't exist
-        n = cm.source_name
-        if groupExists("LEGOizer_%(n)s_bricks" % locals()):
-            self.report({"WARNING"}, "LEGOized Model already created. To create a new LEGOized model, first press 'Commit LEGOized Mesh'.")
-            return {"CANCELLED"}
-
-        # get object to LEGOize
         source = self.getObjectToLegoize()
-        if source == None:
-            self.report({"WARNING"}, "Please select a mesh to LEGOize")
-            return{"CANCELLED"}
-        if source.type != "MESH":
-            self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
-            return{"CANCELLED"}
+        n = cm.source_name
+        LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
 
-        # create 'LEGOizer_[source.name]' group with source object
-        select(source)
-        n = source.name
-        bpy.ops.group.create(name="LEGOizer_%(n)s" % locals())
+        if not self.isValid(LEGOizer_bricks, source):
+             return {"CANCELLED"}
+
+        if not groupExists("LEGOizer_%(n)s"):
+            # create 'LEGOizer_[cm.source_name]' group with source object
+            select(source)
+            bpy.ops.group.create(name="LEGOizer_%(n)s" % locals())
 
         # get cross section
         source_details = bounds(source)
         dimensions = getBrickDimensions(cm.brickHeight, cm.gap)
-        sizes = [source_details.x.distance, source_details.y.distance, source_details.z.distance]
-        m = sizes.index(min(sizes))
-        if m == 0:
-            axis = "x"
-            lScale = (0, source_details.y.distance, source_details.z.distance)
-            numSlices = math.ceil(source_details.x.distance/(dimensions["width"] + dimensions["gap"]))
-            CS_slices = slices(source, numSlices, (dimensions["width"] + dimensions["gap"]), axis=axis, drawSlices=False) # get list of horizontal bmesh slices
-        if m == 1:
-            axis = "y"
-            lScale = (source_details.x.distance, 0, source_details.z.distance)
-            numSlices = math.ceil(source_details.y.distance/(dimensions["width"] + dimensions["gap"]))
-            CS_slices = slices(source, numSlices, (dimensions["width"] + dimensions["gap"]), axis=axis, drawSlices=False) # get list of horizontal bmesh slices
-        if m == 2:
-            axis = "z"
-            lScale = (source_details.x.distance, source_details.y.distance, 0)
-            numSlices = math.ceil(source_details.z.distance/(dimensions["height"] + dimensions["gap"]))
-            CS_slices = slices(source, numSlices, (dimensions["height"] + dimensions["gap"]), axis=axis, drawSlices=False) # get list of horizontal bmesh slices
+        axis, lScale, CS_slices = getCrossSection(source, source_details, dimensions)
 
-        if groupExists("LEGOizer_refLogo"):
+        # update refLogo
+        if cm.logoDetail == "None":
+            refLogo = None
+        elif groupExists("LEGOizer_refLogo"):
             refLogo = bpy.data.groups["LEGOizer_refLogo"].objects[0]
         else:
-            refLogo = None
-            if cm.logoDetail != "None":
-                # import refLogo and add to group
-                refLogo = importLogo()
-                select(refLogo)
-                bpy.ops.group.create(name="LEGOizer_refLogo")
-                hide(refLogo)
+            # import refLogo and add to group
+            refLogo = importLogo()
+            select(refLogo)
+            bpy.ops.group.create(name="LEGOizer_refLogo")
+            # make it so that the object is unnoticable
+            refLogo.scale = (0,0,0)
+            refLogo.hide = True
+            refLogo.hide_select = True
+            refLogo.hide_render = True
 
-        # make 1x1 refBrick
-        refBrick = make1x1(dimensions, refLogo, "%(n)s_brick1x1" % locals())
-        # add refBrick to group
-        bpy.context.scene.objects.link(refBrick)
-        select(refBrick)
-        bpy.ops.group.create(name="LEGOizer_%(n)s_refBrick" % locals())
+        if groupExists("LEGOizer_%(n)s_refBrick" % locals()) and len(bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()].objects) > 0:
+                # get 1x1 refBrick from group
+                refBrick = bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()].objects[0]
+                # update that refBrick
+                unhide(refBrick)
+                make1x1(dimensions, refLogo, name=refBrick.name)
+                hide(refBrick)
+        else:
+            # make 1x1 refBrick
+            refBrick = make1x1(dimensions, refLogo, "%(n)s_brick1x1" % locals())
+            # add that refBrick to new group
+            bpy.context.scene.objects.link(refBrick)
+            if groupExists("LEGOizer_%(n)s_refBrick" % locals()):
+                bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()].objects.link(refBrick)
+            else:
+                select(refBrick)
+                bpy.ops.group.create(name="LEGOizer_%(n)s_refBrick" % locals())
 
-        # hide all
-        selectAll()
-        bpy.ops.group.create(name="LEGOizer_hidden")
-        hidden = hide(bpy.data.objects.values())
+        if self.action == "CREATE":
+            # hide all
+            selectAll()
+            bpy.ops.group.create(name="LEGOizer_hidden")
+            hide(bpy.data.objects.values())
 
-        # make bricks
-        R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
-        slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
-        makeBricks(slicesDict, refBrick, source_details)
+        # if resolution has changed
+        if cm.brickHeight != cm.lastBrickHeight:
+            if self.action == "UPDATE":
+                bricks = list(bpy.data.groups[LEGOizer_bricks].objects)
+                delete(bricks)
+            R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
+            slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
+            makeBricks(slicesDict, refBrick, source, source_details, cm.preHollow)
+
+        # set final variables
+        cm.lastBrickHeight = cm.brickHeight
+        cm.lastLogoResolution = cm.logoResolution
+        cm.lastLogoDetail = cm.logoDetail
+        cm.changesToCommit = True
 
         # STOPWATCH CHECK
         stopWatch("Time Elapsed", time.time()-startTime)
 
-        scn.cmlist[scn.cmlist_index].changesToCommit = True
-
-        context.window_manager.modal_handler_add(self)
-        return{"RUNNING_MODAL"}
+        if self.action == "CREATE":
+            context.window_manager.modal_handler_add(self)
+            return{"RUNNING_MODAL"}
+        else:
+            return{"FINISHED"}
