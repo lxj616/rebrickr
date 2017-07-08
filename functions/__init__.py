@@ -87,10 +87,10 @@ def make1x1(dimensions, refLogo, scale="1x2", name='brick1x1'):
         logoObj = bpy.data.objects.new('LEGOizer_tempObj', logoMesh)
         logoBM.to_mesh(logoMesh)
         if cm.logoResolution < 1:
+            dMod = logoObj.modifiers.new('Decimate', type='DECIMATE')
+            dMod.ratio = cm.logoResolution
             scn.objects.link(logoObj)
             select(logoObj, active=logoObj)
-            bpy.ops.object.modifier_add(type='DECIMATE')
-            logoObj.modifiers['Decimate'].ratio = cm.logoResolution
             bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
         bm.from_mesh(logoMesh)
         bpy.data.objects.remove(logoObj, do_unlink=True)
@@ -327,8 +327,6 @@ def is_inside(ray_origin, ray_destination, obj):
         if i > max_expected_intersections:
             break
 
-    if i > 2:
-        print(i)
     return (i % 2) != 0
 
 def getInsideVerts(bm_slice, bm_lattice, ignoredVerts, boundingObj=False):
@@ -505,17 +503,18 @@ def makeBricks(slicesList, refBrick, source, source_details, preHollow=False):
         brick = bpy.data.objects.new('LEGOizer_brick_' + str(i+1), brickMesh)
         brick.location = Vector(co)
         brick.data = refBrick.data
-        bpy.context.scene.objects.link(brick)
+        scn.objects.link(brick)
         bricks.append(brick)
-    bpy.context.scene.update()
+    scn.update()
     # add bricks to LEGOizer_bricks group
     select(bricks, active=bricks[0])
     n = scn.cmlist[scn.cmlist_index].source_name
     LEGOizer_bricks = 'LEGOizer_%(n)s_bricks' % locals()
-    if not groupExists(LEGOizer_bricks):
-        bpy.ops.group.create(name=LEGOizer_bricks)
-    else:
+    if groupExists(LEGOizer_bricks):
         bpy.data.groups.remove(group=bpy.data.groups[LEGOizer_bricks], do_unlink=True)
-        bpy.ops.group.create(name=LEGOizer_bricks)
+    bGroup = bpy.data.groups.new(LEGOizer_bricks)
+    for o in bricks:
+        bGroup.objects.link(o)
+
     # return list of created objects
     return bricks

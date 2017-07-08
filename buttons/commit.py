@@ -35,9 +35,12 @@ class legoizerCommit(bpy.types.Operator):
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
-        if scn.cmlist_index == -1 or not scn.cmlist[scn.cmlist_index].changesToCommit:
+        if scn.cmlist_index == -1:
             return False
-        return True
+        cm = scn.cmlist[scn.cmlist_index]
+        if cm.changesToCommit:
+            return True
+        return False
 
     def addSource(self):
         scn = bpy.context.scene

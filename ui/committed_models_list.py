@@ -62,36 +62,35 @@ class Uilist_actions(bpy.types.Operator):
         except IndexError:
             pass
 
-        else:
-            if self.action == 'DOWN' and idx < len(scn.cmlist) - 1:
-                item_next = scn.cmlist[idx+1].source_name
-                scn.cmlist_index += 1
-                info = 'Item %d selected' % (scn.cmlist_index + 1)
-                self.report({'INFO'}, info)
-
-            elif self.action == 'UP' and idx >= 1:
-                item_prev = scn.cmlist[idx-1].source_name
+        if self.action == 'REMOVE':
+            cm = scn.cmlist[scn.cmlist_index]
+            sn = cm.source_name
+            n = cm.name
+            if not groupExists("LEGOizer_%(sn)s_bricks" % locals()):
+                info = 'Item %(n)s removed from list' % locals()
                 scn.cmlist_index -= 1
-                info = 'Item %d selected' % (scn.cmlist_index + 1)
                 self.report({'INFO'}, info)
-
-            elif self.action == 'REMOVE':
-                cm = scn.cmlist[scn.cmlist_index]
-                sn = cm.source_name
-                n = cm.name
-                if not groupExists("LEGOizer_%(sn)s_bricks" % locals()):
-                    info = 'Item %(n)s removed from list' % locals()
-                    scn.cmlist_index -= 1
-                    self.report({'INFO'}, info)
-                    scn.cmlist.remove(idx)
-                else:
-                    self.report({"WARNING"}, 'Please delete the LEGOized model before attempting to remove this item.' % locals())
+                scn.cmlist.remove(idx)
+            else:
+                self.report({"WARNING"}, 'Please delete the LEGOized model before attempting to remove this item.' % locals())
 
         if self.action == 'ADD':
             name = get_activeSceneObject()
             addItemToCMList(name)
             info = '%s added to list' % (name)
             self.report({'INFO'}, info)
+
+        # elif self.action == 'DOWN' and idx < len(scn.cmlist) - 1:
+        #     item_next = scn.cmlist[idx+1].source_name
+        #     scn.cmlist_index += 1
+        #     info = 'Item %d selected' % (scn.cmlist_index + 1)
+        #     self.report({'INFO'}, info)
+        #
+        # elif self.action == 'UP' and idx >= 1:
+        #     item_prev = scn.cmlist[idx-1].source_name
+        #     scn.cmlist_index -= 1
+        #     info = 'Item %d selected' % (scn.cmlist_index + 1)
+        #     self.report({'INFO'}, info)
 
         return {"FINISHED"}
 
@@ -126,16 +125,34 @@ class Uilist_printAllItems(bpy.types.Operator):
         return{'FINISHED'}
 
 # select button
-class Uilist_selectAllItems(bpy.types.Operator):
-    bl_idname = "cmlist.select_item"
-    bl_label = "Select List Item"
-    bl_description = "Select Item in scene"
+class Uilist_selectAllBricks(bpy.types.Operator):
+    bl_idname = "cmlist.select_bricks"
+    bl_label = "Select Bricks"
+    bl_description = "Select all bricks in model"
+
+    @classmethod
+    def poll(cls, context):
+        """ ensures operator can execute (if not, returns false) """
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
+        if groupExists(LEGOizer_bricks) and len(bpy.data.groups[LEGOizer_bricks].objects) != 0:
+            return True
+        return False
 
     def execute(self, context):
         scn = context.scene
-        bpy.ops.object.select_all(action='DESELECT')
-        obj = bpy.data.objects[scn.cmlist[scn.cmlist_index].source_name]
-        obj.select = True
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
+        if groupExists(LEGOizer_bricks):
+            bpy.ops.object.select_all(action='DESELECT')
+            objs = list(bpy.data.groups[LEGOizer_bricks].objects)
+            if len(objs) > 0:
+                select(objs)
 
         return{'FINISHED'}
 

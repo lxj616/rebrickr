@@ -37,11 +37,12 @@ class legoizerLegoize(bpy.types.Operator):
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
-        if scn.cmlist_index == -1:
+        try:
+            cm = scn.cmlist[scn.cmlist_index]
+            if bpy.data.objects[cm.source_name].type == 'MESH':
+                return True
+        except:
             return False
-        cm = scn.cmlist[scn.cmlist_index]
-        if bpy.data.objects[cm.source_name].type == 'MESH':
-            return True
         return False
 
     action = bpy.props.EnumProperty(
@@ -129,8 +130,8 @@ class legoizerLegoize(bpy.types.Operator):
 
         if not groupExists("LEGOizer_%(n)s"):
             # create 'LEGOizer_[cm.source_name]' group with source object
-            select(source)
-            bpy.ops.group.create(name="LEGOizer_%(n)s" % locals())
+            sGroup = bpy.data.groups.new("LEGOizer_%(n)s" % locals())
+            sGroup.objects.link(source)
 
         # get cross section
         source_details = bounds(source)
@@ -145,13 +146,9 @@ class legoizerLegoize(bpy.types.Operator):
         else:
             # import refLogo and add to group
             refLogo = importLogo()
-            select(refLogo)
-            bpy.ops.group.create(name="LEGOizer_refLogo")
-            # make it so that the object is unnoticable
-            refLogo.scale = (0,0,0)
-            refLogo.hide = True
-            refLogo.hide_select = True
-            refLogo.hide_render = True
+            scn.objects.unlink(refLogo)
+            rlGroup = bpy.data.groups.new("LEGOizer_refLogo")
+            rlGroup.objects.link(refLogo)
 
         if groupExists("LEGOizer_%(n)s_refBrick" % locals()) and len(bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()].objects) > 0:
                 # get 1x1 refBrick from group
@@ -164,22 +161,23 @@ class legoizerLegoize(bpy.types.Operator):
             # make 1x1 refBrick
             refBrick = make1x1(dimensions, refLogo, "%(n)s_brick1x1" % locals())
             # add that refBrick to new group
-            bpy.context.scene.objects.link(refBrick)
             if groupExists("LEGOizer_%(n)s_refBrick" % locals()):
-                bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()].objects.link(refBrick)
+                rbGroup = bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()]
             else:
-                select(refBrick)
-                bpy.ops.group.create(name="LEGOizer_%(n)s_refBrick" % locals())
+                rbGroup = bpy.data.groups.new("LEGOizer_%(n)s_refBrick" % locals())
+            rbGroup.objects.link(refBrick)
 
-        if self.action == "CREATE":
-            # hide all
-            selectAll()
-            bpy.ops.group.create(name="LEGOizer_hidden")
-            hide(bpy.data.objects.values())
+        if not groupExists("LEGOizer_hidden"):
+            hGroup = bpy.data.groups.new("LEGOizer_hidden")
+        else:
+            hGroup = bpy.data.groups["LEGOizer_hidden"]
+        for o in bpy.data.objects:
+            hGroup.objects.link(o)
+        hide(bpy.data.objects.values())
 
         # if resolution has changed
         if cm.brickHeight != cm.lastBrickHeight:
-            if self.action == "UPDATE":
+            if groupExists(LEGOizer_bricks):
                 bricks = list(bpy.data.groups[LEGOizer_bricks].objects)
                 delete(bricks)
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])

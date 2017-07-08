@@ -24,6 +24,7 @@ import bpy
 from bpy.types import Panel
 from bpy.props import *
 from .committed_models_list import *
+from ..buttons.delete import legoizerDelete
 from ..functions import *
 from ..lib import common_utilities
 from ..lib.common_utilities import bversion
@@ -56,6 +57,7 @@ class LegoModelsPanel(Panel):
         col.operator("cmlist.list_action", icon='ZOOMIN', text="").action = 'ADD'
         col.operator("cmlist.list_action", icon='ZOOMOUT', text="").action = 'REMOVE'
         col.separator()
+        col.operator("cmlist.select_bricks", icon="UV_SYNC_SELECT", text="")
         # col.operator("cmlist.list_action", icon='')
         # col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
         # col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
@@ -69,7 +71,7 @@ class LegoModelsPanel(Panel):
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
-            groupExistsBool = groupExists(LEGOizer_bricks)
+            groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBrick" % locals())
             col = layout.column(align=True)
             col.label("Source Object:")
             row = col.row(align=True)
@@ -86,6 +88,7 @@ class LegoModelsPanel(Panel):
             row = col.row(align=True)
             # remove 'LEGOizer_[source name]_bricks' group if empty
             if groupExistsBool and len(bpy.data.groups[LEGOizer_bricks].objects) == 0:
+                legoizerDelete.cleanUp()
                 bpy.data.groups.remove(bpy.data.groups[LEGOizer_bricks], do_unlink=True)
         else:
             layout.operator("cmlist.list_action", icon='ZOOMIN', text="New LEGO Model").action = 'ADD'
@@ -140,7 +143,7 @@ class SettingsPanel(Panel):
         row = col.row(align=True)
         n = cm.source_name
         LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
-        groupExistsBool = groupExists(LEGOizer_bricks)
+        groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBrick" % locals())
         if not groupExistsBool:
             row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD").action = "CREATE"
         else:

@@ -38,35 +38,40 @@ class legoizerDelete(bpy.types.Operator):
         if scn.cmlist_index == -1:
             return False
         n = scn.cmlist[scn.cmlist_index].source_name
-        if not groupExists("LEGOizer_%(n)s_bricks" % locals()):
-            return False
-        return True
+        if groupExists("LEGOizer_%(n)s_bricks" % locals()) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBrick" % locals()):
+            return True
+        return False
 
-    def execute(self, context):
-        # get start time
-        startTime = time.time()
-
+    @classmethod
+    def cleanUp(cls):
         # set up variables
-        scn = context.scene
+        scn = bpy.context.scene
 
         # clean up LEGOizer_bricks group
         n = scn.cmlist[scn.cmlist_index].source_name
         LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
-        brickGroup = bpy.data.groups[LEGOizer_bricks]
-        delete(list(brickGroup.objects))
-        bpy.data.groups.remove(brickGroup, do_unlink=True)
+        if groupExists(LEGOizer_bricks):
+            brickGroup = bpy.data.groups[LEGOizer_bricks]
+            bgObjects = list(brickGroup.objects)
+            if len(bgObjects) > 0:
+                delete(bgObjects)
+            bpy.data.groups.remove(brickGroup, do_unlink=True)
 
         # clean up 'LEGOizer_[source name]' group
-        sourceGroup = bpy.data.groups["LEGOizer_%(n)s" % locals()]
-        sourceGroup.objects[0].draw_type = 'SOLID'
-        sourceGroup.objects[0].hide_render = False
-        bpy.data.groups.remove(sourceGroup, do_unlink=True)
+        if groupExists("LEGOizer_%(n)s" % locals()):
+            sourceGroup = bpy.data.groups["LEGOizer_%(n)s" % locals()]
+            if len(sourceGroup.objects):
+                sourceGroup.objects[0].draw_type = 'SOLID'
+                sourceGroup.objects[0].hide_render = False
+            bpy.data.groups.remove(sourceGroup, do_unlink=True)
 
         # clean up 'LEGOizer_refBrick' group
-        refBrickGroup = bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()]
-        refBrick = refBrickGroup.objects[0]
-        delete(refBrick)
-        bpy.data.groups.remove(refBrickGroup, do_unlink=True)
+        if groupExists("LEGOizer_%(n)s_refBrick" % locals()):
+            refBrickGroup = bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()]
+            if len(refBrickGroup.objects) > 0:
+                refBrick = refBrickGroup.objects[0]
+                delete(refBrick)
+            bpy.data.groups.remove(refBrickGroup, do_unlink=True)
 
         # # clean up 'LEGOizer_refLogo' group
         # if groupExists("LEGOizer_refLogo"):
@@ -76,6 +81,12 @@ class legoizerDelete(bpy.types.Operator):
         #     bpy.data.groups.remove(refLogoGroup, do_unlink=True)
 
         scn.cmlist[scn.cmlist_index].changesToCommit = False
+
+    def execute(self, context):
+        # get start time
+        startTime = time.time()
+
+        self.cleanUp()
 
         # STOPWATCH CHECK
         stopWatch("Time Elapsed", time.time()-startTime)
