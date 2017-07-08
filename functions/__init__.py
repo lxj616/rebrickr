@@ -24,7 +24,8 @@ import bpy
 import bmesh
 import math
 from .crossSection import slices, drawBMesh
-from .mesh_generate import *
+from .common_mesh_generate import *
+from .lego_mesh_generate import *
 from .common_functions import *
 from mathutils import Vector, geometry
 from mathutils.bvhtree import BVHTree

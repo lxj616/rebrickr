@@ -33,11 +33,6 @@ from bpy.props import IntProperty, CollectionProperty #, StringProperty
 from bpy.types import Panel, UIList
 
 
-# return name of selected object
-def get_activeSceneObject():
-    return bpy.context.scene.objects.active.name
-
-
 # ui list item actions
 class Uilist_actions(bpy.types.Operator):
     bl_idname = "cmlist.list_action"
@@ -75,7 +70,11 @@ class Uilist_actions(bpy.types.Operator):
                 self.report({"WARNING"}, 'Please delete the LEGOized model before attempting to remove this item.' % locals())
 
         if self.action == 'ADD':
-            name = get_activeSceneObject()
+            active_object = scn.objects.active
+            if active_object:
+                name = active_object.name
+            else:
+                name = ""
             addItemToCMList(name)
             info = '%s added to list' % (name)
             self.report({'INFO'}, info)
@@ -198,7 +197,14 @@ def uniquifyName(self, context):
             name = name[:-3] + "%03d" % (num)
         else:
             name = name + ".001"
-    cm.name = name
+    if cm.name != name:
+        cm.name = name
+
+def setNameIfEmpty(self, context):
+    scn = context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    if cm.name == "":
+        cm.name = cm.source_name
 
 
 # Create custom property group
@@ -209,8 +215,8 @@ class CustomProp(bpy.types.PropertyGroup):
     source_name = StringProperty(
         name="Source Object Name",
         description="Name of the source object to legoize (defaults to active object)",
-        default="")
-        # update=setName)
+        default="",
+        update=setNameIfEmpty)
 
     changesToCommit = BoolProperty(
         default=False)
