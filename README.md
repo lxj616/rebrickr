@@ -4,6 +4,7 @@ Blender add-on for automated generation of LEGO Bricks from object (Blender vers
 
 ## LEGOizer
   * Features:
+      * This code is a WIP. Stay tuned!
       * Adjust LEGO brick settings before committing model
   * Instructions:
       * Select an object with 'Source Object' UI box (defaults to active object if blank or if object doesn't exist)
@@ -14,7 +15,6 @@ Blender add-on for automated generation of LEGO Bricks from object (Blender vers
   * Future improvements:
     * Priority 1:
       * Improve logo resolution (currently uses decimate)
-      * Don't import LEGO text every time (currently imports and decimates with every resolution adjustment)
       * Add functionality to 'Merge Bricks' button
       * Add functionality for only rendering LEGO text on exposed studs
       * Add functionality to Pre Hollow/Shell Thickness
