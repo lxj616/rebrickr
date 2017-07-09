@@ -87,7 +87,7 @@ class LegoModelsPanel(Panel):
             col = layout.column(align=True)
             row = col.row(align=True)
             # remove 'LEGOizer_[source name]_bricks' group if empty
-            if groupExistsBool and len(bpy.data.groups[LEGOizer_bricks].objects) == 0:
+            if groupExists(LEGOizer_bricks) and len(bpy.data.groups[LEGOizer_bricks].objects) == 0:
                 legoizerDelete.cleanUp()
                 bpy.data.groups.remove(bpy.data.groups[LEGOizer_bricks], do_unlink=True)
         else:

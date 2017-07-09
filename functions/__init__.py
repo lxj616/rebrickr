@@ -27,7 +27,7 @@ from .crossSection import slices, drawBMesh
 from .common_mesh_generate import *
 from .lego_mesh_generate import *
 from .common_functions import *
-from mathutils import Vector, geometry
+from mathutils import Matrix, Vector, geometry
 from mathutils.bvhtree import BVHTree
 props = bpy.props
 
@@ -75,7 +75,6 @@ def make1x1(dimensions, refLogo, scale="1x2", name='brick1x1'):
     bm = bmesh.new()
     brickBM = makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=settings["numStudVerts"], detail=cm.undersideDetail)
     studInset = dimensions["thickness"] * 0.9
-    cylinderBM = makeCylinder(r=dimensions["stud_radius"], N=settings["numStudVerts"], h=dimensions["stud_height"]+studInset, co=(0,0,dimensions["stud_offset"]-(studInset/2)), botFace=False)
     if refLogo:
         logoBM = bmesh.new()
         logoBM.from_mesh(refLogo.data)
@@ -99,13 +98,9 @@ def make1x1(dimensions, refLogo, scale="1x2", name='brick1x1'):
 
     # add brick mesh to bm mesh
     cube = bpy.data.meshes.new('legoizer_cube')
-    cylinder = bpy.data.meshes.new('legoizer_cylinder')
     brickBM.to_mesh(cube)
-    cylinderBM.to_mesh(cylinder)
     bm.from_mesh(cube)
-    bm.from_mesh(cylinder)
     bpy.data.meshes.remove(cube)
-    bpy.data.meshes.remove(cylinder)
 
     # create apply mesh data to 'legoizer_brick1x1' data
     if bpy.data.objects.find(name) == -1:

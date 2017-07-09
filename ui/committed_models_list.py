@@ -234,18 +234,12 @@ class CustomProp(bpy.types.PropertyGroup):
               ("None", "None", "Don't include LEGO Logo on bricks")],
         default="None")
 
-    lastLogoDetail = StringProperty(
-        default="None")
-
     logoResolution = FloatProperty(
         name="Logo Resolution",
         description="Resolution of the LEGO Logo",
         min=0.1, max=1,
         step=1,
         precision=2,
-        default=0.5)
-
-    lastLogoResolution = FloatProperty(
         default=0.5)
 
     undersideDetail = EnumProperty(
@@ -259,7 +253,7 @@ class CustomProp(bpy.types.PropertyGroup):
     studVerts = IntProperty(
         name="Stud Verts",
         description="Number of vertices on LEGO stud",
-        min=3, max=64,
+        min=4, max=64,
         default=16)
 
     shellThickness = IntProperty(
@@ -279,8 +273,14 @@ class CustomProp(bpy.types.PropertyGroup):
         min=.001, max=1,
         default=.01)
 
-    lastBrickHeight = IntProperty(
-        default=0)
+    lastSourceData = None
+
+    lastBrickHeight = FloatProperty(default=0)
+    lastGap = FloatProperty(default=0)
+    lastPreHollow = BoolProperty(default=False)
+    lastShellThickness = IntProperty(default=0)
+    # lastLogoDetail = StringProperty(default="None")
+    # lastLogoResolution = FloatProperty(default=0.5)
 
     # ADVANCED SETTINGS
     calculationAxis = EnumProperty(

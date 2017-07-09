@@ -167,28 +167,53 @@ class legoizerLegoize(bpy.types.Operator):
                 rbGroup = bpy.data.groups.new("LEGOizer_%(n)s_refBrick" % locals())
             rbGroup.objects.link(refBrick)
 
-        if not groupExists("LEGOizer_hidden"):
-            hGroup = bpy.data.groups.new("LEGOizer_hidden")
-        else:
-            hGroup = bpy.data.groups["LEGOizer_hidden"]
-        for o in bpy.data.objects:
-            hGroup.objects.link(o)
-        hide(bpy.data.objects.values())
+        if self.action == "CREATE":
+            # hide all bricks in scene
+            if not groupExists("LEGOizer_hidden"):
+                hGroup = bpy.data.groups.new("LEGOizer_hidden")
+            else:
+                hGroup = bpy.data.groups["LEGOizer_hidden"]
+            selectAll()
+            for o in bpy.context.selected_objects:
+                hGroup.objects.link(o)
+            hide(bpy.context.selected_objects)
 
-        # if resolution has changed
-        if cm.brickHeight != cm.lastBrickHeight:
+        # check last source data and transformation
+        try:
+            lastSource = bpy.data.objects["LEGOizer_%(n)s_lastSourceData" % locals()]
+            identicalTransforms = lastSource.matrix_world == source.matrix_world
+            meshComparasin = source.data.unit_test_compare(lastSource.data)
+        except:
+            meshComparasin = 'Error'
+            identicalTransforms = False
+
+        # if any related source data or settings have changed
+        if cm.brickHeight != cm.lastBrickHeight or cm.gap != cm.lastGap or cm.preHollow != cm.lastPreHollow or cm.shellThickness != cm.lastShellThickness or meshComparasin != 'Same' or not identicalTransforms:
+            # delete old bricks if present
             if groupExists(LEGOizer_bricks):
                 bricks = list(bpy.data.groups[LEGOizer_bricks].objects)
                 delete(bricks)
+            # create new bricks
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
             slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
             makeBricks(slicesDict, refBrick, source, source_details, cm.preHollow)
 
         # set final variables
         cm.lastBrickHeight = cm.brickHeight
-        cm.lastLogoResolution = cm.logoResolution
-        cm.lastLogoDetail = cm.logoDetail
+        cm.lastGap = cm.gap
+        cm.lastPreHollow = cm.preHollow
+        cm.lastShellThickness = cm.shellThickness
+        # cm.lastLogoResolution = cm.logoResolution
+        # cm.lastLogoDetail = cm.logoDetail
         cm.changesToCommit = True
+
+        # store last source data
+        try:
+            o = bpy.data.objects["LEGOizer_%(n)s_lastSourceData" % locals()]
+            o.data = source.data.copy()
+        except:
+            o = bpy.data.objects.new("LEGOizer_%(n)s_lastSourceData" % locals(), source.data.copy())
+        o.matrix_world = source.matrix_world
 
         # STOPWATCH CHECK
         stopWatch("Time Elapsed", time.time()-startTime)
