@@ -26,110 +26,37 @@ import math
 from copy import copy, deepcopy
 from .crossSection import slices, drawBMesh
 from .common_mesh_generate import *
-from .lego_mesh_generate import *
 from .common_functions import *
 from .binvox_rw import *
+from ..classes.Brick import Brick
 from mathutils import Matrix, Vector, geometry
 from mathutils.bvhtree import BVHTree
 props = bpy.props
 
-def writeBinvox(obj):
-    ''' creates binvox file and returns filepath '''
-
-    scn = bpy.context.scene
-    binvoxPath = props.binvoxPath
-    projectName = bpy.path.display_name_from_filepath(bpy.data.filepath).replace(" ", "_")
-
-    # export obj to obj_exports_folder
-    objExportPath = None # TODO: Write this code
-
-    # send
-    resolution = props.voxelResolution
-    outputFilePath = props.final_output_folder + "/" + projectName + "_" + scn.voxelResolution + ".obj"
-    binvoxCall = "'%(binvoxPath)s' -pb -d %(resolution)s '%(objExportPath)s'" % locals()
-
-    subprocess.call()
-
-    return binvoxPath
-
+# def writeBinvox(obj):
+#     ''' creates binvox file and returns filepath '''
+#
+#     scn = bpy.context.scene
+#     binvoxPath = props.binvoxPath
+#     projectName = bpy.path.display_name_from_filepath(bpy.data.filepath).replace(" ", "_")
+#
+#     # export obj to obj_exports_folder
+#     objExportPath = None # TODO: Write this code
+#
+#     # send
+#     resolution = props.voxelResolution
+#     outputFilePath = props.final_output_folder + "/" + projectName + "_" + scn.voxelResolution + ".obj"
+#     binvoxCall = "'%(binvoxPath)s' -pb -d %(resolution)s '%(objExportPath)s'" % locals()
+#
+#     subprocess.call()
+#
+#     return binvoxPath
+#
 def confirmList(objList):
     """ if single object passed, convert to list """
     if type(objList) != list:
         objList = [objList]
     return objList
-
-def getBrickSettings():
-    """ returns dictionary containing brick detail settings """
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
-    settings = {}
-    settings["underside"] = cm.undersideDetail
-    settings["logo"] = cm.logoDetail
-    settings["numStudVerts"] = cm.studVerts
-    return settings
-
-def make1x1(dimensions, refLogo, scale="1x2", name='brick1x1'):
-    """ create unlinked 1x1 LEGO Brick at origin """
-    settings = getBrickSettings()
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
-
-    bm = bmesh.new()
-    brickBM = makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=settings["numStudVerts"], detail=cm.undersideDetail)
-    studInset = dimensions["thickness"] * 0.9
-    if refLogo:
-        logoBM = bmesh.new()
-        logoBM.from_mesh(refLogo.data)
-        lw = dimensions["logo_width"]
-        bmesh.ops.scale(logoBM, vec=Vector((lw, lw, lw)), verts=logoBM.verts)
-        bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(1.0, 0.0, 0.0), matrix=Matrix.Rotation(math.radians(90.0), 3, 'X'))
-        bmesh.ops.translate(logoBM, vec=Vector((0, 0, dimensions["logo_offset"])), verts=logoBM.verts)
-        # add logoBM mesh to bm mesh
-        logoMesh = bpy.data.meshes.new('LEGOizer_tempMesh')
-        logoObj = bpy.data.objects.new('LEGOizer_tempObj', logoMesh)
-        logoBM.to_mesh(logoMesh)
-        if cm.logoResolution < 1:
-            dMod = logoObj.modifiers.new('Decimate', type='DECIMATE')
-            dMod.ratio = cm.logoResolution
-            scn.objects.link(logoObj)
-            select(logoObj, active=logoObj)
-            bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
-        bm.from_mesh(logoMesh)
-        bpy.data.objects.remove(logoObj, do_unlink=True)
-        bpy.data.meshes.remove(logoMesh, do_unlink=True)
-
-    # add brick mesh to bm mesh
-    cube = bpy.data.meshes.new('legoizer_cube')
-    brickBM.to_mesh(cube)
-    bm.from_mesh(cube)
-    bpy.data.meshes.remove(cube)
-
-    # create apply mesh data to 'legoizer_brick1x1' data
-    if bpy.data.objects.find(name) == -1:
-        brick1x1Mesh = bpy.data.meshes.new(name + 'Mesh')
-        brick1x1 = bpy.data.objects.new(name, brick1x1Mesh)
-    else:
-        brick1x1 = bpy.data.objects[name]
-    bm.to_mesh(brick1x1.data)
-
-    # return 'legoizer_brick1x1' object
-    return brick1x1
-
-def getBrickDimensions(height, gap_percentage):
-    scale = height/9.6
-    brick_dimensions = {}
-    brick_dimensions["height"] = scale*9.6
-    brick_dimensions["width"] = scale*8
-    brick_dimensions["gap"] = scale*9.6*gap_percentage
-    brick_dimensions["stud_height"] = scale*1.8
-    brick_dimensions["stud_diameter"] = scale*4.8
-    brick_dimensions["stud_radius"] = scale*2.4
-    brick_dimensions["stud_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"] / 2)
-    brick_dimensions["thickness"] = scale*1.6
-    brick_dimensions["tube_thickness"] = scale * 0.855
-    brick_dimensions["logo_width"] = scale*3.74
-    brick_dimensions["logo_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"])
-    return brick_dimensions
 
 def bounds(obj, local=False):
 
@@ -631,12 +558,15 @@ def makeBricks(refBrick, source, source_details, dimensions, R, preHollow=False)
     if len(coList) == 0:
         coList.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
     for i,co in enumerate(coList):
-        brickMesh = bpy.data.meshes.new('LEGOizer_brickMesh_' + str(i+1))
-        brick = bpy.data.objects.new('LEGOizer_brick_' + str(i+1), brickMesh)
-        brick.location = Vector(co)
-        brick.data = refBrick.data
-        scn.objects.link(brick)
-        bricks.append(brick)
+        brick = Brick(location=Vector(co), name='LEGOizer_brick_' + str(i+1), mesh_data=refBrick.data)
+        brick.link_to_scene(scn)
+        bricks.append(brick.obj)
+        # brickMesh = bpy.data.meshes.new('LEGOizer_brickMesh_' + str(i+1))
+        # brick = bpy.data.objects.new('LEGOizer_brick_' + str(i+1), brickMesh)
+        # brick.location = Vector(co)
+        # brick.data = refBrick.data
+        # scn.objects.link(brick)
+        # bricks.append(brick)
     scn.update()
     # add bricks to LEGOizer_bricks group
     select(bricks, active=bricks[0])

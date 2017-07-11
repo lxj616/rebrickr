@@ -1,7 +1,7 @@
 import bpy
 import bmesh
 import math
-from .common_mesh_generate import makeCylinder
+from ...functions.common_mesh_generate import makeCylinder
 
 # r = radius, N = numVerts, h = height, t = thickness, co = target cylinder position
 def makeTube(r, N, h, t, co=(0,0,0), bme=None):
