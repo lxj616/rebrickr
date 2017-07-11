@@ -36,6 +36,7 @@ import bpy
 from bpy.props import *
 from .ui import *
 from .buttons import *
+from .classes.Brick import Brick
 props = bpy.props
 
 def register():
@@ -44,7 +45,6 @@ def register():
     # other things (UI List)
     bpy.types.Scene.cmlist = CollectionProperty(type=CustomProp)
     bpy.types.Scene.cmlist_index = IntProperty(default=-1)
-
 
     # session properties
     props.addon_name = "legoizer"

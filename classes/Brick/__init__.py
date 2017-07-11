@@ -24,10 +24,49 @@ import bpy
 import bmesh
 from .lego_mesh_generate import *
 
-class Brick:
-    # observable properties
+class Bricks:
+    def __init__(self):
+        self.objects = {}
 
-    def __init__(self, location=(0,0,0), name='brick', mesh_data=None):
+    def __getitem__(self, string):
+        return self.objects[string]
+
+    def new(self, name, location=(0,0,0), mesh_data=None):
+        self.objects[name] = Brick(location, name, mesh_data)
+        return self.objects[name]
+
+    def getAllObjs(self):
+        brickObjs = []
+        for o in self.objects.values():
+            print(o)
+            brickObjs.append(o.obj)
+        return brickObjs
+
+    @staticmethod
+    def new_obj(name='new_brick', height=1, type=[1,1], logo=False):
+        obj = Brick().new_brick(name=name, height=height, type=type, logo=logo)
+        return obj
+
+    @staticmethod
+    def get_dimensions(height=1, gap_percentage=0.01):
+        scale = height/9.6
+        brick_dimensions = {}
+        brick_dimensions["height"] = scale*9.6
+        brick_dimensions["width"] = scale*8
+        brick_dimensions["gap"] = scale*9.6*gap_percentage
+        brick_dimensions["stud_height"] = scale*1.8
+        brick_dimensions["stud_diameter"] = scale*4.8
+        brick_dimensions["stud_radius"] = scale*2.4
+        brick_dimensions["stud_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"] / 2)
+        brick_dimensions["thickness"] = scale*1.6
+        brick_dimensions["tube_thickness"] = scale * 0.855
+        brick_dimensions["logo_width"] = scale*3.74
+        brick_dimensions["logo_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"])
+        return brick_dimensions
+
+class Brick:
+
+    def __init__(self, location=(0,0,0), name="brick", mesh_data=None):
         if mesh_data:
             self.mesh_data = mesh_data
         else:
@@ -35,8 +74,8 @@ class Brick:
         self.obj = bpy.data.objects.new(name, self.mesh_data)
         self.update_location(location)
         self.update_name(name)
-        self.onTop = False
         self.brick_dimensions = 'UNSET'
+        # Bricks.add_brick(self.name, self)
 
     def update_data(self, mesh_data):
         self.obj.data = mesh_data
@@ -57,10 +96,10 @@ class Brick:
     def link_to_scene(self, scene):
         bpy.context.scene.objects.link(self.obj)
 
-    def select_brick(self):
+    def obj_select(self):
         self.obj.select = True
 
-    def set_brick_height(self, height):
+    def set_height(self, height):
         self.height = height
         # TODO: actually update brick obj height
 
@@ -73,28 +112,14 @@ class Brick:
         settings["numStudVerts"] = cm.studVerts
         return settings
 
-    @staticmethod
-    def get_dimensions(height=1, gap_percentage=0.01):
-        scale = height/9.6
-        brick_dimensions = {}
-        brick_dimensions["height"] = scale*9.6
-        brick_dimensions["width"] = scale*8
-        brick_dimensions["gap"] = scale*9.6*gap_percentage
-        brick_dimensions["stud_height"] = scale*1.8
-        brick_dimensions["stud_diameter"] = scale*4.8
-        brick_dimensions["stud_radius"] = scale*2.4
-        brick_dimensions["stud_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"] / 2)
-        brick_dimensions["thickness"] = scale*1.6
-        brick_dimensions["tube_thickness"] = scale * 0.855
-        brick_dimensions["logo_width"] = scale*3.74
-        brick_dimensions["logo_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"])
-        return brick_dimensions
-
-    def set_dimensions(self, height=1, gap_percentage=0.01):
-        self.brick_dimensions = self.get_dimensions(height, gap_percentage)
+    def get_dimensions(self):
         return self.brick_dimensions
 
-    def new_brick(self, height=1, type=[1,1], logo=False, name="brick"):
+    def set_dimensions(self, height=1, gap_percentage=0.01):
+        self.brick_dimensions = Bricks.get_dimensions(height, gap_percentage)
+        return self.brick_dimensions
+
+    def new_brick(self, name="brick", height=1, type=[1,1], logo=False):
         """ create unlinked LEGO Brick at origin """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]

@@ -157,7 +157,7 @@ class legoizerLegoize(bpy.types.Operator):
 
         # get cross section
         source_details = bounds(source)
-        dimensions = Brick.get_dimensions(cm.brickHeight, cm.gap)
+        dimensions = Bricks.get_dimensions(cm.brickHeight, cm.gap)
         # axis, lScale, CS_slices = getCrossSection(source, source_details, dimensions)
 
         # update refLogo
@@ -177,11 +177,11 @@ class legoizerLegoize(bpy.types.Operator):
                 refBrick = bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()].objects[0]
                 # update that refBrick
                 unhide(refBrick)
-                Brick().new_brick(dimensions["height"], type=[1,1], logo=refLogo, name=refBrick.name)
+                Bricks().new_obj(name=refBrick.name, height=dimensions["height"], type=[1,1], logo=refLogo)
                 hide(refBrick)
         else:
             # make 1x1 refBrick
-            refBrick = Brick().new_brick(dimensions["height"], type=[1,1], logo=refLogo, name="%(n)s_brick1x1" % locals())
+            refBrick = Bricks.new_obj(name="%(n)s_brick1x1" % locals(), height=dimensions["height"], type=[1,1], logo=refLogo)
             # add that refBrick to new group
             if groupExists("LEGOizer_%(n)s_refBrick" % locals()):
                 rbGroup = bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()]

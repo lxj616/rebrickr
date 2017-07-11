@@ -149,7 +149,9 @@ class Uilist_selectAllBricks(bpy.types.Operator):
         LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
         if groupExists(LEGOizer_bricks):
             bpy.ops.object.select_all(action='DESELECT')
-            objs = list(bpy.data.groups[LEGOizer_bricks].objects)
+            # objs = list(bpy.data.groups[LEGOizer_bricks].objects)
+            objs = cm.bricks
+            print(cm.bricks)
             if len(objs) > 0:
                 select(objs)
 
@@ -272,6 +274,8 @@ class CustomProp(bpy.types.PropertyGroup):
         description="Height of the bricks in the final LEGO model",
         min=.001, max=1,
         default=.01)
+
+    bricks = None
 
     lastSourceDataRef = None
 

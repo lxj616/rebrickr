@@ -28,7 +28,7 @@ from .crossSection import slices, drawBMesh
 from .common_mesh_generate import *
 from .common_functions import *
 from .binvox_rw import *
-from ..classes.Brick import Brick
+from ..classes.Brick import Bricks
 from mathutils import Matrix, Vector, geometry
 from mathutils.bvhtree import BVHTree
 props = bpy.props
@@ -488,7 +488,7 @@ def makeBricks(refBrick, source, source_details, dimensions, R, preHollow=False)
     #                 b.verts.new(coordMatrix[x][y][z])
     # drawBMesh(b)
     # print(coordMatrixLast == coordMatrix)
-    print(brickFreqMatrix)
+    # print(brickFreqMatrix)
     # # print()
     # # print(coordMatrixLast)
     # # print()
@@ -553,30 +553,27 @@ def makeBricks(refBrick, source, source_details, dimensions, R, preHollow=False)
     # uniquify coList
     coList = uniquify(coList, lambda x: (round(x[0], 2), round(x[1], 2), round(x[2], 2)))
 
-    # make bricks at determined locations
-    bricks = []
-    if len(coList) == 0:
-        coList.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
-    for i,co in enumerate(coList):
-        brick = Brick(location=Vector(co), name='LEGOizer_brick_' + str(i+1), mesh_data=refBrick.data)
-        brick.link_to_scene(scn)
-        bricks.append(brick.obj)
-        # brickMesh = bpy.data.meshes.new('LEGOizer_brickMesh_' + str(i+1))
-        # brick = bpy.data.objects.new('LEGOizer_brick_' + str(i+1), brickMesh)
-        # brick.location = Vector(co)
-        # brick.data = refBrick.data
-        # scn.objects.link(brick)
-        # bricks.append(brick)
-    scn.update()
-    # add bricks to LEGOizer_bricks group
-    select(bricks, active=bricks[0])
-    n = scn.cmlist[scn.cmlist_index].source_name
+    # create group for lego bricks
+    cm = scn.cmlist[scn.cmlist_index]
+    n = cm.source_name
     LEGOizer_bricks = 'LEGOizer_%(n)s_bricks' % locals()
     if groupExists(LEGOizer_bricks):
         bpy.data.groups.remove(group=bpy.data.groups[LEGOizer_bricks], do_unlink=True)
     bGroup = bpy.data.groups.new(LEGOizer_bricks)
-    for o in bricks:
-        bGroup.objects.link(o)
+    # if no coords in coList, add a coord at center of source
+    if len(coList) == 0:
+        coList.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
+    # make bricks at determined locations
+    bricks = Bricks()
+    for i,co in enumerate(coList):
+        bNum = i + 1
+        brick = bricks.new(name='LEGOizer_%(n)s_brick_%(bNum)s' % locals(), location=Vector(co), mesh_data=refBrick.data)
+        brick.link_to_scene(scn)
+        bGroup.objects.link(brick.obj)
 
-    # return list of created objects
+    select(bricks.getAllObjs())
+
+    scn.update()
+
+    # return list of created Brick objects
     return bricks
