@@ -22,6 +22,8 @@
 # system imports
 import bpy
 import time
+import bmesh
+import os
 import math
 from ..functions import *
 from mathutils import Matrix, Vector
@@ -70,7 +72,7 @@ class legoizerLegoize(bpy.types.Operator):
         if groupExists("LEGOizer_hidden"):
             hiddenGroup = bpy.data.groups["LEGOizer_hidden"]
             unhide(list(hiddenGroup.objects))
-            select(list(hiddenGroup.objects), deselect=True)
+            # select(list(hiddenGroup.objects), deselect=True)
             bpy.data.groups.remove(hiddenGroup, do_unlink=True)
 
     def modal(self, context, event):
@@ -113,6 +115,26 @@ class legoizerLegoize(bpy.types.Operator):
                 return False
 
         return True
+
+    def execute2(self, context):
+        obj = bpy.context.active_object
+
+        filepath = os.path.dirname(os.path.abspath(__file__))[:-7]
+
+        f = open(os.path.join(filepath, 'tulag.binvox'), 'rb')
+
+        model = read_as_coord_array(f).data
+
+        bm = bmesh.new()
+
+        print(model)
+
+        print(len(model[0]))
+        for i in range(len(model[0])):
+            bm.verts.new((model[0][i], model[1][i], model[2][i]))
+        drawBMesh(bm)
+
+        return{"FINISHED"}
 
     def execute(self, context):
         # get start time
@@ -180,9 +202,9 @@ class legoizerLegoize(bpy.types.Operator):
 
         # check last source data and transformation
         try:
-            lastSource = bpy.data.objects["LEGOizer_%(n)s_lastSourceData" % locals()]
-            identicalTransforms = lastSource.matrix_world == source.matrix_world
-            meshComparasin = source.data.unit_test_compare(lastSource.data)
+            lastSourceDataRef = bpy.data.objects["LEGOizer_%(n)s_lastSourceDataRef" % locals()]
+            identicalTransforms = lastSourceDataRef.matrix_world == source.matrix_world
+            meshComparasin = source.data.unit_test_compare(lastSourceDataRef.data)
         except:
             meshComparasin = 'Error'
             identicalTransforms = False
@@ -209,10 +231,10 @@ class legoizerLegoize(bpy.types.Operator):
 
         # store last source data
         try:
-            o = bpy.data.objects["LEGOizer_%(n)s_lastSourceData" % locals()]
+            o = bpy.data.objects["LEGOizer_%(n)s_lastSourceDataRef" % locals()]
             o.data = source.data.copy()
         except:
-            o = bpy.data.objects.new("LEGOizer_%(n)s_lastSourceData" % locals(), source.data.copy())
+            o = bpy.data.objects.new("LEGOizer_%(n)s_lastSourceDataRef" % locals(), source.data.copy())
         o.matrix_world = source.matrix_world
 
         # STOPWATCH CHECK

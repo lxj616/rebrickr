@@ -46,24 +46,27 @@ class legoizerDelete(bpy.types.Operator):
     def cleanUp(cls):
         # set up variables
         scn = bpy.context.scene
-
-        # clean up LEGOizer_bricks group
         n = scn.cmlist[scn.cmlist_index].source_name
         LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
+
+        # clean up 'LEGOizer_[source name]' group
+        if groupExists("LEGOizer_%(n)s" % locals()):
+            sourceGroup = bpy.data.groups["LEGOizer_%(n)s" % locals()]
+            if len(sourceGroup.objects):
+                source = sourceGroup.objects[0]
+                source.draw_type = 'SOLID'
+                source.hide_render = False
+                source.hide = False
+                select(source, active=source)
+            bpy.data.groups.remove(sourceGroup, do_unlink=True)
+
+        # clean up LEGOizer_bricks group
         if groupExists(LEGOizer_bricks):
             brickGroup = bpy.data.groups[LEGOizer_bricks]
             bgObjects = list(brickGroup.objects)
             if len(bgObjects) > 0:
                 delete(bgObjects)
             bpy.data.groups.remove(brickGroup, do_unlink=True)
-
-        # clean up 'LEGOizer_[source name]' group
-        if groupExists("LEGOizer_%(n)s" % locals()):
-            sourceGroup = bpy.data.groups["LEGOizer_%(n)s" % locals()]
-            if len(sourceGroup.objects):
-                sourceGroup.objects[0].draw_type = 'SOLID'
-                sourceGroup.objects[0].hide_render = False
-            bpy.data.groups.remove(sourceGroup, do_unlink=True)
 
         # clean up 'LEGOizer_refBrick' group
         if groupExists("LEGOizer_%(n)s_refBrick" % locals()):
@@ -72,6 +75,13 @@ class legoizerDelete(bpy.types.Operator):
                 refBrick = refBrickGroup.objects[0]
                 delete(refBrick)
             bpy.data.groups.remove(refBrickGroup, do_unlink=True)
+
+        # clean up 'LEGOizer_lastSourceDataRef' object
+        try:
+            lastSourceDataRef = bpy.data.objects["LEGOizer_%(n)s_lastSourceDataRef" % locals()]
+            bpy.data.objects.remove(lastSourceDataRef, do_unlink=True)
+        except:
+            pass
 
         # # clean up 'LEGOizer_refLogo' group
         # if groupExists("LEGOizer_refLogo"):

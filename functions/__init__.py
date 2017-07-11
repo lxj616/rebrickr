@@ -27,6 +27,7 @@ from .crossSection import slices, drawBMesh
 from .common_mesh_generate import *
 from .lego_mesh_generate import *
 from .common_functions import *
+from .binvox_rw import *
 from mathutils import Matrix, Vector, geometry
 from mathutils.bvhtree import BVHTree
 props = bpy.props
@@ -444,7 +445,7 @@ def makeBricks(slicesList, refBrick, source, source_details, preHollow=False):
 
         # for each slice
         for bm in slices:
-            # drawBMesh(bm) # draw the slice (for testing purposes)
+            drawBMesh(bm) # draw the slice (for testing purposes)
             # create lattice bmesh
             # TODO: lattice BM can be created outside of for loop and transformed each time, if that's more efficient
             bm.verts.ensure_lookup_table()
@@ -455,7 +456,7 @@ def makeBricks(slicesList, refBrick, source, source_details, preHollow=False):
             else:
                 offset = ( bm.verts[0].co.x, source_details.y.mid, source_details.z.mid)
             latticeBM = makeLattice(R, lScale, offset)
-            # drawBMesh(latticeBM) # draw the lattice (for testing purposes)
+            drawBMesh(latticeBM) # draw the lattice (for testing purposes)
             coListNew = getIntersectedEdgeVerts(bm, latticeBM, axis)
             insideVerts = getInsideVerts(bm, latticeBM, coListNew, source)
             try:
@@ -480,7 +481,8 @@ def makeBricks(slicesList, refBrick, source, source_details, preHollow=False):
                 #         print("yes!")
                 #         coListNew.append(co)
             else:
-                coList += insideVerts
+                pass
+                # coList += insideVerts
             print("len(coListNew): " + str(len(coListNew)))
             coList += coListNew
             lastcoList = coListNew

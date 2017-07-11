@@ -273,7 +273,7 @@ class CustomProp(bpy.types.PropertyGroup):
         min=.001, max=1,
         default=.01)
 
-    lastSourceData = None
+    lastSourceDataRef = None
 
     lastBrickHeight = FloatProperty(default=0)
     lastGap = FloatProperty(default=0)
