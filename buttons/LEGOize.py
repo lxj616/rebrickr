@@ -158,7 +158,7 @@ class legoizerLegoize(bpy.types.Operator):
         # get cross section
         source_details = bounds(source)
         dimensions = getBrickDimensions(cm.brickHeight, cm.gap)
-        axis, lScale, CS_slices = getCrossSection(source, source_details, dimensions)
+        # axis, lScale, CS_slices = getCrossSection(source, source_details, dimensions)
 
         # update refLogo
         if cm.logoDetail == "None":
@@ -217,8 +217,8 @@ class legoizerLegoize(bpy.types.Operator):
                 delete(bricks)
             # create new bricks
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
-            slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
-            makeBricks(slicesDict, refBrick, source, source_details, cm.preHollow)
+            # slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
+            makeBricks(refBrick, source, source_details, dimensions, R, cm.preHollow)
 
         # set final variables
         cm.lastBrickHeight = cm.brickHeight
