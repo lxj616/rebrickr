@@ -23,6 +23,7 @@ Created by Christopher Gearhart
 import bpy
 import bmesh
 import math
+import time
 from copy import copy, deepcopy
 from .crossSection import slices, drawBMesh
 from .common_mesh_generate import *
@@ -128,13 +129,32 @@ def generateLattice(R, s, o=(0,0,0)):
     # return bmesh
     return coordMatrix
 
-def rayIntersectsObj(point,direction,edgeLen,ob):
+def pointInsideMesh(point,ob):
+    axes = [ Vector((1,0,0)) , Vector((0,1,0)), Vector((0,0,1))  ]
+    outside = False
+    for axis in axes:
+        orig = point
+        count = 0
+        while True:
+            location,normal,index = ob.ray_cast(orig,orig+axis*10000.0)
+            if index == -1: break
+            count += 1
+            orig = location + axis*0.00001
+        if count%2 == 0:
+            outside = True
+            break
+    return not outside
+
+def rayObjIntersections(point,direction,edgeLen,ob):
     """ returns True if ray intersects obj """
-    _,location,normal,index = ob.ray_cast(point,direction,distance=edgeLen*1.00000000001)
-    if index == -1:
-        return False
-    else:
-        return True
+    intersections = 0
+    orig = point
+    while True:
+        _,location,normal,index = ob.ray_cast(orig,direction,distance=edgeLen*1.00000000001)
+        if index == -1: break
+        intersections += 1
+        orig = location + direction*0.00001
+    return intersections
 
 def getBrickMatrix(source, coordMatrix, axes="xyz"):
     brickFreqMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
@@ -163,23 +183,13 @@ def getBrickMatrix(source, coordMatrix, axes="xyz"):
                     rayZ = rayEnd[2] - orig[2]
                     ray = Vector((rayX, rayY, rayZ))
 
-                    if rayIntersectsObj(orig,ray,edgeLen,source):
-                        for f in sourceBM.faces:
-                            v1 = f.verts[0].co.copy()
-                            v2 = f.verts[1].co.copy()
-                            v3 = f.verts[2].co.copy()
-                            pointOfIntersection = geometry.intersect_ray_tri(v1, v2, v3, ray, orig)
-                            if pointOfIntersection:
-                                if (orig - pointOfIntersection).length <= edgeLen:
-                                    inside += 1
-                                    bm.verts.new(pointOfIntersection)
-                                    brickFreqMatrix[x][y][z] = 2
-                                    brickFreqMatrix[x+1][y][z] = 2
-                            elif inside % 2 == 1 and brickFreqMatrix[x][y][z] == 0:
-                                brickFreqMatrix[x][y][z] = 1
-                    else:
-                        if inside % 2 == 1:
-                            brickFreqMatrix[x][y][z] = 1
+                    if brickFreqMatrix[x][y][z] == 0:
+                        brickFreqMatrix[x][y][z] = inside % 2
+                    intersections = rayObjIntersections(orig,ray,edgeLen,source)
+                    if intersections > 0:
+                        brickFreqMatrix[x][y][z] = 2
+                        brickFreqMatrix[x+1][y][z] = 2
+                        inside += intersections
     if "y" in axes:
         for z in range(len(coordMatrix[0][0])):
             for x in range(len(coordMatrix)):
@@ -197,23 +207,13 @@ def getBrickMatrix(source, coordMatrix, axes="xyz"):
                     rayZ = rayEnd[2] - orig[2]
                     ray = Vector((rayX, rayY, rayZ))
 
-                    if rayIntersectsObj(orig,ray,edgeLen,source):
-                        for f in sourceBM.faces:
-                            v1 = f.verts[0].co.copy()
-                            v2 = f.verts[1].co.copy()
-                            v3 = f.verts[2].co.copy()
-                            pointOfIntersection = geometry.intersect_ray_tri(v1, v2, v3, ray, orig)
-                            if pointOfIntersection:
-                                if (orig - pointOfIntersection).length <= edgeLen:
-                                    inside += 1
-                                    bm.verts.new(pointOfIntersection)
-                                    brickFreqMatrix[x][y][z] = 2
-                                    brickFreqMatrix[x][y+1][z] = 2
-                            elif inside % 2 == 1 and brickFreqMatrix[x][y][z] == 0:
-                                brickFreqMatrix[x][y][z] = 1
-                    else:
-                        if inside % 2 == 1:
-                            brickFreqMatrix[x][y][z] = 1
+                    if brickFreqMatrix[x][y][z] == 0:
+                        brickFreqMatrix[x][y][z] = inside % 2
+                    intersections = rayObjIntersections(orig,ray,edgeLen,source)
+                    if intersections > 0:
+                        brickFreqMatrix[x][y][z] = 2
+                        brickFreqMatrix[x][y+1][z] = 2
+                        inside += intersections
     if "z" in axes:
         for x in range(len(coordMatrix)):
             for y in range(len(coordMatrix[0])):
@@ -231,30 +231,20 @@ def getBrickMatrix(source, coordMatrix, axes="xyz"):
                     rayZ = rayEnd[2] - orig[2]
                     ray = Vector((rayX, rayY, rayZ))
 
-                    if rayIntersectsObj(orig,ray,edgeLen,source):
-                        for f in sourceBM.faces:
-                            v1 = f.verts[0].co.copy()
-                            v2 = f.verts[1].co.copy()
-                            v3 = f.verts[2].co.copy()
-                            pointOfIntersection = geometry.intersect_ray_tri(v1, v2, v3, ray, orig)
-                            if pointOfIntersection:
-                                if (orig - pointOfIntersection).length <= edgeLen:
-                                    inside += 1
-                                    bm.verts.new(pointOfIntersection)
-                                    brickFreqMatrix[x][y][z] = 2
-                                    brickFreqMatrix[x][y][z+1] = 2
-                            elif inside % 2 == 1 and brickFreqMatrix[x][y][z] == 0:
-                                brickFreqMatrix[x][y][z] = 1
-                    else:
-                        if inside % 2 == 1:
-                            brickFreqMatrix[x][y][z] = 1
+                    if brickFreqMatrix[x][y][z] == 0:
+                        brickFreqMatrix[x][y][z] = inside % 2
+                    intersections = rayObjIntersections(orig,ray,edgeLen,source)
+                    if intersections > 0:
+                        brickFreqMatrix[x][y][z] = 2
+                        brickFreqMatrix[x][y][z+1] = 2
+                        inside += intersections
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
                 if brickFreqMatrix[x][y][z] == 1:
-                    if (((brickFreqMatrix[x][y][z+1] == 0 or brickFreqMatrix[x][y][z-1] == 0) and "z" not in axes) or
-                        ((brickFreqMatrix[x][y+1][z] == 0 or brickFreqMatrix[x][y-1][z] == 0) and "y" not in axes) or
-                        ((brickFreqMatrix[x+1][y][z] == 0 or brickFreqMatrix[x-1][y][z] == 0) and "x" not in axes)):
+                    if ((((z == len(coordMatrix[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0) or (z == 0 or brickFreqMatrix[x][y][z-1] == 0)) and "z" not in axes) or
+                        (((y == len(coordMatrix[0])-1 or brickFreqMatrix[x][y+1][z] == 0) or (y == 0 or brickFreqMatrix[x][y-1][z] == 0)) and "y" not in axes) or
+                        (((x == len(coordMatrix)-1 or brickFreqMatrix[x+1][y][z] == 0) or (x == 0 or brickFreqMatrix[x-1][y][z] == 0)) and "x" not in axes)):
                         brickFreqMatrix[x][y][z] = 1.5
     # drawBMesh(bm)
     return brickFreqMatrix
@@ -276,6 +266,7 @@ def uniquify3DMatrix(matrix):
 
 def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False):
     """ Make bricks """
+    ct = time.time()
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     # initialize temporary object
@@ -323,9 +314,11 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
         coList.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
 
     # make bricks at determined locations
-    bricks = Bricks()
+    # bricks = Bricks()
+    bricks = []
     i = 0
     # TODO: Improve efficiency of the following nested for loop
+    ct = time.time()
     for x in range(len(coList)):
         print("x: " + str(x))
         for y in range(len(coList[0])):
@@ -333,23 +326,37 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
                 co = coList[x][y][z]
                 if co != -1:
                     i += 1
-                    brick = bricks.new(name='LEGOizer_%(n)s_brick_%(i)s' % locals(), location=Vector(co))
-                    if (z == 0 or brickFreqMatrix[x][y][z-1] != 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] != 0):
-                        brick.update_data(refBrickHidden.data)
-                    elif (z == 0 or brickFreqMatrix[x][y][z-1] != 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0):
-                        brick.update_data(refBrickUpper.data)
-                    elif (z == 0 or brickFreqMatrix[x][y][z-1] == 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] != 0):
-                        brick.update_data(refBrickLower.data)
+                    # brick = bricks.new(name='LEGOizer_%(n)s_brick_%(i)s' % locals(), location=Vector(co))
+                    if (z != 0 and brickFreqMatrix[x][y][z-1] != 0) and (z != len(coList[0][0])-1 and brickFreqMatrix[x][y][z+1] != 0):
+                        brickMesh = refBrickHidden.data
+                        # brick.update_data(refBrickHidden.data)
+                    elif (z != 0 and brickFreqMatrix[x][y][z-1] != 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0):
+                        brickMesh = refBrickUpper.data
+                        # brick.update_data(refBrickUpper.data)
+                    elif (z == 0 or brickFreqMatrix[x][y][z-1] == 0) and (z != len(coList[0][0])-1 and brickFreqMatrix[x][y][z+1] != 0):
+                        brickMesh = refBrickLower.data
+                        # brick.update_data(refBrickLower.data)
                     elif (z == 0 or brickFreqMatrix[x][y][z-1] == 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0):
-                        brick.update_data(refBrickUpperLower.data)
-                    elif z == len(coList[0][0])-1:
-                        if brickFreqMatrix[x][y][z+1] == 0:
-                            brickFreqMatrix[x][y][z] == 1
+                        brickMesh = refBrickUpperLower.data
+                        # brick.update_data(refBrickUpperLower.data)
+                    else:
+                        print("shouldn't get here")
 
-                    brick.link_to_scene(scn)
-                    bGroup.objects.link(brick.obj)
+                    brick = bpy.data.objects.new('LEGOizer_brick_' + str(i+1), brickMesh)
+                    brick.location = Vector(co)
+                    bricks.append(brick)
+                    # brick.link_to_scene(scn)
+                    # bGroup.objects.link(brick.obj)
 
-    select(bricks.getAllObjs())
+    stopWatch("Time Elapsed in loop", time.time()-ct)
+
+    # link objects to scene (this is done later to improve code performance)
+    for brick in bricks:
+        bGroup.objects.link(brick)
+        scn.objects.link(brick)
+
+    select(bricks)
+    # select(bricks.getAllObjs())
 
     scn.update()
 

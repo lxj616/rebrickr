@@ -282,19 +282,15 @@ class CustomProp(bpy.types.PropertyGroup):
         min=.001, max=1,
         default=.01)
 
-    bricks = None
-
-    lastSourceDataRef = None
-
     lastBrickHeight = FloatProperty(default=0)
     lastGap = FloatProperty(default=0)
     lastPreHollow = BoolProperty(default=False)
     lastShellThickness = IntProperty(default=0)
     lastCalculationAxes = StringProperty(default="")
     lastLogoDetail = StringProperty(default="None")
+    lastLogoResolution = FloatProperty(default=0.5)
     lastExposedUndersideDetail = StringProperty(default="None")
     lastHiddenUndersideDetail = StringProperty(default="None")
-    # lastLogoResolution = FloatProperty(default=0.5)
 
     # ADVANCED SETTINGS
     calculationAxes = EnumProperty(

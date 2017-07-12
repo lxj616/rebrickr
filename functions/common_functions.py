@@ -44,10 +44,10 @@ def stopWatch(text, value):
     valueS = (valueM - Minutes)*60
     Seconds = int(valueS)
 
-    # valueMs = (valueS - Seconds)*60
-    # Miliseconds = int(valueMs)
-    #
-    print(str(text) + ": " + str(Days) + ";" + str(Hours) + ":" + str(Minutes) + ";" + str(Seconds)) # + ";;" + str(Miliseconds))
+    valueMs = (valueS - Seconds)*60
+    Miliseconds = int(valueMs)
+
+    print(str(text) + ": " + str(Days) + ";" + str(Hours) + ":" + str(Minutes) + ";" + str(Seconds) + ";;" + str(Miliseconds))
 
 def groupExists(groupName):
     """ check if group exists in blender's memory """

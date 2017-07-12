@@ -142,27 +142,36 @@ class legoizerLegoize(bpy.types.Operator):
         # update refLogo
         if cm.logoDetail == "None":
             refLogo = None
-        elif groupExists("LEGOizer_refLogo"):
-            refLogoImport = bpy.data.groups["LEGOizer_refLogo"].objects[0]
-            refLogo = bpy.data.objects.new(refLogoImport.name+"2", refLogoImport.data.copy())
+        elif cm.lastLogoResolution == cm.logoResolution and groupExists("LEGOizer_refLogo"):
+            rlGroup = bpy.data.groups["LEGOizer_refLogo"]
+            refLogo = rlGroup.objects[1]
         else:
-            # import refLogo and add to group
-            refLogoImport = importLogo()
-            scn.objects.unlink(refLogoImport)
-            rlGroup = bpy.data.groups.new("LEGOizer_refLogo")
-            rlGroup.objects.link(refLogoImport)
-            refLogo = bpy.data.objects.new(refLogoImport.name+"2", refLogoImport.data.copy())
-
-        # decimate refLogo
-        if refLogo and cm.logoResolution < 1:
-            dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
-            dMod.ratio = cm.logoResolution
-            scn.objects.link(refLogo)
-            select(refLogo, active=refLogo)
-            bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
-            scn.objects.unlink(refLogo)
+            if groupExists("LEGOizer_refLogo"):
+                rlGroup = bpy.data.groups["LEGOizer_refLogo"]
+                refLogoImport = rlGroup.objects[0]
+                rlGroup.objects.unlink(rlGroup.objects[1])
+                refLogo = bpy.data.objects.new(refLogoImport.name+"2", refLogoImport.data.copy())
+                rlGroup.objects.link(refLogo)
+            else:
+                # import refLogo and add to group
+                refLogoImport = importLogo()
+                scn.objects.unlink(refLogoImport)
+                rlGroup = bpy.data.groups.new("LEGOizer_refLogo")
+                rlGroup.objects.link(refLogoImport)
+                refLogo = bpy.data.objects.new(refLogoImport.name+"2", refLogoImport.data.copy())
+                rlGroup.objects.link(refLogo)
+            # decimate refLogo
+            # TODO: Speed this up, if possible
+            if refLogo and cm.logoResolution < 1:
+                dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
+                dMod.ratio = cm.logoResolution
+                scn.objects.link(refLogo)
+                select(refLogo, active=refLogo)
+                bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
+                scn.objects.unlink(refLogo)
 
         # set up refLogoHidden and refLogoExposed based on cm.logoDetail
+        # TODO: only do the following if necessary
         if cm.logoDetail == "On Exposed Bricks":
             refLogoHidden = None
             refLogoExposed = refLogo
