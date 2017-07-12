@@ -130,7 +130,7 @@ class legoizerLegoize(bpy.types.Operator):
         if not self.isValid(LEGOizer_bricks, source):
              return {"CANCELLED"}
 
-        if not groupExists("LEGOizer_%(n)s"):
+        if not groupExists("LEGOizer_%(n)s" % locals()):
             # create 'LEGOizer_[cm.source_name]' group with source object
             sGroup = bpy.data.groups.new("LEGOizer_%(n)s" % locals())
             sGroup.objects.link(source)
@@ -138,7 +138,6 @@ class legoizerLegoize(bpy.types.Operator):
         # get cross section
         source_details = bounds(source)
         dimensions = Bricks.get_dimensions(cm.brickHeight, cm.gap)
-        # axis, lScale, CS_slices = getCrossSection(source, source_details, dimensions)
 
         # update refLogo
         if cm.logoDetail == "None":
@@ -154,28 +153,25 @@ class legoizerLegoize(bpy.types.Operator):
             rlGroup.objects.link(refLogoImport)
             refLogo = bpy.data.objects.new(refLogoImport.name+"2", refLogoImport.data.copy())
 
-        # # decimate refLogo
-        # if refLogo and cm.logoResolution < 1:
-        #     dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
-        #     dMod.ratio = cm.logoResolution
-        #     scn.objects.link(refLogo)
-        #     select(refLogo, active=refLogo)
-        #     bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
-
+        # decimate refLogo
+        if refLogo and cm.logoResolution < 1:
+            dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
+            dMod.ratio = cm.logoResolution
+            scn.objects.link(refLogo)
+            select(refLogo, active=refLogo)
+            bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
+            scn.objects.unlink(refLogo)
 
         # set up refLogoHidden and refLogoExposed based on cm.logoDetail
         if cm.logoDetail == "On Exposed Bricks":
             refLogoHidden = None
             refLogoExposed = refLogo
-            print("exposed")
         elif cm.logoDetail == "On All Bricks":
             refLogoHidden = refLogo
             refLogoExposed = refLogo
-            print("all")
         elif cm.logoDetail == "None":
             refLogoHidden = None
             refLogoExposed = None
-            print("none")
         if groupExists("LEGOizer_%(n)s_refBricks" % locals()) and len(bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()].objects) > 0:
                 rbGroup = bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()]
                 # get 1x1 refBrick from group
@@ -188,14 +184,14 @@ class legoizerLegoize(bpy.types.Operator):
                 rbGroup.objects.unlink(refBrickLower)
                 rbGroup.objects.unlink(refBrickUpperLower)
                 # update that refBrick
-                m0 = Bricks.new_mesh(name=refBrickHidden.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoHidden)
-                refBrickHidden.data = m0
-                m1 = Bricks().new_mesh(name=refBrickUpper.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoExposed)
-                refBrickUpper.data = m1
-                m2 = Bricks().new_mesh(name=refBrickLower.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoHidden)
-                refBrickLower.data = m2
-                m3 = Bricks().new_mesh(name=refBrickUpperLower.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoExposed)
-                refBrickUpperLower.data = m3
+                m = refBrickHidden.data
+                Bricks.new_mesh(name=refBrickHidden.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoHidden, meshToOverwrite=m)
+                m = refBrickUpper.data
+                Bricks().new_mesh(name=refBrickUpper.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoExposed, meshToOverwrite=m)
+                m = refBrickLower.data
+                Bricks().new_mesh(name=refBrickLower.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoHidden, meshToOverwrite=m)
+                m = refBrickUpperLower.data
+                Bricks().new_mesh(name=refBrickUpperLower.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoExposed, meshToOverwrite=m)
                 # link refBricks to new group
                 rbGroup.objects.link(refBrickHidden)
                 rbGroup.objects.link(refBrickUpper)
@@ -243,7 +239,14 @@ class legoizerLegoize(bpy.types.Operator):
             identicalTransforms = False
 
         # if any related source data or settings have changed
-        if cm.brickHeight != cm.lastBrickHeight or cm.gap != cm.lastGap or cm.preHollow != cm.lastPreHollow or cm.shellThickness != cm.lastShellThickness or meshComparasin != 'Same' or not identicalTransforms or cm.lastCalculationAxes != cm.calculationAxes or cm.lastLogoDetail != cm.logoDetail:
+        if (cm.brickHeight != cm.lastBrickHeight or
+           cm.gap != cm.lastGap or
+           cm.preHollow != cm.lastPreHollow or
+           cm.shellThickness != cm.lastShellThickness or
+           meshComparasin != 'Same' or
+           not identicalTransforms or
+           cm.lastCalculationAxes != cm.calculationAxes or
+           cm.lastLogoDetail != cm.logoDetail):
             # delete old bricks if present
             if groupExists(LEGOizer_bricks):
                 bricks = list(bpy.data.groups[LEGOizer_bricks].objects)
@@ -260,6 +263,8 @@ class legoizerLegoize(bpy.types.Operator):
         cm.lastPreHollow = cm.preHollow
         cm.lastShellThickness = cm.shellThickness
         cm.lastCalculationAxes = cm.calculationAxes
+        cm.lastExposedUndersideDetail = cm.exposedUndersideDetail
+        cm.lastHiddenUndersideDetail = cm.hiddenUndersideDetail
         # cm.lastLogoResolution = cm.logoResolution
         cm.lastLogoDetail = cm.logoDetail
         cm.changesToCommit = True

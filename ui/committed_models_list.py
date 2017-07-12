@@ -292,6 +292,8 @@ class CustomProp(bpy.types.PropertyGroup):
     lastShellThickness = IntProperty(default=0)
     lastCalculationAxes = StringProperty(default="")
     lastLogoDetail = StringProperty(default="None")
+    lastExposedUndersideDetail = StringProperty(default="None")
+    lastHiddenUndersideDetail = StringProperty(default="None")
     # lastLogoResolution = FloatProperty(default=0.5)
 
     # ADVANCED SETTINGS

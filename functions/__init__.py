@@ -123,23 +123,26 @@ def generateLattice(R, s, o=(0,0,0)):
                 p = (xCO, yCO, zCO)
                 v = bme.verts.new(tupleAdd(p, o))
                 coordList2.append(v.co.copy())
-                # create new edge parallel x axis
-                # if z != 0:
-                #     e = bme.edges.new((coordList2[z], coordList2[z-1]))
             coordList1.append(coordList2)
-            # if y != 0:
-            #     for z in range(zL):
-            #         e = bme.edges.new((coordList1[y][z], coordList1[y-1][z]))
         coordMatrix.append(coordList1)
-        # if x != 0:
-        #     for y in range(yL):
-        #         for z in range(zL):
-        #             e = bme.edges.new((vertMatrix[x][y][z], vertMatrix[x-1][y][z]))
     # return bmesh
     return coordMatrix
 
-def getBrickMatrix(sourceBM, coordMatrix, axes="xyz"):
+def rayIntersectsObj(point,direction,edgeLen,ob):
+    """ returns True if ray intersects obj """
+    _,location,normal,index = ob.ray_cast(point,direction,distance=edgeLen*1.00000000001)
+    if index == -1:
+        return False
+    else:
+        return True
+
+def getBrickMatrix(source, coordMatrix, axes="xyz"):
     brickFreqMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
+    # convert source to bmesh and convert faces to tri's
+    sourceBM = bmesh.new()
+    sourceBM.from_mesh(source.data)
+    bmesh.ops.triangulate(sourceBM, faces=sourceBM.faces)
+
     bm = bmesh.new()
     axes = axes.lower()
     if "x" in axes:
@@ -147,119 +150,112 @@ def getBrickMatrix(sourceBM, coordMatrix, axes="xyz"):
             for y in range(len(coordMatrix[0])):
                 inside = 0
                 for x in range(len(coordMatrix)):
-                    # inside = checkIntersections(x, y, z, inside, coordMatrix, sourceBM, bm, brickFreqMatrix)
                     orig = coordMatrix[x][y][z]
                     nextVerts = []
                     try:
                         rayEnd = coordMatrix[x+1][y][z]
                     except:
                         continue
+                    # check if point can be thrown away
+                    edgeLen = (orig - rayEnd).length
                     rayX = rayEnd[0] - orig[0]
                     rayY = rayEnd[1] - orig[1]
                     rayZ = rayEnd[2] - orig[2]
                     ray = Vector((rayX, rayY, rayZ))
 
-                    for f in sourceBM.faces:
-                        v1 = f.verts[0].co.copy()
-                        v2 = f.verts[1].co.copy()
-                        v3 = f.verts[2].co.copy()
-                        pointOfIntersection = geometry.intersect_ray_tri(v1, v2, v3, ray, orig)
-                        # print(type(pointOfIntersection), pointOfIntersection)
-                        if pointOfIntersection:
-                            # TODO: calculate this earlier so it doesn't have to be calculated every time
-                            edgeLen = (orig - rayEnd).length
-                            intersectLen = (orig - pointOfIntersection).length
-                            if intersectLen <= edgeLen:
-                                inside += 1
-                                bm.verts.new(pointOfIntersection)
-                                # brickFreqMatrix[x][y][z] += (orig - pointOfIntersection).length/edgeLen
-                                # brickFreqMatrix[x+1][y][z] += (rayEnd - pointOfIntersection).length/edgeLen
-                                brickFreqMatrix[x][y][z] = 2
-                                brickFreqMatrix[x+1][y][z] = 2
-                    if inside % 2 == 1 and brickFreqMatrix[x][y][z] == 0:
-                        brickFreqMatrix[x][y][z] = 1
+                    if rayIntersectsObj(orig,ray,edgeLen,source):
+                        for f in sourceBM.faces:
+                            v1 = f.verts[0].co.copy()
+                            v2 = f.verts[1].co.copy()
+                            v3 = f.verts[2].co.copy()
+                            pointOfIntersection = geometry.intersect_ray_tri(v1, v2, v3, ray, orig)
+                            if pointOfIntersection:
+                                if (orig - pointOfIntersection).length <= edgeLen:
+                                    inside += 1
+                                    bm.verts.new(pointOfIntersection)
+                                    brickFreqMatrix[x][y][z] = 2
+                                    brickFreqMatrix[x+1][y][z] = 2
+                            elif inside % 2 == 1 and brickFreqMatrix[x][y][z] == 0:
+                                brickFreqMatrix[x][y][z] = 1
+                    else:
+                        if inside % 2 == 1:
+                            brickFreqMatrix[x][y][z] = 1
     if "y" in axes:
         for z in range(len(coordMatrix[0][0])):
             for x in range(len(coordMatrix)):
                 inside = 0
                 for y in range(len(coordMatrix[0])):
-                    # inside = checkIntersections(x, y, z, inside, coordMatrix, sourceBM, bm, brickFreqMatrix)
                     orig = coordMatrix[x][y][z]
                     nextVerts = []
                     try:
                         rayEnd = coordMatrix[x][y+1][z]
                     except:
                         continue
+                    edgeLen = (orig - rayEnd).length
                     rayX = rayEnd[0] - orig[0]
                     rayY = rayEnd[1] - orig[1]
                     rayZ = rayEnd[2] - orig[2]
                     ray = Vector((rayX, rayY, rayZ))
 
-                    for f in sourceBM.faces:
-                        v1 = f.verts[0].co.copy()
-                        v2 = f.verts[1].co.copy()
-                        v3 = f.verts[2].co.copy()
-                        pointOfIntersection = geometry.intersect_ray_tri(v1, v2, v3, ray, orig)
-                        # print(type(pointOfIntersection), pointOfIntersection)
-                        if pointOfIntersection:
-                            # TODO: calculate this earlier so it doesn't have to be calculated every time
-                            edgeLen = (orig - rayEnd).length
-                            if (orig - pointOfIntersection).length <= edgeLen:
-                                inside += 1
-                                bm.verts.new(pointOfIntersection)
-                                # brickFreqMatrix[x][y][z] += (orig - pointOfIntersection).length/edgeLen
-                                # brickFreqMatrix[x+1][y][z] += (rayEnd - pointOfIntersection).length/edgeLen
-                                brickFreqMatrix[x][y][z] = 2
-                                brickFreqMatrix[x][y+1][z] = 2
-                        elif inside % 2 == 1 and brickFreqMatrix[x][y][z] == 0:
+                    if rayIntersectsObj(orig,ray,edgeLen,source):
+                        for f in sourceBM.faces:
+                            v1 = f.verts[0].co.copy()
+                            v2 = f.verts[1].co.copy()
+                            v3 = f.verts[2].co.copy()
+                            pointOfIntersection = geometry.intersect_ray_tri(v1, v2, v3, ray, orig)
+                            if pointOfIntersection:
+                                if (orig - pointOfIntersection).length <= edgeLen:
+                                    inside += 1
+                                    bm.verts.new(pointOfIntersection)
+                                    brickFreqMatrix[x][y][z] = 2
+                                    brickFreqMatrix[x][y+1][z] = 2
+                            elif inside % 2 == 1 and brickFreqMatrix[x][y][z] == 0:
+                                brickFreqMatrix[x][y][z] = 1
+                    else:
+                        if inside % 2 == 1:
                             brickFreqMatrix[x][y][z] = 1
     if "z" in axes:
         for x in range(len(coordMatrix)):
             for y in range(len(coordMatrix[0])):
                 inside = 0
                 for z in range(len(coordMatrix[0][0])):
-                    # inside = checkIntersections(x, y, z, inside, coordMatrix, sourceBM, bm, brickFreqMatrix)
                     orig = coordMatrix[x][y][z]
                     nextVerts = []
                     try:
                         rayEnd = coordMatrix[x][y][z+1]
                     except:
                         continue
+                    edgeLen = (orig - rayEnd).length
                     rayX = rayEnd[0] - orig[0]
                     rayY = rayEnd[1] - orig[1]
                     rayZ = rayEnd[2] - orig[2]
                     ray = Vector((rayX, rayY, rayZ))
 
-                    for f in sourceBM.faces:
-                        v1 = f.verts[0].co.copy()
-                        v2 = f.verts[1].co.copy()
-                        v3 = f.verts[2].co.copy()
-                        pointOfIntersection = geometry.intersect_ray_tri(v1, v2, v3, ray, orig)
-                        # print(type(pointOfIntersection), pointOfIntersection)
-                        if pointOfIntersection:
-                            # TODO: calculate this earlier so it doesn't have to be calculated every time
-                            edgeLen = (orig - rayEnd).length
-                            if (orig - pointOfIntersection).length <= edgeLen:
-                                inside += 1
-                                bm.verts.new(pointOfIntersection)
-                                # brickFreqMatrix[x][y][z] += (orig - pointOfIntersection).length/edgeLen
-                                # brickFreqMatrix[x+1][y][z] += (rayEnd - pointOfIntersection).length/edgeLen
-                                brickFreqMatrix[x][y][z] = 2
-                                brickFreqMatrix[x][y][z+1] = 2
-                        elif inside % 2 == 1 and brickFreqMatrix[x][y][z] == 0:
+                    if rayIntersectsObj(orig,ray,edgeLen,source):
+                        for f in sourceBM.faces:
+                            v1 = f.verts[0].co.copy()
+                            v2 = f.verts[1].co.copy()
+                            v3 = f.verts[2].co.copy()
+                            pointOfIntersection = geometry.intersect_ray_tri(v1, v2, v3, ray, orig)
+                            if pointOfIntersection:
+                                if (orig - pointOfIntersection).length <= edgeLen:
+                                    inside += 1
+                                    bm.verts.new(pointOfIntersection)
+                                    brickFreqMatrix[x][y][z] = 2
+                                    brickFreqMatrix[x][y][z+1] = 2
+                            elif inside % 2 == 1 and brickFreqMatrix[x][y][z] == 0:
+                                brickFreqMatrix[x][y][z] = 1
+                    else:
+                        if inside % 2 == 1:
                             brickFreqMatrix[x][y][z] = 1
-    if "z" not in axes:
-        for x in range(len(coordMatrix)):
-            for y in range(len(coordMatrix[0])):
-                for z in range(len(coordMatrix[0][0])):
-                    if brickFreqMatrix[x][y][z] == 1:
-                        if (((brickFreqMatrix[x][y][z+1] == 0 or brickFreqMatrix[x][y][z-1] == 0) and "z" not in axes) or
-                            ((brickFreqMatrix[x][y+1][z] == 0 or brickFreqMatrix[x][y-1][z] == 0) and "y" not in axes) or
-                            ((brickFreqMatrix[x+1][y][z] == 0 or brickFreqMatrix[x-1][y][z] == 0) and "x" not in axes)):
-                            brickFreqMatrix[x][y][z] = 1.5
-
-
-
+    for x in range(len(coordMatrix)):
+        for y in range(len(coordMatrix[0])):
+            for z in range(len(coordMatrix[0][0])):
+                if brickFreqMatrix[x][y][z] == 1:
+                    if (((brickFreqMatrix[x][y][z+1] == 0 or brickFreqMatrix[x][y][z-1] == 0) and "z" not in axes) or
+                        ((brickFreqMatrix[x][y+1][z] == 0 or brickFreqMatrix[x][y-1][z] == 0) and "y" not in axes) or
+                        ((brickFreqMatrix[x+1][y][z] == 0 or brickFreqMatrix[x-1][y][z] == 0) and "x" not in axes)):
+                        brickFreqMatrix[x][y][z] = 1.5
     # drawBMesh(bm)
     return brickFreqMatrix
 
@@ -297,12 +293,7 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
     coordMatrix = generateLattice(R, lScale, offset)
     coordMatrixLast = deepcopy(coordMatrix)
     # drawBMesh(makeLattice(R, lScale, offset))
-
-    # convert source to bmesh and convert faces to tri's
-    sourceBM = bmesh.new()
-    sourceBM.from_mesh(source.data)
-    bmesh.ops.triangulate(sourceBM, faces=sourceBM.faces)
-    brickFreqMatrix = getBrickMatrix(sourceBM, coordMatrix, axes=cm.calculationAxes)
+    brickFreqMatrix = getBrickMatrix(source, coordMatrix, axes=cm.calculationAxes)
     # b = bmesh.new()
     # for x in range(len(coordMatrix)):
     #     for y in range(len(coordMatrix[x])):
@@ -320,60 +311,6 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
         threshold = 0
     coList = getCOList(brickFreqMatrix, coordMatrix, threshold)
 
-    # for sl in slicesList:
-    #     slices = sl["slices"]
-    #     lScale = sl["lScale"]
-    #     R = sl["R"]
-    #     axis = sl["axis"]
-    #
-    #     # for each slice
-    #     latticeBM = makeLattice(R, lScale, offset)
-    #     for bm in slices:
-    #         drawBMesh(bm) # draw the slice (for testing purposes)
-    #         # create lattice bmesh
-    #         # TODO: lattice BM can be created outside of for loop and transformed each time, if that's more efficient
-    #         bm.verts.ensure_lookup_table()
-    #         if axis == "z":
-    #             offset = (source_details.x.mid, source_details.y.mid, bm.verts[0].co.z)
-    #         elif axis == "y":
-    #             offset = (source_details.x.mid, bm.verts[0].co.y, source_details.z.mid)
-    #         else:
-    #             offset = ( bm.verts[0].co.x, source_details.y.mid, source_details.z.mid)
-    #         latticeBM = makeLattice(R, lScale, offset)
-    #         drawBMesh(latticeBM) # draw the lattice (for testing purposes)
-    #         coListNew = getIntersectedEdgeVerts(bm, latticeBM, axis)
-    #         insideVerts = getInsideVerts(bm, latticeBM, coListNew, source)
-    #         try:
-    #             if lastcoList and lastInsideVerts:
-    #                 pass
-    #         except:
-    #             lastcoList = coListNew
-    #             lastInsideVerts = insideVerts
-    #         if preHollow and len(lastcoList) != 0:
-    #             print(len(insideVerts))
-    #             # bmJunk = bmesh.new()
-    #             # for co in insideVerts:
-    #             #     v2 = bmJunk.verts.new((co))
-    #             #     if axis == "z":
-    #             #         v2.co.z = lastcoList[0][2]
-    #             #     if axis == "y":
-    #             #         v2.co.y = lastcoList[0][1]
-    #             #     else:
-    #             #         v2.co.x = lastcoList[0][0]
-    #             #
-    #             #     if v2.co.to_tuple() not in lastcoList and v2.co.to_tuple() not in lastInsideVerts:
-    #             #         print("yes!")
-    #             #         coListNew.append(co)
-    #         else:
-    #             pass
-    #             # coList += insideVerts
-    #         print("len(coListNew): " + str(len(coListNew)))
-    #         coList += coListNew
-    #         lastcoList = coListNew
-    #         lastInsideVerts = insideVerts
-    #     coList += insideVerts
-
-
     # create group for lego bricks
     n = cm.source_name
     LEGOizer_bricks = 'LEGOizer_%(n)s_bricks' % locals()
@@ -388,22 +325,27 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
     # make bricks at determined locations
     bricks = Bricks()
     i = 0
-    print(coList)
+    # TODO: Improve efficiency of the following nested for loop
     for x in range(len(coList)):
+        print("x: " + str(x))
         for y in range(len(coList[0])):
             for z in range(len(coList[0][0])):
-                i += 1
                 co = coList[x][y][z]
                 if co != -1:
+                    i += 1
                     brick = bricks.new(name='LEGOizer_%(n)s_brick_%(i)s' % locals(), location=Vector(co))
-                    if (z != len(coList[0][0])-1 and brickFreqMatrix[x][y][z-1] != 0) and (z != 0 and brickFreqMatrix[x][y][z+1] != 0):
+                    if (z == 0 or brickFreqMatrix[x][y][z-1] != 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] != 0):
                         brick.update_data(refBrickHidden.data)
-                    elif (z != len(coList[0][0])-1 and brickFreqMatrix[x][y][z-1] != 0) and (z != 0 and brickFreqMatrix[x][y][z+1] == 0):
+                    elif (z == 0 or brickFreqMatrix[x][y][z-1] != 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0):
                         brick.update_data(refBrickUpper.data)
-                    elif (z != len(coList[0][0])-1 and brickFreqMatrix[x][y][z-1] == 0) and (z != 0 and brickFreqMatrix[x][y][z+1] != 0):
+                    elif (z == 0 or brickFreqMatrix[x][y][z-1] == 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] != 0):
                         brick.update_data(refBrickLower.data)
-                    elif (z != len(coList[0][0])-1 and brickFreqMatrix[x][y][z-1] == 0) and (z != 0 and brickFreqMatrix[x][y][z+1] == 0):
+                    elif (z == 0 or brickFreqMatrix[x][y][z-1] == 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0):
                         brick.update_data(refBrickUpperLower.data)
+                    elif z == len(coList[0][0])-1:
+                        if brickFreqMatrix[x][y][z+1] == 0:
+                            brickFreqMatrix[x][y][z] == 1
+
                     brick.link_to_scene(scn)
                     bGroup.objects.link(brick.obj)
 
