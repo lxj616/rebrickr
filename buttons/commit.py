@@ -75,7 +75,7 @@ class legoizerCommit(bpy.types.Operator):
         # bpy.data.groups.remove(sourceGroup, do_unlink=True)
 
         # # clean up 'LEGOizer_[source name]_refBrick' group
-        # refBrickGroup = bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()]
+        # refBrickGroup = bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()]
         # refBrick = refBrickGroup.objects[0]
         # delete(refBrick)
         # bpy.data.groups.remove(refBrickGroup, do_unlink=True)

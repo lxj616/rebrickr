@@ -71,7 +71,7 @@ class LegoModelsPanel(Panel):
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
-            groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBrick" % locals())
+            groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
             col = layout.column(align=True)
             col.label("Source Object:")
             row = col.row(align=True)
@@ -128,14 +128,19 @@ class SettingsPanel(Panel):
             row.prop(cm, "shellThickness")
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(cm, "logoDetail", text="Logo")
+        row.label("Logo Detail:")
+        row = col.row(align=True)
+        row.prop(cm, "logoDetail", text="")
         if cm.logoDetail != "None":
-            col = layout.column(align=True)
             row = col.row(align=True)
             row.prop(cm, "logoResolution", text="Logo Resolution")
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(cm, "undersideDetail", text="Underside")
+        row.label("Underside Detail:")
+        row = col.row(align=True)
+        row.prop(cm, "hiddenUndersideDetail", text="Hidden")
+        row = col.row(align=True)
+        row.prop(cm, "exposedUndersideDetail", text="Exposed")
         col = layout.column(align=True)
         row = col.row(align=True)
         row.prop(cm, "studVerts")
@@ -143,7 +148,7 @@ class SettingsPanel(Panel):
         row = col.row(align=True)
         n = cm.source_name
         LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
-        groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBrick" % locals())
+        groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
         if not groupExistsBool:
             row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD").action = "CREATE"
         else:
@@ -178,4 +183,4 @@ class AdvancedPanel(Panel):
 
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(cm, "calculationAxis", text="")
+        row.prop(cm, "calculationAxes", text="")

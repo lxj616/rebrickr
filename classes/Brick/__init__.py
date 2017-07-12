@@ -22,7 +22,9 @@ Created by Christopher Gearhart
 # system imports
 import bpy
 import bmesh
+from mathutils import Vector, Matrix
 from .lego_mesh_generate import *
+from ...functions import *
 
 class Bricks:
     def __init__(self):
@@ -38,14 +40,13 @@ class Bricks:
     def getAllObjs(self):
         brickObjs = []
         for o in self.objects.values():
-            print(o)
             brickObjs.append(o.obj)
         return brickObjs
 
     @staticmethod
-    def new_obj(name='new_brick', height=1, type=[1,1], logo=False):
-        obj = Brick().new_brick(name=name, height=height, type=type, logo=logo)
-        return obj
+    def new_mesh(name='new_brick', height=1, type=[1,1], logo=False, undersideDetail="Flat", meshToOverwrite=None):
+        m = Brick().new_brick(name=name, height=height, type=type, logo=logo, undersideDetail=undersideDetail, brickMesh=meshToOverwrite)
+        return m
 
     @staticmethod
     def get_dimensions(height=1, gap_percentage=0.01):
@@ -107,7 +108,7 @@ class Brick:
     def get_settings(cm):
         """ returns dictionary containing brick detail settings """
         settings = {}
-        settings["underside"] = cm.undersideDetail
+        # settings["underside"] = cm.undersideDetail
         settings["logo"] = cm.logoDetail
         settings["numStudVerts"] = cm.studVerts
         return settings
@@ -119,7 +120,7 @@ class Brick:
         self.brick_dimensions = Bricks.get_dimensions(height, gap_percentage)
         return self.brick_dimensions
 
-    def new_brick(self, name="brick", height=1, type=[1,1], logo=False):
+    def new_brick(self, name="brick", height=1, type=[1,1], logo=False, undersideDetail="Flat", brickMesh=None):
         """ create unlinked LEGO Brick at origin """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
@@ -127,7 +128,8 @@ class Brick:
         self.set_dimensions(height)
 
         bm = bmesh.new()
-        brickBM = makeBrick(dimensions=self.brick_dimensions, brickSize=type, numStudVerts=settings["numStudVerts"], detail=cm.undersideDetail)
+
+        brickBM = makeBrick(dimensions=self.brick_dimensions, brickSize=type, numStudVerts=settings["numStudVerts"], detail=undersideDetail)
         studInset = self.brick_dimensions["thickness"] * 0.9
         if logo:
             logoBM = bmesh.new()
@@ -140,12 +142,6 @@ class Brick:
             logoMesh = bpy.data.meshes.new('LEGOizer_tempMesh')
             logoObj = bpy.data.objects.new('LEGOizer_tempObj', logoMesh)
             logoBM.to_mesh(logoMesh)
-            if cm.logoResolution < 1:
-                dMod = logoObj.modifiers.new('Decimate', type='DECIMATE')
-                dMod.ratio = cm.logoResolution
-                scn.objects.link(logoObj)
-                select(logoObj, active=logoObj)
-                bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
             bm.from_mesh(logoMesh)
             bpy.data.objects.remove(logoObj, do_unlink=True)
             bpy.data.meshes.remove(logoMesh, do_unlink=True)
@@ -157,9 +153,9 @@ class Brick:
         bpy.data.meshes.remove(cube)
 
         # create apply mesh data to 'legoizer_brick1x1' data
-        brick1x1Mesh = bpy.data.meshes.new(name + 'Mesh')
-        bm.to_mesh(brick1x1Mesh)
-        self.update_data(brick1x1Mesh)
+        if not brickMesh:
+            brickMesh = bpy.data.meshes.new(name + 'Mesh')
+        bm.to_mesh(brickMesh)
 
         # return updated brick object
-        return self.obj
+        return brickMesh

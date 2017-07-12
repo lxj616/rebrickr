@@ -232,7 +232,7 @@ class CustomProp(bpy.types.PropertyGroup):
         name="Logo Detailing",
         description="Choose whether to construct or deconstruct the LEGO bricks",
         items=[("On All Bricks", "On All Bricks", "Include LEGO Logo on all bricks"),
-            #   ("On Exposed Bricks", "On Exposed Bricks", "Include LEGO Logo only on bricks with studs exposed"),
+              ("On Exposed Bricks", "On Exposed Bricks", "Include LEGO Logo only on bricks with studs exposed"),
               ("None", "None", "Don't include LEGO Logo on bricks")],
         default="None")
 
@@ -244,9 +244,16 @@ class CustomProp(bpy.types.PropertyGroup):
         precision=2,
         default=0.5)
 
-    undersideDetail = EnumProperty(
-        name="Underside Detailing",
-        description="Choose whether to construct or deconstruct the LEGO bricks",
+    hiddenUndersideDetail = EnumProperty(
+        name="Hidden Underside Detailing",
+        description="Choose the level of detail to include for the underside of hidden bricks",
+        items=[("High Detail", "High Detail", "Draw intricate details on brick underside"),
+              ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
+              ("Flat", "Flat", "draw single face on brick underside")],
+        default="Flat")
+    exposedUndersideDetail = EnumProperty(
+        name="Eposed Underside Detailing",
+        description="Choose the level of detail to include for the underside of exposed bricks",
         items=[("High Detail", "High Detail", "Draw intricate details on brick underside"),
               ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
               ("Flat", "Flat", "draw single face on brick underside")],
@@ -283,18 +290,22 @@ class CustomProp(bpy.types.PropertyGroup):
     lastGap = FloatProperty(default=0)
     lastPreHollow = BoolProperty(default=False)
     lastShellThickness = IntProperty(default=0)
-    # lastLogoDetail = StringProperty(default="None")
+    lastCalculationAxes = StringProperty(default="")
+    lastLogoDetail = StringProperty(default="None")
     # lastLogoResolution = FloatProperty(default=0.5)
 
     # ADVANCED SETTINGS
-    calculationAxis = EnumProperty(
-        name="Calculation Axis",
+    calculationAxes = EnumProperty(
+        name="Calculation Axes",
         description="PLACEHOLDER", # TODO: Fill in placeholders on this line and the next four
-        items=[("Auto", "Auto", "PLACEHOLDER"),
-              ("X Axis", "X Axis", "PLACEHOLDER"),
-              ("Y Axis", "Y Axis", "PLACEHOLDER"),
-              ("Z Axis", "Z Axis", "PLACEHOLDER")],
-        default="Auto")
+        items=[("XYZ", "XYZ", "PLACEHOLDER"),
+              ("XY", "XY", "PLACEHOLDER"),
+              ("YZ", "YZ", "PLACEHOLDER"),
+              ("XZ", "XZ", "PLACEHOLDER"),
+              ("X", "X", "PLACEHOLDER"),
+              ("Y", "Y", "PLACEHOLDER"),
+              ("Z", "Z", "PLACEHOLDER")],
+        default="XY")
 
     logoMesh = None
 
