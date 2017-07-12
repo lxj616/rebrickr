@@ -140,10 +140,8 @@ class Brick:
             bmesh.ops.translate(logoBM, vec=Vector((0, 0, self.brick_dimensions["logo_offset"])), verts=logoBM.verts)
             # add logoBM mesh to bm mesh
             logoMesh = bpy.data.meshes.new('LEGOizer_tempMesh')
-            logoObj = bpy.data.objects.new('LEGOizer_tempObj', logoMesh)
             logoBM.to_mesh(logoMesh)
             bm.from_mesh(logoMesh)
-            bpy.data.objects.remove(logoObj, do_unlink=True)
             bpy.data.meshes.remove(logoMesh, do_unlink=True)
 
         # add brick mesh to bm mesh
