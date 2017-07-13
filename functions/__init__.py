@@ -69,18 +69,6 @@ def bounds(obj, local=False):
     o_details = collections.namedtuple('object_details', 'x y z')
     return o_details(**originals)
 
-def addItemToCMList(name="New Model"):
-    scn = bpy.context.scene
-    item = scn.cmlist.add()
-    item.id = len(scn.cmlist)
-    scn.cmlist_index = (len(scn.cmlist)-1)
-    if bpy.context.active_object == None:
-        item.source_name = ""
-    else:
-        item.source_name = bpy.context.active_object.name # assign name of selected object
-    item.name = name
-    return True
-
 def importLogo():
     """ import logo object from legoizer addon folder """
     addonsPath = bpy.utils.user_resource('SCRIPTS', "addons")
@@ -136,7 +124,7 @@ def pointInsideMesh(point,ob):
         orig = point
         count = 0
         while True:
-            location,normal,index = ob.ray_cast(orig,orig+axis*10000.0)
+            _,location,normal,index = ob.ray_cast(orig,orig+axis*10000.0)
             if index == -1: break
             count += 1
             orig = location + axis*0.00001
@@ -156,6 +144,36 @@ def rayObjIntersections(point,direction,edgeLen,ob):
         orig = location + direction*0.00001
     return intersections
 
+def tempFuncName(x0, y0, z0, coordMatrix, brickFreqMatrix, source, x1, y1, z1, inside=None):
+    orig = coordMatrix[x0][y0][z0]
+    try:
+        rayEnd = coordMatrix[x1][y1][z1]
+    except:
+        return
+    # check if point can be thrown away
+    edgeLen = (orig - rayEnd).length
+    rayX = rayEnd[0] - orig[0]
+    rayY = rayEnd[1] - orig[1]
+    rayZ = rayEnd[2] - orig[2]
+    ray = Vector((rayX, rayY, rayZ))
+
+    if pointInsideMesh(orig, source) and brickFreqMatrix[x0][y0][z0] == 0:
+        brickFreqMatrix[x0][y0][z0] = 1
+    intersections = rayObjIntersections(orig,ray,edgeLen,source)
+    if intersections > 0:
+        brickFreqMatrix[x0][y0][z0] = 2
+        brickFreqMatrix[x1][y1][z1] = 2
+    # return brickFreqMatrix
+
+    # if brickFreqMatrix[x0][y0][z0] == 0:
+    #     brickFreqMatrix[x0][y0][z0] = inside % 2
+    # intersections = rayObjIntersections(orig,ray,edgeLen,source)
+    # if intersections > 0:
+    #     brickFreqMatrix[x0][y0][z0] = 2
+    #     brickFreqMatrix[x1][y1][z1] = 2
+    #     inside += intersections
+    # return inside
+
 def getBrickMatrix(source, coordMatrix, axes="xyz"):
     brickFreqMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
     # convert source to bmesh and convert faces to tri's
@@ -163,81 +181,28 @@ def getBrickMatrix(source, coordMatrix, axes="xyz"):
     sourceBM.from_mesh(source.data)
     bmesh.ops.triangulate(sourceBM, faces=sourceBM.faces)
 
-    bm = bmesh.new()
     axes = axes.lower()
     if "x" in axes:
         for z in range(len(coordMatrix[0][0])):
             for y in range(len(coordMatrix[0])):
-                inside = 0
+                # inside = 0
                 for x in range(len(coordMatrix)):
-                    orig = coordMatrix[x][y][z]
-                    nextVerts = []
-                    try:
-                        rayEnd = coordMatrix[x+1][y][z]
-                    except:
-                        continue
-                    # check if point can be thrown away
-                    edgeLen = (orig - rayEnd).length
-                    rayX = rayEnd[0] - orig[0]
-                    rayY = rayEnd[1] - orig[1]
-                    rayZ = rayEnd[2] - orig[2]
-                    ray = Vector((rayX, rayY, rayZ))
-
-                    if brickFreqMatrix[x][y][z] == 0:
-                        brickFreqMatrix[x][y][z] = inside % 2
-                    intersections = rayObjIntersections(orig,ray,edgeLen,source)
-                    if intersections > 0:
-                        brickFreqMatrix[x][y][z] = 2
-                        brickFreqMatrix[x+1][y][z] = 2
-                        inside += intersections
+                    # inside = tempFuncName(x, y, z, coordMatrix, brickFreqMatrix, source, x+1, y, z, inside)
+                    tempFuncName(x, y, z, coordMatrix, brickFreqMatrix, source, x+1, y, z)
     if "y" in axes:
         for z in range(len(coordMatrix[0][0])):
             for x in range(len(coordMatrix)):
-                inside = 0
+                # inside = 0
                 for y in range(len(coordMatrix[0])):
-                    orig = coordMatrix[x][y][z]
-                    nextVerts = []
-                    try:
-                        rayEnd = coordMatrix[x][y+1][z]
-                    except:
-                        continue
-                    edgeLen = (orig - rayEnd).length
-                    rayX = rayEnd[0] - orig[0]
-                    rayY = rayEnd[1] - orig[1]
-                    rayZ = rayEnd[2] - orig[2]
-                    ray = Vector((rayX, rayY, rayZ))
-
-                    if brickFreqMatrix[x][y][z] == 0:
-                        brickFreqMatrix[x][y][z] = inside % 2
-                    intersections = rayObjIntersections(orig,ray,edgeLen,source)
-                    if intersections > 0:
-                        brickFreqMatrix[x][y][z] = 2
-                        brickFreqMatrix[x][y+1][z] = 2
-                        inside += intersections
+                    # inside = tempFuncName(x, y, z, coordMatrix, brickFreqMatrix, source, x, y+1, z, inside)
+                    tempFuncName(x, y, z, coordMatrix, brickFreqMatrix, source, x, y+1, z)
     if "z" in axes:
         for x in range(len(coordMatrix)):
             for y in range(len(coordMatrix[0])):
-                inside = 0
+                # inside = 0
                 for z in range(len(coordMatrix[0][0])):
-                    orig = coordMatrix[x][y][z]
-                    nextVerts = []
-                    try:
-                        rayEnd = coordMatrix[x][y][z+1]
-                    except:
-                        continue
-                    edgeLen = (orig - rayEnd).length
-                    rayX = rayEnd[0] - orig[0]
-                    rayY = rayEnd[1] - orig[1]
-                    rayZ = rayEnd[2] - orig[2]
-                    ray = Vector((rayX, rayY, rayZ))
-
-                    if brickFreqMatrix[x][y][z] == 0:
-                        brickFreqMatrix[x][y][z] = inside % 2
-                    intersections = rayObjIntersections(orig,ray,edgeLen,source)
-                    if intersections > 0:
-                        brickFreqMatrix[x][y][z] = 2
-                        brickFreqMatrix[x][y][z+1] = 2
-                        inside += intersections
+                    # inside = tempFuncName(x, y, z, coordMatrix, brickFreqMatrix, source, x, y, z+1, inside)
+                    tempFuncName(x, y, z, coordMatrix, brickFreqMatrix, source, x, y, z+1)
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
@@ -246,6 +211,12 @@ def getBrickMatrix(source, coordMatrix, axes="xyz"):
                         (((y == len(coordMatrix[0])-1 or brickFreqMatrix[x][y+1][z] == 0) or (y == 0 or brickFreqMatrix[x][y-1][z] == 0)) and "y" not in axes) or
                         (((x == len(coordMatrix)-1 or brickFreqMatrix[x+1][y][z] == 0) or (x == 0 or brickFreqMatrix[x-1][y][z] == 0)) and "x" not in axes)):
                         brickFreqMatrix[x][y][z] = 1.5
+    # bm = bmesh.new()
+    # for x in range(len(coordMatrix)):
+    #     for y in range(len(coordMatrix[0])):
+    #         for z in range(len(coordMatrix[0][0])):
+    #             if brickFreqMatrix[x][y][z] > 1:
+    #                 bm.verts.new(coordMatrix[x][y][z])
     # drawBMesh(bm)
     return brickFreqMatrix
 
@@ -354,8 +325,9 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
     for brick in bricks:
         bGroup.objects.link(brick)
         scn.objects.link(brick)
+        brick.parent = source
 
-    select(bricks)
+    select(source)
     # select(bricks.getAllObjs())
 
     scn.update()

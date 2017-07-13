@@ -44,8 +44,8 @@ class Bricks:
         return brickObjs
 
     @staticmethod
-    def new_mesh(name='new_brick', height=1, type=[1,1], logo=False, undersideDetail="Flat", meshToOverwrite=None):
-        m = Brick().new_brick(name=name, height=height, type=type, logo=logo, undersideDetail=undersideDetail, brickMesh=meshToOverwrite)
+    def new_mesh(name='new_brick', height=1, type=[1,1], logo=False, undersideDetail="Flat", stud=True, meshToOverwrite=None):
+        m = Brick().new_brick(name=name, height=height, type=type, logo=logo, undersideDetail=undersideDetail, stud=stud, brickMesh=meshToOverwrite)
         return m
 
     @staticmethod
@@ -120,7 +120,7 @@ class Brick:
         self.brick_dimensions = Bricks.get_dimensions(height, gap_percentage)
         return self.brick_dimensions
 
-    def new_brick(self, name="brick", height=1, type=[1,1], logo=False, undersideDetail="Flat", brickMesh=None):
+    def new_brick(self, name="brick", height=1, type=[1,1], logo=False, undersideDetail="Flat", stud=True, brickMesh=None):
         """ create unlinked LEGO Brick at origin """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
@@ -129,7 +129,7 @@ class Brick:
 
         bm = bmesh.new()
 
-        brickBM = makeBrick(dimensions=self.brick_dimensions, brickSize=type, numStudVerts=settings["numStudVerts"], detail=undersideDetail)
+        brickBM = makeBrick(dimensions=self.brick_dimensions, brickSize=type, numStudVerts=settings["numStudVerts"], detail=undersideDetail, stud=stud)
         studInset = self.brick_dimensions["thickness"] * 0.9
         if logo:
             logoBM = bmesh.new()

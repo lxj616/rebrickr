@@ -90,8 +90,6 @@ class legoizerDelete(bpy.types.Operator):
         #     delete(refLogo)
         #     bpy.data.groups.remove(refLogoGroup, do_unlink=True)
 
-        scn.cmlist[scn.cmlist_index].changesToCommit = False
-
     def execute(self, context):
         # get start time
         startTime = time.time()

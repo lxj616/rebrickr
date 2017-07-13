@@ -110,7 +110,7 @@ def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
 
     return vertListBDict
 
-def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail"):
+def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", stud=True):
     # create new bmesh object
     bme = bmesh.new()
 
@@ -143,10 +143,11 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail"):
     bme.faces.new((v4, v3, v7, v8))
 
     # CREATING STUD(S)
-    studInset = thick * 0.9
-    for xNum in range(brickSize[0]):
-        for yNum in range(brickSize[1]):
-            makeCylinder(r=dimensions["stud_radius"], N=numStudVerts, h=dimensions["stud_height"]+studInset, co=(xNum*dX*2,yNum*dY*2,dimensions["stud_offset"]-(studInset/2)), botFace=False, bme=bme)
+    if stud:
+        studInset = thick * 0.9
+        for xNum in range(brickSize[0]):
+            for yNum in range(brickSize[1]):
+                makeCylinder(r=dimensions["stud_radius"], N=numStudVerts, h=dimensions["stud_height"]+studInset, co=(xNum*dX*2,yNum*dY*2,dimensions["stud_offset"]-(studInset/2)), botFace=False, bme=bme)
 
     if detail == "Flat":
         bme.faces.new((v8, v7, v6, v5))
