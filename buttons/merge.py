@@ -38,7 +38,7 @@ class legoizerMergeBricks(bpy.types.Operator):
         if scn.cmlist_index == -1:
             return False
         n = scn.cmlist[scn.cmlist_index].source_name
-        if groupExists("LEGOizer_%(n)s_bricks" % locals()) and groupExists("LEGOizer_%(n)s" % locals()) and groupExists("LEGOizer_%(n)s_refBrick" % locals()):
+        if groupExists("LEGOizer_%(n)s_bricks" % locals()) and groupExists("LEGOizer_%(n)s" % locals()) and groupExists("LEGOizer_%(n)s_refBricks" % locals()):
             return True
         return False
 

@@ -71,12 +71,20 @@ class Uilist_actions(bpy.types.Operator):
 
         if self.action == 'ADD':
             active_object = scn.objects.active
+            # if active object already has a model, don't set it as default source for new model
+            for cm in scn.cmlist:
+                if cm.source_name == active_object.name:
+                    active_object = None
+                    break
+            item = scn.cmlist.add()
+            scn.cmlist_index = len(scn.cmlist)-1
+            item.name = "<New Model>"
             if active_object:
-                name = active_object.name
+                item.source_name = active_object.name
             else:
-                name = ""
-            addItemToCMList(name)
-            info = '%s added to list' % (name)
+                item.source_name = ""
+            item.id = len(scn.cmlist)
+            info = '%s added to list' % (item.name)
             self.report({'INFO'}, info)
 
         # elif self.action == 'DOWN' and idx < len(scn.cmlist) - 1:
@@ -124,10 +132,44 @@ class Uilist_printAllItems(bpy.types.Operator):
         return{'FINISHED'}
 
 # select button
+class Uilist_selectSource(bpy.types.Operator):
+    bl_idname = "cmlist.select_source"
+    bl_label = "Select Source Object"
+    bl_description = "Select only source object for model"
+
+    @classmethod
+    def poll(cls, context):
+        """ ensures operator can execute (if not, returns false) """
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        LEGOizer_source = "LEGOizer_%(n)s" % locals()
+        if groupExists(LEGOizer_source) and len(bpy.data.groups[LEGOizer_source].objects) == 1:
+            return True
+        try:
+            cm = scn.cmlist[scn.cmlist_index]
+            if bpy.data.objects[cm.source_name].type == 'MESH':
+                return True
+        except:
+            return False
+        return False
+
+    def execute(self, context):
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        obj = bpy.data.objects[n]
+        select(obj, active=obj)
+
+        return{'FINISHED'}
+
+# select button
 class Uilist_selectAllBricks(bpy.types.Operator):
     bl_idname = "cmlist.select_bricks"
     bl_label = "Select Bricks"
-    bl_description = "Select all bricks in model"
+    bl_description = "Select only bricks in model"
 
     @classmethod
     def poll(cls, context):
@@ -148,8 +190,8 @@ class Uilist_selectAllBricks(bpy.types.Operator):
         n = cm.source_name
         LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
         if groupExists(LEGOizer_bricks):
-            bpy.ops.object.select_all(action='DESELECT')
             objs = list(bpy.data.groups[LEGOizer_bricks].objects)
+
             if len(objs) > 0:
                 select(objs)
 
@@ -202,10 +244,13 @@ def uniquifyName(self, context):
 
 def setNameIfEmpty(self, context):
     scn = context.scene
-    cm = scn.cmlist[scn.cmlist_index]
-    if cm.name == "":
-        cm.name = cm.source_name
-
+    cm0 = scn.cmlist[scn.cmlist_index]
+    # verify model doesn't exist with that name
+    if cm0.source_name != "":
+        for i,cm1 in enumerate(scn.cmlist):
+            if cm1 != cm0 and cm1.source_name == cm0.source_name:
+                cm0.source_name = ""
+                scn.cmlist_index = i
 
 # Create custom property group
 class CustomProp(bpy.types.PropertyGroup):
@@ -218,19 +263,23 @@ class CustomProp(bpy.types.PropertyGroup):
         default="",
         update=setNameIfEmpty)
 
-    changesToCommit = BoolProperty(
-        default=False)
-
     preHollow = BoolProperty(
         name="Pre Hollow",
         description="Hollow out LEGO model with user defined shell thickness",
         default=True)
 
+    studDetail = EnumProperty(
+        name="Stud Detailing",
+        description="Choose where to draw the studs",
+        items=[("On Exposed Bricks", "On Exposed Bricks", "Include LEGO Logo only on bricks with studs exposed"),
+              ("On All Bricks", "On All Bricks", "Include LEGO Logo only on bricks with studs exposed")],
+        default="On Exposed Bricks")
+
     logoDetail = EnumProperty(
         name="Logo Detailing",
-        description="Choose whether to construct or deconstruct the LEGO bricks",
+        description="Choose where to draw the logo",
         items=[("On All Bricks", "On All Bricks", "Include LEGO Logo on all bricks"),
-            #   ("On Exposed Bricks", "On Exposed Bricks", "Include LEGO Logo only on bricks with studs exposed"),
+              ("On Exposed Bricks", "On Exposed Bricks", "Include LEGO Logo only on bricks with studs exposed"),
               ("None", "None", "Don't include LEGO Logo on bricks")],
         default="None")
 
@@ -242,9 +291,16 @@ class CustomProp(bpy.types.PropertyGroup):
         precision=2,
         default=0.5)
 
-    undersideDetail = EnumProperty(
-        name="Underside Detailing",
-        description="Choose whether to construct or deconstruct the LEGO bricks",
+    hiddenUndersideDetail = EnumProperty(
+        name="Hidden Underside Detailing",
+        description="Choose the level of detail to include for the underside of hidden bricks",
+        items=[("High Detail", "High Detail", "Draw intricate details on brick underside"),
+              ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
+              ("Flat", "Flat", "draw single face on brick underside")],
+        default="Flat")
+    exposedUndersideDetail = EnumProperty(
+        name="Eposed Underside Detailing",
+        description="Choose the level of detail to include for the underside of exposed bricks",
         items=[("High Detail", "High Detail", "Draw intricate details on brick underside"),
               ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
               ("Flat", "Flat", "draw single face on brick underside")],
@@ -273,24 +329,33 @@ class CustomProp(bpy.types.PropertyGroup):
         min=.001, max=1,
         default=.01)
 
-    lastSourceDataRef = None
-
     lastBrickHeight = FloatProperty(default=0)
     lastGap = FloatProperty(default=0)
     lastPreHollow = BoolProperty(default=False)
     lastShellThickness = IntProperty(default=0)
-    # lastLogoDetail = StringProperty(default="None")
-    # lastLogoResolution = FloatProperty(default=0.5)
+    lastCalculationAxes = StringProperty(default="")
+    lastLogoDetail = StringProperty(default="None")
+    lastLogoResolution = FloatProperty(default=0)
+    lastExposedUndersideDetail = StringProperty(default="None")
+    lastHiddenUndersideDetail = StringProperty(default="None")
+
+    lastLocation = StringProperty(default="0")
+    lastRotationEuler = StringProperty(default="0")
+    lastScale = StringProperty(default="0")
+    lastDimensions = StringProperty(default="0")
 
     # ADVANCED SETTINGS
-    calculationAxis = EnumProperty(
-        name="Calculation Axis",
+    calculationAxes = EnumProperty(
+        name="Calculation Axes",
         description="PLACEHOLDER", # TODO: Fill in placeholders on this line and the next four
-        items=[("Auto", "Auto", "PLACEHOLDER"),
-              ("X Axis", "X Axis", "PLACEHOLDER"),
-              ("Y Axis", "Y Axis", "PLACEHOLDER"),
-              ("Z Axis", "Z Axis", "PLACEHOLDER")],
-        default="Auto")
+        items=[("XYZ", "XYZ", "PLACEHOLDER"),
+              ("XY", "XY", "PLACEHOLDER"),
+              ("YZ", "YZ", "PLACEHOLDER"),
+              ("XZ", "XZ", "PLACEHOLDER"),
+              ("X", "X", "PLACEHOLDER"),
+              ("Y", "Y", "PLACEHOLDER"),
+              ("Z", "Z", "PLACEHOLDER")],
+        default="XY")
 
     logoMesh = None
 

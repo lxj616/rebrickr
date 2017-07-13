@@ -38,7 +38,7 @@ class legoizerDelete(bpy.types.Operator):
         if scn.cmlist_index == -1:
             return False
         n = scn.cmlist[scn.cmlist_index].source_name
-        if groupExists("LEGOizer_%(n)s_bricks" % locals()) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBrick" % locals()):
+        if groupExists("LEGOizer_%(n)s_bricks" % locals()) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals()):
             return True
         return False
 
@@ -69,8 +69,8 @@ class legoizerDelete(bpy.types.Operator):
             bpy.data.groups.remove(brickGroup, do_unlink=True)
 
         # clean up 'LEGOizer_refBrick' group
-        if groupExists("LEGOizer_%(n)s_refBrick" % locals()):
-            refBrickGroup = bpy.data.groups["LEGOizer_%(n)s_refBrick" % locals()]
+        if groupExists("LEGOizer_%(n)s_refBricks" % locals()):
+            refBrickGroup = bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()]
             if len(refBrickGroup.objects) > 0:
                 refBrick = refBrickGroup.objects[0]
                 delete(refBrick)
@@ -89,8 +89,6 @@ class legoizerDelete(bpy.types.Operator):
         #     refLogo = refLogoGroup.objects[0]
         #     delete(refLogo)
         #     bpy.data.groups.remove(refLogoGroup, do_unlink=True)
-
-        scn.cmlist[scn.cmlist_index].changesToCommit = False
 
     def execute(self, context):
         # get start time

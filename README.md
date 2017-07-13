@@ -1,26 +1,25 @@
 # README
 
-Blender add-on for automated generation of LEGO Bricks from object (Blender version: 2.78b)
+Blender add-on for automated generation of LEGO Bricks from object (Blender version: 2.78c)
 
 ## LEGOizer
   * Features:
-      * This code is a WIP. Stay tuned!
-      * Adjust LEGO brick settings before committing model
+      * Create LEGO models out of any 3D model in Blender
+      * Adjust LEGO brick settings after it's created
   * Instructions:
-      * Select an object with 'Source Object' UI box (defaults to active object if blank or if object doesn't exist)
+      * Create a new model with the 'New Model' button, and name it whatever you'd like
+      * Select a source object with the 'Source Object' dropdown (defaults to active object when model was created)
       * Click 'LEGOize Object'
       * Adjust settings for your desired result
       * Click 'Update Model' to view setting adjustments
-      * Click 'Commit Model' once the settings are correct to apply setting adjustments so that you can create more LEGOized models!
   * Future improvements:
     * Priority 1:
-      * Improve logo resolution (currently uses decimate)
       * Add functionality to 'Merge Bricks' button
-      * Add functionality for only rendering LEGO text on exposed studs
-      * Add functionality to Pre Hollow/Shell Thickness
-      * Fix functionality for generating LEGO bricks on shell of source object
     * Priority 2:
+      * Add functionality to Shell Thickness
       * Apply closest LEGO color based on color of nearest vertex
+      * Improve logo resolution (currently uses decimate)
+      * Add functionality for bevel on LEGO bricks
     * Priority 3:
       * New feature: frame-by-frame generation of LEGO models (like the explosions in the LEGO Movie)
       * Allow for custom object to generate model from

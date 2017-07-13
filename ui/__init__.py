@@ -57,21 +57,14 @@ class LegoModelsPanel(Panel):
         col.operator("cmlist.list_action", icon='ZOOMIN', text="").action = 'ADD'
         col.operator("cmlist.list_action", icon='ZOOMOUT', text="").action = 'REMOVE'
         col.separator()
-        col.operator("cmlist.select_bricks", icon="UV_SYNC_SELECT", text="")
-        # col.operator("cmlist.list_action", icon='')
-        # col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
-        # col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
+        col.operator("cmlist.select_source", icon="UV_SYNC_SELECT", text="")
+        col.operator("cmlist.select_bricks", icon="BORDER_RECT", text="")
 
-        # row = layout.row()
-        # col = row.column(align=True)
-        # col.operator("cmlist.print_list", icon="WORDWRAP_ON")
-        # col.operator("cmlist.select_item", icon="UV_SYNC_SELECT")
-        # col.operator("cmlist.clear_list", icon="X")
         if scn.cmlist_index != -1:
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
-            groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBrick" % locals())
+            groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
             col = layout.column(align=True)
             col.label("Source Object:")
             row = col.row(align=True)
@@ -128,30 +121,37 @@ class SettingsPanel(Panel):
             row.prop(cm, "shellThickness")
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(cm, "logoDetail", text="Logo")
-        if cm.logoDetail != "None":
-            col = layout.column(align=True)
-            row = col.row(align=True)
-            row.prop(cm, "logoResolution", text="Logo Resolution")
-        col = layout.column(align=True)
+        row.label("Stud Detail:")
         row = col.row(align=True)
-        row.prop(cm, "undersideDetail", text="Underside")
-        col = layout.column(align=True)
+        row.prop(cm, "studDetail", text="")
         row = col.row(align=True)
         row.prop(cm, "studVerts")
         col = layout.column(align=True)
         row = col.row(align=True)
+        row.label("Logo Detail:")
+        row = col.row(align=True)
+        row.prop(cm, "logoDetail", text="")
+        if cm.logoDetail != "None":
+            row = col.row(align=True)
+            row.prop(cm, "logoResolution", text="Logo Resolution")
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.label("Underside Detail:")
+        row = col.row(align=True)
+        row.prop(cm, "hiddenUndersideDetail", text="Hidden")
+        row = col.row(align=True)
+        row.prop(cm, "exposedUndersideDetail", text="Exposed")
+        col = layout.column(align=True)
+        row = col.row(align=True)
         n = cm.source_name
         LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
-        groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBrick" % locals())
+        groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
         if not groupExistsBool:
             row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD").action = "CREATE"
         else:
             row.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH").action = "UPDATE"
         row = col.row(align=True)
         row.operator("scene.legoizer_merge", text="Merge Bricks", icon="MOD_REMESH")
-        row = col.row(align=True)
-        row.operator("scene.legoizer_commit", text="Commit Model", icon="FILE_TICK")
 
 
 class AdvancedPanel(Panel):
@@ -178,4 +178,4 @@ class AdvancedPanel(Panel):
 
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(cm, "calculationAxis", text="")
+        row.prop(cm, "calculationAxes", text="")
