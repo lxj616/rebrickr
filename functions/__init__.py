@@ -157,8 +157,9 @@ def tempFuncName(x0, y0, z0, coordMatrix, brickFreqMatrix, source, x1, y1, z1, i
     rayZ = rayEnd[2] - orig[2]
     ray = Vector((rayX, rayY, rayZ))
 
-    if pointInsideMesh(orig, source) and brickFreqMatrix[x0][y0][z0] == 0:
-        brickFreqMatrix[x0][y0][z0] = 1
+    if pointInsideMesh(orig, source):
+        if brickFreqMatrix[x0][y0][z0] == 0:
+            brickFreqMatrix[x0][y0][z0] = -1
     intersections = rayObjIntersections(orig,ray,edgeLen,source)
     if intersections > 0:
         brickFreqMatrix[x0][y0][z0] = 2
@@ -206,11 +207,44 @@ def getBrickMatrix(source, coordMatrix, axes="xyz"):
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
-                if brickFreqMatrix[x][y][z] == 1:
+                if brickFreqMatrix[x][y][z] == -1:
                     if ((((z == len(coordMatrix[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0) or (z == 0 or brickFreqMatrix[x][y][z-1] == 0)) and "z" not in axes) or
                         (((y == len(coordMatrix[0])-1 or brickFreqMatrix[x][y+1][z] == 0) or (y == 0 or brickFreqMatrix[x][y-1][z] == 0)) and "y" not in axes) or
                         (((x == len(coordMatrix)-1 or brickFreqMatrix[x+1][y][z] == 0) or (x == 0 or brickFreqMatrix[x-1][y][z] == 0)) and "x" not in axes)):
-                        brickFreqMatrix[x][y][z] = 1.5
+                        brickFreqMatrix[x][y][z] = 2
+    ct = time.time()
+    j = 1
+    for idx in range(100):
+        j -= 0.01
+        gotOne = False
+        for x in range(len(coordMatrix)):
+            for y in range(len(coordMatrix[0])):
+                for z in range(len(coordMatrix[0][0])):
+                    if brickFreqMatrix[x][y][z] == -1:
+                        if (j == 0.99 and
+                           (brickFreqMatrix[x+1][y][z] == 2 or
+                           brickFreqMatrix[x-1][y][z] == 2 or
+                           brickFreqMatrix[x][y+1][z] == 2 or
+                           brickFreqMatrix[x][y-1][z] == 2 or
+                           brickFreqMatrix[x][y][z+1] == 2 or
+                           brickFreqMatrix[x][y][z-1] == 2) or
+                           (brickFreqMatrix[x+1][y][z] == j + 0.01 or
+                           brickFreqMatrix[x-1][y][z] == j + 0.01 or
+                           brickFreqMatrix[x][y+1][z] == j + 0.01 or
+                           brickFreqMatrix[x][y-1][z] == j + 0.01 or
+                           brickFreqMatrix[x][y][z+1] == j + 0.01 or
+                           brickFreqMatrix[x][y][z-1] == j + 0.01)):
+                            brickFreqMatrix[x][y][z] = round(j, 2)
+                            gotOne = True
+
+
+        if not gotOne:
+            break
+
+    # STOPWATCH CHECK
+    stopWatch("Time Elapsed (mycalc)", time.time()-ct)
+
+
     # bm = bmesh.new()
     # for x in range(len(coordMatrix)):
     #     for y in range(len(coordMatrix[0])):
@@ -267,10 +301,8 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
     # get coordinate list from intersections of edges with faces
     if not cm.preHollow:
         threshold = 0
-    elif cm.shellThickness == 1:
-        threshold = 1
     else:
-        threshold = 0
+        threshold = 1.01 - (cm.shellThickness / 100)
     coList = getCOList(brickFreqMatrix, coordMatrix, threshold)
 
     # create group for lego bricks

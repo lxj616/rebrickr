@@ -242,8 +242,7 @@ class legoizerLegoize(bpy.types.Operator):
            cm.preHollow != cm.lastPreHollow or
            cm.shellThickness != cm.lastShellThickness or
            meshComparasin != 'Same' or
-           cm.lastCalculationAxes != cm.calculationAxes or
-           cm.lastLogoDetail != cm.logoDetail):
+           cm.lastCalculationAxes != cm.calculationAxes):
             # delete old bricks if present
             if groupExists(LEGOizer_bricks):
                 bricks = list(bpy.data.groups[LEGOizer_bricks].objects)
