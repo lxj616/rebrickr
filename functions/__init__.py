@@ -160,6 +160,7 @@ def tempFuncName(x0, y0, z0, coordMatrix, brickFreqMatrix, source, x1, y1, z1, i
     if pointInsideMesh(orig, source):
         if brickFreqMatrix[x0][y0][z0] == 0:
             brickFreqMatrix[x0][y0][z0] = -1
+            brickFreqMatrix[x0][y0][z0] = -1
     intersections = rayObjIntersections(orig,ray,edgeLen,source)
     if intersections > 0:
         brickFreqMatrix[x0][y0][z0] = 2
@@ -259,7 +260,7 @@ def getCOList(brickFreqMatrix, coordMatrix, threshold):
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
-                if brickFreqMatrix[x][y][z] > threshold:
+                if brickFreqMatrix[x][y][z] >= threshold:
                     coList[x][y][z] = coordMatrix[x][y][z]
     return coList
 
@@ -305,6 +306,7 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
     i = 0
     # TODO: Improve efficiency of the following nested for loop
     ct = time.time()
+    brickDict = {}
     for x in range(len(coList)):
         print("x: " + str(x))
         for y in range(len(coList[0])):
@@ -328,11 +330,14 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
                     else:
                         print("shouldn't get here")
 
-                    brick = bpy.data.objects.new('LEGOizer_brick_' + str(i+1), brickMesh)
+                    brick = bpy.data.objects.new('LEGOizer_brick_' + str(i+1) + " (" + str(brickFreqMatrix[x][y][z]) + ")", brickMesh)
                     brick.location = Vector(co)
                     bricks.append(brick)
+                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {"name":brick.name, "val":brickFreqMatrix[x][y][z], "coord":coordMatrix[x][y][z], "connected":[]}
                     # brick.link_to_scene(scn)
                     # bGroup.objects.link(brick.obj)
+                else:
+                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {"name":"DNE", "val":brickFreqMatrix[x][y][z], "coord":coordMatrix[x][y][z], "connected":[]}
 
     stopWatch("Time Elapsed in loop", time.time()-ct)
 
@@ -342,7 +347,9 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
         scn.objects.link(brick)
         brick.parent = source
 
-    select(bricks)
+    # print(brickDict)
+    source["bricks"] = brickDict
+
     scn.update()
     # return list of created Brick objects
     return bricks

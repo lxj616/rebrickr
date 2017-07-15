@@ -287,7 +287,7 @@ class CustomProp(bpy.types.PropertyGroup):
         name="Shell Thickness",
         description="Thickness of the LEGO shell",
         min=1, max=100,
-        default=1)
+        default=2)
 
     studDetail = EnumProperty(
         name="Stud Detailing",
@@ -387,6 +387,7 @@ class CustomProp(bpy.types.PropertyGroup):
         default="XY")
 
     logoMesh = None
+    # modalRunning = BoolProperty(default=False)
 
 # -------------------------------------------------------------------
 # register

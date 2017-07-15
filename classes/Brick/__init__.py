@@ -97,6 +97,9 @@ class Brick:
     def link_to_scene(self, scene):
         bpy.context.scene.objects.link(self.obj)
 
+    def link_to_group(self, group):
+        group.objects.link(self.obj)
+
     def obj_select(self):
         self.obj.select = True
 

@@ -69,10 +69,11 @@ class legoizerLegoize(bpy.types.Operator):
 
     def modal(self, context, event):
         """ When pressed, 'legoize mode' (loose concept) is deactivated """
-        if event.type in {"RET", "NUMPAD_ENTER"} and event.shift:
-            return{"FINISHED"}
-
+        # if event.type in {"RET", "NUMPAD_ENTER"} and event.shift:
+        #     cm.modalRunning = False
+        #     return{"FINISHED"}
         if context.scene.cmlist_index == -1:
+            cm.modalRunning = False
             return{"FINISHED"}
         return {"PASS_THROUGH"}
 
@@ -284,11 +285,14 @@ class legoizerLegoize(bpy.types.Operator):
             o = bpy.data.objects.new("LEGOizer_%(n)s_lastSourceDataRef" % locals(), source.data.copy())
         o.matrix_world = source.matrix_world
 
+        disableRelationshipLines()
+
         # STOPWATCH CHECK
         stopWatch("Time Elapsed", time.time()-startTime)
 
-        if self.action == "CREATE":
-            context.window_manager.modal_handler_add(self)
-            return{"RUNNING_MODAL"}
-        else:
-            return{"FINISHED"}
+        # if self.action == "CREATE":
+        #     context.window_manager.modal_handler_add(self)
+        #     # cm.modalRunning = True
+        #     return{"RUNNING_MODAL"}
+        # else:
+        return{"FINISHED"}

@@ -1,6 +1,7 @@
 import bpy
 import bmesh
 import math
+from mathutils import Matrix
 from ...functions.common_mesh_generate import makeCylinder
 
 # r = radius, N = numVerts, h = height, t = thickness, co = target cylinder position
@@ -115,6 +116,8 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", stu
     bme = bmesh.new()
 
     # set scale and thickness variables
+    addedX = round(((dimensions["gap"] * brickSize[0]) - dimensions["gap"]),5)
+    addedY = round(((dimensions["gap"] * brickSize[1]) - dimensions["gap"]),5)
     dX = dimensions["width"]
     dY = dimensions["width"]
     dZ = dimensions["height"]
@@ -297,6 +300,10 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", stu
                     v3 = vList1[i-1]
                     v4 = vList1[i]
                     bme.faces.new((v1, v2, v3, v4))
+
+
+    # bmesh.ops.transform(bme, matrix=Matrix.Translation(((dimensions["width"]/2)*(addedX),(dimensions["width"]/2)*(addedY),0)), verts=bme.verts)
+    bmesh.ops.scale(bme, verts=bme.verts, vec=((dimensions["width"] + addedX/4)/dimensions["width"], (dimensions["width"] + addedY/4)/dimensions["width"], 1.0))
 
     # return bmesh
     return bme

@@ -83,7 +83,7 @@ class legoizerBevel(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         for brick in bricks:
-            createBevelMod(obj=brick, width=cm.bevelWidth, segments=cm.bevelResolution, limitMethod="ANGLE", angleLimit=0.5236)
+            createBevelMod(obj=brick, width=cm.bevelWidth, segments=cm.bevelResolution, limitMethod="ANGLE", angleLimit=1.55334)
 
     def execute(self, context):
         # get bricks to bevel
