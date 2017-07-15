@@ -104,7 +104,7 @@ def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
 #            bme.faces.new((vertListBDict[key][1][i-1], vertListBDict[key][1][i], vertListBDict[key][0]))
 #        lastKey = key
 
-    bme.faces.new((vertListT[-1], vertListB[-1], vertListB[0], vertListT[0]))
+    bme.faces.new((vertListT[0], vertListB[0], vertListB[-1], vertListT[-1]))
     for v in range(N-1):
         bme.faces.new((vertListT[1], vertListB[1], vertListB.pop(0), vertListT.pop(0)))
 

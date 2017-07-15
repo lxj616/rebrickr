@@ -262,7 +262,6 @@ def updateBevel(self, context):
         if cm.lastBevelWidth != cm.bevelWidth or cm.lastBevelResolution != cm.bevelResolution:
             bricks = list(bpy.data.groups["LEGOizer_%(n)s_bricks" % locals()].objects)
             legoizerBevel.setBevelMods(bricks)
-            print("running...")
             cm.lastBevelWidth = cm.bevelWidth
             cm.lastBevelResolution = cm.bevelResolution
     except:

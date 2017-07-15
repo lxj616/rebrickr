@@ -83,7 +83,7 @@ class legoizerBevel(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         for brick in bricks:
-            createBevelMod(obj=brick, width=cm.bevelWidth, segments=cm.bevelResolution, limitMethod="ANGLE", angleLimit=30)
+            createBevelMod(obj=brick, width=cm.bevelWidth, segments=cm.bevelResolution, limitMethod="ANGLE", angleLimit=0.5236)
 
     def execute(self, context):
         # get bricks to bevel
@@ -94,7 +94,6 @@ class legoizerBevel(bpy.types.Operator):
         # cm.bevelResolution = round(cm.studVerts/10)
         bricks = list(bpy.data.groups["LEGOizer_%(n)s_bricks" % locals()].objects)
 
-        print(self.action)
         if self.action == "REMOVE" or self.action == "APPLY":
             removeBevelMods(objs=bricks)
         else:
