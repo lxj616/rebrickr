@@ -24,6 +24,7 @@ import bpy
 from bpy.types import Panel
 from bpy.props import *
 from ..functions import *
+from ..buttons.bevel import *
 from ..lib import common_utilities
 from ..lib.common_utilities import bversion
 props = bpy.props
@@ -252,6 +253,21 @@ def setNameIfEmpty(self, context):
                 cm0.source_name = ""
                 scn.cmlist_index = i
 
+def updateBevel(self, context):
+    # get bricks to bevel
+    scn = context.scene
+    try:
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        if cm.lastBevelWidth != cm.bevelWidth or cm.lastBevelResolution != cm.bevelResolution:
+            bricks = list(bpy.data.groups["LEGOizer_%(n)s_bricks" % locals()].objects)
+            legoizerBevel.setBevelMods(bricks)
+            print("running...")
+            cm.lastBevelWidth = cm.bevelWidth
+            cm.lastBevelResolution = cm.bevelResolution
+    except:
+        pass
+
 # Create custom property group
 class CustomProp(bpy.types.PropertyGroup):
     name = StringProperty(update=uniquifyName)
@@ -267,6 +283,12 @@ class CustomProp(bpy.types.PropertyGroup):
         name="Pre Hollow",
         description="Hollow out LEGO model with user defined shell thickness",
         default=True)
+
+    shellThickness = IntProperty(
+        name="Shell Thickness",
+        description="Thickness of the LEGO shell",
+        min=1, max=100,
+        default=1)
 
     studDetail = EnumProperty(
         name="Stud Detailing",
@@ -312,12 +334,6 @@ class CustomProp(bpy.types.PropertyGroup):
         min=4, max=64,
         default=16)
 
-    shellThickness = IntProperty(
-        name="Shell Thickness",
-        description="Thickness of the LEGO shell",
-        min=1, max=10,
-        default=1)
-
     brickHeight = FloatProperty(
         name="Brick Height",
         description="Height of the bricks in the final LEGO model",
@@ -343,6 +359,20 @@ class CustomProp(bpy.types.PropertyGroup):
     lastRotationEuler = StringProperty(default="0")
     lastScale = StringProperty(default="0")
     lastDimensions = StringProperty(default="0")
+
+    # Bevel Settings
+    lastBevelWidth = FloatProperty()
+    bevelWidth = FloatProperty(
+        name="Bevel Width",
+        default=0.001,
+        min=0.000001, max=10,
+        update=updateBevel)
+    lastBevelResolution = IntProperty()
+    bevelResolution = IntProperty(
+        name="Bevel Resolution",
+        default=1,
+        min=1, max=10,
+        update=updateBevel)
 
     # ADVANCED SETTINGS
     calculationAxes = EnumProperty(

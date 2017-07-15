@@ -274,50 +274,33 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
     ct = time.time()
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
-    # initialize temporary object
-    tempMesh = bpy.data.meshes.new('tempM')
-    tempObj = bpy.data.objects.new('temp', tempMesh)
     # set refBricks
     refBrickHidden = refBricks[0]
     refBrickUpper = refBricks[1]
     refBrickLower = refBricks[2]
     refBrickUpperLower = refBricks[3]
-
     # get lattice bmesh
     lScale = (source_details.x.distance, source_details.y.distance, source_details.z.distance)
     offset = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
     coordMatrix = generateLattice(R, lScale, offset)
-    coordMatrixLast = deepcopy(coordMatrix)
     # drawBMesh(makeLattice(R, lScale, offset))
     brickFreqMatrix = getBrickMatrix(source, coordMatrix, axes=cm.calculationAxes)
-    # b = bmesh.new()
-    # for x in range(len(coordMatrix)):
-    #     for y in range(len(coordMatrix[x])):
-    #         for z in range(len(coordMatrix[x][y])):
-    #             if brickFreqMatrix[x][y][z] == 1:
-    #                 b.verts.new(coordMatrix[x][y][z])
-    # drawBMesh(b)
-
     # get coordinate list from intersections of edges with faces
     if not cm.preHollow:
         threshold = 0
     else:
         threshold = 1.01 - (cm.shellThickness / 100)
     coList = getCOList(brickFreqMatrix, coordMatrix, threshold)
-
     # create group for lego bricks
     n = cm.source_name
     LEGOizer_bricks = 'LEGOizer_%(n)s_bricks' % locals()
     if groupExists(LEGOizer_bricks):
         bpy.data.groups.remove(group=bpy.data.groups[LEGOizer_bricks], do_unlink=True)
     bGroup = bpy.data.groups.new(LEGOizer_bricks)
-
     # if no coords in coList, add a coord at center of source
     if len(coList) == 0:
         coList.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
-
     # make bricks at determined locations
-    # bricks = Bricks()
     bricks = []
     i = 0
     # TODO: Improve efficiency of the following nested for loop
@@ -359,10 +342,7 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
         scn.objects.link(brick)
         brick.parent = source
 
-    select(source)
-    # select(bricks.getAllObjs())
-
+    select(bricks)
     scn.update()
-
     # return list of created Brick objects
     return bricks

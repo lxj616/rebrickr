@@ -166,7 +166,7 @@ class legoizerLegoize(bpy.types.Operator):
                 scn.objects.unlink(refLogo)
 
         # set up refLogoHidden and refLogoExposed based on cm.logoDetail
-        # TODO: only do the following if necessary
+        # TODO: only do the following if necessary. If no setting is changed, update button shouldn't really do much
         if cm.logoDetail == "On Exposed Bricks":
             refLogoHidden = None
             refLogoExposed = refLogo
@@ -182,6 +182,7 @@ class legoizerLegoize(bpy.types.Operator):
         else:
             hiddenStuds = False
         if groupExists("LEGOizer_%(n)s_refBricks" % locals()) and len(bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()].objects) > 0:
+            # initialize rbGroup
             rbGroup = bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()]
             # get 1x1 refBrick from group
             refBrickHidden = rbGroup.objects[0]
@@ -194,7 +195,7 @@ class legoizerLegoize(bpy.types.Operator):
             rbGroup.objects.unlink(refBrickUpperLower)
             # update that refBrick
             m = refBrickHidden.data
-            Bricks.new_mesh(name=refBrickHidden.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoHidden, stud=hiddenStuds, meshToOverwrite=m)
+            Bricks().new_mesh(name=refBrickHidden.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoHidden, stud=hiddenStuds, meshToOverwrite=m)
             m = refBrickUpper.data
             Bricks().new_mesh(name=refBrickUpper.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoExposed, stud=True, meshToOverwrite=m)
             m = refBrickLower.data
@@ -242,7 +243,8 @@ class legoizerLegoize(bpy.types.Operator):
            cm.preHollow != cm.lastPreHollow or
            cm.shellThickness != cm.lastShellThickness or
            meshComparasin != 'Same' or
-           cm.lastCalculationAxes != cm.calculationAxes):
+           cm.lastCalculationAxes != cm.calculationAxes or
+           self.action == "CREATE"):
             # delete old bricks if present
             if groupExists(LEGOizer_bricks):
                 bricks = list(bpy.data.groups[LEGOizer_bricks].objects)

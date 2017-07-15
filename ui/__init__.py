@@ -153,6 +153,45 @@ class SettingsPanel(Panel):
         row = col.row(align=True)
         row.operator("scene.legoizer_merge", text="Merge Bricks", icon="MOD_REMESH")
 
+class BevelPanel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "Bevel"
+    bl_idname      = "VIEW3D_PT_tools_LEGOizer_bevel"
+    bl_context     = "objectmode"
+    bl_category    = "LEGOizer"
+    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
+
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        if not groupExists('LEGOizer_%(n)s_bricks' % locals()):
+            return False
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        try:
+            testBrick = bpy.data.groups['LEGOizer_%(n)s_bricks' % locals()].objects[0]
+            testBrick.modifiers[testBrick.name + '_bevel']
+            row.prop(cm, "bevelWidth")
+            row = col.row(align=True)
+            row.prop(cm, "bevelResolution")
+            row = col.row(align=True)
+            row.operator("scene.legoizer_bevel", text="Remove Bevel", icon="CANCEL").action = "REMOVE"
+        except:
+            row.operator("scene.legoizer_bevel", text="Bevel bricks", icon="MOD_BEVEL").action = "CREATE"
+
 
 class AdvancedPanel(Panel):
     bl_space_type  = "VIEW_3D"
