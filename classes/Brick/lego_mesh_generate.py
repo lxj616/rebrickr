@@ -46,8 +46,40 @@ def makeTube(r, N, h, t, co=(0,0,0), bme=None):
     # return bmesh
     return bme
 
+# r = radius, N = numVerts, h = height, co = target cylinder position, botFace = Bool for creating face on bottom, bme = bmesh to insert mesh data into
+#def makeCylinder(r, N, h, co=(0,0,0), botFace=True, bme=None):
+#    # create new bmesh object
+#    if bme == None:
+#        bme = bmesh.new()
+
+#    # create upper and lower circles
+#    vertListT = []
+#    vertListB = []
+#    for i in range(N):
+#        x = r * math.cos(((2 * math.pi) / N) * i)
+#        y = r * math.sin(((2 * math.pi) / N) * i)
+#        z = h / 2
+#        coordT = (x + co[0], y + co[1], z + co[2])
+#        coordB = (x + co[0], y + co[1], -z + co[2])
+#        vertListT.append(bme.verts.new(coordT))
+#        vertListB.append(bme.verts.new(coordB))
+
+#    # create top and bottom faces
+#    bme.faces.new(vertListT)
+#    if botFace:
+#        bme.faces.new(vertListB)
+
+#    # create faces on the sides
+#    bme.faces.new((vertListT[-1], vertListB[-1], vertListB[0], vertListT[0]))
+#    for v in range(N-1):
+#        bme.faces.new((vertListT.pop(0), vertListB.pop(0), vertListB[0], vertListT[0]))
+
+#    # return bmesh
+#    return bme
+
+
 # r = radius, N = numVerts, h = height, o = z offset, co = target cylinder position, bme = bmesh to insert mesh data into
-def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
+def makeInnerCylinder(r, N, h, co=(0,0,0), reverseNorms=False, bme=None):
     """ Make a brick inner cylinder """
     # create upper circle
     vertListT = []
@@ -86,7 +118,10 @@ def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
                 l = "+-"
         vertListBDict[l].insert(0,v)
         vertListB.append(v)
-    bme.faces.new(vertListT[::-1])
+    if reverseNorms:
+        bme.faces.new(vertListT[::-1])
+    else:
+        bme.faces.new(vertListT)
     if len(vertListBDict["y+"]) == 0:
         vertListBDict["y+"] = [vertListBDict["++"].pop(0)]
     if len(vertListBDict["x+"]) == 0:
@@ -105,10 +140,182 @@ def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
 #        lastKey = key
 
     bme.faces.new((vertListT[-1], vertListB[-1], vertListB[0], vertListT[0]))
-    for v in range(N-1):
-        bme.faces.new((vertListT[1], vertListB[1], vertListB.pop(0), vertListT.pop(0)))
+    if reverseNorms:
+        for v in range(N-1):
+            bme.faces.new((vertListT[1], vertListB[1], vertListB.pop(0), vertListT.pop(0)))
+    else:
+        for v in range(N-1):
+            bme.faces.new((vertListT.pop(0), vertListB.pop(0), vertListB[0], vertListT[0]))
 
     return vertListBDict
+
+def makeFaces(botVertsDofDs, v13, v14, v15, v16, xNum, yNum, brickSize, reverseFaces, bme):
+    # Make corner faces
+    vList = botVertsDofDs["0,0"]["y-"] + botVertsDofDs["0,0"]["--"] + botVertsDofDs["0,0"]["x-"]
+    for i in range(1, len(vList)):
+        if reverseFaces:
+            bme.faces.new((vList[i], vList[i-1], v15))
+        else:
+            bme.faces.new((v15, vList[i-1], vList[i]))
+    vList = botVertsDofDs[str(xNum) + "," + str(0)]["x+"] + botVertsDofDs[str(xNum) + "," + str(0)]["+-"] + botVertsDofDs[str(xNum) + "," + str(0)]["y-"]
+    for i in range(1, len(vList)):
+        if reverseFaces:
+            bme.faces.new((vList[i], vList[i-1], v16))
+        else:
+            bme.faces.new((v16, vList[i-1], vList[i]))
+    vList = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["++"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["x+"]
+    for i in range(1, len(vList)):
+        if reverseFaces:
+            bme.faces.new((vList[i], vList[i-1], v13))
+        else:
+            bme.faces.new((v13, vList[i-1], vList[i]))
+    vList = botVertsDofDs[str(0) + "," + str(yNum)]["x-"] + botVertsDofDs[str(0) + "," + str(yNum)]["-+"] + botVertsDofDs[str(0) + "," + str(yNum)]["y+"]
+    for i in range(1, len(vList)):
+        if reverseFaces:
+            bme.faces.new((vList[i], vList[i-1], v14))
+        else:
+            bme.faces.new((v14, vList[i-1], vList[i]))
+
+    if reverseFaces:
+        # Make edge faces
+        v = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"][0]
+        bme.faces.new((v14, v13, v))
+        # except:
+        #     v = botVertsDofDs[str(xNum) + "," + str(yNum)]["++"][0]
+        # bme.faces.new((v14, v13, v))
+        v = botVertsDofDs[str(0) + "," + str(yNum)]["x-"][0]
+        bme.faces.new((v15, v14, v))
+        # except:
+        #     v = botVertsDofDs[str(0) + "," + str(yNum)]["--"][0]
+        # bme.faces.new((v15, v14, v))
+        v = botVertsDofDs[str(0) + "," + str(0)]["y-"][0]
+        bme.faces.new((v16, v15, v))
+        # except:
+        #     v = botVertsDofDs[str(0) + "," + str(0)]["--"][0]
+        # bme.faces.new((v16, v15, v))
+        v = botVertsDofDs[str(xNum) + "," + str(0)]["x+"][0]
+        bme.faces.new((v13, v16, v))
+    else:
+        # Make edge faces
+        v = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"][0]
+        bme.faces.new((v, v13, v14))
+        # except:
+        #     v = botVertsDofDs[str(xNum) + "," + str(yNum)]["++"][0]
+        # bme.faces.new((v14, v13, v))
+        v = botVertsDofDs[str(0) + "," + str(yNum)]["x-"][0]
+        bme.faces.new((v, v14, v15))
+        # except:
+        #     v = botVertsDofDs[str(0) + "," + str(yNum)]["--"][0]
+        # bme.faces.new((v15, v14, v))
+        v = botVertsDofDs[str(0) + "," + str(0)]["y-"][0]
+        bme.faces.new((v, v15, v16))
+        # except:
+        #     v = botVertsDofDs[str(0) + "," + str(0)]["--"][0]
+        # bme.faces.new((v16, v15, v))
+        v = botVertsDofDs[str(xNum) + "," + str(0)]["x+"][0]
+        bme.faces.new((v, v16, v13))
+    # except:
+    #     v = botVertsDofDs[str(xNum) + "," + str(0)]["++"][0]
+    # bme.faces.new((v13, v16, v))
+    for xNum in range(1, brickSize[0]):
+        try:
+            v1 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"][0]
+            v2 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"][0]
+            if reverseFaces:
+                bme.faces.new((v1, v2, v14))
+            else:
+                bme.faces.new((v14, v2, v1))
+        except:
+            v1 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"][0]
+            v2 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"][0]
+            if reverseFaces:
+                bme.faces.new((v1, v2, v14))
+            else:
+                bme.faces.new((v14, v2, v1))
+        try:
+            v1 = botVertsDofDs[str(xNum) + "," + str(0)]["y-"][0]
+            v2 = botVertsDofDs[str(xNum-1) + "," + str(0)]["y-"][0]
+            if reverseFaces:
+                bme.faces.new((v1, v2, v16))
+            else:
+                bme.faces.new((v16, v2, v1))
+        except:
+            pass
+    for yNum in range(1, brickSize[1]):
+        try:
+            v1 = botVertsDofDs[str(xNum) + "," + str(yNum)]["x+"][0]
+            v2 = botVertsDofDs[str(xNum) + "," + str(yNum-1)]["x+"][0]
+            if reverseFaces:
+                bme.faces.new((v1, v2, v13))
+            else:
+                bme.faces.new((v13, v2, v1))
+        except:
+            pass
+        try:
+            v1 = botVertsDofDs[str(0) + "," + str(yNum)]["x-"][0]
+            v2 = botVertsDofDs[str(0) + "," + str(yNum-1)]["x-"][0]
+            if reverseFaces:
+                bme.faces.new((v1, v2, v15))
+            else:
+                bme.faces.new((v15, v2, v1))
+        except:
+            pass
+
+    # Make in-between-insets faces along x axis
+    for xNum in range(1, brickSize[0]):
+        for yNum in range(brickSize[1]):
+            vList1 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["++"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["x+"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["+-"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y-"]
+            vList2 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["-+"][::-1] + botVertsDofDs[str(xNum) + "," + str(yNum)]["x-"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["--"][::-1] + botVertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
+            for i in range(1, len(vList1)):
+                v1 = vList1[i]
+                v2 = vList1[i-1]
+                v3 = vList2[i-1]
+                v4 = vList2[i]
+                if reverseFaces:
+                    bme.faces.new((v1, v2, v3, v4))
+                else:
+                    bme.faces.new((v4, v3, v2, v1))
+
+    # Make in-between-inset quads
+    for yNum in range(1, brickSize[1]):
+        for xNum in range(1, brickSize[0]):
+            try:
+                v1 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y-"][0]
+                v2 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y-"][0]
+                v3 = botVertsDofDs[str(xNum) + "," + str(yNum-1)]["y+"][0]
+                v4 = botVertsDofDs[str(xNum-1) + "," + str(yNum-1)]["y+"][0]
+                if reverseFaces:
+                    bme.faces.new((v1, v2, v3, v4))
+                else:
+                    bme.faces.new((v4, v3, v2, v1))
+            except:
+                pass
+
+    # Make final in-between-insets faces on extremes of x axis along y axis
+    for yNum in range(1, brickSize[1]):
+        vList1 = botVertsDofDs[str(0) + "," + str(yNum-1)]["x-"] + botVertsDofDs[str(0) + "," + str(yNum-1)]["-+"] + botVertsDofDs[str(0) + "," + str(yNum-1)]["y+"]
+        vList2 = botVertsDofDs[str(0) + "," + str(yNum)]["x-"] + botVertsDofDs[str(0) + "," + str(yNum)]["--"][::-1] + botVertsDofDs[str(0) + "," + str(yNum)]["y-"]
+        for i in range(1, len(vList1)):
+            v1 = vList1[i]
+            v2 = vList1[i-1]
+            v3 = vList2[i-1]
+            v4 = vList2[i]
+            if reverseFaces:
+                bme.faces.new((v1, v2, v3, v4))
+            else:
+                bme.faces.new((v4, v3, v2, v1))
+    for yNum in range(1, brickSize[1]):
+        vList1 = botVertsDofDs[str(xNum) + "," + str(yNum-1)]["x+"] + botVertsDofDs[str(xNum) + "," + str(yNum-1)]["++"][::-1] + botVertsDofDs[str(xNum) + "," + str(yNum-1)]["y+"]
+        vList2 = botVertsDofDs[str(xNum) + "," + str(yNum)]["x+"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["+-"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
+        for i in range(1, len(vList1)):
+            v1 = vList2[i]
+            v2 = vList2[i-1]
+            v3 = vList1[i-1]
+            v4 = vList1[i]
+            if reverseFaces:
+                bme.faces.new((v1, v2, v3, v4))
+            else:
+                bme.faces.new((v4, v3, v2, v1))
 
 def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", stud=True):
     # create new bmesh object
@@ -132,7 +339,6 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", stu
     v2 = bme.verts.new((-dX, dY * sY, dZ))
     v3 = bme.verts.new((-dX,-dY, dZ))
     v4 = bme.verts.new(( dX * sX,-dY, dZ))
-    bme.faces.new((v1, v2, v3, v4))
     v5 = bme.verts.new(( dX * sX, dY * sY,-dZ))
     v6 = bme.verts.new((-dX, dY * sY,-dZ))
     bme.faces.new((v2, v1, v5, v6))
@@ -145,9 +351,14 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", stu
     # CREATING STUD(S)
     if stud:
         studInset = thick * 0.9
+        botVertsDofDs = {}
         for xNum in range(brickSize[0]):
             for yNum in range(brickSize[1]):
-                makeCylinder(r=dimensions["stud_radius"], N=numStudVerts, h=dimensions["stud_height"]+studInset, co=(xNum*dX*2,yNum*dY*2,dimensions["stud_offset"]-(studInset/2)), botFace=False, bme=bme)
+                botVertsD = makeInnerCylinder(r=dimensions["stud_radius"], N=numStudVerts, h=dimensions["stud_height"], co=(xNum*dX*2,yNum*dY*2,dimensions["height"]/2), reverseNorms=False, bme=bme)
+                botVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = botVertsD
+        makeFaces(botVertsDofDs, v1, v2, v3, v4, xNum, yNum, brickSize, False, bme)
+    else:
+        bme.faces.new((v1, v2, v3, v4))
 
     if detail == "Flat":
         bme.faces.new((v8, v7, v6, v5))
@@ -186,117 +397,10 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", stu
                     r = dimensions["stud_radius"]-(2 * thick)
                     N = numStudVerts
                     h = thick * 0.99
-                    botVertsD = makeInnerCylinder(r, N, h, co=(xNum*dX*2,yNum*dY*2,v16.co.z), bme=bme)
+                    botVertsD = makeInnerCylinder(r, N, h, co=(xNum*dX*2,yNum*dY*2,v16.co.z), reverseNorms=False, bme=bme)
                     botVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = botVertsD
 
-            # Make corner faces
-            vList = botVertsDofDs["0,0"]["y-"] + botVertsDofDs["0,0"]["--"] + botVertsDofDs["0,0"]["x-"]
-            for i in range(1, len(vList)):
-                bme.faces.new((vList[i], vList[i-1], v15))
-            vList = botVertsDofDs[str(xNum) + "," + str(0)]["x+"] + botVertsDofDs[str(xNum) + "," + str(0)]["+-"] + botVertsDofDs[str(xNum) + "," + str(0)]["y-"]
-            for i in range(1, len(vList)):
-                bme.faces.new((vList[i], vList[i-1], v16))
-            vList = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["++"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["x+"]
-            for i in range(1, len(vList)):
-                bme.faces.new((vList[i], vList[i-1], v13))
-            vList = botVertsDofDs[str(0) + "," + str(yNum)]["x-"] + botVertsDofDs[str(0) + "," + str(yNum)]["-+"] + botVertsDofDs[str(0) + "," + str(yNum)]["y+"]
-            for i in range(1, len(vList)):
-                bme.faces.new((vList[i], vList[i-1], v14))
-
-            # Make edge faces
-            v = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"][0]
-            bme.faces.new((v14, v13, v))
-            # except:
-            #     v = botVertsDofDs[str(xNum) + "," + str(yNum)]["++"][0]
-            # bme.faces.new((v14, v13, v))
-            v = botVertsDofDs[str(0) + "," + str(yNum)]["x-"][0]
-            bme.faces.new((v15, v14, v))
-            # except:
-            #     v = botVertsDofDs[str(0) + "," + str(yNum)]["--"][0]
-            # bme.faces.new((v15, v14, v))
-            v = botVertsDofDs[str(0) + "," + str(0)]["y-"][0]
-            bme.faces.new((v16, v15, v))
-            # except:
-            #     v = botVertsDofDs[str(0) + "," + str(0)]["--"][0]
-            # bme.faces.new((v16, v15, v))
-            v = botVertsDofDs[str(xNum) + "," + str(0)]["x+"][0]
-            bme.faces.new((v13, v16, v))
-            # except:
-            #     v = botVertsDofDs[str(xNum) + "," + str(0)]["++"][0]
-            # bme.faces.new((v13, v16, v))
-            for xNum in range(1, brickSize[0]):
-                try:
-                    v1 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"][0]
-                    v2 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"][0]
-                    bme.faces.new((v1, v2, v14))
-                except:
-                    v1 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"][0]
-                    v2 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"][0]
-                    bme.faces.new((v1, v2, v14))
-                    pass
-                try:
-                    v1 = botVertsDofDs[str(xNum) + "," + str(0)]["y-"][0]
-                    v2 = botVertsDofDs[str(xNum-1) + "," + str(0)]["y-"][0]
-                    bme.faces.new((v16, v2, v1))
-                except:
-                    pass
-            for yNum in range(1, brickSize[1]):
-                try:
-                    v1 = botVertsDofDs[str(xNum) + "," + str(yNum)]["x+"][0]
-                    v2 = botVertsDofDs[str(xNum) + "," + str(yNum-1)]["x+"][0]
-                    bme.faces.new((v13, v2, v1))
-                except:
-                    pass
-                try:
-                    v1 = botVertsDofDs[str(0) + "," + str(yNum)]["x-"][0]
-                    v2 = botVertsDofDs[str(0) + "," + str(yNum-1)]["x-"][0]
-                    bme.faces.new((v1, v2, v15))
-                except:
-                    pass
-
-            # Make in-between-insets faces along x axis
-            for xNum in range(1, brickSize[0]):
-                for yNum in range(brickSize[1]):
-                    vList1 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["++"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["x+"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["+-"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y-"]
-                    vList2 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["-+"][::-1] + botVertsDofDs[str(xNum) + "," + str(yNum)]["x-"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["--"][::-1] + botVertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
-                    for i in range(1, len(vList1)):
-                        v1 = vList1[i]
-                        v2 = vList1[i-1]
-                        v3 = vList2[i-1]
-                        v4 = vList2[i]
-                        bme.faces.new((v1, v2, v3, v4))
-
-            # Make in-between-inset quads
-            for yNum in range(1, brickSize[1]):
-                for xNum in range(1, brickSize[0]):
-                    try:
-                        v1 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y-"][0]
-                        v2 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y-"][0]
-                        v3 = botVertsDofDs[str(xNum) + "," + str(yNum-1)]["y+"][0]
-                        v4 = botVertsDofDs[str(xNum-1) + "," + str(yNum-1)]["y+"][0]
-                        bme.faces.new((v1, v2, v3, v4))
-                    except:
-                        pass
-
-            # Make final in-between-insets faces on extremes of x axis along y axis
-            for yNum in range(1, brickSize[1]):
-                vList1 = botVertsDofDs[str(0) + "," + str(yNum-1)]["x-"] + botVertsDofDs[str(0) + "," + str(yNum-1)]["-+"] + botVertsDofDs[str(0) + "," + str(yNum-1)]["y+"]
-                vList2 = botVertsDofDs[str(0) + "," + str(yNum)]["x-"] + botVertsDofDs[str(0) + "," + str(yNum)]["--"][::-1] + botVertsDofDs[str(0) + "," + str(yNum)]["y-"]
-                for i in range(1, len(vList1)):
-                    v1 = vList1[i]
-                    v2 = vList1[i-1]
-                    v3 = vList2[i-1]
-                    v4 = vList2[i]
-                    bme.faces.new((v1, v2, v3, v4))
-            for yNum in range(1, brickSize[1]):
-                vList1 = botVertsDofDs[str(xNum) + "," + str(yNum-1)]["x+"] + botVertsDofDs[str(xNum) + "," + str(yNum-1)]["++"][::-1] + botVertsDofDs[str(xNum) + "," + str(yNum-1)]["y+"]
-                vList2 = botVertsDofDs[str(xNum) + "," + str(yNum)]["x+"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["+-"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
-                for i in range(1, len(vList1)):
-                    v1 = vList2[i]
-                    v2 = vList2[i-1]
-                    v3 = vList1[i-1]
-                    v4 = vList1[i]
-                    bme.faces.new((v1, v2, v3, v4))
+            makeFaces(botVertsDofDs, v13, v14, v15, v16, xNum, yNum, brickSize, True, bme)
 
     # return bmesh
     return bme
