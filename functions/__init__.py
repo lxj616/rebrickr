@@ -25,10 +25,10 @@ import bmesh
 import math
 import time
 from copy import copy, deepcopy
-from .crossSection import slices, drawBMesh
-from .common_mesh_generate import *
+# from .common_mesh_generate import *
 from .common_functions import *
-from .binvox_rw import *
+from .generate_lattice import generateLattice
+from .merge import *
 from ..classes.Brick import Bricks
 from mathutils import Matrix, Vector, geometry
 from mathutils.bvhtree import BVHTree
@@ -78,45 +78,6 @@ def importLogo():
     logoObj = bpy.context.selected_objects[0]
     return logoObj
 
-def merge(bricks):
-    return
-
-# R = resolution, s = 3D scale tuple, o = offset lattice center from origin
-def generateLattice(R, s, o=(0,0,0)):
-    # TODO: Raise exception if R is less than 2
-    bme = bmesh.new()
-    # initialize variables
-    coordMatrix = []
-    xR = R[0]
-    yR = R[1]
-    zR = R[2]
-    xS = s[0]
-    yS = s[1]
-    zS = s[2]
-    xL = int(round((xS)/xR))+1
-    if xL != 1: xL += 1
-    yL = int(round((yS)/yR))+1
-    if yL != 1: yL += 1
-    zL = int(round((zS)/zR))+1
-    if zL != 1: zL += 1
-    # iterate through x,y,z dimensions and create verts/connect with edges
-    for x in range(xL):
-        coordList1 = []
-        xCO = (x-(xS/(2*xR)))*xR
-        for y in range(yL):
-            coordList2 = []
-            yCO = (y-(yS/(2*yR)))*yR
-            for z in range(zL):
-                # create verts
-                zCO = (z-(zS/(2*zR)))*zR
-                p = (xCO, yCO, zCO)
-                v = bme.verts.new(tupleAdd(p, o))
-                coordList2.append(v.co.copy())
-            coordList1.append(coordList2)
-        coordMatrix.append(coordList1)
-    # return bmesh
-    return coordMatrix
-
 def pointInsideMesh(point,ob):
     axes = [ Vector((1,0,0)) , Vector((0,1,0)), Vector((0,0,1))  ]
     outside = False
@@ -144,7 +105,7 @@ def rayObjIntersections(point,direction,edgeLen,ob):
         orig = location + direction*0.00001
     return intersections
 
-def tempFuncName(x0, y0, z0, coordMatrix, brickFreqMatrix, source, x1, y1, z1, inside=None):
+def updateBFMatrix(x0, y0, z0, coordMatrix, brickFreqMatrix, source, x1, y1, z1, inside=None):
     orig = coordMatrix[x0][y0][z0]
     try:
         rayEnd = coordMatrix[x1][y1][z1]
@@ -165,16 +126,6 @@ def tempFuncName(x0, y0, z0, coordMatrix, brickFreqMatrix, source, x1, y1, z1, i
     if intersections > 0:
         brickFreqMatrix[x0][y0][z0] = 2
         brickFreqMatrix[x1][y1][z1] = 2
-    # return brickFreqMatrix
-
-    # if brickFreqMatrix[x0][y0][z0] == 0:
-    #     brickFreqMatrix[x0][y0][z0] = inside % 2
-    # intersections = rayObjIntersections(orig,ray,edgeLen,source)
-    # if intersections > 0:
-    #     brickFreqMatrix[x0][y0][z0] = 2
-    #     brickFreqMatrix[x1][y1][z1] = 2
-    #     inside += intersections
-    # return inside
 
 def getBrickMatrix(source, coordMatrix, axes="xyz"):
     brickFreqMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
@@ -187,24 +138,18 @@ def getBrickMatrix(source, coordMatrix, axes="xyz"):
     if "x" in axes:
         for z in range(len(coordMatrix[0][0])):
             for y in range(len(coordMatrix[0])):
-                # inside = 0
                 for x in range(len(coordMatrix)):
-                    # inside = tempFuncName(x, y, z, coordMatrix, brickFreqMatrix, source, x+1, y, z, inside)
-                    tempFuncName(x, y, z, coordMatrix, brickFreqMatrix, source, x+1, y, z)
+                    updateBFMatrix(x, y, z, coordMatrix, brickFreqMatrix, source, x+1, y, z)
     if "y" in axes:
         for z in range(len(coordMatrix[0][0])):
             for x in range(len(coordMatrix)):
-                # inside = 0
                 for y in range(len(coordMatrix[0])):
-                    # inside = tempFuncName(x, y, z, coordMatrix, brickFreqMatrix, source, x, y+1, z, inside)
-                    tempFuncName(x, y, z, coordMatrix, brickFreqMatrix, source, x, y+1, z)
+                    updateBFMatrix(x, y, z, coordMatrix, brickFreqMatrix, source, x, y+1, z)
     if "z" in axes:
         for x in range(len(coordMatrix)):
             for y in range(len(coordMatrix[0])):
-                # inside = 0
                 for z in range(len(coordMatrix[0][0])):
-                    # inside = tempFuncName(x, y, z, coordMatrix, brickFreqMatrix, source, x, y, z+1, inside)
-                    tempFuncName(x, y, z, coordMatrix, brickFreqMatrix, source, x, y, z+1)
+                    updateBFMatrix(x, y, z, coordMatrix, brickFreqMatrix, source, x, y, z+1)
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
@@ -244,7 +189,6 @@ def getBrickMatrix(source, coordMatrix, axes="xyz"):
 
     # STOPWATCH CHECK
     stopWatch("Time Elapsed (mycalc)", time.time()-ct)
-
 
     # bm = bmesh.new()
     # for x in range(len(coordMatrix)):
@@ -347,9 +291,6 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
         scn.objects.link(brick)
         brick.parent = source
 
-    # print(brickDict)
-    source["bricks"] = brickDict
-
     scn.update()
     # return list of created Brick objects
-    return bricks
+    return brickDict

@@ -2,7 +2,39 @@ import bpy
 import bmesh
 import math
 from mathutils import Matrix
-from ...functions.common_mesh_generate import makeCylinder
+# from ...functions.common_mesh_generate import makeCylinder
+
+# r = radius, N = numVerts, h = height, co = target cylinder position, botFace = Bool for creating face on bottom, bme = bmesh to insert mesh data into
+def makeCylinder(r, N, h, co=(0,0,0), botFace=True, topFace=True, bme=None):
+    # create new bmesh object
+    if bme == None:
+        bme = bmesh.new()
+
+    # create upper and lower circles
+    vertListT = []
+    vertListB = []
+    for i in range(N):
+        x = r * math.cos(((2 * math.pi) / N) * i)
+        y = r * math.sin(((2 * math.pi) / N) * i)
+        z = h / 2
+        coordT = (x + co[0], y + co[1], z + co[2])
+        coordB = (x + co[0], y + co[1], -z + co[2])
+        vertListT.append(bme.verts.new(coordT))
+        vertListB.append(bme.verts.new(coordB))
+
+    # create top and bottom faces
+    if topFace:
+        bme.faces.new(vertListT)
+    if botFace:
+        bme.faces.new(vertListB[::-1])
+
+    # create faces on the sides
+    bme.faces.new((vertListT[-1], vertListB[-1], vertListB[0], vertListT[0]))
+    for v in range(N-1):
+        bme.faces.new((vertListT.pop(0), vertListB.pop(0), vertListB[0], vertListT[0]))
+
+    # return bmesh
+    return bme
 
 # r = radius, N = numVerts, h = height, t = thickness, co = target cylinder position
 def makeTube(r, N, h, t, co=(0,0,0), bme=None):
@@ -111,7 +143,7 @@ def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
 
     return vertListBDict
 
-def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", stud=True):
+def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", logo=None, stud=True):
     # create new bmesh object
     bme = bmesh.new()
 
@@ -178,6 +210,13 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", stu
         for xNum in range(brickSize[0]-1):
             for yNum in range(brickSize[1]-1):
                 makeTube(dimensions["stud_radius"], numStudVerts, (dZ*2)-thick, dimensions["tube_thickness"], co=((xNum * dX * 2) + dX, (yNum * dY * 2) + dY, -thick/2), bme=bme)
+        # Adding bar inside 1 by x bricks
+        if brickSize[0] == 1:
+            for y in range(1, brickSize[1]):
+                makeCylinder(r=dimensions["bar_radius"], N=numStudVerts, h=(dZ*2)-thick, co=(0, (y * dY * 2) - dY, -thick/2), botFace=True, topFace=False, bme=bme)
+        if brickSize[1] == 1:
+            for x in range(1, brickSize[0]):
+                makeCylinder(r=dimensions["bar_radius"], N=numStudVerts, h=(dZ*2)-thick, co=((x * dX * 2) - dX, 0, -thick/2), botFace=True, topFace=False, bme=bme)
         # make face at top
         if detail == "Low Detail":
             bme.faces.new((v16, v15, v14, v13))
@@ -303,105 +342,74 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", stu
 
 
     # bmesh.ops.transform(bme, matrix=Matrix.Translation(((dimensions["width"]/2)*(addedX),(dimensions["width"]/2)*(addedY),0)), verts=bme.verts)
-    bmesh.ops.scale(bme, verts=bme.verts, vec=((dimensions["width"] + addedX/4)/dimensions["width"], (dimensions["width"] + addedY/4)/dimensions["width"], 1.0))
+    bmesh.ops.scale(bme, verts=bme.verts, vec=(((dimensions["width"]*brickSize[0]) + addedX)/(dimensions["width"]*brickSize[0]), ((dimensions["width"]*brickSize[1]) + addedY)/(dimensions["width"]*brickSize[1]), 1.0))
 
     # return bmesh
     return bme
 
-## r = radius, N = numVerts, h = height, co = target cylinder position, botFace = Bool for creating face on bottom, bme = bmesh to insert mesh data into
-#def makeCylinder(r, N, h, co=(0,0,0), botFace=True, bme=None):
-#    # create new bmesh object
-#    if bme == None:
-#        bme = bmesh.new()
-
-#    # create upper and lower circles
-#    vertListT = []
-#    vertListB = []
-#    for i in range(N):
-#        x = r * math.cos(((2 * math.pi) / N) * i)
-#        y = r * math.sin(((2 * math.pi) / N) * i)
-#        z = h / 2
-#        coordT = (x + co[0], y + co[1], z + co[2])
-#        coordB = (x + co[0], y + co[1], -z + co[2])
-#        vertListT.append(bme.verts.new(coordT))
-#        vertListB.append(bme.verts.new(coordB))
-
-#    # create top and bottom faces
-#    bme.faces.new(vertListT)
-#    if botFace:
-#        bme.faces.new(vertListB)
-
-#    # create faces on the sides
-#    bme.faces.new((vertListT[-1], vertListB[-1], vertListB[0], vertListT[0]))
-#    for v in range(N-1):
-#        bme.faces.new((vertListT.pop(0), vertListB.pop(0), vertListB[0], vertListT[0]))
-
-#    # return bmesh
-#    return bme
-
-#def newObjFromBmesh(layer, bme, meshName, objName=False):
-
-#    # if only one name given, use it for both names
-#    if not objName:
-#        objName = meshName
-
-#    # create mesh and object
-#    me = bpy.data.meshes.new(meshName)
-#    ob = bpy.data.objects.new(objName, me)
-
-#    scn = bpy.context.scene # grab a reference to the scene
-#    scn.objects.link(ob)    # link new object to scene
-#    scn.objects.active = ob # make new object active
-#    ob.select = True        # make new object selected (does not deselect
-#                             # other objects)
+# def newObjFromBmesh(layer, bme, meshName, objName=False):
 #
-#    obj = bme.to_mesh(me)         # push bmesh data into me
-
-#    # move to appropriate layer
-#    layerList = []
-#    for i in range(20):
-#        if i == layer-1:
-#            layerList.append(True)
-#        else:
-#            layerList.append(False)
-#    bpy.ops.object.move_to_layer(layers=layerList)
-#    bpy.context.scene.layers = layerList
-#    bpy.ops.object.select_all(action='TOGGLE')
-#    return ob
-
-#def deleteExisting():
-#    # delete existing objects
-#    tmpList = [True]*20
-#    bpy.context.scene.layers = tmpList
-#    for i in range(2):
-#        bpy.ops.object.select_all(action='TOGGLE')
-#        bpy.ops.object.delete(use_global=False)
-#    bpy.context.scene.layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True]
-
-#def main():
-#    deleteExisting()
-
-#    # create objects
-#    dimensions = {'gap': 0.0015000000260770308, 'width': 0.12500000496705374, 'stud_diameter': 0.07500000298023224, 'height': 0.15000000596046448, 'stud_offset': 0.08906250353902578, 'thickness': 0.02500000099341075, 'tube_thickness': 0.013359375530853868, 'logo_width': 0.05843750232209763, 'stud_radius': 0.03750000149011612, 'stud_height': 0.028125001117587093, 'logo_offset': 0.10312500409781933}
-#    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="Flat"), "1x1 flat").location = (-.2,0,0)
-#    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="Low Detail"), "1x1 low").location = (0,0,0)
-#    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="High Detail"), "1x1 high").location = (.2,0,0)
-#    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="Flat"), "1x2 flat").location = (-.2,0,0)
-#    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="Low Detail"), "1x2 low").location = (0,0,0)
-#    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="High Detail"), "1x2 high").location = (.2,0,0)
-#    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="Flat"), "2x2 flat").location = (-.3,0,0)
-#    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="Low Detail"), "2x2 low").location = (0,0,0)
-#    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="High Detail"), "2x2 high").location = (.3,0,0)
-#    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="Flat"), "2x6 flat").location = (-.3,0,0)
-#    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="Low Detail"), "2x6 low").location = (0,0,0)
-#    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="High Detail"), "2x6 high").location = (.3,0,0)
+#     # if only one name given, use it for both names
+#     if not objName:
+#         objName = meshName
 #
-#    layerToOpen = 1
-
-#    layerList = []
-#    for i in range(20):
-#        if i == layerToOpen-1: layerList.append(True)
-#        else: layerList.append(False)
-#    bpy.context.scene.layers = layerList
-
-#main()
+#     # create mesh and object
+#     me = bpy.data.meshes.new(meshName)
+#     ob = bpy.data.objects.new(objName, me)
+#
+#     scn = bpy.context.scene # grab a reference to the scene
+#     scn.objects.link(ob)    # link new object to scene
+#     scn.objects.active = ob # make new object active
+#     ob.select = True        # make new object selected (does not deselect
+#                              # other objects)
+#
+#     obj = bme.to_mesh(me)         # push bmesh data into me
+#
+#     # move to appropriate layer
+#     layerList = []
+#     for i in range(20):
+#         if i == layer-1:
+#             layerList.append(True)
+#         else:
+#             layerList.append(False)
+#     bpy.ops.object.move_to_layer(layers=layerList)
+#     bpy.context.scene.layers = layerList
+#     bpy.ops.object.select_all(action='TOGGLE')
+#     return ob
+#
+# def deleteExisting():
+#     # delete existing objects
+#     tmpList = [True]*20
+#     bpy.context.scene.layers = tmpList
+#     for i in range(2):
+#         bpy.ops.object.select_all(action='TOGGLE')
+#         bpy.ops.object.delete(use_global=False)
+#     bpy.context.scene.layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True]
+#
+# def main():
+#     deleteExisting()
+#
+#     # create objects
+#     dimensions = {'gap': 0.0015000000260770308, 'width': 0.12500000496705374, 'stud_diameter': 0.07500000298023224, 'height': 0.15000000596046448, 'stud_offset': 0.08906250353902578, 'thickness': 0.02500000099341075, 'tube_thickness': 0.013359375530853868, 'logo_width': 0.05843750232209763, 'stud_radius': 0.03750000149011612, 'stud_height': 0.028125001117587093, 'logo_offset': 0.10312500409781933}
+#     newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="Flat"), "1x1 flat").location = (-.2,0,0)
+#     newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="Low Detail"), "1x1 low").location = (0,0,0)
+#     newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="High Detail"), "1x1 high").location = (.2,0,0)
+#     newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="Flat"), "1x2 flat").location = (-.2,0,0)
+#     newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="Low Detail"), "1x2 low").location = (0,0,0)
+#     newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="High Detail"), "1x2 high").location = (.2,0,0)
+#     newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="Flat"), "2x2 flat").location = (-.3,0,0)
+#     newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="Low Detail"), "2x2 low").location = (0,0,0)
+#     newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="High Detail"), "2x2 high").location = (.3,0,0)
+#     newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="Flat"), "2x6 flat").location = (-.3,0,0)
+#     newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="Low Detail"), "2x6 low").location = (0,0,0)
+#     newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="High Detail"), "2x6 high").location = (.3,0,0)
+#
+#     layerToOpen = 1
+#
+#     layerList = []
+#     for i in range(20):
+#         if i == layerToOpen-1: layerList.append(True)
+#         else: layerList.append(False)
+#     bpy.context.scene.layers = layerList
+#
+# main()

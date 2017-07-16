@@ -39,8 +39,18 @@ from .buttons import *
 from .classes.Brick import Brick
 props = bpy.props
 
+# store keymaps here to access after registration
+addon_keymaps = []
+
 def register():
     bpy.utils.register_module(__name__)
+
+    # handle the keymap
+    wm = bpy.context.window_manager
+    km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
+    kmi = km.keymap_items.new("scene.legoizer_legoize", 'L', 'PRESS', alt=True, shift=True)
+    kmi = km.keymap_items.new("scene.legoizer_delete", 'L', 'PRESS', alt=True, shift=True)#, ctrl=True)
+    addon_keymaps.append(km)
 
     # other things (UI List)
     bpy.types.Scene.cmlist = CollectionProperty(type=CustomProp)
@@ -62,6 +72,13 @@ def unregister():
 
     del Scn.cmlist_index
     del Scn.cmlist
+
+    wm = bpy.context.window_manager
+    for km in addon_keymaps:
+        wm.keyconfigs.addon.keymaps.remove(km)
+
+    # clear the list
+    addon_keymaps.clear()
 
     bpy.utils.unregister_module(__name__)
 

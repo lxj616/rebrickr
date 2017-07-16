@@ -22,6 +22,7 @@ Created by Christopher Gearhart
 # system imports
 import bpy
 import bmesh
+import random
 from mathutils import Vector, Matrix
 from .lego_mesh_generate import *
 from ...functions import *
@@ -60,7 +61,8 @@ class Bricks:
         brick_dimensions["stud_radius"] = scale*2.4
         brick_dimensions["stud_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"] / 2)
         brick_dimensions["thickness"] = scale*1.6
-        brick_dimensions["tube_thickness"] = scale * 0.855
+        brick_dimensions["tube_thickness"] = scale*0.855
+        brick_dimensions["bar_radius"] = scale*1.6
         brick_dimensions["logo_width"] = scale*3.74
         brick_dimensions["logo_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"])
         return brick_dimensions
@@ -133,19 +135,40 @@ class Brick:
         bm = bmesh.new()
 
         brickBM = makeBrick(dimensions=self.brick_dimensions, brickSize=type, numStudVerts=settings["numStudVerts"], detail=undersideDetail, stud=stud)
-        studInset = self.brick_dimensions["thickness"] * 0.9
-        if logo:
-            logoBM = bmesh.new()
-            logoBM.from_mesh(logo.data)
-            lw = self.brick_dimensions["logo_width"]
-            bmesh.ops.scale(logoBM, vec=Vector((lw, lw, lw)), verts=logoBM.verts)
-            bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(1.0, 0.0, 0.0), matrix=Matrix.Rotation(math.radians(90.0), 3, 'X'))
-            bmesh.ops.translate(logoBM, vec=Vector((0, 0, self.brick_dimensions["logo_offset"])), verts=logoBM.verts)
-            # add logoBM mesh to bm mesh
-            logoMesh = bpy.data.meshes.new('LEGOizer_tempMesh')
-            logoBM.to_mesh(logoMesh)
-            bm.from_mesh(logoMesh)
-            bpy.data.meshes.remove(logoMesh, do_unlink=True)
+        if logo and stud:
+            # get logo rotation angle based on type of brick
+            if type == [1,1]:
+                zRot = random.randint(0,3) * 90
+            elif type[0] == 2 and type[1] > 2:
+                zRot = random.randint(0,1) * 180 + 90
+            elif type[1] == 2 and type[0] > 2:
+                zRot = random.randint(0,1) * 180
+            elif type == [2,2]:
+                zRot = random.randint(0,1) * 180
+            elif type[0] == 1:
+                zRot = random.randint(0,1) * 180 + 90
+            elif type[1] == 1:
+                zRot = random.randint(0,1) * 180
+            else:
+                print("shouldn't get here")
+            for x in range(type[0]):
+                for y in range(type[1]):
+                    logoBM = bmesh.new()
+                    logoBM.from_mesh(logo.data)
+                    lw = self.brick_dimensions["logo_width"]
+                    # transform logo into place
+                    bmesh.ops.scale(logoBM, vec=Vector((lw, lw, lw)), verts=logoBM.verts)
+                    bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(1.0, 0.0, 0.0), matrix=Matrix.Rotation(math.radians(90.0), 3, 'X'))
+                    # rotate logo around stud
+                    if zRot != 0:
+                        bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(0.0, 0.0, 1.0), matrix=Matrix.Rotation(math.radians(zRot), 3, 'Z'))
+                    bmesh.ops.translate(logoBM, vec=Vector((x*self.brick_dimensions["width"], y*self.brick_dimensions["width"], self.brick_dimensions["logo_offset"])), verts=logoBM.verts)
+                    lastLogoBM = logoBM
+                    # add logoBM mesh to bm mesh
+                    logoMesh = bpy.data.meshes.new('LEGOizer_tempMesh')
+                    logoBM.to_mesh(logoMesh)
+                    bm.from_mesh(logoMesh)
+                    bpy.data.meshes.remove(logoMesh, do_unlink=True)
 
         # add brick mesh to bm mesh
         cube = bpy.data.meshes.new('legoizer_cube')

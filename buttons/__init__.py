@@ -19,4 +19,4 @@
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
     """
 
-__all__ = ["legoize", "merge", "delete", "bevel"]
+__all__ = ["legoize", "delete", "bevel"]

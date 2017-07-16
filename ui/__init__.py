@@ -65,13 +65,22 @@ class LegoModelsPanel(Panel):
             n = cm.source_name
             LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
             groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
-            col = layout.column(align=True)
-            col.label("Source Object:")
-            row = col.row(align=True)
             if not groupExistsBool:
+                col = layout.column(align=True)
+                col.label("Source Object:")
+                row = col.row(align=True)
                 row.prop_search(cm, "source_name", scn, "objects", text='')
+                col = layout.column(align=True)
+                row = col.row(align=True)
+                row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD").action = "CREATE"
             else:
+                col = layout.column(align=True)
+                col.label("Source Object: " + cm.source_name)
+                row = col.row(align=True)
                 row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL")
+                col = layout.column(align=True)
+                row = col.row(align=True)
+                row.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH").action = "UPDATE"
 
             # sub = row.row(align=True)
             # sub.scale_x = 0.1
@@ -87,11 +96,11 @@ class LegoModelsPanel(Panel):
             layout.operator("cmlist.list_action", icon='ZOOMIN', text="New LEGO Model").action = 'ADD'
 
 
-class SettingsPanel(Panel):
+class ModelSettingsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
-    bl_label       = "Settings"
-    bl_idname      = "VIEW3D_PT_tools_LEGOizer_settings"
+    bl_label       = "Model Settings"
+    bl_idname      = "VIEW3D_PT_tools_LEGOizer_model_settings"
     bl_context     = "objectmode"
     bl_category    = "LEGOizer"
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
@@ -119,39 +128,70 @@ class SettingsPanel(Panel):
         if cm.preHollow:
             row = col.row(align=True)
             row.prop(cm, "shellThickness")
+
+
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.label("Stud Detail:")
+        row.label("Brick Settings:")
+        row = col.row(align=True)
+        row.prop(cm, "maxBrickScale")
+        row = col.row(align=True)
+        row.prop(cm, "mergeSeed")
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.label("Calculation Axes:")
+        row = col.row(align=True)
+        row.prop(cm, "calculationAxes", text="")
+
+class DetailingPanel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "Detailing"
+    bl_idname      = "VIEW3D_PT_tools_LEGOizer_detailing"
+    bl_context     = "objectmode"
+    bl_category    = "LEGOizer"
+    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
+
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.label("Studs:")
         row = col.row(align=True)
         row.prop(cm, "studDetail", text="")
+        if cm.studDetail != "None":
+            row = col.row(align=True)
+            row.prop(cm, "studVerts")
+            col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(cm, "studVerts")
-        col = layout.column(align=True)
-        row = col.row(align=True)
-        row.label("Logo Detail:")
+        row.label("Logo:")
         row = col.row(align=True)
         row.prop(cm, "logoDetail", text="")
         if cm.logoDetail != "None":
             row = col.row(align=True)
             row.prop(cm, "logoResolution", text="Logo Resolution")
-        col = layout.column(align=True)
+            col = layout.column(align=True)
         row = col.row(align=True)
-        row.label("Underside Detail:")
+        row.label("Underside Hidden:")
         row = col.row(align=True)
-        row.prop(cm, "hiddenUndersideDetail", text="Hidden")
+        row.prop(cm, "hiddenUndersideDetail", text="")
         row = col.row(align=True)
-        row.prop(cm, "exposedUndersideDetail", text="Exposed")
-        col = layout.column(align=True)
+        row.label("Underside Exposed:")
         row = col.row(align=True)
-        n = cm.source_name
-        LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
-        groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
-        if not groupExistsBool:
-            row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD").action = "CREATE"
-        else:
-            row.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH").action = "UPDATE"
-        row = col.row(align=True)
-        row.operator("scene.legoizer_merge", text="Merge Bricks", icon="MOD_REMESH")
+        row.prop(cm, "exposedUndersideDetail", text="")
+
 
 class BevelPanel(Panel):
     bl_space_type  = "VIEW_3D"
@@ -191,30 +231,31 @@ class BevelPanel(Panel):
             row.operator("scene.legoizer_bevel", text="Remove Bevel", icon="CANCEL").action = "REMOVE"
         except:
             row.operator("scene.legoizer_bevel", text="Bevel bricks", icon="MOD_BEVEL").action = "CREATE"
-
-
-class AdvancedPanel(Panel):
-    bl_space_type  = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_label       = "Advanced"
-    bl_idname      = "VIEW3D_PT_tools_LEGOizer_advanced"
-    bl_context     = "objectmode"
-    bl_category    = "LEGOizer"
-    bl_options     = {"DEFAULT_CLOSED"}
-    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
-
-    @classmethod
-    def poll(self, context):
-        scn = context.scene
-        if scn.cmlist_index == -1:
-            return False
-        return True
-
-    def draw(self, context):
-        layout = self.layout
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-
-        col = layout.column(align=True)
-        row = col.row(align=True)
-        row.prop(cm, "calculationAxes", text="")
+#
+# class AdvancedPanel(Panel):
+#     bl_space_type  = "VIEW_3D"
+#     bl_region_type = "TOOLS"
+#     bl_label       = "Advanced"
+#     bl_idname      = "VIEW3D_PT_tools_LEGOizer_advanced"
+#     bl_context     = "objectmode"
+#     bl_category    = "LEGOizer"
+#     bl_options     = {"DEFAULT_CLOSED"}
+#     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
+#
+#     @classmethod
+#     def poll(self, context):
+#         scn = context.scene
+#         if scn.cmlist_index == -1:
+#             return False
+#         return True
+#
+#     def draw(self, context):
+#         layout = self.layout
+#         scn = context.scene
+#         cm = scn.cmlist[scn.cmlist_index]
+#
+#         col = layout.column(align=True)
+#         row = col.row(align=True)
+#         row.label("Calculation Axes:")
+#         row = col.row(align=True)
+#         row.prop(cm, "calculationAxes", text="")

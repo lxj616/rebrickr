@@ -14,12 +14,11 @@ Blender add-on for automated generation of LEGO Bricks from object (Blender vers
       * Click 'Update Model' to view setting adjustments
   * Future improvements:
     * Priority 1:
-      * Add functionality to 'Merge Bricks' button
+      * Finished!
     * Priority 2:
-      * Add functionality to Shell Thickness
       * Apply closest LEGO color based on color of nearest vertex
+      * Improve bevel so that number of verts doesn't affect it
       * Improve logo resolution (currently uses decimate)
-      * Add functionality for bevel on LEGO bricks
     * Priority 3:
       * New feature: frame-by-frame generation of LEGO models (like the explosions in the LEGO Movie)
       * Allow for custom object to generate model from

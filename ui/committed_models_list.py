@@ -292,15 +292,16 @@ class CustomProp(bpy.types.PropertyGroup):
     studDetail = EnumProperty(
         name="Stud Detailing",
         description="Choose where to draw the studs",
-        items=[("On Exposed Bricks", "On Exposed Bricks", "Include LEGO Logo only on bricks with studs exposed"),
-              ("On All Bricks", "On All Bricks", "Include LEGO Logo only on bricks with studs exposed")],
+        items=[("On All Bricks", "On All Bricks", "Include LEGO Logo only on bricks with studs exposed"),
+              ("On Exposed Bricks", "On Exposed Bricks", "Include LEGO Logo only on bricks with studs exposed"),
+              ("None", "None", "Don't include LEGO Logo on bricks")],
         default="On Exposed Bricks")
 
     logoDetail = EnumProperty(
         name="Logo Detailing",
         description="Choose where to draw the logo",
-        items=[("On All Bricks", "On All Bricks", "Include LEGO Logo on all bricks"),
-              ("On Exposed Bricks", "On Exposed Bricks", "Include LEGO Logo only on bricks with studs exposed"),
+        items=[("On All Studs", "On All Studs", "Include LEGO Logo on all studs"),
+              ("On Exposed Studs", "On Exposed Studs", "Include LEGO Logo only on exposed studs"),
               ("None", "None", "Don't include LEGO Logo on bricks")],
         default="None")
 
@@ -344,6 +345,18 @@ class CustomProp(bpy.types.PropertyGroup):
         min=.001, max=1,
         default=.01)
 
+    mergeSeed = IntProperty(
+        name="Random Seed",
+        description="Random seed for brick merging calculations",
+        min=-1, max=5000,
+        default=1000)
+
+    maxBrickScale = IntProperty(
+        name="Max Brick Scale",
+        description="Maximum scale of the generated LEGO bricks (equivalent to num studs on top)",
+        min=1, max=20,
+        default=20)
+
     lastBrickHeight = FloatProperty(default=0)
     lastGap = FloatProperty(default=0)
     lastPreHollow = BoolProperty(default=False)
@@ -351,6 +364,10 @@ class CustomProp(bpy.types.PropertyGroup):
     lastCalculationAxes = StringProperty(default="")
     lastLogoDetail = StringProperty(default="None")
     lastLogoResolution = FloatProperty(default=0)
+    lastStudDetail = StringProperty(default="None")
+    lastStudVerts = FloatProperty(default=0)
+    lastMergeSeed = IntProperty(default=1000)
+    lastMaxBrickScale = IntProperty(default=10)
     lastExposedUndersideDetail = StringProperty(default="None")
     lastHiddenUndersideDetail = StringProperty(default="None")
 
@@ -358,6 +375,8 @@ class CustomProp(bpy.types.PropertyGroup):
     lastRotationEuler = StringProperty(default="0")
     lastScale = StringProperty(default="0")
     lastDimensions = StringProperty(default="0")
+
+    bricksMerged = BoolProperty(default=False)
 
     # Bevel Settings
     lastBevelWidth = FloatProperty()

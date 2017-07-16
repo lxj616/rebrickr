@@ -168,19 +168,24 @@ class legoizerLegoize(bpy.types.Operator):
 
         # set up refLogoHidden and refLogoExposed based on cm.logoDetail
         # TODO: only do the following if necessary. If no setting is changed, update button shouldn't really do much
-        if cm.logoDetail == "On Exposed Bricks":
+        if cm.logoDetail == "On Exposed Studs":
             refLogoHidden = None
             refLogoExposed = refLogo
-        elif cm.logoDetail == "On All Bricks":
+        elif cm.logoDetail == "On All Studs":
             refLogoHidden = refLogo
             refLogoExposed = refLogo
         elif cm.logoDetail == "None":
             refLogoHidden = None
             refLogoExposed = None
 
-        if cm.studDetail == "On All Bricks":
+        if cm.studDetail == "None":
+            exposedStuds = False
+            hiddenStuds = False
+        elif cm.studDetail == "On All Studs":
+            exposedStuds = True
             hiddenStuds = True
         else:
+            exposedStuds = True
             hiddenStuds = False
         if groupExists("LEGOizer_%(n)s_refBricks" % locals()) and len(bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()].objects) > 0:
             # initialize rbGroup
@@ -198,11 +203,11 @@ class legoizerLegoize(bpy.types.Operator):
             m = refBrickHidden.data
             Bricks().new_mesh(name=refBrickHidden.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoHidden, stud=hiddenStuds, meshToOverwrite=m)
             m = refBrickUpper.data
-            Bricks().new_mesh(name=refBrickUpper.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoExposed, stud=True, meshToOverwrite=m)
+            Bricks().new_mesh(name=refBrickUpper.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoExposed, stud=exposedStuds, meshToOverwrite=m)
             m = refBrickLower.data
             Bricks().new_mesh(name=refBrickLower.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoHidden, stud=hiddenStuds, meshToOverwrite=m)
             m = refBrickUpperLower.data
-            Bricks().new_mesh(name=refBrickUpperLower.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoExposed, stud=True, meshToOverwrite=m)
+            Bricks().new_mesh(name=refBrickUpperLower.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoExposed, stud=exposedStuds, meshToOverwrite=m)
             # link refBricks to new group
             rbGroup.objects.link(refBrickHidden)
             rbGroup.objects.link(refBrickUpper)
@@ -212,11 +217,11 @@ class legoizerLegoize(bpy.types.Operator):
             # make 1x1 refBrick
             m0 = Bricks.new_mesh(name="LEGOizer_%(n)s_refBrickHidden" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoHidden, stud=hiddenStuds)
             refBrickHidden = bpy.data.objects.new(m0.name, m0)
-            m1 = Bricks().new_mesh(name="LEGOizer_%(n)s_refBrickUpper" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoExposed, stud=True)
+            m1 = Bricks().new_mesh(name="LEGOizer_%(n)s_refBrickUpper" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoExposed, stud=exposedStuds)
             refBrickUpper = bpy.data.objects.new(m1.name, m1)
             m2 = Bricks().new_mesh(name="LEGOizer_%(n)s_refBrickLower" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoHidden, stud=hiddenStuds)
             refBrickLower = bpy.data.objects.new(m2.name, m2)
-            m3 = Bricks().new_mesh(name="LEGOizer_%(n)s_refBrickUpperLower" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoExposed, stud=True)
+            m3 = Bricks().new_mesh(name="LEGOizer_%(n)s_refBrickUpperLower" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoExposed, stud=exposedStuds)
             refBrickUpperLower = bpy.data.objects.new(m3.name, m3)
             # create new refbricks group
             if groupExists("LEGOizer_%(n)s_refBricks" % locals()):
@@ -245,6 +250,14 @@ class legoizerLegoize(bpy.types.Operator):
            cm.shellThickness != cm.lastShellThickness or
            meshComparasin != 'Same' or
            cm.lastCalculationAxes != cm.calculationAxes or
+           (cm.exposedUndersideDetail != cm.lastExposedUndersideDetail and cm.bricksMerged) or
+           (cm.hiddenUndersideDetail != cm.lastHiddenUndersideDetail and cm.bricksMerged) or
+           (cm.studDetail != cm.lastStudDetail and cm.bricksMerged) or
+           (cm.studVerts != cm.lastStudVerts and cm.bricksMerged) or
+           (cm.logoDetail != cm.lastLogoDetail and cm.bricksMerged) or
+           (cm.logoResolution != cm.lastLogoResolution and cm.bricksMerged) or
+           (cm.lastMergeSeed != cm.mergeSeed and cm.bricksMerged) or
+           cm.lastMaxBrickScale != cm.maxBrickScale or
            self.action == "CREATE"):
             # delete old bricks if present
             if groupExists(LEGOizer_bricks):
@@ -254,7 +267,12 @@ class legoizerLegoize(bpy.types.Operator):
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
             # slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
             refBricks = list(rbGroup.objects)
-            makeBricks(refBricks, source, source_details, dimensions, R, cm.preHollow)
+            bricks = makeBricks(refBricks, source, source_details, dimensions, R, cm.preHollow)
+            if cm.maxBrickScale != 1:
+                mergeBricks(source, refLogo, dimensions, bricks)
+            else:
+                cm.bricksMerged = False
+
 
         # set final variables
         cm.lastBrickHeight = cm.brickHeight
@@ -266,6 +284,10 @@ class legoizerLegoize(bpy.types.Operator):
         cm.lastHiddenUndersideDetail = cm.hiddenUndersideDetail
         cm.lastLogoResolution = cm.logoResolution
         cm.lastLogoDetail = cm.logoDetail
+        cm.lastStudVerts = cm.studVerts
+        cm.lastStudDetail = cm.studDetail
+        cm.lastMergeSeed = cm.mergeSeed
+        cm.lastMaxBrickScale = cm.maxBrickScale
 
         # set last transformation data
         lastLoc = str(source.location[0]) + str(source.location[1]) + str(source.location[2])
