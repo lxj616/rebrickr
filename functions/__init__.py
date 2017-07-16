@@ -157,7 +157,6 @@ def getBrickMatrix(source, coordMatrix, axes="xyz"):
                         (((y == len(coordMatrix[0])-1 or brickFreqMatrix[x][y+1][z] == 0) or (y == 0 or brickFreqMatrix[x][y-1][z] == 0)) and "y" not in axes) or
                         (((x == len(coordMatrix)-1 or brickFreqMatrix[x+1][y][z] == 0) or (x == 0 or brickFreqMatrix[x-1][y][z] == 0)) and "x" not in axes)):
                         brickFreqMatrix[x][y][z] = 2
-    ct = time.time()
     j = 1
     for idx in range(100):
         j -= 0.01
@@ -185,9 +184,6 @@ def getBrickMatrix(source, coordMatrix, axes="xyz"):
 
         if not gotOne:
             break
-
-    # STOPWATCH CHECK
-    stopWatch("Time Elapsed (mycalc)", time.time()-ct)
 
     # bm = bmesh.new()
     # for x in range(len(coordMatrix)):
@@ -248,10 +244,9 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
     bricks = []
     i = 0
     # TODO: Improve efficiency of the following nested for loop
-    ct = time.time()
     brickDict = {}
+    denom = len(coList)/20
     for x in range(len(coList)):
-        print("x: " + str(x))
         for y in range(len(coList[0])):
             for z in range(len(coList[0][0])):
                 co = coList[x][y][z]
@@ -273,7 +268,7 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
                     else:
                         print("shouldn't get here")
 
-                    brick = bpy.data.objects.new('LEGOizer_brick_' + str(i+1) + " (" + str(brickFreqMatrix[x][y][z]) + ")", brickMesh)
+                    brick = bpy.data.objects.new('LEGOizer_brick_' + str(i+1), brickMesh)
                     brick.location = Vector(co)
                     bricks.append(brick)
                     brickDict[str(x) + "," + str(y) + "," + str(z)] = {"name":brick.name, "val":brickFreqMatrix[x][y][z], "coord":coordMatrix[x][y][z], "connected":[]}
@@ -281,8 +276,12 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
                     # bGroup.objects.link(brick.obj)
                 else:
                     brickDict[str(x) + "," + str(y) + "," + str(z)] = {"name":"DNE", "val":brickFreqMatrix[x][y][z], "coord":coordMatrix[x][y][z], "connected":[]}
-
-    stopWatch("Time Elapsed in loop", time.time()-ct)
+        # print status to terminal
+        if x % denom < 1:
+            percent = x*100//len(coList)+5
+            if percent > 100:
+                percent = 100
+            print("Calculating Bricks... " + str(percent) + "%")
 
     # link objects to scene (this is done later to improve code performance)
     for brick in bricks:
@@ -291,5 +290,8 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
         brick.parent = source
 
     scn.update()
+
+    stopWatch("Time Elapsed (makeBricks)", time.time()-ct)
+
     # return list of created Brick objects
     return brickDict

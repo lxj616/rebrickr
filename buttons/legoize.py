@@ -181,7 +181,7 @@ class legoizerLegoize(bpy.types.Operator):
         if cm.studDetail == "None":
             exposedStuds = False
             hiddenStuds = False
-        elif cm.studDetail == "On All Studs":
+        elif cm.studDetail == "On All Bricks":
             exposedStuds = True
             hiddenStuds = True
         else:
@@ -267,12 +267,11 @@ class legoizerLegoize(bpy.types.Operator):
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
             # slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
             refBricks = list(rbGroup.objects)
-            bricks = makeBricks(refBricks, source, source_details, dimensions, R, cm.preHollow)
+            bricksDict = makeBricks(refBricks, source, source_details, dimensions, R, cm.preHollow)
             if cm.maxBrickScale != 1:
-                mergeBricks(source, refLogo, dimensions, bricks)
+                mergeBricks(source, refLogo, dimensions, bricksDict)
             else:
                 cm.bricksMerged = False
-
 
         # set final variables
         cm.lastBrickHeight = cm.brickHeight
@@ -310,7 +309,7 @@ class legoizerLegoize(bpy.types.Operator):
         disableRelationshipLines()
 
         # STOPWATCH CHECK
-        stopWatch("Time Elapsed", time.time()-startTime)
+        stopWatch("Total Time Elapsed", time.time()-startTime)
 
         # if self.action == "CREATE":
         #     context.window_manager.modal_handler_add(self)

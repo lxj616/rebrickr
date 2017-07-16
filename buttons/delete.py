@@ -91,12 +91,12 @@ class legoizerDelete(bpy.types.Operator):
         #     bpy.data.groups.remove(refLogoGroup, do_unlink=True)
 
     def execute(self, context):
-        # get start time
-        startTime = time.time()
+        # # get start time
+        # startTime = time.time()
 
         self.cleanUp()
-
-        # STOPWATCH CHECK
-        stopWatch("Time Elapsed", time.time()-startTime)
+        
+        # # STOPWATCH CHECK
+        # stopWatch("Time Elapsed (DELETE)", time.time()-startTime)
 
         return{"FINISHED"}

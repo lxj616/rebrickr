@@ -162,7 +162,7 @@ class Brick:
                     # rotate logo around stud
                     if zRot != 0:
                         bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(0.0, 0.0, 1.0), matrix=Matrix.Rotation(math.radians(zRot), 3, 'Z'))
-                    bmesh.ops.translate(logoBM, vec=Vector((x*self.brick_dimensions["width"], y*self.brick_dimensions["width"], self.brick_dimensions["logo_offset"])), verts=logoBM.verts)
+                    bmesh.ops.translate(logoBM, vec=Vector((x*self.brick_dimensions["width"], y*self.brick_dimensions["width"], self.brick_dimensions["logo_offset"]*0.998)), verts=logoBM.verts)
                     lastLogoBM = logoBM
                     # add logoBM mesh to bm mesh
                     logoMesh = bpy.data.meshes.new('LEGOizer_tempMesh')

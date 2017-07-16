@@ -23,7 +23,9 @@ Created by Christopher Gearhart
 import bpy
 import time
 import random
+import time
 from ..classes.Brick import Bricks
+from ..functions.common_functions import stopWatch
 
 def brickAvail(brick):
     if brick != None:
@@ -42,15 +44,15 @@ def mergeBricks(source, logo, dimensions, bricks):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     n = cm.source_name
-
-    print("merging bricks...")
+    ct = time.time()
 
     # get bricks in seeded order
     keys = list(bricks.keys())
     random.seed(a=cm.mergeSeed)
     random.shuffle(keys)
 
-    for key in keys:
+    denom = len(keys)/20
+    for i,key in enumerate(keys):
         brickD = bricks[key]
         if brickD["name"] != "DNE" and len(brickD["connected"]) == 0:
             loc = key.split(",")
@@ -205,4 +207,16 @@ def mergeBricks(source, logo, dimensions, bricks):
             m = Bricks().new_mesh(name=brick0.name, height=dimensions["height"], type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
             brick0.data = m
 
+        # print status to terminal
+        if i % denom < 1:
+            if i == len(keys):
+                print("merging... 100%")
+            else:
+                percent = i*100//len(keys)+5
+                if percent > 100:
+                    percent = 100
+                print("merging... " + str(percent) + "%")
+
     cm.bricksMerged = True
+
+    stopWatch("Time Elapsed (merge)", time.time()-ct)

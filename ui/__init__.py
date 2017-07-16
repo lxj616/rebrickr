@@ -152,6 +152,7 @@ class DetailingPanel(Panel):
     bl_idname      = "VIEW3D_PT_tools_LEGOizer_detailing"
     bl_context     = "objectmode"
     bl_category    = "LEGOizer"
+    bl_options     = {"DEFAULT_CLOSED"}
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
