@@ -25,7 +25,6 @@ import bmesh
 import math
 import time
 from copy import copy, deepcopy
-# from .common_mesh_generate import *
 from .common_functions import *
 from .generate_lattice import generateLattice
 from .merge import *
