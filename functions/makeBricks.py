@@ -217,6 +217,4 @@ def makeBricks(source, logo, dimensions, bricks):
                     percent = 100
                 print("building... " + str(percent) + "%")
 
-    cm.bricksMerged = True
-
     stopWatch("Time Elapsed (merge)", time.time()-ct)

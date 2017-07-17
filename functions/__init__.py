@@ -209,16 +209,16 @@ def uniquify3DMatrix(matrix):
             matrix[i][j] = uniquify(matrix[i][j], lambda x: (round(x[0], 2), round(x[1], 2), round(x[2], 2)))
     return matrix
 
-def makeBricksDict(refBricks, source, source_details, dimensions, R, preHollow=False):
+def makeBricksDict(source, source_details, dimensions, R, preHollow=False):
     """ Make bricks """
     ct = time.time()
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
-    # set refBricks
-    refBrickHidden = refBricks[0]
-    refBrickUpper = refBricks[1]
-    refBrickLower = refBricks[2]
-    refBrickUpperLower = refBricks[3]
+    # # set refBricks
+    # refBrickHidden = refBricks[0]
+    # refBrickUpper = refBricks[1]
+    # refBrickLower = refBricks[2]
+    # refBrickUpperLower = refBricks[3]
     # get lattice bmesh
     lScale = (source_details.x.distance, source_details.y.distance, source_details.z.distance)
     offset = (source_details.x.mid, source_details.y.mid, source_details.z.mid)

@@ -376,8 +376,6 @@ class CustomProp(bpy.types.PropertyGroup):
     lastScale = StringProperty(default="0")
     lastDimensions = StringProperty(default="0")
 
-    bricksMerged = BoolProperty(default=False)
-
     # Bevel Settings
     lastBevelWidth = FloatProperty()
     bevelWidth = FloatProperty(

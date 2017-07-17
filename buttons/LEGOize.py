@@ -166,73 +166,73 @@ class legoizerLegoize(bpy.types.Operator):
                 bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
                 scn.objects.unlink(refLogo)
 
-        # set up refLogoHidden and refLogoExposed based on cm.logoDetail
-        # TODO: only do the following if necessary. If no setting is changed, update button shouldn't really do much
-        if cm.logoDetail == "On Exposed Studs":
-            refLogoHidden = None
-            refLogoExposed = refLogo
-        elif cm.logoDetail == "On All Studs":
-            refLogoHidden = refLogo
-            refLogoExposed = refLogo
-        elif cm.logoDetail == "None":
-            refLogoHidden = None
-            refLogoExposed = None
-
-        if cm.studDetail == "None":
-            exposedStuds = False
-            hiddenStuds = False
-        elif cm.studDetail == "On All Bricks":
-            exposedStuds = True
-            hiddenStuds = True
-        else:
-            exposedStuds = True
-            hiddenStuds = False
-        if groupExists("LEGOizer_%(n)s_refBricks" % locals()) and len(bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()].objects) > 0:
-            # initialize rbGroup
-            rbGroup = bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()]
-            # get 1x1 refBrick from group
-            refBrickHidden = rbGroup.objects[0]
-            refBrickUpper = rbGroup.objects[1]
-            refBrickLower = rbGroup.objects[2]
-            refBrickUpperLower = rbGroup.objects[3]
-            rbGroup.objects.unlink(refBrickHidden)
-            rbGroup.objects.unlink(refBrickUpper)
-            rbGroup.objects.unlink(refBrickLower)
-            rbGroup.objects.unlink(refBrickUpperLower)
-            # update that refBrick
-            m = refBrickHidden.data
-            Bricks().new_mesh(name=refBrickHidden.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoHidden, stud=hiddenStuds, meshToOverwrite=m)
-            m = refBrickUpper.data
-            Bricks().new_mesh(name=refBrickUpper.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoExposed, stud=exposedStuds, meshToOverwrite=m)
-            m = refBrickLower.data
-            Bricks().new_mesh(name=refBrickLower.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoHidden, stud=hiddenStuds, meshToOverwrite=m)
-            m = refBrickUpperLower.data
-            Bricks().new_mesh(name=refBrickUpperLower.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoExposed, stud=exposedStuds, meshToOverwrite=m)
-            # link refBricks to new group
-            rbGroup.objects.link(refBrickHidden)
-            rbGroup.objects.link(refBrickUpper)
-            rbGroup.objects.link(refBrickLower)
-            rbGroup.objects.link(refBrickUpperLower)
-        else:
-            # make 1x1 refBrick
-            m0 = Bricks.new_mesh(name="LEGOizer_%(n)s_refBrickHidden" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoHidden, stud=hiddenStuds)
-            refBrickHidden = bpy.data.objects.new(m0.name, m0)
-            m1 = Bricks().new_mesh(name="LEGOizer_%(n)s_refBrickUpper" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoExposed, stud=exposedStuds)
-            refBrickUpper = bpy.data.objects.new(m1.name, m1)
-            m2 = Bricks().new_mesh(name="LEGOizer_%(n)s_refBrickLower" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoHidden, stud=hiddenStuds)
-            refBrickLower = bpy.data.objects.new(m2.name, m2)
-            m3 = Bricks().new_mesh(name="LEGOizer_%(n)s_refBrickUpperLower" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoExposed, stud=exposedStuds)
-            refBrickUpperLower = bpy.data.objects.new(m3.name, m3)
-            # create new refbricks group
-            if groupExists("LEGOizer_%(n)s_refBricks" % locals()):
-                rbGroup = bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()]
-            else:
-                rbGroup = bpy.data.groups.new("LEGOizer_%(n)s_refBricks" % locals())
-            # link refBricks to new group
-            rbGroup.objects.link(refBrickHidden)
-            rbGroup.objects.link(refBrickUpper)
-            rbGroup.objects.link(refBrickLower)
-            rbGroup.objects.link(refBrickUpperLower)
+        # # set up refLogoHidden and refLogoExposed based on cm.logoDetail
+        # # TODO: only do the following if necessary. If no setting is changed, update button shouldn't really do much
+        # if cm.logoDetail == "On Exposed Studs":
+        #     refLogoHidden = None
+        #     refLogoExposed = refLogo
+        # elif cm.logoDetail == "On All Studs":
+        #     refLogoHidden = refLogo
+        #     refLogoExposed = refLogo
+        # elif cm.logoDetail == "None":
+        #     refLogoHidden = None
+        #     refLogoExposed = None
+        #
+        # if cm.studDetail == "None":
+        #     exposedStuds = False
+        #     hiddenStuds = False
+        # elif cm.studDetail == "On All Bricks":
+        #     exposedStuds = True
+        #     hiddenStuds = True
+        # else:
+        #     exposedStuds = True
+        #     hiddenStuds = False
+        # if groupExists("LEGOizer_%(n)s_refBricks" % locals()) and len(bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()].objects) > 0:
+        #     # initialize rbGroup
+        #     rbGroup = bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()]
+        #     # get 1x1 refBrick from group
+        #     refBrickHidden = rbGroup.objects[0]
+        #     refBrickUpper = rbGroup.objects[1]
+        #     refBrickLower = rbGroup.objects[2]
+        #     refBrickUpperLower = rbGroup.objects[3]
+        #     rbGroup.objects.unlink(refBrickHidden)
+        #     rbGroup.objects.unlink(refBrickUpper)
+        #     rbGroup.objects.unlink(refBrickLower)
+        #     rbGroup.objects.unlink(refBrickUpperLower)
+        #     # update that refBrick
+        #     m = refBrickHidden.data
+        #     Bricks().new_mesh(name=refBrickHidden.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoHidden, stud=hiddenStuds, meshToOverwrite=m)
+        #     m = refBrickUpper.data
+        #     Bricks().new_mesh(name=refBrickUpper.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoExposed, stud=exposedStuds, meshToOverwrite=m)
+        #     m = refBrickLower.data
+        #     Bricks().new_mesh(name=refBrickLower.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoHidden, stud=hiddenStuds, meshToOverwrite=m)
+        #     m = refBrickUpperLower.data
+        #     Bricks().new_mesh(name=refBrickUpperLower.name, height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoExposed, stud=exposedStuds, meshToOverwrite=m)
+        #     # link refBricks to new group
+        #     rbGroup.objects.link(refBrickHidden)
+        #     rbGroup.objects.link(refBrickUpper)
+        #     rbGroup.objects.link(refBrickLower)
+        #     rbGroup.objects.link(refBrickUpperLower)
+        # else:
+        #     # make 1x1 refBrick
+        #     m0 = Bricks.new_mesh(name="LEGOizer_%(n)s_refBrickHidden" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoHidden, stud=hiddenStuds)
+        #     refBrickHidden = bpy.data.objects.new(m0.name, m0)
+        #     m1 = Bricks().new_mesh(name="LEGOizer_%(n)s_refBrickUpper" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.hiddenUndersideDetail, logo=refLogoExposed, stud=exposedStuds)
+        #     refBrickUpper = bpy.data.objects.new(m1.name, m1)
+        #     m2 = Bricks().new_mesh(name="LEGOizer_%(n)s_refBrickLower" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoHidden, stud=hiddenStuds)
+        #     refBrickLower = bpy.data.objects.new(m2.name, m2)
+        #     m3 = Bricks().new_mesh(name="LEGOizer_%(n)s_refBrickUpperLower" % locals(), height=dimensions["height"], type=[1,1], undersideDetail=cm.exposedUndersideDetail, logo=refLogoExposed, stud=exposedStuds)
+        #     refBrickUpperLower = bpy.data.objects.new(m3.name, m3)
+        #     # create new refbricks group
+        #     if groupExists("LEGOizer_%(n)s_refBricks" % locals()):
+        #         rbGroup = bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()]
+        #     else:
+        #         rbGroup = bpy.data.groups.new("LEGOizer_%(n)s_refBricks" % locals())
+        #     # link refBricks to new group
+        #     rbGroup.objects.link(refBrickHidden)
+        #     rbGroup.objects.link(refBrickUpper)
+        #     rbGroup.objects.link(refBrickLower)
+        #     rbGroup.objects.link(refBrickUpperLower)
 
         # check last source data and transformation
         try:
@@ -250,13 +250,13 @@ class legoizerLegoize(bpy.types.Operator):
            cm.shellThickness != cm.lastShellThickness or
            meshComparasin != 'Same' or
            cm.lastCalculationAxes != cm.calculationAxes or
-           (cm.exposedUndersideDetail != cm.lastExposedUndersideDetail and cm.bricksMerged) or
-           (cm.hiddenUndersideDetail != cm.lastHiddenUndersideDetail and cm.bricksMerged) or
-           (cm.studDetail != cm.lastStudDetail and cm.bricksMerged) or
-           (cm.studVerts != cm.lastStudVerts and cm.bricksMerged) or
-           (cm.logoDetail != cm.lastLogoDetail and cm.bricksMerged) or
-           (cm.logoResolution != cm.lastLogoResolution and cm.bricksMerged) or
-           (cm.lastMergeSeed != cm.mergeSeed and cm.bricksMerged) or
+           cm.exposedUndersideDetail != cm.lastExposedUndersideDetail or
+           cm.hiddenUndersideDetail != cm.lastHiddenUndersideDetail or
+           cm.studDetail != cm.lastStudDetail or
+           cm.studVerts != cm.lastStudVerts or
+           cm.logoDetail != cm.lastLogoDetail or
+           cm.logoResolution != cm.lastLogoResolution or
+           cm.lastMergeSeed != cm.mergeSeed or
            cm.lastMaxBrickScale != cm.maxBrickScale or
            self.action == "CREATE"):
             # delete old bricks if present
@@ -266,8 +266,7 @@ class legoizerLegoize(bpy.types.Operator):
             # create new bricks
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
             # slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
-            refBricks = list(rbGroup.objects)
-            bricksDict = makeBricksDict(refBricks, source, source_details, dimensions, R, cm.preHollow)
+            bricksDict = makeBricksDict(source, source_details, dimensions, R, cm.preHollow)
             makeBricks(source, refLogo, dimensions, bricksDict)
 
         # set final variables
