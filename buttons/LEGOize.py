@@ -267,6 +267,7 @@ class legoizerLegoize(bpy.types.Operator):
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
             # slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
             bricksDict = makeBricksDict(source, source_details, dimensions, R, cm.preHollow)
+            print(dimensions["gap"])
             makeBricks(source, refLogo, dimensions, bricksDict)
 
         # set final variables

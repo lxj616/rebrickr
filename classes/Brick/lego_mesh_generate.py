@@ -147,9 +147,9 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
     # create new bmesh object
     bme = bmesh.new()
 
+    print(dimensions["gap"])
+
     # set scale and thickness variables
-    addedX = round(((dimensions["gap"] * brickSize[0]) - dimensions["gap"]),5)
-    addedY = round(((dimensions["gap"] * brickSize[1]) - dimensions["gap"]),5)
     dX = dimensions["width"]
     dY = dimensions["width"]
     dZ = dimensions["height"]
@@ -342,7 +342,11 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
 
 
     # bmesh.ops.transform(bme, matrix=Matrix.Translation(((dimensions["width"]/2)*(addedX),(dimensions["width"]/2)*(addedY),0)), verts=bme.verts)
-    bmesh.ops.scale(bme, verts=bme.verts, vec=(((dimensions["width"]*brickSize[0]) + addedX)/(dimensions["width"]*brickSize[0]), ((dimensions["width"]*brickSize[1]) + addedY)/(dimensions["width"]*brickSize[1]), 1.0))
+    nx = (dimensions["width"] + dimensions["gap"]) * brickSize[0] - dimensions["gap"]
+    ny = (dimensions["width"] + dimensions["gap"]) * brickSize[1] - dimensions["gap"]
+    dx = dimensions["width"] * brickSize[0]
+    dy = dimensions["width"] * brickSize[1]
+    bmesh.ops.scale(bme, verts=bme.verts, vec=(nx/dx, ny/dy, 1.0))
 
     # return bmesh
     return bme

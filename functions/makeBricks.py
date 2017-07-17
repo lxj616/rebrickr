@@ -190,11 +190,11 @@ def makeBricks(source, logo, dimensions, bricks):
                     # set name of deleted brick to 'DNE'
                     curBrick["name"] = "DNE"
 
-            if topExposed or cm.logoDetail == "On All Bricks":
+            if topExposed or cm.logoDetail == "On All Studs":
                 logoDetail = logo
             else:
                 logoDetail = None
-            if (topExposed and cm.studDetail != "None") or cm.studDetail == "On All Studs":
+            if (topExposed and cm.studDetail != "None") or cm.studDetail == "On All Bricks":
                 studDetail = True
             else:
                 studDetail = False
@@ -204,7 +204,7 @@ def makeBricks(source, logo, dimensions, bricks):
                 undersideDetail = cm.hiddenUndersideDetail
 
             # Remesh brick at original location
-            m = Bricks().new_mesh(name=brick0.name, height=dimensions["height"], type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
+            m = Bricks().new_mesh(name=brick0.name, height=dimensions["height"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
             brick0.data = m
 
         # print status to terminal
