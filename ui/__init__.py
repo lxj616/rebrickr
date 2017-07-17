@@ -43,11 +43,11 @@ class LegoModelsPanel(Panel):
         layout = self.layout
         scn = context.scene
 
-        # if bversion() < '002.076.00':
-        #     col = layout.column(align=True)
-        #     col.label('ERROR: upgrade needed', icon='ERROR')
-        #     col.label('LEGOizer requires Blender 2.76+')
-        #     return
+        if bversion() < '002.078.00':
+            col = layout.column(align=True)
+            col.label('ERROR: upgrade needed', icon='ERROR')
+            col.label('LEGOizer requires Blender 2.78+')
+            return
 
         rows = 3
         row = layout.row()
@@ -107,8 +107,11 @@ class ModelSettingsPanel(Panel):
 
     @classmethod
     def poll(self, context):
+        """ ensures operator can execute (if not, returns false) """
         scn = context.scene
         if scn.cmlist_index == -1:
+            return False
+        if bversion() < '002.078.00':
             return False
         return True
 
@@ -160,6 +163,8 @@ class DetailingPanel(Panel):
         scn = context.scene
         if scn.cmlist_index == -1:
             return False
+        if bversion() < '002.078.00':
+            return False
         return True
 
     def draw(self, context):
@@ -208,6 +213,8 @@ class BevelPanel(Panel):
         scn = context.scene
         if scn.cmlist_index == -1:
             return False
+        if bversion() < '002.078.00':
+            return False
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         if not groupExists('LEGOizer_%(n)s_bricks' % locals()):
@@ -232,31 +239,3 @@ class BevelPanel(Panel):
             row.operator("scene.legoizer_bevel", text="Remove Bevel", icon="CANCEL").action = "REMOVE"
         except:
             row.operator("scene.legoizer_bevel", text="Bevel bricks", icon="MOD_BEVEL").action = "CREATE"
-#
-# class AdvancedPanel(Panel):
-#     bl_space_type  = "VIEW_3D"
-#     bl_region_type = "TOOLS"
-#     bl_label       = "Advanced"
-#     bl_idname      = "VIEW3D_PT_tools_LEGOizer_advanced"
-#     bl_context     = "objectmode"
-#     bl_category    = "LEGOizer"
-#     bl_options     = {"DEFAULT_CLOSED"}
-#     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
-#
-#     @classmethod
-#     def poll(self, context):
-#         scn = context.scene
-#         if scn.cmlist_index == -1:
-#             return False
-#         return True
-#
-#     def draw(self, context):
-#         layout = self.layout
-#         scn = context.scene
-#         cm = scn.cmlist[scn.cmlist_index]
-#
-#         col = layout.column(align=True)
-#         row = col.row(align=True)
-#         row.label("Calculation Axes:")
-#         row = col.row(align=True)
-#         row.prop(cm, "calculationAxes", text="")
