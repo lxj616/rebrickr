@@ -147,8 +147,6 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
     # create new bmesh object
     bme = bmesh.new()
 
-    print(dimensions["gap"])
-
     # set scale and thickness variables
     dX = dimensions["width"]
     dY = dimensions["width"]

@@ -342,7 +342,9 @@ class CustomProp(bpy.types.PropertyGroup):
     gap = FloatProperty(
         name="Gap Between Bricks",
         description="Height of the bricks in the final LEGO model",
-        min=.001, max=1,
+        step=1,
+        precision=3,
+        min=0, max=0.1,
         default=.01)
 
     mergeSeed = IntProperty(
