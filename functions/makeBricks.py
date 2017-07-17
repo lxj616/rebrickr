@@ -39,7 +39,7 @@ def getNextBrick(bricks, loc, x, y):
     except:
         return None
 
-def mergeBricks(source, logo, dimensions, bricks):
+def makeBricks(source, logo, dimensions, bricks):
     # set up variables
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -61,9 +61,9 @@ def mergeBricks(source, logo, dimensions, bricks):
 
             # Set up brick types
             brick0 = bpy.data.objects[brickD["name"]]
-            brickTypes = []
+            brickTypes = [[1,1]]
             nextBrick = getNextBrick(bricks, loc, 1, 0)
-            if brickAvail(nextBrick):
+            if brickAvail(nextBrick) and cm.maxBrickScale > 1:
                 brickTypes.append([2,1])
                 nextBrick = getNextBrick(bricks, loc, 2, 0)
                 if brickAvail(nextBrick) and cm.maxBrickScale > 2:
@@ -80,7 +80,7 @@ def mergeBricks(source, logo, dimensions, bricks):
                             if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 7:
                                 brickTypes.append([8,1])
             nextBrick = getNextBrick(bricks, loc, 0, 1)
-            if brickAvail(nextBrick):
+            if brickAvail(nextBrick) and cm.maxBrickScale > 1:
                 brickTypes.append([1,2])
                 nextBrick = getNextBrick(bricks, loc, 0, 2)
                 if brickAvail(nextBrick) and cm.maxBrickScale > 2:
@@ -142,9 +142,9 @@ def mergeBricks(source, logo, dimensions, bricks):
                             if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 15:
                                 brickTypes.append([8,2])
 
-            # if it's only going to be a 1x1, skip merging for this brick
-            if len(brickTypes) == 0:
-                continue
+            # # if it's only going to be a 1x1, skip merging for this brick
+            # if len(brickTypes) == 0:
+            #     continue
             # sort brick types from smallest to largest
             brickTypes.sort()
 
@@ -210,12 +210,12 @@ def mergeBricks(source, logo, dimensions, bricks):
         # print status to terminal
         if i % denom < 1:
             if i == len(keys):
-                print("merging... 100%")
+                print("building... 100%")
             else:
                 percent = i*100//len(keys)+5
                 if percent > 100:
                     percent = 100
-                print("merging... " + str(percent) + "%")
+                print("building... " + str(percent) + "%")
 
     cm.bricksMerged = True
 

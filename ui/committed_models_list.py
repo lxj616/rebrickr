@@ -355,7 +355,7 @@ class CustomProp(bpy.types.PropertyGroup):
         name="Max Brick Scale",
         description="Maximum scale of the generated LEGO bricks (equivalent to num studs on top)",
         min=1, max=20,
-        default=1)
+        default=20)
 
     lastBrickHeight = FloatProperty(default=0)
     lastGap = FloatProperty(default=0)

@@ -27,7 +27,7 @@ import time
 from copy import copy, deepcopy
 from .common_functions import *
 from .generate_lattice import generateLattice
-from .merge import *
+from .makeBricks import *
 from ..classes.Brick import Bricks
 from mathutils import Matrix, Vector, geometry
 from mathutils.bvhtree import BVHTree
@@ -209,7 +209,7 @@ def uniquify3DMatrix(matrix):
             matrix[i][j] = uniquify(matrix[i][j], lambda x: (round(x[0], 2), round(x[1], 2), round(x[2], 2)))
     return matrix
 
-def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False):
+def makeBricksDict(refBricks, source, source_details, dimensions, R, preHollow=False):
     """ Make bricks """
     ct = time.time()
     scn = bpy.context.scene
@@ -246,29 +246,32 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
     # TODO: Improve efficiency of the following nested for loop
     brickDict = {}
     denom = len(coList)/20
+    tempMesh = bpy.data.meshes.get('LEGOizer_tempMesh')
+    if tempMesh == None:
+        tempMesh = bpy.data.meshes.new('LEGOizer_tempMesh')
     for x in range(len(coList)):
         for y in range(len(coList[0])):
             for z in range(len(coList[0][0])):
                 co = coList[x][y][z]
                 if co != -1:
                     i += 1
-                    # brick = bricks.new(name='LEGOizer_%(n)s_brick_%(i)s' % locals(), location=Vector(co))
-                    if (z != 0 and brickFreqMatrix[x][y][z-1] != 0) and (z != len(coList[0][0])-1 and brickFreqMatrix[x][y][z+1] != 0):
-                        brickMesh = refBrickHidden.data
-                        # brick.update_data(refBrickHidden.data)
-                    elif (z != 0 and brickFreqMatrix[x][y][z-1] != 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0):
-                        brickMesh = refBrickUpper.data
-                        # brick.update_data(refBrickUpper.data)
-                    elif (z == 0 or brickFreqMatrix[x][y][z-1] == 0) and (z != len(coList[0][0])-1 and brickFreqMatrix[x][y][z+1] != 0):
-                        brickMesh = refBrickLower.data
-                        # brick.update_data(refBrickLower.data)
-                    elif (z == 0 or brickFreqMatrix[x][y][z-1] == 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0):
-                        brickMesh = refBrickUpperLower.data
-                        # brick.update_data(refBrickUpperLower.data)
-                    else:
-                        print("shouldn't get here")
+                    # # brick = bricks.new(name='LEGOizer_%(n)s_brick_%(i)s' % locals(), location=Vector(co))
+                    # if (z != 0 and brickFreqMatrix[x][y][z-1] != 0) and (z != len(coList[0][0])-1 and brickFreqMatrix[x][y][z+1] != 0):
+                    #     brickMesh = refBrickHidden.data
+                    #     # brick.update_data(refBrickHidden.data)
+                    # elif (z != 0 and brickFreqMatrix[x][y][z-1] != 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0):
+                    #     brickMesh = refBrickUpper.data
+                    #     # brick.update_data(refBrickUpper.data)
+                    # elif (z == 0 or brickFreqMatrix[x][y][z-1] == 0) and (z != len(coList[0][0])-1 and brickFreqMatrix[x][y][z+1] != 0):
+                    #     brickMesh = refBrickLower.data
+                    #     # brick.update_data(refBrickLower.data)
+                    # elif (z == 0 or brickFreqMatrix[x][y][z-1] == 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0):
+                    #     brickMesh = refBrickUpperLower.data
+                    #     # brick.update_data(refBrickUpperLower.data)
+                    # else:
+                    #     print("shouldn't get here")
 
-                    brick = bpy.data.objects.new('LEGOizer_brick_' + str(i+1), brickMesh)
+                    brick = bpy.data.objects.new('LEGOizer_brick_' + str(i+1), tempMesh)
                     brick.location = Vector(co)
                     bricks.append(brick)
                     brickDict[str(x) + "," + str(y) + "," + str(z)] = {"name":brick.name, "val":brickFreqMatrix[x][y][z], "coord":coordMatrix[x][y][z], "connected":[]}
@@ -281,7 +284,7 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
             percent = x*100//len(coList)+5
             if percent > 100:
                 percent = 100
-            print("Calculating Bricks... " + str(percent) + "%")
+            print("generating blueprint... " + str(percent) + "%")
 
     # link objects to scene (this is done later to improve code performance)
     for brick in bricks:
@@ -291,7 +294,7 @@ def makeBricks(refBricks, source, source_details, dimensions, R, preHollow=False
 
     scn.update()
 
-    stopWatch("Time Elapsed (makeBricks)", time.time()-ct)
+    stopWatch("Time Elapsed (makeBricksDict)", time.time()-ct)
 
     # return list of created Brick objects
     return brickDict

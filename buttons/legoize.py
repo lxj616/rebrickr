@@ -267,11 +267,8 @@ class legoizerLegoize(bpy.types.Operator):
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
             # slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
             refBricks = list(rbGroup.objects)
-            bricksDict = makeBricks(refBricks, source, source_details, dimensions, R, cm.preHollow)
-            if cm.maxBrickScale != 1:
-                mergeBricks(source, refLogo, dimensions, bricksDict)
-            else:
-                cm.bricksMerged = False
+            bricksDict = makeBricksDict(refBricks, source, source_details, dimensions, R, cm.preHollow)
+            makeBricks(source, refLogo, dimensions, bricksDict)
 
         # set final variables
         cm.lastBrickHeight = cm.brickHeight
