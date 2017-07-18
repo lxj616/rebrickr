@@ -206,6 +206,12 @@ def makeBricks(source, logo, dimensions, bricks):
             # Remesh brick at original location
             m = Bricks().new_mesh(name=brick0.name, height=dimensions["height"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
             brick0.data = m
+            # Add edge split modifier
+            if cm.smoothCylinders and cm.studVerts > 12:
+                eMod = brick0.modifiers.new('Edge Split', 'EDGE_SPLIT')
+                # eMod.use_edge_angle = False
+                for p in brick0.data.polygons:
+                    p.use_smooth = True
 
         # print status to terminal
         if i % denom < 1:

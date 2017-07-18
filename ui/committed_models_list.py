@@ -363,6 +363,11 @@ class CustomProp(bpy.types.PropertyGroup):
         min=1, max=20,
         default=20)
 
+    smoothCylinders = BoolProperty(
+        name="Smooth Cylinders",
+        description="Smooths cylinders with edge split and smooth shading (disable for bevel resolution control)",
+        default=True)
+
     lastBrickHeight = FloatProperty(default=0)
     lastGap = FloatProperty(default=0)
     lastPreHollow = BoolProperty(default=False)
@@ -376,6 +381,7 @@ class CustomProp(bpy.types.PropertyGroup):
     lastMaxBrickScale = IntProperty(default=10)
     lastExposedUndersideDetail = StringProperty(default="None")
     lastHiddenUndersideDetail = StringProperty(default="None")
+    lastSmoothCylinders = BoolProperty(default=True)
 
     lastLocation = StringProperty(default="0")
     lastRotationEuler = StringProperty(default="0")

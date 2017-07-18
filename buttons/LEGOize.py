@@ -258,6 +258,7 @@ class legoizerLegoize(bpy.types.Operator):
            cm.logoResolution != cm.lastLogoResolution or
            cm.lastMergeSeed != cm.mergeSeed or
            cm.lastMaxBrickScale != cm.maxBrickScale or
+           cm.lastSmoothCylinders != cm.smoothCylinders or
            self.action == "CREATE"):
             # delete old bricks if present
             if groupExists(LEGOizer_bricks):
@@ -283,6 +284,7 @@ class legoizerLegoize(bpy.types.Operator):
         cm.lastStudDetail = cm.studDetail
         cm.lastMergeSeed = cm.mergeSeed
         cm.lastMaxBrickScale = cm.maxBrickScale
+        cm.lastSmoothCylinders = cm.smoothCylinders
 
         # set last transformation data
         lastLoc = str(source.location[0]) + str(source.location[1]) + str(source.location[2])

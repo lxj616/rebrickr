@@ -686,12 +686,12 @@ def get_dimensions(height=1, gap_percentage=0.01):
     brick_dimensions["stud_radius"] = scale*2.4
     brick_dimensions["stud_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"] / 2)
     brick_dimensions["thickness"] = scale*1.6
-    brick_dimensions["tube_thickness"] = scale*0.8056
+    brick_dimensions["tube_thickness"] = scale*0.855
     brick_dimensions["bar_radius"] = scale*1.6
     brick_dimensions["logo_width"] = scale*3.74
-    brick_dimensions["support_width"] = scale*0.97
-    brick_dimensions["tick_width"] = scale*0.7275
-    brick_dimensions["tick_depth"] = scale*0.36375
+    brick_dimensions["support_width"] = scale*0.8
+    brick_dimensions["tick_width"] = scale*0.6
+    brick_dimensions["tick_depth"] = scale*0.3
     brick_dimensions["support_height"] = scale*6.25
 
     brick_dimensions["logo_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"])

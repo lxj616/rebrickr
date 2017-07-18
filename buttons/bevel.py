@@ -33,6 +33,10 @@ def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limit
     dMod = obj.modifiers.get(obj.name + '_bevel')
     if not dMod:
         dMod = obj.modifiers.new(obj.name + '_bevel', 'BEVEL')
+        eMod = obj.modifiers.get('Edge Split')
+        if eMod:
+            obj.modifiers.remove(eMod)
+            obj.modifiers.new('Edge Split', 'EDGE_SPLIT')
     dMod.use_only_vertices = onlyVerts
     dMod.width = width
     dMod.segments = segments
@@ -69,7 +73,6 @@ class legoizerBevel(bpy.types.Operator):
         items=(
             ("CREATE", "Create", ""),
             ("UPDATE", "Update", ""),
-            ("APPLY", "Apply", ""),
             ("REMOVE", "Remove", ""),
         ),
         default="CREATE"
@@ -83,18 +86,22 @@ class legoizerBevel(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         for brick in bricks:
-            createBevelMod(obj=brick, width=cm.bevelWidth, segments=cm.bevelResolution, limitMethod="ANGLE", angleLimit=1.55334)
+            if cm.smoothCylinders:
+                segments = 1
+            else:
+                segments = cm.bevelResolution
+            createBevelMod(obj=brick, width=cm.bevelWidth, segments=segments, limitMethod="ANGLE", angleLimit=1.55334)
 
     def execute(self, context):
         # get bricks to bevel
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        cm.bevelWidth = cm.brickHeight/100
+        cm.bevelWidth = cm.brickHeight/200
         # cm.bevelResolution = round(cm.studVerts/10)
         bricks = list(bpy.data.groups["LEGOizer_%(n)s_bricks" % locals()].objects)
 
-        if self.action == "REMOVE" or self.action == "APPLY":
+        if self.action == "REMOVE":
             removeBevelMods(objs=bricks)
         else:
             legoizerBevel.setBevelMods(bricks)

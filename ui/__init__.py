@@ -174,6 +174,9 @@ class DetailingPanel(Panel):
 
         col = layout.column(align=True)
         row = col.row(align=True)
+        row.prop(cm, "smoothCylinders")
+        col = layout.column(align=True)
+        row = col.row(align=True)
         row.label("Studs:")
         row = col.row(align=True)
         row.prop(cm, "studDetail", text="")
@@ -233,8 +236,9 @@ class BevelPanel(Panel):
             testBrick = bpy.data.groups['LEGOizer_%(n)s_bricks' % locals()].objects[0]
             testBrick.modifiers[testBrick.name + '_bevel']
             row.prop(cm, "bevelWidth")
-            row = col.row(align=True)
-            row.prop(cm, "bevelResolution")
+            if not cm.smoothCylinders:
+                row = col.row(align=True)
+                row.prop(cm, "bevelResolution")
             row = col.row(align=True)
             row.operator("scene.legoizer_bevel", text="Remove Bevel", icon="CANCEL").action = "REMOVE"
         except:
