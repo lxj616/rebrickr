@@ -37,7 +37,7 @@ def makeCylinder(r, N, h, co=(0,0,0), botFace=True, topFace=True, bme=None):
     return bme
 
 # r = radius, N = numVerts, h = height, t = thickness, co = target cylinder position
-def makeTube(r, N, h, t, co=(0,0,0), bme=None):
+def makeTube(r, N, h, t, co=(0,0,0), wings=False, bme=None):
     # create new bmesh object
     if bme == None:
         bme = bmesh.new()
@@ -151,7 +151,11 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
     dX = dimensions["width"]
     dY = dimensions["width"]
     dZ = dimensions["height"]
-    thick = dimensions["thickness"]
+    thickZ = dimensions["thickness"]
+    if detail == "Full Detail" and not (brickSize[0] == 1 or brickSize[1] == 1):
+        thickXY = dimensions["thickness"] - dimensions["tick_depth"]
+    else:
+        thickXY = dimensions["thickness"]
     sX = (brickSize[0] * 2) - 1
     sY = (brickSize[1] * 2) - 1
 
@@ -177,7 +181,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
 
     # CREATING STUD(S)
     if stud:
-        studInset = thick * 0.9
+        studInset = thickZ * 0.9
         for xNum in range(brickSize[0]):
             for yNum in range(brickSize[1]):
                 makeCylinder(r=dimensions["stud_radius"], N=numStudVerts, h=dimensions["stud_height"]+studInset, co=(xNum*dX*2,yNum*dY*2,dimensions["stud_offset"]-(studInset/2)), botFace=False, bme=bme)
@@ -187,46 +191,262 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
     else:
         # creating cylinder
         # making verts for hollow portion at bottom
-        v9 = bme.verts.new((v5.co.x-thick, v5.co.y-thick, v5.co.z))
-        v10 = bme.verts.new((v6.co.x+thick, v6.co.y-thick, v6.co.z))
+        v9 = bme.verts.new((v5.co.x-thickXY, v5.co.y-thickXY, v5.co.z))
+        v10 = bme.verts.new((v6.co.x+thickXY, v6.co.y-thickXY, v6.co.z))
         bme.faces.new((v5, v9, v10, v6))
-        v11 = bme.verts.new((v7.co.x+thick, v7.co.y+thick, v7.co.z))
+        v11 = bme.verts.new((v7.co.x+thickXY, v7.co.y+thickXY, v7.co.z))
         bme.faces.new((v6, v10, v11, v7))
-        v12 = bme.verts.new((v8.co.x-thick, v8.co.y+thick, v8.co.z))
+        v12 = bme.verts.new((v8.co.x-thickXY, v8.co.y+thickXY, v8.co.z))
         bme.faces.new((v7, v11, v12, v8))
         bme.faces.new((v8, v12, v9, v5))
         # making verts for hollow portion at top
-        v13 = bme.verts.new((v9.co.x, v9.co.y, v1.co.z-thick))
-        v14 = bme.verts.new((v10.co.x, v10.co.y, v2.co.z-thick))
+        v13 = bme.verts.new((v9.co.x, v9.co.y, dZ-thickZ))
+        v14 = bme.verts.new((v10.co.x, v10.co.y, dZ-thickZ))
         bme.faces.new((v9, v13, v14, v10))
-        v15 = bme.verts.new((v11.co.x, v11.co.y, v3.co.z-thick))
+        v15 = bme.verts.new((v11.co.x, v11.co.y, dZ-thickZ))
         bme.faces.new((v10, v14, v15, v11))
-        v16 = bme.verts.new((v12.co.x, v12.co.y, v4.co.z-thick))
+        v16 = bme.verts.new((v12.co.x, v12.co.y, dZ-thickZ))
         bme.faces.new((v11, v15, v16, v12))
         bme.faces.new((v12,v16, v13, v9))
+        # make tick marks inside 2 by x bricks
+        if detail == "Full Detail" and (brickSize[0] == 2 or brickSize[1] == 2):
+            for xNum in range(brickSize[0]):
+                for yNum in range(brickSize[1]):
+                    if xNum == 0:
+                        # initialize x, y, z
+                        x1 = -dX+thickXY
+                        x2 = x1+dimensions["tick_depth"]
+                        y1 = yNum*dY*2+dimensions["tick_width"]/2
+                        y2 = yNum*dY*2-dimensions["tick_width"]/2
+                        z1 = dZ-thickZ
+                        z2 = -dZ
+                        # CREATING SUPPORT BEAM
+                        v1 = bme.verts.new((x1, y1, z1))
+                        v2 = bme.verts.new((x1, y2, z1))
+                        v3 = bme.verts.new((x1, y1, z2))
+                        v4 = bme.verts.new((x1, y2, z2))
+                        v5 = bme.verts.new((x2, y1, z1))
+                        v6 = bme.verts.new((x2, y2, z1))
+                        v7 = bme.verts.new((x2, y1, z2))
+                        v8 = bme.verts.new((x2, y2, z2))
+                        bme.faces.new((v8, v6, v2, v4))
+                        bme.faces.new((v4, v3, v7, v8))
+                        bme.faces.new((v5, v7, v3, v1))
+                        bme.faces.new((v6, v8, v7, v5))
+                    elif xNum == brickSize[0]-1:
+                        # initialize x, y, z
+                        x1 = xNum*dX*2+dX-thickXY
+                        x2 = x1-dimensions["tick_depth"]
+                        y1 = yNum*dY*2+dimensions["tick_width"]/2
+                        y2 = yNum*dY*2-dimensions["tick_width"]/2
+                        z1 = dZ-thickZ
+                        z2 = -dZ
+                        # CREATING SUPPORT BEAM
+                        v1 = bme.verts.new((x1, y1, z1))
+                        v2 = bme.verts.new((x1, y2, z1))
+                        v3 = bme.verts.new((x1, y1, z2))
+                        v4 = bme.verts.new((x1, y2, z2))
+                        v5 = bme.verts.new((x2, y1, z1))
+                        v6 = bme.verts.new((x2, y2, z1))
+                        v7 = bme.verts.new((x2, y1, z2))
+                        v8 = bme.verts.new((x2, y2, z2))
+                        bme.faces.new((v4, v2, v6, v8))
+                        bme.faces.new((v8, v7, v3, v4))
+                        bme.faces.new((v1, v3, v7, v5))
+                        bme.faces.new((v5, v7, v8, v6))
+                    if yNum == 0:
+                        # initialize x, y, z
+                        y1 = -dY+thickXY
+                        y2 = y1+dimensions["tick_depth"]
+                        x1 = xNum*dX*2+dimensions["tick_width"]/2
+                        x2 = xNum*dX*2-dimensions["tick_width"]/2
+                        z1 = dZ-thickZ
+                        z2 = -dZ
+                        # CREATING SUPPORT BEAM
+                        v1 = bme.verts.new((x1, y1, z1))
+                        v2 = bme.verts.new((x2, y1, z1))
+                        v3 = bme.verts.new((x1, y1, z2))
+                        v4 = bme.verts.new((x2, y1, z2))
+                        v5 = bme.verts.new((x1, y2, z1))
+                        v6 = bme.verts.new((x2, y2, z1))
+                        v7 = bme.verts.new((x1, y2, z2))
+                        v8 = bme.verts.new((x2, y2, z2))
+                        bme.faces.new((v4, v2, v6, v8))
+                        bme.faces.new((v8, v7, v3, v4))
+                        bme.faces.new((v1, v3, v7, v5))
+                        bme.faces.new((v5, v7, v8, v6))
+                    elif yNum == brickSize[1]-1:
+                        # initialize x, y, z
+                        y1 = yNum*dY*2+dY-thickXY
+                        y2 = y1-dimensions["tick_depth"]
+                        x1 = xNum*dX*2+dimensions["tick_width"]/2
+                        x2 = xNum*dX*2-dimensions["tick_width"]/2
+                        z1 = dZ-thickZ
+                        z2 = -dZ
+                        # CREATING SUPPORT BEAM
+                        v1 = bme.verts.new((x1, y1, z1))
+                        v2 = bme.verts.new((x1, y2, z1))
+                        v3 = bme.verts.new((x1, y1, z2))
+                        v4 = bme.verts.new((x1, y2, z2))
+                        v5 = bme.verts.new((x2, y1, z1))
+                        v6 = bme.verts.new((x2, y2, z1))
+                        v7 = bme.verts.new((x2, y1, z2))
+                        v8 = bme.verts.new((x2, y2, z2))
+                        bme.faces.new((v4, v2, v6, v8))
+                        bme.faces.new((v8, v7, v3, v4))
+                        bme.faces.new((v8, v6, v5, v7))
+                        bme.faces.new((v2, v4, v3, v1))
+
         # make tubes
+        addSupports = (brickSize[0] > 2 and brickSize[1] == 2) or (brickSize[1] > 2 and brickSize[0] == 2)
         for xNum in range(brickSize[0]-1):
             for yNum in range(brickSize[1]-1):
-                makeTube(dimensions["stud_radius"], numStudVerts, (dZ*2)-thick, dimensions["tube_thickness"], co=((xNum * dX * 2) + dX, (yNum * dY * 2) + dY, -thick/2), bme=bme)
+                tubeX = (xNum * dX * 2) + dX
+                tubeY = (yNum * dY * 2) + dY
+                tubeZ = (-thickZ/2)
+                r = dimensions["stud_radius"]
+                t = (dZ*2)-thickZ
+                makeTube(r, numStudVerts, t, dimensions["tube_thickness"], co=(tubeX, tubeY, tubeZ), wings=True, bme=bme)
+                # add support next to odd tubes
+                if detail == "High Detail" and addSupports:
+                    if brickSize[0] > brickSize[1]:
+                        if brickSize[0] == 3 or xNum % 2 == 1:
+                            # initialize x, y, z
+                            x1 = tubeX + (dimensions["support_width"]/2)
+                            x2 = tubeX - (dimensions["support_width"]/2)
+                            y1 = tubeY + r
+                            y2 = tubeY + dY*2-thickXY
+                            y3 = tubeY - r
+                            y4 = tubeY - dY*2+thickXY
+                            z1 = dZ-thickZ
+                            z2 = dZ-thickZ-dimensions["support_height"]
+                            # CREATING SUPPORT BEAM
+                            v1a = bme.verts.new((x1, y1, z1))
+                            v2a = bme.verts.new((x2, y1, z1))
+                            v3a = bme.verts.new((x1, y1, z2))
+                            v4a = bme.verts.new((x2, y1, z2))
+                            v5a = bme.verts.new((x1, y2, z1))
+                            v6a = bme.verts.new((x2, y2, z1))
+                            v7a = bme.verts.new((x1, y2, z2))
+                            v8a = bme.verts.new((x2, y2, z2))
+                            bme.faces.new((v1a, v3a, v7a, v5a))
+                            bme.faces.new((v3a, v4a, v8a, v7a))
+                            bme.faces.new((v6a, v8a, v4a, v2a))
+                            v1b = bme.verts.new((x1, y3, z1))
+                            v2b = bme.verts.new((x2, y3, z1))
+                            v3b = bme.verts.new((x1, y3, z2))
+                            v4b = bme.verts.new((x2, y3, z2))
+                            v5b = bme.verts.new((x1, y4, z1))
+                            v6b = bme.verts.new((x2, y4, z1))
+                            v7b = bme.verts.new((x1, y4, z2))
+                            v8b = bme.verts.new((x2, y4, z2))
+                            bme.faces.new((v5b, v7b, v3b, v1b))
+                            bme.faces.new((v7b, v8b, v4b, v3b))
+                            bme.faces.new((v2b, v4b, v8b, v6b))
+                    elif brickSize[1] > brickSize[0]:
+                        if brickSize[1] == 3 or yNum % 2 == 1:
+                            # initialize x, y, z
+                            x1 = tubeX + r
+                            x2 = tubeX + dX*2-thickXY
+                            x3 = tubeX - r
+                            x4 = tubeX - dX*2+thickXY
+                            y1 = tubeY + (dimensions["support_width"]/2)
+                            y2 = tubeY - (dimensions["support_width"]/2)
+                            z1 = dZ-thickZ
+                            z2 = dZ-thickZ-dimensions["support_height"]
+                            # CREATING SUPPORT BEAM
+                            v1a = bme.verts.new((x1, y1, z1))
+                            v2a = bme.verts.new((x1, y2, z1))
+                            v3a = bme.verts.new((x1, y1, z2))
+                            v4a = bme.verts.new((x1, y2, z2))
+                            v5a = bme.verts.new((x2, y1, z1))
+                            v6a = bme.verts.new((x2, y2, z1))
+                            v7a = bme.verts.new((x2, y1, z2))
+                            v8a = bme.verts.new((x2, y2, z2))
+                            bme.faces.new((v5a, v7a, v3a, v1a))
+                            bme.faces.new((v7a, v8a, v4a, v3a))
+                            bme.faces.new((v2a, v4a, v8a, v6a))
+                            v1b = bme.verts.new((x3, y1, z1))
+                            v2b = bme.verts.new((x3, y2, z1))
+                            v3b = bme.verts.new((x3, y1, z2))
+                            v4b = bme.verts.new((x3, y2, z2))
+                            v5b = bme.verts.new((x4, y1, z1))
+                            v6b = bme.verts.new((x4, y2, z1))
+                            v7b = bme.verts.new((x4, y1, z2))
+                            v8b = bme.verts.new((x4, y2, z2))
+                            bme.faces.new((v1b, v3b, v7b, v5b))
+                            bme.faces.new((v3b, v4b, v8b, v7b))
+                            bme.faces.new((v6b, v8b, v4b, v2b))
         # Adding bar inside 1 by x bricks
         if brickSize[0] == 1:
             for y in range(1, brickSize[1]):
-                makeCylinder(r=dimensions["bar_radius"], N=numStudVerts, h=(dZ*2)-thick, co=(0, (y * dY * 2) - dY, -thick/2), botFace=True, topFace=False, bme=bme)
+                barX = 0
+                barY = (y * dY * 2) - dY
+                barZ = -thickZ/2
+                r = dimensions["bar_radius"]
+                makeCylinder(r=r, N=numStudVerts, h=(dZ*2)-thickZ, co=(barX, barY, barZ), botFace=True, topFace=False, bme=bme)
+                if detail == "High Detail":
+                    if brickSize[1] == 3 or brickSize[1] == 2 or y % 2 == 0:
+                        # initialize x, y, z
+                        x2 = barX + dX-thickXY
+                        x4 = barX - dX+thickXY
+                        y1 = barY + (dimensions["support_width"]/2)
+                        y2 = barY - (dimensions["support_width"]/2)
+                        z1 = dZ-thickZ
+                        z2 = dZ-thickZ-dimensions["support_height"]
+                        # CREATING SUPPORT BEAM
+                        v1 = bme.verts.new((x2, y1, z1))
+                        v2 = bme.verts.new((x2, y2, z1))
+                        v3 = bme.verts.new((x2, y1, z2))
+                        v4 = bme.verts.new((x2, y2, z2))
+                        v5 = bme.verts.new((x4, y1, z1))
+                        v6 = bme.verts.new((x4, y2, z1))
+                        v7 = bme.verts.new((x4, y1, z2))
+                        v8 = bme.verts.new((x4, y2, z2))
+                        bme.faces.new((v4, v2, v6, v8))
+                        bme.faces.new((v8, v7, v3, v4))
+                        bme.faces.new((v1, v3, v7, v5))
         if brickSize[1] == 1:
             for x in range(1, brickSize[0]):
-                makeCylinder(r=dimensions["bar_radius"], N=numStudVerts, h=(dZ*2)-thick, co=((x * dX * 2) - dX, 0, -thick/2), botFace=True, topFace=False, bme=bme)
+                barX = (x * dX * 2) - dX
+                barY = 0
+                barZ = -thickZ/2
+                r = dimensions["bar_radius"]
+                makeCylinder(r=r, N=numStudVerts, h=(dZ*2)-thickZ, co=(barX, barY, barZ), botFace=True, topFace=False, bme=bme)
+                # add supports next to odd bars
+                if detail == "High Detail":
+                    if brickSize[0] == 3 or brickSize[0] == 2 or x % 2 == 0:
+                        # initialize x, y, z
+                        x1 = barX + (dimensions["support_width"]/2)
+                        x2 = barX - (dimensions["support_width"]/2)
+                        y2 = barY + dY-thickXY
+                        y4 = barY - dY+thickXY
+                        z1 = dZ-thickZ
+                        z2 = dZ-thickZ-dimensions["support_height"]
+                        # CREATING SUPPORT BEAM
+                        v1 = bme.verts.new((x1, y2, z1))
+                        v2 = bme.verts.new((x2, y2, z1))
+                        v3 = bme.verts.new((x1, y2, z2))
+                        v4 = bme.verts.new((x2, y2, z2))
+                        v5 = bme.verts.new((x1, y4, z1))
+                        v6 = bme.verts.new((x2, y4, z1))
+                        v7 = bme.verts.new((x1, y4, z2))
+                        v8 = bme.verts.new((x2, y4, z2))
+                        bme.faces.new((v8, v6, v2, v4))
+                        bme.faces.new((v4, v3, v7, v8))
+                        bme.faces.new((v5, v7, v3, v1))
         # make face at top
         if detail == "Low Detail":
             bme.faces.new((v16, v15, v14, v13))
+        else:
         # make small inner cylinder at top
-        elif detail == "High Detail":
             botVertsDofDs = {}
             for xNum in range(brickSize[0]):
                 for yNum in range(brickSize[1]):
-                    r = dimensions["stud_radius"]-(2 * thick)
+                    r = dimensions["stud_radius"]-(2 * thickZ)
                     N = numStudVerts
-                    h = thick * 0.99
-                    botVertsD = makeInnerCylinder(r, N, h, co=(xNum*dX*2,yNum*dY*2,v16.co.z), bme=bme)
+                    h = thickZ * 0.99
+                    botVertsD = makeInnerCylinder(r, N, h, co=(xNum*dX*2,yNum*dY*2,dZ-thickZ), bme=bme)
                     botVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = botVertsD
 
             # Make corner faces
@@ -337,6 +557,8 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                     v3 = vList1[i-1]
                     v4 = vList1[i]
                     bme.faces.new((v1, v2, v3, v4))
+            if detail == "High Detail":
+                print("yep")
 
 
     # bmesh.ops.transform(bme, matrix=Matrix.Translation(((dimensions["width"]/2)*(addedX),(dimensions["width"]/2)*(addedY),0)), verts=bme.verts)
@@ -349,69 +571,112 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
     # return bmesh
     return bme
 
-# def newObjFromBmesh(layer, bme, meshName, objName=False):
-#
-#     # if only one name given, use it for both names
-#     if not objName:
-#         objName = meshName
-#
-#     # create mesh and object
-#     me = bpy.data.meshes.new(meshName)
-#     ob = bpy.data.objects.new(objName, me)
-#
-#     scn = bpy.context.scene # grab a reference to the scene
-#     scn.objects.link(ob)    # link new object to scene
-#     scn.objects.active = ob # make new object active
-#     ob.select = True        # make new object selected (does not deselect
-#                              # other objects)
-#
-#     obj = bme.to_mesh(me)         # push bmesh data into me
-#
-#     # move to appropriate layer
-#     layerList = []
-#     for i in range(20):
-#         if i == layer-1:
-#             layerList.append(True)
-#         else:
-#             layerList.append(False)
-#     bpy.ops.object.move_to_layer(layers=layerList)
-#     bpy.context.scene.layers = layerList
-#     bpy.ops.object.select_all(action='TOGGLE')
-#     return ob
-#
-# def deleteExisting():
-#     # delete existing objects
-#     tmpList = [True]*20
-#     bpy.context.scene.layers = tmpList
-#     for i in range(2):
-#         bpy.ops.object.select_all(action='TOGGLE')
-#         bpy.ops.object.delete(use_global=False)
-#     bpy.context.scene.layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True]
-#
-# def main():
-#     deleteExisting()
-#
-#     # create objects
-#     dimensions = {'gap': 0.0015000000260770308, 'width': 0.12500000496705374, 'stud_diameter': 0.07500000298023224, 'height': 0.15000000596046448, 'stud_offset': 0.08906250353902578, 'thickness': 0.02500000099341075, 'tube_thickness': 0.013359375530853868, 'logo_width': 0.05843750232209763, 'stud_radius': 0.03750000149011612, 'stud_height': 0.028125001117587093, 'logo_offset': 0.10312500409781933}
-#     newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="Flat"), "1x1 flat").location = (-.2,0,0)
-#     newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="Low Detail"), "1x1 low").location = (0,0,0)
-#     newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="High Detail"), "1x1 high").location = (.2,0,0)
-#     newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="Flat"), "1x2 flat").location = (-.2,0,0)
-#     newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="Low Detail"), "1x2 low").location = (0,0,0)
-#     newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="High Detail"), "1x2 high").location = (.2,0,0)
-#     newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="Flat"), "2x2 flat").location = (-.3,0,0)
-#     newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="Low Detail"), "2x2 low").location = (0,0,0)
-#     newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="High Detail"), "2x2 high").location = (.3,0,0)
-#     newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="Flat"), "2x6 flat").location = (-.3,0,0)
-#     newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="Low Detail"), "2x6 low").location = (0,0,0)
-#     newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="High Detail"), "2x6 high").location = (.3,0,0)
-#
-#     layerToOpen = 1
-#
-#     layerList = []
-#     for i in range(20):
-#         if i == layerToOpen-1: layerList.append(True)
-#         else: layerList.append(False)
-#     bpy.context.scene.layers = layerList
-#
-# main()
+def newObjFromBmesh(layer, bme, meshName, objName=False):
+
+    # if only one name given, use it for both names
+    if not objName:
+        objName = meshName
+
+    # create mesh and object
+    me = bpy.data.meshes.new(meshName)
+    ob = bpy.data.objects.new(objName, me)
+
+    scn = bpy.context.scene # grab a reference to the scene
+    scn.objects.link(ob)    # link new object to scene
+    scn.objects.active = ob # make new object active
+    ob.select = True        # make new object selected (does not deselect
+                             # other objects)
+
+    obj = bme.to_mesh(me)         # push bmesh data into me
+
+    # move to appropriate layer
+    layerList = []
+    for i in range(20):
+        if i == layer-1:
+            layerList.append(True)
+        else:
+            layerList.append(False)
+    bpy.ops.object.move_to_layer(layers=layerList)
+    bpy.context.scene.layers = layerList
+    bpy.ops.object.select_all(action='TOGGLE')
+    return ob
+
+def deleteExisting():
+    # delete existing objects
+    tmpList = [True]*20
+    bpy.context.scene.layers = tmpList
+    for i in range(2):
+        bpy.ops.object.select_all(action='TOGGLE')
+        bpy.ops.object.delete(use_global=False)
+    bpy.context.scene.layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True]
+
+def get_dimensions(height=1, gap_percentage=0.01):
+    scale = height/9.6
+    brick_dimensions = {}
+    brick_dimensions["height"] = scale*9.6
+    brick_dimensions["width"] = scale*8
+    brick_dimensions["gap"] = scale*9.6*gap_percentage
+    brick_dimensions["stud_height"] = scale*1.8
+    brick_dimensions["stud_diameter"] = scale*4.8
+    brick_dimensions["stud_radius"] = scale*2.4
+    brick_dimensions["stud_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"] / 2)
+    brick_dimensions["thickness"] = scale*1.6
+    brick_dimensions["tube_thickness"] = scale*0.8056
+    brick_dimensions["bar_radius"] = scale*1.6
+    brick_dimensions["logo_width"] = scale*3.74
+    brick_dimensions["support_width"] = scale*0.97
+    brick_dimensions["tick_width"] = scale*0.7275
+    brick_dimensions["tick_depth"] = scale*0.36375
+    brick_dimensions["support_height"] = scale*6.25
+
+    brick_dimensions["logo_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"])
+    return brick_dimensions
+
+def main():
+    try:
+        bpy.ops.object.select_all(action='TOGGLE')
+    except:
+        print("Not in object mode!")
+        return
+    deleteExisting()
+
+    # create objects
+    dimensions = get_dimensions(.1, .01)
+    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="Flat"), "1x1 flat").location = (-.2,0,0)
+    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="Low Detail"), "1x1 low").location = (0,0,0)
+    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="Medium Detail"), "1x1 medium").location = (.2,0,0)
+    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="High Detail"), "1x1 high").location = (.4,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="Flat"), "1x2 flat").location = (-.2,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="Low Detail"), "1x2 low").location = (0,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="Medium Detail"), "1x2 meidium").location = (.2,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="High Detail"), "1x2 high").location = (.4,0,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1], numStudVerts=16, detail="Flat"), "3x1 flat").location = (0,-.2,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1], numStudVerts=16, detail="Low Detail"), "3x1 low").location = (0,0,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1], numStudVerts=16, detail="Medium Detail"), "3x1 meidium").location = (0,.2,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1], numStudVerts=16, detail="High Detail"), "3x1 high").location = (0,.4,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8], numStudVerts=16, detail="Flat"), "1x8 flat").location = (-.2,0,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8], numStudVerts=16, detail="Low Detail"), "1x8 low").location = (0,0,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8], numStudVerts=16, detail="Medium Detail"), "1x8 meidium").location = (.2,0,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8], numStudVerts=16, detail="High Detail"), "1x8 high").location = (.4,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="Flat"), "2x2 flat").location = (-.3,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="Low Detail"), "2x2 low").location = (0,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="Medium Detail"), "2x2 medium").location = (.3,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="High Detail"), "2x2 high").location = (.6,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="Flat"), "2x6 flat").location = (-.3,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="Low Detail"), "2x6 low").location = (0,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="Medium Detail"), "2x6 medium").location = (.3,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="High Detail"), "2x6 high").location = (.6,0,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2], numStudVerts=16, detail="Flat"), "6x2 flat").location = (0,-.3,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2], numStudVerts=16, detail="Low Detail"), "6x2 low").location = (0,0,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2], numStudVerts=16, detail="Medium Detail"), "6x2 medium").location = (0,.3,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2], numStudVerts=16, detail="High Detail"), "6x2 high").location = (0,.6,0)
+
+    layerToOpen = 7
+
+    layerList = []
+    for i in range(20):
+        if i == layerToOpen-1: layerList.append(True)
+        else: layerList.append(False)
+    bpy.context.scene.layers = layerList
+
+main()
