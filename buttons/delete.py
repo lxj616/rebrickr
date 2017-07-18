@@ -52,7 +52,7 @@ class legoizerDelete(bpy.types.Operator):
         # clean up 'LEGOizer_[source name]' group
         if groupExists("LEGOizer_%(n)s" % locals()):
             sourceGroup = bpy.data.groups["LEGOizer_%(n)s" % locals()]
-            if len(sourceGroup.objects):
+            if len(sourceGroup.objects) > 0:
                 source = sourceGroup.objects[0]
                 source.draw_type = 'SOLID'
                 source.hide_render = False
@@ -61,12 +61,16 @@ class legoizerDelete(bpy.types.Operator):
             bpy.data.groups.remove(sourceGroup, do_unlink=True)
 
         # clean up LEGOizer_bricks group
+        print(1)
         if groupExists(LEGOizer_bricks):
+            print(2)
             brickGroup = bpy.data.groups[LEGOizer_bricks]
             bgObjects = list(brickGroup.objects)
             if len(bgObjects) > 0:
+                print(3)
                 delete(bgObjects)
             bpy.data.groups.remove(brickGroup, do_unlink=True)
+            bpy.context.area.tag_redraw()
 
         # clean up 'LEGOizer_refBrick' group
         if groupExists("LEGOizer_%(n)s_refBricks" % locals()):
@@ -95,7 +99,7 @@ class legoizerDelete(bpy.types.Operator):
         # startTime = time.time()
 
         self.cleanUp()
-        
+
         # # STOPWATCH CHECK
         # stopWatch("Time Elapsed (DELETE)", time.time()-startTime)
 
