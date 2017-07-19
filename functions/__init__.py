@@ -104,7 +104,7 @@ def rayObjIntersections(point,direction,edgeLen,ob):
         orig = location + direction*0.00001
     return intersections
 
-def updateBFMatrix(x0, y0, z0, coordMatrix, brickFreqMatrix, source, x1, y1, z1, inside=None):
+def updateBFMatrix(x0, y0, z0, coordMatrix, brickFreqMatrix, brickShell, source, x1, y1, z1, inside=None):
     orig = coordMatrix[x0][y0][z0]
     try:
         rayEnd = coordMatrix[x1][y1][z1]
@@ -117,16 +117,19 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, brickFreqMatrix, source, x1, y1, z1,
     rayZ = rayEnd[2] - orig[2]
     ray = Vector((rayX, rayY, rayZ))
 
-    if pointInsideMesh(orig, source):
+    origInside = pointInsideMesh(orig, source)
+    if origInside:
         if brickFreqMatrix[x0][y0][z0] == 0:
             brickFreqMatrix[x0][y0][z0] = -1
             brickFreqMatrix[x0][y0][z0] = -1
     intersections = rayObjIntersections(orig,ray,edgeLen,source)
     if intersections > 0:
-        brickFreqMatrix[x0][y0][z0] = 2
-        brickFreqMatrix[x1][y1][z1] = 2
+        if (origInside and brickShell == "Inside Mesh") or (not origInside and brickShell == "Outside Mesh") or brickShell == "Inside and Outside":
+            brickFreqMatrix[x0][y0][z0] = 2
+        if (not origInside and brickShell == "Inside Mesh") or (origInside and brickShell == "Outside Mesh") or brickShell == "Inside and Outside":
+            brickFreqMatrix[x1][y1][z1] = 2
 
-def getBrickMatrix(source, coordMatrix, axes="xyz"):
+def getBrickMatrix(source, coordMatrix, brickShell, axes="xyz"):
     brickFreqMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
     # convert source to bmesh and convert faces to tri's
     sourceBM = bmesh.new()
@@ -138,17 +141,17 @@ def getBrickMatrix(source, coordMatrix, axes="xyz"):
         for z in range(len(coordMatrix[0][0])):
             for y in range(len(coordMatrix[0])):
                 for x in range(len(coordMatrix)):
-                    updateBFMatrix(x, y, z, coordMatrix, brickFreqMatrix, source, x+1, y, z)
+                    updateBFMatrix(x, y, z, coordMatrix, brickFreqMatrix, brickShell, source, x+1, y, z)
     if "y" in axes:
         for z in range(len(coordMatrix[0][0])):
             for x in range(len(coordMatrix)):
                 for y in range(len(coordMatrix[0])):
-                    updateBFMatrix(x, y, z, coordMatrix, brickFreqMatrix, source, x, y+1, z)
+                    updateBFMatrix(x, y, z, coordMatrix, brickFreqMatrix, brickShell, source, x, y+1, z)
     if "z" in axes:
         for x in range(len(coordMatrix)):
             for y in range(len(coordMatrix[0])):
                 for z in range(len(coordMatrix[0][0])):
-                    updateBFMatrix(x, y, z, coordMatrix, brickFreqMatrix, source, x, y, z+1)
+                    updateBFMatrix(x, y, z, coordMatrix, brickFreqMatrix, brickShell, source, x, y, z+1)
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
@@ -224,7 +227,11 @@ def makeBricksDict(source, source_details, dimensions, R, preHollow=False):
     offset = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
     coordMatrix = generateLattice(R, lScale, offset)
     # drawBMesh(makeLattice(R, lScale, offset))
-    brickFreqMatrix = getBrickMatrix(source, coordMatrix, axes=cm.calculationAxes)
+    if cm.brickShell != "Inside Mesh":
+        calculationAxes = cm.calculationAxes
+    else:
+        calculationAxes = "XYZ"
+    brickFreqMatrix = getBrickMatrix(source, coordMatrix, cm.brickShell, axes=calculationAxes)
     # get coordinate list from intersections of edges with faces
     if not cm.preHollow:
         threshold = 0

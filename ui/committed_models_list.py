@@ -152,6 +152,40 @@ class Uilist_printAllItems(bpy.types.Operator):
             print (i.source_name, i.id)
         return{'FINISHED'}
 
+# set source to active button
+class Uilist_setSourceToActive(bpy.types.Operator):
+    bl_idname = "cmlist.set_to_active"
+    bl_label = "Set to Active"
+    bl_description = "Set source to active object in scene"
+
+    @classmethod
+    def poll(cls, context):
+        """ ensures operator can execute (if not, returns false) """
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        if context.scene.objects.active == None:
+            return False
+        # cm = scn.cmlist[scn.cmlist_index]
+        # n = cm.source_name
+        # LEGOizer_source = "LEGOizer_%(n)s" % locals()
+        # if groupExists(LEGOizer_source) and len(bpy.data.groups[LEGOizer_source].objects) == 1:
+        #     return True
+        # try:
+        #     if bpy.data.objects[cm.source_name].type == 'MESH':
+        #         return True
+        # except:
+        #     return False
+        return True
+
+    def execute(self, context):
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        active_object = context.scene.objects.active
+        cm.source_name = active_object.name
+
+        return{'FINISHED'}
+
 # select button
 class Uilist_selectSource(bpy.types.Operator):
     bl_idname = "cmlist.select_source"
@@ -402,6 +436,7 @@ class CreatedModels(bpy.types.PropertyGroup):
     lastExposedUndersideDetail = StringProperty(default="None")
     lastHiddenUndersideDetail = StringProperty(default="None")
     lastSmoothCylinders = BoolProperty(default=True)
+    lastBrickShell = StringProperty(default="Inside Mesh")
 
     # Bevel Settings
     lastBevelWidth = FloatProperty()
@@ -418,9 +453,16 @@ class CreatedModels(bpy.types.PropertyGroup):
         update=updateBevel)
 
     # ADVANCED SETTINGS
+    brickShell = EnumProperty(
+        name="Brick Shell",
+        description="Choose whether the brick shell with be drawn inside or outside source mesh",
+        items=[("Inside Mesh", "Inside Mesh (recommended)", "Draw brick shell inside source mesh (Recommended)"),
+              ("Outside Mesh", "Outside Mesh", "Draw brick shell outside source mesh"),
+              ("Inside and Outside", "Inside and Outside", "Draw brick shell inside and outside source mesh (two layers)")],
+        default="Inside Mesh")
     calculationAxes = EnumProperty(
-        name="Calculation Axes",
-        description="Choose which directions rays will be cast from",
+        name="Expanded Shell Axes",
+        description="The brick shell will be drawn on the outside in these directions",
         items=[("XYZ", "XYZ", "PLACEHOLDER"),
               ("XY", "XY", "PLACEHOLDER"),
               ("YZ", "YZ", "PLACEHOLDER"),

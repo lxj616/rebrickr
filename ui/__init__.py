@@ -72,7 +72,7 @@ class LegoModelsPanel(Panel):
                 col = split.column(align=True)
                 col.prop_search(cm, "source_name", scn, "objects", text='')
                 col = split.column(align=True)
-                col.operator("cmlist.select_bricks", icon="BORDER_RECT", text="")
+                col.operator("cmlist.set_to_active", icon="EDIT", text="")
                 col = layout.column(align=True)
                 row = col.row(align=True)
                 row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD").action = "CREATE"
@@ -191,11 +191,12 @@ class ModelSettingsPanel(Panel):
         row.prop(cm, "mergeSeed")
         col = layout.column(align=True)
         row = col.row(align=True)
-        col = layout.column(align=True)
+        row.label("Brick Shell:")
         row = col.row(align=True)
-        row.label("Calculation Axes:")
-        row = col.row(align=True)
-        row.prop(cm, "calculationAxes", text="")
+        row.prop(cm, "brickShell", text="")
+        if cm.brickShell != "Inside Mesh":
+            row = col.row(align=True)
+            row.prop(cm, "calculationAxes", text="")
 
 class DetailingPanel(Panel):
     bl_space_type  = "VIEW_3D"

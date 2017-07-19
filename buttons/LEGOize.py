@@ -249,7 +249,8 @@ class legoizerLegoize(bpy.types.Operator):
            cm.gap != cm.lastGap or
            cm.preHollow != cm.lastPreHollow or
            cm.shellThickness != cm.lastShellThickness or
-           cm.lastCalculationAxes != cm.calculationAxes or
+           cm.lastBrickShell != cm.brickShell or
+           (cm.brickShell != "Inside Mesh" and cm.lastCalculationAxes != cm.calculationAxes) or
            cm.exposedUndersideDetail != cm.lastExposedUndersideDetail or
            cm.hiddenUndersideDetail != cm.lastHiddenUndersideDetail or
            cm.studDetail != cm.lastStudDetail or
@@ -276,6 +277,7 @@ class legoizerLegoize(bpy.types.Operator):
         cm.lastPreHollow = cm.preHollow
         cm.lastShellThickness = cm.shellThickness
         cm.lastCalculationAxes = cm.calculationAxes
+        cm.lastBrickShell = cm.brickShell
         cm.lastExposedUndersideDetail = cm.exposedUndersideDetail
         cm.lastHiddenUndersideDetail = cm.hiddenUndersideDetail
         cm.lastLogoResolution = cm.logoResolution
