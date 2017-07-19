@@ -22,9 +22,10 @@ Created by Christopher Gearhart
 # system imports
 import bpy
 import time
+import bmesh
 import random
 import time
-from mathutils import Vector
+from mathutils import Vector, Matrix
 from ..classes.Brick import Bricks
 from ..functions.common_functions import stopWatch, groupExists
 
@@ -40,7 +41,23 @@ def getNextBrick(bricks, loc, x, y):
     except:
         return None
 
-def makeBricks(parent, logo, dimensions, bricksD):
+def addEdgeSplitMod(obj):
+    """ Add edge split modifier """
+    eMod = obj.modifiers.new('Edge Split', 'EDGE_SPLIT')
+    # eMod.use_edge_angle = False
+    for p in obj.data.polygons:
+        p.use_smooth = True
+
+def combineMeshes(meshes):
+    bm = bmesh.new()
+    # add meshes to bmesh
+    for m in meshes:
+        bm.from_mesh( m )
+    finalMesh = bpy.data.meshes.new( "newMesh" )
+    bm.to_mesh( finalMesh )
+    return finalMesh
+
+def makeBricks(parent, logo, dimensions, bricksD, split=False):
     # set up variables
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -58,7 +75,11 @@ def makeBricks(parent, logo, dimensions, bricksD):
         bpy.data.groups.remove(group=bpy.data.groups[LEGOizer_bricks], do_unlink=True)
     bGroup = bpy.data.groups.new(LEGOizer_bricks)
 
+    if not split:
+        allBrickMeshes = []
+
     denom = len(keys)/20
+    j = 0
     for i,key in enumerate(keys):
         brickD = bricksD[key]
         if brickD["name"] != "DNE" and not brickD["connected"]:
@@ -215,16 +236,22 @@ def makeBricks(parent, logo, dimensions, bricksD):
                 undersideDetail = cm.hiddenUndersideDetail
 
             # Remesh brick at original location
-            m = Bricks().new_mesh(name=brickD["name"], height=dimensions["height"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
-            brick = bpy.data.objects.new(brickD["name"], m)
-            brick.location = Vector(brickD["co"])
+            if split or j == 0:
+                m = Bricks().new_mesh(name=brickD["name"], height=dimensions["height"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
+                brick = bpy.data.objects.new(brickD["name"], m)
+                brick.location = Vector(brickD["co"])
 
-            # Add edge split modifier
-            if cm.smoothCylinders and cm.studVerts > 12:
-                eMod = brick.modifiers.new('Edge Split', 'EDGE_SPLIT')
-                # eMod.use_edge_angle = False
-                for p in brick.data.polygons:
-                    p.use_smooth = True
+                # Add edge split modifier
+                if cm.smoothCylinders and cm.studVerts > 12:
+                    addEdgeSplitMod(brick)
+            else:
+                bm = Bricks().new_mesh(name=brickD["name"], height=dimensions["height"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail, returnType="bmesh")
+                bmesh.ops.transform(bm, matrix=Matrix.Translation(brickD["co"]), verts=bm.verts)
+                tempMesh = bpy.data.meshes.new(brickD["name"])
+                bm.to_mesh(tempMesh)
+                allBrickMeshes.append(tempMesh)
+            j += 1
+
 
         # print status to terminal
         if i % denom < 1:
@@ -236,11 +263,22 @@ def makeBricks(parent, logo, dimensions, bricksD):
                     percent = 100
                 print("building... " + str(percent) + "%")
 
-    for key in bricksD:
-        if bricksD[key]["name"] != "DNE":
-            brick = bpy.data.objects[bricksD[key]["name"]]
-            bGroup.objects.link(brick)
-            scn.objects.link(brick)
-            brick.parent = parent
+    # allBricksObj.data.update(calc_edges=True)
+
+    if not split:
+        m = combineMeshes(allBrickMeshes)
+        allBricksObj = bpy.data.objects.new('LEGOizer_%(n)s_bricks_combined' % locals(), m)
+        if cm.smoothCylinders and cm.studVerts > 12:
+            addEdgeSplitMod(allBricksObj)
+        bGroup.objects.link(allBricksObj)
+        scn.objects.link(allBricksObj)
+        allBricksObj.parent = parent
+    else:
+        for key in bricksD:
+            if bricksD[key]["name"] != "DNE":
+                brick = bpy.data.objects[bricksD[key]["name"]]
+                bGroup.objects.link(brick)
+                scn.objects.link(brick)
+                brick.parent = parent
 
     stopWatch("Time Elapsed (merge)", time.time()-ct)

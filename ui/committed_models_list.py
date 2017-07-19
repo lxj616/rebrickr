@@ -395,7 +395,8 @@ class CreatedModels(bpy.types.PropertyGroup):
     brickHeight = FloatProperty(
         name="Brick Height",
         description="Height of the bricks in the final LEGO model",
-        min=.001, max=10,
+        precision=3,
+        min=0.001, max=10,
         default=.1)
     gap = FloatProperty(
         name="Gap Between Bricks",

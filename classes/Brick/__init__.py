@@ -45,8 +45,8 @@ class Bricks:
         return brickObjs
 
     @staticmethod
-    def new_mesh(name='new_brick', height=1, gap_percentage=0.01, type=[1,1], logo=False, undersideDetail="Flat", stud=True, meshToOverwrite=None):
-        m = Brick().new_brick(name=name, height=height, gap_percentage=gap_percentage, type=type, logo=logo, undersideDetail=undersideDetail, stud=stud, brickMesh=meshToOverwrite)
+    def new_mesh(name='new_brick', height=1, gap_percentage=0.01, type=[1,1], logo=False, undersideDetail="Flat", stud=True, returnType="mesh", meshToOverwrite=None):
+        m = Brick().new_brick(name=name, height=height, gap_percentage=gap_percentage, type=type, logo=logo, undersideDetail=undersideDetail, stud=stud, returnType=returnType, brickMesh=meshToOverwrite)
         return m
 
     @staticmethod
@@ -130,7 +130,7 @@ class Brick:
         self.brick_dimensions = Bricks.get_dimensions(height, gap_percentage)
         return self.brick_dimensions
 
-    def new_brick(self, name="brick", height=1, gap_percentage=0.01, type=[1,1], logo=False, undersideDetail="Flat", stud=True, brickMesh=None):
+    def new_brick(self, name="brick", height=1, gap_percentage=0.01, type=[1,1], logo=False, undersideDetail="Flat", stud=True, returnType="mesh", brickMesh=None):
         """ create unlinked LEGO Brick at origin """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
@@ -181,10 +181,13 @@ class Brick:
         bm.from_mesh(cube)
         bpy.data.meshes.remove(cube)
 
-        # create apply mesh data to 'legoizer_brick1x1' data
-        if not brickMesh:
-            brickMesh = bpy.data.meshes.new(name + 'Mesh')
-        bm.to_mesh(brickMesh)
-
-        # return updated brick object
-        return brickMesh
+        if returnType == "mesh":
+            # create apply mesh data to 'legoizer_brick1x1' data
+            if not brickMesh:
+                brickMesh = bpy.data.meshes.new(name + 'Mesh')
+            bm.to_mesh(brickMesh)
+            # return updated brick object
+            return brickMesh
+        else:
+            # return bmesh object
+            return bm

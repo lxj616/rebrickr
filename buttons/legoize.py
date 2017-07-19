@@ -51,6 +51,7 @@ class legoizerLegoize(bpy.types.Operator):
         items=(
             ("CREATE", "Create", ""),
             ("UPDATE", "Update", ""),
+            ("SPLIT", "Split", "")
         )
     )
 
@@ -91,7 +92,7 @@ class legoizerLegoize(bpy.types.Operator):
                 self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
 
-        if self.action == "UPDATE":
+        if self.action == "UPDATE" or self.action == "SPLIT":
             # make sure 'LEGOizer_[source name]_bricks' group exists
             if not groupExists(LEGOizer_bricks_gn):
                 self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
@@ -268,7 +269,11 @@ class legoizerLegoize(bpy.types.Operator):
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
             # slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
             bricksDict = makeBricksDict(source, source_details, dimensions, R, cm.preHollow)
-            makeBricks(parent, refLogo, dimensions, bricksDict)
+            if self.action == "SPLIT":
+                split = True
+            else:
+                split = False
+            makeBricks(parent, refLogo, dimensions, bricksDict, split)
 
         # set final variables
         cm.lastBrickHeight = cm.brickHeight
