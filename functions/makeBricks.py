@@ -209,9 +209,12 @@ def makeBricks(source, logo, dimensions, bricksD):
 
             # Remesh brick at original location
             m = Bricks().new_mesh(name=brickD["name"], height=dimensions["height"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
-            j += 1
             brick = bpy.data.objects.new(brickD["name"], m)
             brick.location = Vector(brickD["co"])
+            bGroup.objects.link(brick)
+            scn.objects.link(brick)
+            brick.parent = source
+
             # Add edge split modifier
             if cm.smoothCylinders and cm.studVerts > 12:
                 eMod = brick.modifiers.new('Edge Split', 'EDGE_SPLIT')
@@ -228,13 +231,5 @@ def makeBricks(source, logo, dimensions, bricksD):
                 if percent > 100:
                     percent = 100
                 print("building... " + str(percent) + "%")
-
-    # link objects to scene (this is done later to improve code performance)
-    for key in bricksD:
-        if bricksD[key]["name"] != "DNE":
-            brick = bpy.data.objects[bricksD[key]["name"]]
-            bGroup.objects.link(brick)
-            scn.objects.link(brick)
-            brick.parent = source
 
     stopWatch("Time Elapsed (merge)", time.time()-ct)

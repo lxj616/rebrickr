@@ -75,15 +75,15 @@ class Bricks:
 class Brick:
 
     def __init__(self, location=(0,0,0), name="brick", mesh_data=None):
-        if mesh_data:
-            self.mesh_data = mesh_data
-        else:
-            self.mesh_data = bpy.data.meshes.new(name + "_mesh")
-        self.obj = bpy.data.objects.new(name, self.mesh_data)
-        self.update_location(location)
-        self.update_name(name)
-        self.brick_dimensions = 'UNSET'
-        # Bricks.add_brick(self.name, self)
+        # if mesh_data:
+        #     self.mesh_data = mesh_data
+        # else:
+        #     self.mesh_data = bpy.data.meshes.new(name + "_mesh")
+        # self.obj = bpy.data.objects.new(name, self.mesh_data)
+        # self.update_location(location)
+        # self.update_name(name)
+        # self.brick_dimensions = 'UNSET'
+        pass
 
     def update_data(self, mesh_data):
         self.obj.data = mesh_data
