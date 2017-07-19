@@ -61,13 +61,10 @@ class legoizerDelete(bpy.types.Operator):
             bpy.data.groups.remove(sourceGroup, do_unlink=True)
 
         # clean up LEGOizer_bricks group
-        print(1)
         if groupExists(LEGOizer_bricks):
-            print(2)
             brickGroup = bpy.data.groups[LEGOizer_bricks]
             bgObjects = list(brickGroup.objects)
             if len(bgObjects) > 0:
-                print(3)
                 delete(bgObjects)
             bpy.data.groups.remove(brickGroup, do_unlink=True)
             bpy.context.area.tag_redraw()

@@ -231,12 +231,6 @@ def makeBricksDict(source, source_details, dimensions, R, preHollow=False):
     else:
         threshold = 1.01 - (cm.shellThickness / 100)
     coList = getCOList(brickFreqMatrix, coordMatrix, threshold)
-    # create group for lego bricks
-    n = cm.source_name
-    LEGOizer_bricks = 'LEGOizer_%(n)s_bricks' % locals()
-    if groupExists(LEGOizer_bricks):
-        bpy.data.groups.remove(group=bpy.data.groups[LEGOizer_bricks], do_unlink=True)
-    bGroup = bpy.data.groups.new(LEGOizer_bricks)
     # if no coords in coList, add a coord at center of source
     if len(coList) == 0:
         coList.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
@@ -246,9 +240,6 @@ def makeBricksDict(source, source_details, dimensions, R, preHollow=False):
     # TODO: Improve efficiency of the following nested for loop
     brickDict = {}
     denom = len(coList)/20
-    tempMesh = bpy.data.meshes.get('LEGOizer_tempMesh')
-    if tempMesh == None:
-        tempMesh = bpy.data.meshes.new('LEGOizer_tempMesh')
     for x in range(len(coList)):
         for y in range(len(coList[0])):
             for z in range(len(coList[0][0])):
@@ -271,28 +262,15 @@ def makeBricksDict(source, source_details, dimensions, R, preHollow=False):
                     # else:
                     #     print("shouldn't get here")
 
-                    brick = bpy.data.objects.new('LEGOizer_brick_' + str(i+1), tempMesh)
-                    brick.location = Vector(co)
-                    bricks.append(brick)
-                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {"name":brick.name, "val":brickFreqMatrix[x][y][z], "coord":coordMatrix[x][y][z], "connected":[]}
-                    # brick.link_to_scene(scn)
-                    # bGroup.objects.link(brick.obj)
+                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {"name":'LEGOizer_brick_' + str(i+1), "val":brickFreqMatrix[x][y][z], "co":co, "connected":[]}
                 else:
-                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {"name":"DNE", "val":brickFreqMatrix[x][y][z], "coord":coordMatrix[x][y][z], "connected":[]}
+                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {"name":"DNE", "val":brickFreqMatrix[x][y][z], "co":co, "connected":[]}
         # print status to terminal
         if x % denom < 1:
             percent = x*100//len(coList)+5
             if percent > 100:
                 percent = 100
             print("generating blueprint... " + str(percent) + "%")
-
-    # link objects to scene (this is done later to improve code performance)
-    for brick in bricks:
-        bGroup.objects.link(brick)
-        scn.objects.link(brick)
-        brick.parent = source
-
-    scn.update()
 
     stopWatch("Time Elapsed (makeBricksDict)", time.time()-ct)
 
