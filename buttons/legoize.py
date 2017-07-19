@@ -137,7 +137,6 @@ class legoizerLegoize(bpy.types.Operator):
             parent = bpy.data.objects.new(LEGOizer_parent_gn, source.data.copy())
             parent.location = (source_details.x.mid + source["previous_location"][0], source_details.y.mid + source["previous_location"][1], source_details.z.mid + source["previous_location"][2])
             pGroup = bpy.data.groups.new(LEGOizer_parent_gn)
-            print(pGroup.name)
             pGroup.objects.link(parent)
         else:
             parent = bpy.data.groups[LEGOizer_parent_gn].objects[0]
