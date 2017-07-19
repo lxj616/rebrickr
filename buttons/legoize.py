@@ -103,6 +103,7 @@ class legoizerLegoize(bpy.types.Operator):
     def execute(self, context):
         # get start time
         startTime = time.time()
+        curTime = startTime
 
         # set up variables
         scn = context.scene
@@ -260,6 +261,7 @@ class legoizerLegoize(bpy.types.Operator):
            cm.lastMergeSeed != cm.mergeSeed or
            cm.lastMaxBrickScale != cm.maxBrickScale or
            cm.lastSmoothCylinders != cm.smoothCylinders or
+           cm.lastSplitModel != cm.splitModel or
            self.action == "CREATE"):
             # delete old bricks if present
             if groupExists(LEGOizer_bricks_gn):
@@ -269,11 +271,8 @@ class legoizerLegoize(bpy.types.Operator):
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
             # slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
             bricksDict = makeBricksDict(source, source_details, dimensions, R, cm.preHollow)
-            if self.action == "SPLIT":
-                split = True
-            else:
-                split = False
-            makeBricks(parent, refLogo, dimensions, bricksDict, split)
+            makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel)
+
 
         # set final variables
         cm.lastBrickHeight = cm.brickHeight
@@ -291,6 +290,7 @@ class legoizerLegoize(bpy.types.Operator):
         cm.lastMergeSeed = cm.mergeSeed
         cm.lastMaxBrickScale = cm.maxBrickScale
         cm.lastSmoothCylinders = cm.smoothCylinders
+        cm.lastSplitModel = cm.splitModel
 
         disableRelationshipLines()
 

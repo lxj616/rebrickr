@@ -263,8 +263,6 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                     percent = 100
                 print("building... " + str(percent) + "%")
 
-    # allBricksObj.data.update(calc_edges=True)
-
     if not split:
         m = combineMeshes(allBrickMeshes)
         allBricksObj = bpy.data.objects.new('LEGOizer_%(n)s_bricks_combined' % locals(), m)

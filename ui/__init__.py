@@ -89,9 +89,6 @@ class LegoModelsPanel(Panel):
                 col.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH").action = "UPDATE"
                 col = split.column(align=True)
                 col.operator("cmlist.select_bricks", icon="BORDER_RECT", text="")
-                col = layout.column(align=True)
-                row = col.row(align=True)
-                row.operator("scene.legoizer_legoize", text="Split Model", icon="MOD_ARRAY").action = "SPLIT"
 
             # sub = row.row(align=True)
             # sub.scale_x = 0.1
@@ -200,6 +197,8 @@ class ModelSettingsPanel(Panel):
         if cm.brickShell != "Inside Mesh":
             row = col.row(align=True)
             row.prop(cm, "calculationAxes", text="")
+        row = col.row(align=True)
+        row.prop(cm, "splitModel")
 
 class DetailingPanel(Panel):
     bl_space_type  = "VIEW_3D"

@@ -22,6 +22,7 @@ Created by Christopher Gearhart
 # system imports
 import bpy
 import bmesh
+from mathutils import Vector
 
 def tupleAdd(p1, p2):
     """ returns linear sum of two given tuples """
@@ -39,6 +40,9 @@ def generateLattice(R, s, o=(0,0,0)):
     xS = s[0]
     yS = s[1]
     zS = s[2]
+    xN = (xS/(2*xR))
+    yN = (yS/(2*yR))
+    zN = (zS/(2*zR))
     xL = int(round((xS)/xR))+1
     if xL != 1: xL += 1
     yL = int(round((yS)/yR))+1
@@ -48,17 +52,16 @@ def generateLattice(R, s, o=(0,0,0)):
     # iterate through x,y,z dimensions and create verts/connect with edges
     for x in range(xL):
         coordList1 = []
-        xCO = (x-(xS/(2*xR)))*xR
+        xCO = (x-xN)*xR
         for y in range(yL):
             coordList2 = []
-            yCO = (y-(yS/(2*yR)))*yR
+            yCO = (y-yN)*yR
             for z in range(zL):
                 # create verts
-                zCO = (z-(zS/(2*zR)))*zR
-                p = (xCO, yCO, zCO)
-                v = bme.verts.new(tupleAdd(p, o))
-                coordList2.append(v.co.copy())
+                zCO = (z-zN)*zR
+                p = Vector((o[0] + xCO, o[1] + yCO, o[2] + zCO))
+                coordList2.append(p)
             coordList1.append(coordList2)
         coordMatrix.append(coordList1)
-    # return bmesh
+    # return coord matrix
     return coordMatrix

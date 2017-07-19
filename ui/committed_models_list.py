@@ -423,6 +423,11 @@ class CreatedModels(bpy.types.PropertyGroup):
         description="Smooths cylinders with edge split and smooth shading (disable for bevel resolution control)",
         default=True)
 
+    splitModel = BoolProperty(
+        name="Split Model",
+        description="Split model into separate bricks (slower)",
+        default=False)
+
     lastBrickHeight = FloatProperty(default=0)
     lastGap = FloatProperty(default=0)
     lastPreHollow = BoolProperty(default=False)
@@ -438,6 +443,7 @@ class CreatedModels(bpy.types.PropertyGroup):
     lastHiddenUndersideDetail = StringProperty(default="None")
     lastSmoothCylinders = BoolProperty(default=True)
     lastBrickShell = StringProperty(default="Inside Mesh")
+    lastSplitModel = BoolProperty(default=False)
 
     # Bevel Settings
     lastBevelWidth = FloatProperty()
