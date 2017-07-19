@@ -261,10 +261,19 @@ def makeBricksDict(source, source_details, dimensions, R, preHollow=False):
                     #     # brick.update_data(refBrickUpperLower.data)
                     # else:
                     #     print("shouldn't get here")
-
-                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {"name":'LEGOizer_brick_' + str(i+1), "val":brickFreqMatrix[x][y][z], "co":co, "connected":[]}
+                    n = cm.source_name
+                    j = str(i+1)
+                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {
+                        "name":'LEGOizer_%(n)s_brick_%(j)s' % locals(),
+                        "val":brickFreqMatrix[x][y][z],
+                        "co":(co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
+                        "connected":False}
                 else:
-                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {"name":"DNE", "val":brickFreqMatrix[x][y][z], "co":co, "connected":[]}
+                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {
+                        "name":"DNE",
+                        "val":brickFreqMatrix[x][y][z],
+                        "co":co,
+                        "connected":False}
         # print status to terminal
         if x % denom < 1:
             percent = x*100//len(coList)+5

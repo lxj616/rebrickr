@@ -12,6 +12,9 @@ Blender add-on for automated generation of LEGO Bricks from object (Blender vers
       * Click 'LEGOize Object'
       * Adjust settings for your desired result
       * Click 'Update Model' to view setting adjustments
+  * Known Bugs:
+    * long, thin plane models don't turn out correctly (inside/outsideness seems to be broken)
+    * 'UP' and 'DOWN' arrows in UI don't move models, they just change the 'cmlist_index'
   * Future improvements:
     * Priority 1:
       * Improve bevel so that number of verts doesn't affect it

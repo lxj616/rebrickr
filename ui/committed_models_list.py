@@ -33,6 +33,23 @@ import bpy
 from bpy.props import IntProperty, CollectionProperty #, StringProperty
 from bpy.types import Panel, UIList
 
+def matchProperties(cmNew, cmOld):
+    cmNew.preHollow = cmOld.preHollow
+    cmNew.shellThickness = cmOld.shellThickness
+    cmNew.studDetail = cmOld.studDetail
+    cmNew.logoDetail = cmOld.logoDetail
+    cmNew.logoResolution = cmOld.logoResolution
+    cmNew.hiddenUndersideDetail = cmOld.hiddenUndersideDetail
+    cmNew.exposedUndersideDetail = cmOld.exposedUndersideDetail
+    cmNew.studVerts = cmOld.studVerts
+    cmNew.brickHeight = cmOld.brickHeight
+    cmNew.gap = cmOld.gap
+    cmNew.mergeSeed = cmOld.mergeSeed
+    cmNew.maxBrickScale = cmOld.maxBrickScale
+    cmNew.smoothCylinders = cmOld.smoothCylinders
+    cmNew.calculationAxes = cmOld.calculationAxes
+    cmNew.bevelWidth = cmOld.bevelWidth
+    cmNew.bevelResolution = cmOld.bevelResolution
 
 # ui list item actions
 class Uilist_actions(bpy.types.Operator):
@@ -73,11 +90,13 @@ class Uilist_actions(bpy.types.Operator):
         if self.action == 'ADD':
             active_object = scn.objects.active
             # if active object already has a model, don't set it as default source for new model
-            for cm in scn.cmlist:
-                if cm.source_name == active_object.name:
-                    active_object = None
-                    break
+            if active_object != None:
+                for cm in scn.cmlist:
+                    if cm.source_name == active_object.name:
+                        active_object = None
+                        break
             item = scn.cmlist.add()
+            last_index = scn.cmlist_index
             scn.cmlist_index = len(scn.cmlist)-1
             item.name = "<New Model>"
             if active_object:
@@ -86,19 +105,20 @@ class Uilist_actions(bpy.types.Operator):
                 item.source_name = ""
             item.id = len(scn.cmlist)
             info = '%s added to list' % (item.name)
+            matchProperties(scn.cmlist[scn.cmlist_index], scn.cmlist[last_index])
             self.report({'INFO'}, info)
 
-        # elif self.action == 'DOWN' and idx < len(scn.cmlist) - 1:
-        #     item_next = scn.cmlist[idx+1].source_name
-        #     scn.cmlist_index += 1
-        #     info = 'Item %d selected' % (scn.cmlist_index + 1)
-        #     self.report({'INFO'}, info)
-        #
-        # elif self.action == 'UP' and idx >= 1:
-        #     item_prev = scn.cmlist[idx-1].source_name
-        #     scn.cmlist_index -= 1
-        #     info = 'Item %d selected' % (scn.cmlist_index + 1)
-        #     self.report({'INFO'}, info)
+        elif self.action == 'DOWN' and idx < len(scn.cmlist) - 1:
+            item_next = scn.cmlist[idx+1].source_name
+            scn.cmlist_index += 1
+            info = 'Item %d selected' % (scn.cmlist_index + 1)
+            self.report({'INFO'}, info)
+
+        elif self.action == 'UP' and idx >= 1:
+            item_prev = scn.cmlist[idx-1].source_name
+            scn.cmlist_index -= 1
+            info = 'Item %d selected' % (scn.cmlist_index + 1)
+            self.report({'INFO'}, info)
 
         return {"FINISHED"}
 
@@ -268,7 +288,7 @@ def updateBevel(self, context):
         pass
 
 # Create custom property group
-class CustomProp(bpy.types.PropertyGroup):
+class CreatedModels(bpy.types.PropertyGroup):
     name = StringProperty(update=uniquifyName)
     id = IntProperty()
 
@@ -361,7 +381,7 @@ class CustomProp(bpy.types.PropertyGroup):
         name="Max Brick Scale",
         description="Maximum scale of the generated LEGO bricks (equivalent to num studs on top)",
         min=1, max=20,
-        default=20)
+        default=16)
 
     smoothCylinders = BoolProperty(
         name="Smooth Cylinders",
@@ -383,11 +403,6 @@ class CustomProp(bpy.types.PropertyGroup):
     lastHiddenUndersideDetail = StringProperty(default="None")
     lastSmoothCylinders = BoolProperty(default=True)
 
-    lastLocation = StringProperty(default="0")
-    lastRotationEuler = StringProperty(default="0")
-    lastScale = StringProperty(default="0")
-    lastDimensions = StringProperty(default="0")
-
     # Bevel Settings
     lastBevelWidth = FloatProperty()
     bevelWidth = FloatProperty(
@@ -405,7 +420,7 @@ class CustomProp(bpy.types.PropertyGroup):
     # ADVANCED SETTINGS
     calculationAxes = EnumProperty(
         name="Calculation Axes",
-        description="PLACEHOLDER", # TODO: Fill in placeholders on this line and the next four
+        description="Choose which directions rays will be cast from",
         items=[("XYZ", "XYZ", "PLACEHOLDER"),
               ("XY", "XY", "PLACEHOLDER"),
               ("YZ", "YZ", "PLACEHOLDER"),
@@ -415,16 +430,13 @@ class CustomProp(bpy.types.PropertyGroup):
               ("Z", "Z", "PLACEHOLDER")],
         default="XY")
 
-    logoMesh = None
-    # modalRunning = BoolProperty(default=False)
-
 # -------------------------------------------------------------------
 # register
 # -------------------------------------------------------------------
 
 def register():
     bpy.utils.register_module(__name__)
-    bpy.types.Scene.custom = CollectionProperty(type=CustomProp)
+    bpy.types.Scene.custom = CollectionProperty(type=CreatedModels)
     bpy.types.Scene.cmlist_index = IntProperty()
 
 def unregister():

@@ -22,6 +22,7 @@
 # system imports
 import bpy
 import time
+from mathutils import Euler
 from ..functions import *
 props = bpy.props
 
@@ -47,22 +48,34 @@ class legoizerDelete(bpy.types.Operator):
         # set up variables
         scn = bpy.context.scene
         n = scn.cmlist[scn.cmlist_index].source_name
-        LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
+        LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
+        LEGOizer_parent_gn = "LEGOizer_%(n)s_parent" % locals()
+        LEGOizer_refBricks_gn = "LEGOizer_%(n)s_refBricks" % locals()
+        LEGOizer_source_gn = "LEGOizer_%(n)s" % locals()
 
         # clean up 'LEGOizer_[source name]' group
-        if groupExists("LEGOizer_%(n)s" % locals()):
-            sourceGroup = bpy.data.groups["LEGOizer_%(n)s" % locals()]
+        if groupExists(LEGOizer_source_gn):
+            sourceGroup = bpy.data.groups[LEGOizer_source_gn]
             if len(sourceGroup.objects) > 0:
                 source = sourceGroup.objects[0]
-                source.draw_type = 'SOLID'
-                source.hide_render = False
-                source.hide = False
+                source.location = source["previous_location"]
+                scn.objects.link(source)
                 select(source, active=source)
             bpy.data.groups.remove(sourceGroup, do_unlink=True)
 
+        # clean up LEGOizer_parent group
+        if groupExists(LEGOizer_parent_gn):
+            pGroup = bpy.data.groups[LEGOizer_parent_gn]
+            try:
+                parent = bpy.data.groups[LEGOizer_parent_gn].objects[0]
+                delete(parent)
+            except:
+                pass
+            bpy.data.groups.remove(pGroup, do_unlink=True)
+
         # clean up LEGOizer_bricks group
-        if groupExists(LEGOizer_bricks):
-            brickGroup = bpy.data.groups[LEGOizer_bricks]
+        if groupExists(LEGOizer_bricks_gn):
+            brickGroup = bpy.data.groups[LEGOizer_bricks_gn]
             bgObjects = list(brickGroup.objects)
             if len(bgObjects) > 0:
                 delete(bgObjects)
@@ -70,19 +83,12 @@ class legoizerDelete(bpy.types.Operator):
             bpy.context.area.tag_redraw()
 
         # clean up 'LEGOizer_refBrick' group
-        if groupExists("LEGOizer_%(n)s_refBricks" % locals()):
-            refBrickGroup = bpy.data.groups["LEGOizer_%(n)s_refBricks" % locals()]
+        if groupExists(LEGOizer_refBricks_gn):
+            refBrickGroup = bpy.data.groups[LEGOizer_refBricks_gn]
             if len(refBrickGroup.objects) > 0:
                 refBrick = refBrickGroup.objects[0]
                 delete(refBrick)
             bpy.data.groups.remove(refBrickGroup, do_unlink=True)
-
-        # clean up 'LEGOizer_lastSourceDataRef' object
-        try:
-            lastSourceDataRef = bpy.data.objects["LEGOizer_%(n)s_lastSourceDataRef" % locals()]
-            bpy.data.objects.remove(lastSourceDataRef, do_unlink=True)
-        except:
-            pass
 
         # # clean up 'LEGOizer_refLogo' group
         # if groupExists("LEGOizer_refLogo"):

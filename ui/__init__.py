@@ -57,8 +57,8 @@ class LegoModelsPanel(Panel):
         col.operator("cmlist.list_action", icon='ZOOMIN', text="").action = 'ADD'
         col.operator("cmlist.list_action", icon='ZOOMOUT', text="").action = 'REMOVE'
         col.separator()
-        col.operator("cmlist.select_source", icon="UV_SYNC_SELECT", text="")
-        col.operator("cmlist.select_bricks", icon="BORDER_RECT", text="")
+        col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
+        col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
 
         if scn.cmlist_index != -1:
             cm = scn.cmlist[scn.cmlist_index]
@@ -68,8 +68,11 @@ class LegoModelsPanel(Panel):
             if not groupExistsBool:
                 col = layout.column(align=True)
                 col.label("Source Object:")
-                row = col.row(align=True)
-                row.prop_search(cm, "source_name", scn, "objects", text='')
+                split = col.split(align=True, percentage=0.85)
+                col = split.column(align=True)
+                col.prop_search(cm, "source_name", scn, "objects", text='')
+                col = split.column(align=True)
+                col.operator("cmlist.select_bricks", icon="BORDER_RECT", text="")
                 col = layout.column(align=True)
                 row = col.row(align=True)
                 row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD").action = "CREATE"
@@ -79,8 +82,13 @@ class LegoModelsPanel(Panel):
                 row = col.row(align=True)
                 row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL")
                 col = layout.column(align=True)
-                row = col.row(align=True)
-                row.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH").action = "UPDATE"
+                # row = col.row(align=True)
+                # row.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH").action = "UPDATE"
+                split = col.split(align=True, percentage=.85)
+                col = split.column(align=True)
+                col.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH").action = "UPDATE"
+                col = split.column(align=True)
+                col.operator("cmlist.select_bricks", icon="BORDER_RECT", text="")
 
             # sub = row.row(align=True)
             # sub.scale_x = 0.1
@@ -89,12 +97,53 @@ class LegoModelsPanel(Panel):
             col = layout.column(align=True)
             row = col.row(align=True)
             # remove 'LEGOizer_[source name]_bricks' group if empty
-            if groupExists(LEGOizer_bricks) and len(bpy.data.groups[LEGOizer_bricks].objects) == 0:
-                legoizerDelete.cleanUp()
-                bpy.data.groups.remove(bpy.data.groups[LEGOizer_bricks], do_unlink=True)
+            # if groupExists(LEGOizer_bricks) and len(bpy.data.groups[LEGOizer_bricks].objects) == 0:
+            #     legoizerDelete.cleanUp()
+            #     bpy.data.groups.remove(bpy.data.groups[LEGOizer_bricks], do_unlink=True)
         else:
             layout.operator("cmlist.list_action", icon='ZOOMIN', text="New LEGO Model").action = 'ADD'
 
+class ModelTransformationPanel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "Model Transformation"
+    bl_idname      = "VIEW3D_PT_tools_LEGOizer_model_transformation"
+    bl_context     = "objectmode"
+    bl_category    = "LEGOizer"
+    bl_options     = {"DEFAULT_CLOSED"}
+    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
+
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        if bversion() < '002.078.00':
+            return False
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        if not groupExists('LEGOizer_%(n)s' % locals()):
+            return False
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        parent = bpy.data.groups['LEGOizer_%(n)s_parent' % locals()].objects[0]
+        row = layout.row()
+        row.column().prop(parent, "location")
+        if parent.rotation_mode == 'QUATERNION':
+            row.column().prop(parent, "rotation_quaternion", text="Rotation")
+        elif parent.rotation_mode == 'AXIS_ANGLE':
+            row.column().prop(parent, "rotation_axis_angle", text="Rotation")
+        else:
+            row.column().prop(parent, "rotation_euler", text="Rotation")
+        row.column().prop(parent, "scale")
+        layout.prop(parent, "rotation_mode")
 
 class ModelSettingsPanel(Panel):
     bl_space_type  = "VIEW_3D"

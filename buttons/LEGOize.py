@@ -77,10 +77,10 @@ class legoizerLegoize(bpy.types.Operator):
             return{"FINISHED"}
         return {"PASS_THROUGH"}
 
-    def isValid(self, LEGOizer_bricks, source):
+    def isValid(self, LEGOizer_bricks_gn, source):
         if self.action == "CREATE":
             # verify function can run
-            if groupExists(LEGOizer_bricks):
+            if groupExists(LEGOizer_bricks_gn):
                 self.report({"WARNING"}, "LEGOized Model already created.")
                 return False
             # verify source exists and is of type mesh
@@ -93,7 +93,7 @@ class legoizerLegoize(bpy.types.Operator):
 
         if self.action == "UPDATE":
             # make sure 'LEGOizer_[source name]_bricks' group exists
-            if not groupExists(LEGOizer_bricks):
+            if not groupExists(LEGOizer_bricks_gn):
                 self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
                 return False
 
@@ -108,32 +108,42 @@ class legoizerLegoize(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         source = self.getObjectToLegoize()
         n = cm.source_name
-        LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
+        LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
+        LEGOizer_parent_gn = "LEGOizer_%(n)s_parent" % locals()
+        LEGOizer_source_gn = "LEGOizer_%(n)s" % locals()
 
-        if not self.isValid(LEGOizer_bricks, source):
+        if not self.isValid(LEGOizer_bricks_gn, source):
              return {"CANCELLED"}
 
-        if not groupExists("LEGOizer_%(n)s" % locals()):
-            # create 'LEGOizer_[cm.source_name]' group with source object
-            sGroup = bpy.data.groups.new("LEGOizer_%(n)s" % locals())
-            sGroup.objects.link(source)
+        if self.action == "CREATE":
+            source["previous_location"] = source.location.to_tuple()
+            source.location = (0,0,0)
+            select(source, active=source)
+            bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
 
-        # change source to 'WIRE' and hide from render
-        source.draw_type = 'WIRE'
-        source.hide_render = True
+        if not groupExists(LEGOizer_source_gn):
+            # link source to new 'source' group
+            sGroup = bpy.data.groups.new(LEGOizer_source_gn)
+            sGroup.objects.link(source)
+            # unlink source from scene
+            scn.objects.unlink(source)
 
         # get cross section
         source_details = bounds(source)
         dimensions = Bricks.get_dimensions(cm.brickHeight, cm.gap)
 
-        # apply mesh transformation if necessary
-        if (source.location != tuple(cm.lastLocation) or
-           source.rotation_euler != tuple(cm.lastRotationEuler) or
-           source.scale != tuple(cm.lastScale) or
-           source.dimensions != tuple(cm.lastDimensions)):
-            select(source, active=source)
-            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        if not groupExists(LEGOizer_parent_gn):
+            # create new empty 'parent' object and add to new group
+            parent = bpy.data.objects.new(LEGOizer_parent_gn, source.data.copy())
+            parent.location = (source_details.x.mid + source["previous_location"][0], source_details.y.mid + source["previous_location"][1], source_details.z.mid + source["previous_location"][2])
+            pGroup = bpy.data.groups.new(LEGOizer_parent_gn)
+            print(pGroup.name)
+            pGroup.objects.link(parent)
+        else:
+            parent = bpy.data.groups[LEGOizer_parent_gn].objects[0]
 
+        if self.action == "UPDATE" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0:
+            self.action = "CREATE"
 
         # update refLogo
         if cm.logoDetail == "None":
@@ -234,21 +244,11 @@ class legoizerLegoize(bpy.types.Operator):
         #     rbGroup.objects.link(refBrickLower)
         #     rbGroup.objects.link(refBrickUpperLower)
 
-        # check last source data and transformation
-        try:
-            lastSourceDataRef = bpy.data.objects["LEGOizer_%(n)s_lastSourceDataRef" % locals()]
-            # identicalTransforms = lastSourceDataRef.matrix_world == source.matrix_world
-            meshComparasin = source.data.unit_test_compare(lastSourceDataRef.data)
-        except:
-            meshComparasin = 'Error'
-            # identicalTransforms = False
-
         # if any related source data or settings have changed
         if (cm.brickHeight != cm.lastBrickHeight or
            cm.gap != cm.lastGap or
            cm.preHollow != cm.lastPreHollow or
            cm.shellThickness != cm.lastShellThickness or
-           meshComparasin != 'Same' or
            cm.lastCalculationAxes != cm.calculationAxes or
            cm.exposedUndersideDetail != cm.lastExposedUndersideDetail or
            cm.hiddenUndersideDetail != cm.lastHiddenUndersideDetail or
@@ -261,14 +261,14 @@ class legoizerLegoize(bpy.types.Operator):
            cm.lastSmoothCylinders != cm.smoothCylinders or
            self.action == "CREATE"):
             # delete old bricks if present
-            if groupExists(LEGOizer_bricks):
-                bricks = list(bpy.data.groups[LEGOizer_bricks].objects)
+            if groupExists(LEGOizer_bricks_gn):
+                bricks = list(bpy.data.groups[LEGOizer_bricks_gn].objects)
                 delete(bricks)
             # create new bricks
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
             # slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
             bricksDict = makeBricksDict(source, source_details, dimensions, R, cm.preHollow)
-            makeBricks(source, refLogo, dimensions, bricksDict)
+            makeBricks(parent, refLogo, dimensions, bricksDict)
 
         # set final variables
         cm.lastBrickHeight = cm.brickHeight
@@ -285,24 +285,6 @@ class legoizerLegoize(bpy.types.Operator):
         cm.lastMergeSeed = cm.mergeSeed
         cm.lastMaxBrickScale = cm.maxBrickScale
         cm.lastSmoothCylinders = cm.smoothCylinders
-
-        # set last transformation data
-        lastLoc = str(source.location[0]) + str(source.location[1]) + str(source.location[2])
-        lastRot = str(source.rotation_euler[0]) + str(source.rotation_euler[1]) + str(source.location[2])
-        lastScale = str(source.scale[0]) + str(source.scale[1]) + str(source.scale[2])
-        lastDim = str(source.dimensions[0]) + str(source.dimensions[1]) + str(source.dimensions[2])
-        cm.lastLocation = lastLoc
-        cm.lastRotationEuler = lastRot
-        cm.lastScale = lastScale
-        cm.lastDimensions = lastDim
-
-        # store last source data
-        try:
-            o = bpy.data.objects["LEGOizer_%(n)s_lastSourceDataRef" % locals()]
-            o.data = source.data.copy()
-        except:
-            o = bpy.data.objects.new("LEGOizer_%(n)s_lastSourceDataRef" % locals(), source.data.copy())
-        o.matrix_world = source.matrix_world
 
         disableRelationshipLines()
 

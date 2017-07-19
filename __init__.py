@@ -53,7 +53,7 @@ def register():
     addon_keymaps.append(km)
 
     # other things (UI List)
-    bpy.types.Scene.cmlist = CollectionProperty(type=CustomProp)
+    bpy.types.Scene.cmlist = CollectionProperty(type=CreatedModels)
     bpy.types.Scene.cmlist_index = IntProperty(default=-1)
 
     # session properties

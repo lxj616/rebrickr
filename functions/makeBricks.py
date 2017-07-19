@@ -30,7 +30,7 @@ from ..functions.common_functions import stopWatch, groupExists
 
 def brickAvail(brick):
     if brick != None:
-        if brick["name"] != "DNE" and len(brick["connected"]) == 0:
+        if brick["name"] != "DNE" and not brick["connected"]:
             return True
     return False
 
@@ -40,7 +40,7 @@ def getNextBrick(bricks, loc, x, y):
     except:
         return None
 
-def makeBricks(source, logo, dimensions, bricksD):
+def makeBricks(parent, logo, dimensions, bricksD):
     # set up variables
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -59,10 +59,9 @@ def makeBricks(source, logo, dimensions, bricksD):
     bGroup = bpy.data.groups.new(LEGOizer_bricks)
 
     denom = len(keys)/20
-    j = 0
     for i,key in enumerate(keys):
         brickD = bricksD[key]
-        if brickD["name"] != "DNE" and len(brickD["connected"]) == 0:
+        if brickD["name"] != "DNE" and not brickD["connected"]:
             loc = key.split(",")
             for i in range(len(loc)):
                 loc[i] = int(loc[i])
@@ -128,6 +127,12 @@ def makeBricks(source, logo, dimensions, bricksD):
                             nextBrick3 = getNextBrick(bricksD, loc, 1, 7)
                             if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 15:
                                 brickTypes.append([2,8])
+                                nextBrick0 = getNextBrick(bricksD, loc, 0, 8)
+                                nextBrick1 = getNextBrick(bricksD, loc, 1, 8)
+                                nextBrick2 = getNextBrick(bricksD, loc, 0, 9)
+                                nextBrick3 = getNextBrick(bricksD, loc, 1, 9)
+                                if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 19:
+                                    brickTypes.append([2,10])
                 nextBrick0 = getNextBrick(bricksD, loc, 2, 0)
                 nextBrick1 = getNextBrick(bricksD, loc, 2, 1)
                 if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 5:
@@ -148,6 +153,12 @@ def makeBricks(source, logo, dimensions, bricksD):
                             nextBrick3 = getNextBrick(bricksD, loc, 7, 1)
                             if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 15:
                                 brickTypes.append([8,2])
+                                nextBrick0 = getNextBrick(bricksD, loc, 8, 0)
+                                nextBrick1 = getNextBrick(bricksD, loc, 8, 1)
+                                nextBrick2 = getNextBrick(bricksD, loc, 9, 0)
+                                nextBrick3 = getNextBrick(bricksD, loc, 9, 1)
+                                if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 19:
+                                    brickTypes.append([10,2])
 
             # # if it's only going to be a 1x1, skip merging for this brick
             # if len(brickTypes) == 0:
@@ -181,16 +192,12 @@ def makeBricks(source, logo, dimensions, bricksD):
                         botExposed = True
                     # skip the original brick
                     if x == 0 and y == 0:
+                        brickD["connected"] = True
                         continue
                     # get brick at x,y location
                     curBrick = bricksD[str(loc[0] + x) + "," + str(loc[1] + y) + "," + str(loc[2])]
                     # add brick to connected bricks
-                    l0 = list(brickD["connected"])
-                    l0.append(key)
-                    brickD["connected"] = l0
-                    l1 = list(curBrick["connected"])
-                    l1.append(key)
-                    curBrick["connected"] = l1
+                    curBrick["connected"] = True
                     # set name of deleted brick to 'DNE'
                     curBrick["name"] = "DNE"
 
@@ -211,9 +218,6 @@ def makeBricks(source, logo, dimensions, bricksD):
             m = Bricks().new_mesh(name=brickD["name"], height=dimensions["height"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
             brick = bpy.data.objects.new(brickD["name"], m)
             brick.location = Vector(brickD["co"])
-            bGroup.objects.link(brick)
-            scn.objects.link(brick)
-            brick.parent = source
 
             # Add edge split modifier
             if cm.smoothCylinders and cm.studVerts > 12:
@@ -231,5 +235,12 @@ def makeBricks(source, logo, dimensions, bricksD):
                 if percent > 100:
                     percent = 100
                 print("building... " + str(percent) + "%")
+
+    for key in bricksD:
+        if bricksD[key]["name"] != "DNE":
+            brick = bpy.data.objects[bricksD[key]["name"]]
+            bGroup.objects.link(brick)
+            scn.objects.link(brick)
+            brick.parent = parent
 
     stopWatch("Time Elapsed (merge)", time.time()-ct)
