@@ -178,7 +178,7 @@ class legoizerLegoize(bpy.types.Operator):
             # TODO: Speed this up, if possible
             if refLogo and cm.logoResolution < 1:
                 dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
-                dMod.ratio = cm.logoResolution
+                dMod.ratio = cm.logoResolution * 1.6
                 scn.objects.link(refLogo)
                 select(refLogo, active=refLogo)
                 bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
