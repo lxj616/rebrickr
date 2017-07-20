@@ -36,7 +36,6 @@ import bpy
 from bpy.props import *
 from .ui import *
 from .buttons import *
-from .classes.Brick import Brick
 props = bpy.props
 
 # store keymaps here to access after registration

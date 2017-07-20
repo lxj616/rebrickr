@@ -103,7 +103,6 @@ class legoizerLegoize(bpy.types.Operator):
     def execute(self, context):
         # get start time
         startTime = time.time()
-        curTime = startTime
 
         # set up variables
         scn = context.scene
@@ -122,6 +121,10 @@ class legoizerLegoize(bpy.types.Operator):
             source.location = (0,0,0)
             select(source, active=source)
             bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+        elif self.action == "UPDATE":
+            bpy.context.scene.objects.link(source)
+            scn.update()
+            bpy.context.scene.objects.unlink(source)
 
         if not groupExists(LEGOizer_source_gn):
             # link source to new 'source' group

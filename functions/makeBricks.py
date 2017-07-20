@@ -361,7 +361,6 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
             brickType = brickTypes[-1]
             # if testZ:
             #     brickType = brickType[::-1]
-            print(brickTypes)
 
             topExposed = False
             botExposed = False
@@ -412,7 +411,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
 
             # Remesh brick at original location
             if split or j == 0:
-                m = Bricks().new_mesh(name=brickD["name"], height=dimensions["height"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
+                m = Bricks().new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
                 brick = bpy.data.objects.new(brickD["name"], m)
                 brick.location = Vector(brickD["co"])
 
@@ -420,7 +419,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                 if cm.smoothCylinders and cm.studVerts > 12:
                     addEdgeSplitMod(brick)
             else:
-                bm = Bricks().new_mesh(name=brickD["name"], height=dimensions["height"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail, returnType="bmesh")
+                bm = Bricks().new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail, returnType="bmesh")
                 bmesh.ops.transform(bm, matrix=Matrix.Translation(brickD["co"]), verts=bm.verts)
                 tempMesh = bpy.data.meshes.new(brickD["name"])
                 bm.to_mesh(tempMesh)

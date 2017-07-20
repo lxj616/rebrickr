@@ -88,6 +88,18 @@ def disableRelationshipLines():
         if area.type == 'VIEW_3D':
             area.spaces[0].show_relationship_lines = False
 
+def drawBMesh(BMesh, name="drawnBMesh"):
+    """ create mesh and object from bmesh """
+    # note: neither are linked to the scene, yet, so they won't show in the 3d view
+    m = bpy.data.meshes.new(name + "_mesh")
+    obj = bpy.data.objects.new(name, m)
+
+    scn = bpy.context.scene  # grab a reference to the scene
+    scn.objects.link(obj)    # link new object to scene
+    scn.objects.active = obj # make new object active
+    obj.select = True        # make new object selected (does not deselect other objects)
+    BMesh.to_mesh(m)         # push bmesh data into m
+    return obj
 
 def confirmList(objList):
     """ if single object passed, convert to list """
@@ -125,16 +137,18 @@ def unhide(objList):
     for obj in objList:
         obj.hide = False
 
-def select(objList=[], active=None, deselect=False, exclusive=True):
+def select(objList=[], active=None, deselect=False, only=True):
     """ selects objs in list and deselects the rest """
     objList = confirmList(objList)
     try:
         if not deselect:
             # deselect all if selection is exclusive
-            if exclusive and len(objList) > 0:
+            if only and len(objList) > 0:
                 deselectAll()
             # select objects in list
+            print(objList)
             for obj in objList:
+                print("HERE TOO")
                 obj.select = True
         elif deselect:
             # deselect objects in list

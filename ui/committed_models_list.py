@@ -246,7 +246,7 @@ class Uilist_selectAllBricks(bpy.types.Operator):
         LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
         if groupExists(LEGOizer_bricks):
             objs = list(bpy.data.groups[LEGOizer_bricks].objects)
-
+            select(active=objs[0])
             if len(objs) > 0:
                 select(objs)
 

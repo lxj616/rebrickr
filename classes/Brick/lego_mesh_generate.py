@@ -121,13 +121,33 @@ def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
         vertListB.append(v)
     bme.faces.new(vertListT[::-1])
     if len(vertListBDict["y+"]) == 0:
-        vertListBDict["y+"] = [vertListBDict["++"].pop(0)]
+        v0 = vertListBDict["++"][0]
+        v1 = vertListBDict["-+"][0]
+        if v0.co.y > v1.co.y:
+            vertListBDict["y+"] = [vertListBDict["++"].pop(0)]
+        else:
+            vertListBDict["y+"] = [vertListBDict["-+"].pop(-1)]
     if len(vertListBDict["x+"]) == 0:
-        vertListBDict["x+"] = [vertListBDict["+-"].pop(0)]
+        v0 = vertListBDict["+-"][0]
+        v1 = vertListBDict["++"][0]
+        if v0.co.x > v1.co.x:
+            vertListBDict["x+"] = [vertListBDict["+-"].pop(0)]
+        else:
+            vertListBDict["x+"] = [vertListBDict["++"].pop(-1)]
     if len(vertListBDict["y-"]) == 0:
-        vertListBDict["y-"] = [vertListBDict["--"].pop(0)]
+        v0 = vertListBDict["--"][0]
+        v1 = vertListBDict["+-"][0]
+        if v0.co.y > v1.co.y:
+            vertListBDict["y-"] = [vertListBDict["--"].pop(0)]
+        else:
+            vertListBDict["y-"] = [vertListBDict["+-"].pop(-1)]
     if len(vertListBDict["x-"]) == 0:
-        vertListBDict["x-"] = [vertListBDict["-+"].pop(0)]
+        v0 = vertListBDict["-+"][0]
+        v1 = vertListBDict["--"][0]
+        if v0.co.x > v1.co.x:
+            vertListBDict["x-"] = [vertListBDict["-+"].pop(0)]
+        else:
+            vertListBDict["x-"] = [vertListBDict["--"].pop(-1)]
 
 #    # create lower circle faces with square
 #    lastKey = "x-y"
@@ -588,7 +608,21 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                 for yNum in range(brickSize[1]):
                     vList1 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["++"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["x+"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["+-"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y-"]
                     vList2 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["-+"][::-1] + botVertsDofDs[str(xNum) + "," + str(yNum)]["x-"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["--"][::-1] + botVertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
-                    for i in range(1, len(vList1)):
+                    if len(vList1) > len(vList2):
+                        v1 = vList1[-1]
+                        v2 = vList1[-2]
+                        v3 = vList2[-1]
+                        bme.faces.new((v1, v2, v3))
+                        numIters = len(vList2)
+                    elif len(vList1) < len(vList2):
+                        v1 = vList1[-1]
+                        v2 = vList2[-2]
+                        v3 = vList2[-1]
+                        bme.faces.new((v1, v2, v3))
+                        numIters = len(vList1)
+                    else:
+                        numIters = len(vList1)
+                    for i in range(1, numIters):
                         v1 = vList1[i]
                         v2 = vList1[i-1]
                         v3 = vList2[i-1]
@@ -611,7 +645,21 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
             for yNum in range(1, brickSize[1]):
                 vList1 = botVertsDofDs[str(0) + "," + str(yNum-1)]["x-"] + botVertsDofDs[str(0) + "," + str(yNum-1)]["-+"] + botVertsDofDs[str(0) + "," + str(yNum-1)]["y+"]
                 vList2 = botVertsDofDs[str(0) + "," + str(yNum)]["x-"] + botVertsDofDs[str(0) + "," + str(yNum)]["--"][::-1] + botVertsDofDs[str(0) + "," + str(yNum)]["y-"]
-                for i in range(1, len(vList1)):
+                if len(vList1) > len(vList2):
+                    v1 = vList1[-1]
+                    v2 = vList1[-2]
+                    v3 = vList2[-1]
+                    bme.faces.new((v1, v2, v3))
+                    numIters = len(vList2)
+                elif len(vList1) < len(vList2):
+                    v1 = vList1[-1]
+                    v2 = vList2[-2]
+                    v3 = vList2[-1]
+                    bme.faces.new((v1, v2, v3))
+                    numIters = len(vList1)
+                else:
+                    numIters = len(vList1)
+                for i in range(1, numIters):
                     v1 = vList1[i]
                     v2 = vList1[i-1]
                     v3 = vList2[i-1]
@@ -620,14 +668,25 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
             for yNum in range(1, brickSize[1]):
                 vList1 = botVertsDofDs[str(xNum) + "," + str(yNum-1)]["x+"] + botVertsDofDs[str(xNum) + "," + str(yNum-1)]["++"][::-1] + botVertsDofDs[str(xNum) + "," + str(yNum-1)]["y+"]
                 vList2 = botVertsDofDs[str(xNum) + "," + str(yNum)]["x+"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["+-"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
-                for i in range(1, len(vList1)):
+                if len(vList1) > len(vList2):
+                    v1 = vList1[-1]
+                    v2 = vList2[-1]
+                    v3 = vList1[-2]
+                    bme.faces.new((v1, v2, v3))
+                    numIters = len(vList2)
+                elif len(vList1) < len(vList2):
+                    v1 = vList1[-1]
+                    v2 = vList2[-2]
+                    v3 = vList2[-1]
+                    bme.faces.new((v1, v2, v3))
+                else:
+                    numIters = len(vList1)
+                for i in range(1, numIters):
                     v1 = vList2[i]
                     v2 = vList2[i-1]
                     v3 = vList1[i-1]
                     v4 = vList1[i]
                     bme.faces.new((v1, v2, v3, v4))
-            if detail == "High Detail":
-                print("yep")
 
 
     # bmesh.ops.transform(bme, matrix=Matrix.Translation(((dimensions["width"]/2)*(addedX),(dimensions["width"]/2)*(addedY),0)), verts=bme.verts)
@@ -740,13 +799,13 @@ def main():
     newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], numStudVerts=16, detail="Medium Detail"), "2x6 medium").location = (0,0,0)
     newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], numStudVerts=16, detail="High Detail"), "2x6 high").location = (.3,0,0)
     newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], numStudVerts=16, detail="Full Detail"), "2x6 full").location = (.6,0,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=16, detail="Flat"), "6x2 flat").location = (0,-.6,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=16, detail="Low Detail"), "6x2 low").location = (0,-.3,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=16, detail="Medium Detail"), "6x2 medium").location = (0,0,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=16, detail="High Detail"), "6x2 high").location = (0,.3,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=16, detail="Full Detail"), "6x2 full").location = (0,.6,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=15, detail="Flat"), "6x2 flat").location = (0,-.6,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=15, detail="Low Detail"), "6x2 low").location = (0,-.3,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=15, detail="Medium Detail"), "6x2 medium").location = (0,0,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=15, detail="High Detail"), "6x2 high").location = (0,.3,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=15, detail="Full Detail"), "6x2 full").location = (0,.6,0)
 
-    layerToOpen = 2
+    layerToOpen = 7
 
     layerList = []
     for i in range(20):
