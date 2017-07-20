@@ -132,7 +132,11 @@ class legoizerLegoize(bpy.types.Operator):
 
         # get cross section
         source_details = bounds(source)
-        dimensions = Bricks.get_dimensions(cm.brickHeight, cm.gap)
+        if cm.brickType == "Plates" or cm.brickType == "Bricks and Plates":
+            zScale = 0.333
+        elif cm.brickType == "Bricks":
+            zScale = 1
+        dimensions = Bricks.get_dimensions(cm.brickHeight, zScale, cm.gap)
 
         if not groupExists(LEGOizer_parent_gn):
             # create new empty 'parent' object and add to new group
@@ -262,6 +266,7 @@ class legoizerLegoize(bpy.types.Operator):
            cm.lastMaxBrickScale != cm.maxBrickScale or
            cm.lastSmoothCylinders != cm.smoothCylinders or
            cm.lastSplitModel != cm.splitModel or
+           cm.lastBrickType != cm.brickType or
            self.action == "CREATE"):
             # delete old bricks if present
             if groupExists(LEGOizer_bricks_gn):
@@ -291,6 +296,7 @@ class legoizerLegoize(bpy.types.Operator):
         cm.lastMaxBrickScale = cm.maxBrickScale
         cm.lastSmoothCylinders = cm.smoothCylinders
         cm.lastSplitModel = cm.splitModel
+        cm.lastBrickType = cm.brickType
 
         disableRelationshipLines()
 

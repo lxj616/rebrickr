@@ -112,6 +112,7 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, brickFreqMatrix, brickShell, source,
         if (not origInside and brickShell == "Inside Mesh") or (origInside and brickShell == "Outside Mesh") or brickShell == "Inside and Outside":
             brickFreqMatrix[x1][y1][z1] = 2
 
+# TODO: Make this more efficient
 def getBrickMatrix(source, coordMatrix, brickShell, axes="xyz"):
     ct = time.time()
     brickFreqMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
@@ -228,9 +229,6 @@ def makeBricksDict(source, source_details, dimensions, R, preHollow=False):
     else:
         calculationAxes = "XYZ"
 
-    stopWatch("1", time.time()-ct)
-    ct = time.time()
-
     brickFreqMatrix = getBrickMatrix(source, coordMatrix, cm.brickShell, axes=calculationAxes)
     # get coordinate list from intersections of edges with faces
     if not cm.preHollow:
@@ -238,21 +236,14 @@ def makeBricksDict(source, source_details, dimensions, R, preHollow=False):
     else:
         threshold = 1.01 - (cm.shellThickness / 100)
 
-    stopWatch("2", time.time()-ct)
-    ct = time.time()
-
     coList = getCOList(brickFreqMatrix, coordMatrix, threshold)
     # if no coords in coList, add a coord at center of source
     if len(coList) == 0:
         coList.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
 
-    stopWatch("3", time.time()-ct)
-    ct = time.time()
-
     # make bricks at determined locations
     bricks = []
     i = 0
-    # TODO: Improve efficiency of the following nested for loop
     brickDict = {}
     denom = len(coList)/20
     for x in range(len(coList)):
@@ -283,12 +274,6 @@ def makeBricksDict(source, source_details, dimensions, R, preHollow=False):
                         "val":brickFreqMatrix[x][y][z],
                         "co":(co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
                         "connected":False}
-                else:
-                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {
-                        "name":"DNE",
-                        "val":brickFreqMatrix[x][y][z],
-                        "co":co,
-                        "connected":False}
         # print status to terminal
         if x % denom < 1:
             percent = x*100//len(coList)+5
@@ -296,7 +281,7 @@ def makeBricksDict(source, source_details, dimensions, R, preHollow=False):
                 percent = 100
             print("generating blueprint... " + str(percent) + "%")
 
-    stopWatch("Time Elapsed (makeBricksDict)", time.time()-ct)
+    stopWatch("Time Elapsed (generating blueprint)", time.time()-ct)
 
     # return list of created Brick objects
     return brickDict

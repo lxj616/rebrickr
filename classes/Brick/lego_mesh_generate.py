@@ -146,13 +146,17 @@ def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
 def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", logo=None, stud=True):
     # create new bmesh object
     bme = bmesh.new()
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
 
     # set scale and thickness variables
     dX = dimensions["width"]
     dY = dimensions["width"]
     dZ = dimensions["height"]
+    if cm.brickType != "Bricks":
+        dZ = dZ*brickSize[2]
     thickZ = dimensions["thickness"]
-    if detail == "Full Detail" and not (brickSize[0] == 1 or brickSize[1] == 1):
+    if detail == "Full Detail" and not (brickSize[0] == 1 or brickSize[1] == 1) and brickSize[2] != 1:
         thickXY = dimensions["thickness"] - dimensions["tick_depth"]
     else:
         thickXY = dimensions["thickness"]
@@ -214,7 +218,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
         ppi = v11
         npi = v12
         # make tick marks inside 2 by x bricks
-        if detail == "Full Detail" and ((brickSize[0] == 2 and brickSize[1] > 1) or (brickSize[1] == 2 and brickSize[0] > 1)):
+        if detail == "Full Detail" and ((brickSize[0] == 2 and brickSize[1] > 1) or (brickSize[1] == 2 and brickSize[0] > 1)) and brickSize[2] != 1:
             for xNum in range(brickSize[0]):
                 for yNum in range(brickSize[1]):
                     if xNum == 0:
@@ -675,10 +679,10 @@ def deleteExisting():
         bpy.ops.object.delete(use_global=False)
     bpy.context.scene.layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True]
 
-def get_dimensions(height=1, gap_percentage=0.01):
+def get_dimensions(height=1, zScale=1, gap_percentage=0.01):
     scale = height/9.6
     brick_dimensions = {}
-    brick_dimensions["height"] = scale*9.6
+    brick_dimensions["height"] = scale*9.6*zScale
     brick_dimensions["width"] = scale*8
     brick_dimensions["gap"] = scale*9.6*gap_percentage
     brick_dimensions["stud_height"] = scale*1.8
@@ -692,7 +696,7 @@ def get_dimensions(height=1, gap_percentage=0.01):
     brick_dimensions["support_width"] = scale*0.8
     brick_dimensions["tick_width"] = scale*0.6
     brick_dimensions["tick_depth"] = scale*0.3
-    brick_dimensions["support_height"] = scale*6.25
+    brick_dimensions["support_height"] = brick_dimensions["height"]*0.65
 
     brick_dimensions["logo_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"])
     return brick_dimensions
@@ -706,41 +710,41 @@ def main():
     deleteExisting()
 
     # create objects
-    dimensions = get_dimensions(.1, .01)
-    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="Flat"), "1x1 flat").location = (-.2,0,0)
-    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="Low Detail"), "1x1 low").location = (0,0,0)
-    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="Medium Detail"), "1x1 medium").location = (.2,0,0)
-    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1], numStudVerts=16, detail="High Detail"), "1x1 high").location = (.4,0,0)
-    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="Flat"), "1x2 flat").location = (-.4,0,0)
-    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="Low Detail"), "1x2 low").location = (-.2,0,0)
-    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="Medium Detail"), "1x2 meidium").location = (0,0,0)
-    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="High Detail"), "1x2 high").location = (.2,0,0)
-    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2], numStudVerts=16, detail="Full Detail"), "1x2 full").location = (.4,0,0)
-    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1], numStudVerts=16, detail="Flat"), "3x1 flat").location = (0,-.4,0)
-    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1], numStudVerts=16, detail="Low Detail"), "3x1 low").location = (0,-.2,0)
-    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1], numStudVerts=16, detail="Medium Detail"), "3x1 meidium").location = (0,0,0)
-    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1], numStudVerts=16, detail="High Detail"), "3x1 high").location = (0,.2,0)
-    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1], numStudVerts=16, detail="Full Detail"), "3x1 full").location = (0,.4,0)
-    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8], numStudVerts=16, detail="Flat"), "1x8 flat").location = (-.4,0,0)
-    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8], numStudVerts=16, detail="Low Detail"), "1x8 low").location = (-.2,0,0)
-    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8], numStudVerts=16, detail="Medium Detail"), "1x8 meidium").location = (0,0,0)
-    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8], numStudVerts=16, detail="High Detail"), "1x8 high").location = (.2,0,0)
-    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8], numStudVerts=16, detail="Full Detail"), "1x8 full").location = (.4,0,0)
-    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="Flat"), "2x2 flat").location = (-.6,0,0)
-    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="Low Detail"), "2x2 low").location = (-.3,0,0)
-    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="Medium Detail"), "2x2 medium").location = (0,0,0)
-    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="High Detail"), "2x2 high").location = (.3,0,0)
-    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2], numStudVerts=16, detail="Full Detail"), "2x2 full").location = (.6,0,0)
-    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="Flat"), "2x6 flat").location = (-.6,0,0)
-    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="Low Detail"), "2x6 low").location = (-.3,0,0)
-    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="Medium Detail"), "2x6 medium").location = (0,0,0)
-    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="High Detail"), "2x6 high").location = (.3,0,0)
-    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6], numStudVerts=16, detail="Full Detail"), "2x6 full").location = (.6,0,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2], numStudVerts=16, detail="Flat"), "6x2 flat").location = (0,-.6,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2], numStudVerts=16, detail="Low Detail"), "6x2 low").location = (0,-.3,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2], numStudVerts=16, detail="Medium Detail"), "6x2 medium").location = (0,0,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2], numStudVerts=16, detail="High Detail"), "6x2 high").location = (0,.3,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2], numStudVerts=16, detail="Full Detail"), "6x2 full").location = (0,.6,0)
+    dimensions = get_dimensions(.1, 1, .01)
+    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1,3], numStudVerts=16, detail="Flat"), "1x1 flat").location = (-.2,0,0)
+    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1,3], numStudVerts=16, detail="Low Detail"), "1x1 low").location = (0,0,0)
+    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1,3], numStudVerts=16, detail="Medium Detail"), "1x1 medium").location = (.2,0,0)
+    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1,3], numStudVerts=16, detail="High Detail"), "1x1 high").location = (.4,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], numStudVerts=16, detail="Flat"), "1x2 flat").location = (-.4,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], numStudVerts=16, detail="Low Detail"), "1x2 low").location = (-.2,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], numStudVerts=16, detail="Medium Detail"), "1x2 meidium").location = (0,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], numStudVerts=16, detail="High Detail"), "1x2 high").location = (.2,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], numStudVerts=16, detail="Full Detail"), "1x2 full").location = (.4,0,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], numStudVerts=16, detail="Flat"), "3x1 flat").location = (0,-.4,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], numStudVerts=16, detail="Low Detail"), "3x1 low").location = (0,-.2,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], numStudVerts=16, detail="Medium Detail"), "3x1 meidium").location = (0,0,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], numStudVerts=16, detail="High Detail"), "3x1 high").location = (0,.2,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], numStudVerts=16, detail="Full Detail"), "3x1 full").location = (0,.4,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], numStudVerts=16, detail="Flat"), "1x8 flat").location = (-.4,0,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], numStudVerts=16, detail="Low Detail"), "1x8 low").location = (-.2,0,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], numStudVerts=16, detail="Medium Detail"), "1x8 meidium").location = (0,0,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], numStudVerts=16, detail="High Detail"), "1x8 high").location = (.2,0,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], numStudVerts=16, detail="Full Detail"), "1x8 full").location = (.4,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], numStudVerts=16, detail="Flat"), "2x2 flat").location = (-.6,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], numStudVerts=16, detail="Low Detail"), "2x2 low").location = (-.3,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], numStudVerts=16, detail="Medium Detail"), "2x2 medium").location = (0,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], numStudVerts=16, detail="High Detail"), "2x2 high").location = (.3,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], numStudVerts=16, detail="Full Detail"), "2x2 full").location = (.6,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], numStudVerts=16, detail="Flat"), "2x6 flat").location = (-.6,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], numStudVerts=16, detail="Low Detail"), "2x6 low").location = (-.3,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], numStudVerts=16, detail="Medium Detail"), "2x6 medium").location = (0,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], numStudVerts=16, detail="High Detail"), "2x6 high").location = (.3,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], numStudVerts=16, detail="Full Detail"), "2x6 full").location = (.6,0,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=16, detail="Flat"), "6x2 flat").location = (0,-.6,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=16, detail="Low Detail"), "6x2 low").location = (0,-.3,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=16, detail="Medium Detail"), "6x2 medium").location = (0,0,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=16, detail="High Detail"), "6x2 high").location = (0,.3,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], numStudVerts=16, detail="Full Detail"), "6x2 full").location = (0,.6,0)
 
     layerToOpen = 2
 

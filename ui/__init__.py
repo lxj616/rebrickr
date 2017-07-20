@@ -186,6 +186,8 @@ class ModelSettingsPanel(Panel):
         row = col.row(align=True)
         row.label("Brick Settings:")
         row = col.row(align=True)
+        row.prop(cm, "brickType", text="")
+        row = col.row(align=True)
         row.prop(cm, "maxBrickScale")
         row = col.row(align=True)
         row.prop(cm, "mergeSeed")

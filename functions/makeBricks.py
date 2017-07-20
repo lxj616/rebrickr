@@ -35,9 +35,9 @@ def brickAvail(brick):
             return True
     return False
 
-def getNextBrick(bricks, loc, x, y):
+def getNextBrick(bricks, loc, x, y, z=0):
     try:
-        return bricks[str(loc[0] + x) + "," + str(loc[1] + y) + "," + str(loc[2])]
+        return bricks[str(loc[0] + x) + "," + str(loc[1] + y) + "," + str(loc[2] + z)]
     except:
         return None
 
@@ -63,6 +63,16 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
     cm = scn.cmlist[scn.cmlist_index]
     n = cm.source_name
     ct = time.time()
+    z1,z2,z3,z4,z5,z6,z7,z8,z9,z10,z11,z12,z13,z14,z15,z16,z17,z18,z19,z20,z21,z22,z23 = (False,)*23
+    if cm.brickType == "Bricks":
+        testZ = False
+        bt2 = 3
+    elif cm.brickType == "Plates":
+        testZ = False
+        bt2 = 1
+    else:
+        testZ = True
+        bt2 = 1
 
     # get brick dicts in seeded order
     keys = list(bricksD.keys())
@@ -88,103 +98,259 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                 loc[i] = int(loc[i])
 
             # Set up brick types
-            brickTypes = [[1,1]]
+            brickTypes = [[1,1,bt2]]
+            # if testZ:
+            #     nextBrick0 = getNextBrick(bricksD, loc, 0, 0, 1)
+            #     nextBrick1 = getNextBrick(bricksD, loc, 0, 0, 2)
+            #     if brickAvail(nextBrick0) and brickAvail(nextBrick1):
+            #         brickTypes.append([1,1,3])
+            #         z1 = True
             nextBrick = getNextBrick(bricksD, loc, 1, 0)
             if brickAvail(nextBrick) and cm.maxBrickScale > 1:
-                brickTypes.append([2,1])
+                brickTypes.append([2,1,bt2])
+                # if testZ and z1:
+                #     nextBrick0 = getNextBrick(bricksD, loc, 1, 0, 1)
+                #     nextBrick1 = getNextBrick(bricksD, loc, 1, 0, 2)
+                #     if brickAvail(nextBrick0) and brickAvail(nextBrick1):
+                #         brickTypes.append([2,1,3])
+                #         z2 = True
                 nextBrick = getNextBrick(bricksD, loc, 2, 0)
                 if brickAvail(nextBrick) and cm.maxBrickScale > 2:
-                    brickTypes.append([3,1])
+                    brickTypes.append([3,1,bt2])
+                    # if testZ and z2:
+                    #     nextBrick0 = getNextBrick(bricksD, loc, 2, 0, 1)
+                    #     nextBrick1 = getNextBrick(bricksD, loc, 2, 0, 2)
+                    #     if brickAvail(nextBrick0) and brickAvail(nextBrick1):
+                    #         brickTypes.append([3,1,3])
+                    #         z3 = True
                     nextBrick = getNextBrick(bricksD, loc, 3, 0)
                     if brickAvail(nextBrick) and cm.maxBrickScale > 3:
-                        brickTypes.append([4,1])
+                        brickTypes.append([4,1,bt2])
+                        # if testZ and z3:
+                        #     nextBrick0 = getNextBrick(bricksD, loc, 3, 0, 1)
+                        #     nextBrick1 = getNextBrick(bricksD, loc, 3, 0, 2)
+                        #     if brickAvail(nextBrick0) and brickAvail(nextBrick1):
+                        #         brickTypes.append([4,1,3])
+                        #         z4 = True
                         nextBrick0 = getNextBrick(bricksD, loc, 4, 0)
                         nextBrick1 = getNextBrick(bricksD, loc, 5, 0)
                         if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 5:
-                            brickTypes.append([6,1])
+                            brickTypes.append([6,1,bt2])
+                            # if testZ and z4:
+                            #     nextBrick0 = getNextBrick(bricksD, loc, 4, 0, 1)
+                            #     nextBrick1 = getNextBrick(bricksD, loc, 4, 0, 2)
+                            #     nextBrick2 = getNextBrick(bricksD, loc, 5, 0, 1)
+                            #     nextBrick3 = getNextBrick(bricksD, loc, 5, 0, 2)
+                            #     if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3):
+                            #         brickTypes.append([6,1,3])
+                            #         z5 = True
                             nextBrick0 = getNextBrick(bricksD, loc, 6, 0)
                             nextBrick1 = getNextBrick(bricksD, loc, 7, 0)
                             if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 7:
-                                brickTypes.append([8,1])
+                                brickTypes.append([8,1,bt2])
+                                # if testZ and z5:
+                                #     nextBrick0 = getNextBrick(bricksD, loc, 6, 0, 1)
+                                #     nextBrick1 = getNextBrick(bricksD, loc, 6, 0, 2)
+                                #     nextBrick2 = getNextBrick(bricksD, loc, 7, 0, 1)
+                                #     nextBrick3 = getNextBrick(bricksD, loc, 7, 0, 2)
+                                #     if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3):
+                                #         brickTypes.append([6,1,3])
+                                #         z6 = True
             nextBrick = getNextBrick(bricksD, loc, 0, 1)
             if brickAvail(nextBrick) and cm.maxBrickScale > 1:
-                brickTypes.append([1,2])
+                brickTypes.append([1,2,bt2])
+                # if testZ and z1:
+                #     nextBrick0 = getNextBrick(bricksD, loc, 0, 1, 1)
+                #     nextBrick1 = getNextBrick(bricksD, loc, 0, 1, 2)
+                #     if brickAvail(nextBrick0) and brickAvail(nextBrick1):
+                #         brickTypes.append([1,2,3])
+                #         z7 = True
                 nextBrick = getNextBrick(bricksD, loc, 0, 2)
                 if brickAvail(nextBrick) and cm.maxBrickScale > 2:
-                    brickTypes.append([1,3])
+                    brickTypes.append([1,3,bt2])
+                    # if testZ and z7:
+                    #     nextBrick0 = getNextBrick(bricksD, loc, 0, 2, 1)
+                    #     nextBrick1 = getNextBrick(bricksD, loc, 0, 2, 2)
+                    #     if brickAvail(nextBrick0) and brickAvail(nextBrick1):
+                    #         brickTypes.append([1,3,3])
+                    #         z8 = True
                     nextBrick = getNextBrick(bricksD, loc, 0, 3)
                     if brickAvail(nextBrick) and cm.maxBrickScale > 3:
-                        brickTypes.append([1,4])
+                        brickTypes.append([1,4,bt2])
+                        # if testZ and z8:
+                        #     nextBrick0 = getNextBrick(bricksD, loc, 0, 3, 1)
+                        #     nextBrick1 = getNextBrick(bricksD, loc, 0, 3, 2)
+                        #     if brickAvail(nextBrick0) and brickAvail(nextBrick1):
+                        #         brickTypes.append([1,4,3])
+                        #         z9 = True
                         nextBrick0 = getNextBrick(bricksD, loc, 0, 4)
                         nextBrick1 = getNextBrick(bricksD, loc, 0, 5)
                         if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 5:
-                            brickTypes.append([1,6])
+                            brickTypes.append([1,6,bt2])
+                            # if testZ and z10:
+                            #     nextBrick0 = getNextBrick(bricksD, loc, 0, 4, 1)
+                            #     nextBrick1 = getNextBrick(bricksD, loc, 0, 4, 2)
+                            #     nextBrick2 = getNextBrick(bricksD, loc, 0, 5, 1)
+                            #     nextBrick3 = getNextBrick(bricksD, loc, 0, 5, 2)
+                            #     if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3):
+                            #         brickTypes.append([1,6,3])
+                            #         z11 = True
                             nextBrick0 = getNextBrick(bricksD, loc, 0, 6)
                             nextBrick1 = getNextBrick(bricksD, loc, 0, 7)
                             if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 7:
-                                brickTypes.append([1,8])
+                                brickTypes.append([1,8,bt2])
+                                # if testZ and z11:
+                                #     nextBrick0 = getNextBrick(bricksD, loc, 0, 6, 1)
+                                #     nextBrick1 = getNextBrick(bricksD, loc, 0, 6, 2)
+                                #     nextBrick2 = getNextBrick(bricksD, loc, 0, 7, 1)
+                                #     nextBrick3 = getNextBrick(bricksD, loc, 0, 7, 2)
+                                #     if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3):
+                                #         brickTypes.append([1,8,3])
+                                #         z12 = True
             nextBrick0 = getNextBrick(bricksD, loc, 0, 1)
             nextBrick1 = getNextBrick(bricksD, loc, 1, 0)
             nextBrick2 = getNextBrick(bricksD, loc, 1, 1)
             if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and cm.maxBrickScale > 3:
-                brickTypes.append([2,2])
+                brickTypes.append([2,2,bt2])
+                # if testZ and z1 and z2 and z7:
+                #     nextBrick0 = getNextBrick(bricksD, loc, 1, 1, 1)
+                #     nextBrick1 = getNextBrick(bricksD, loc, 1, 1, 2)
+                #     if brickAvail(nextBrick0) and brickAvail(nextBrick1):
+                #         brickTypes.append([2,2,3])
+                #         z13 = True
                 nextBrick0 = getNextBrick(bricksD, loc, 0, 2)
                 nextBrick1 = getNextBrick(bricksD, loc, 1, 2)
                 if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 5:
-                    brickTypes.append([2,3])
+                    brickTypes.append([2,3,bt2])
+                    # if testZ and z13 and z8:
+                    #     nextBrick0 = getNextBrick(bricksD, loc, 1, 2, 1)
+                    #     nextBrick1 = getNextBrick(bricksD, loc, 1, 2, 2)
+                    #     if brickAvail(nextBrick0) and brickAvail(nextBrick1):
+                    #         brickTypes.append([2,3,3])
+                    #         z14 = True
                     nextBrick0 = getNextBrick(bricksD, loc, 0, 3)
                     nextBrick1 = getNextBrick(bricksD, loc, 1, 3)
                     if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 7:
-                        brickTypes.append([2,4])
+                        brickTypes.append([2,4,bt2])
+                        # if testZ and z14 and z9:
+                        #     nextBrick0 = getNextBrick(bricksD, loc, 1, 3, 1)
+                        #     nextBrick1 = getNextBrick(bricksD, loc, 1, 3, 2)
+                        #     if brickAvail(nextBrick0) and brickAvail(nextBrick1):
+                        #         brickTypes.append([2,4,3])
+                        #         z15 = True
                         nextBrick0 = getNextBrick(bricksD, loc, 0, 4)
                         nextBrick1 = getNextBrick(bricksD, loc, 1, 4)
                         nextBrick2 = getNextBrick(bricksD, loc, 0, 5)
                         nextBrick3 = getNextBrick(bricksD, loc, 1, 5)
                         if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 11:
-                            brickTypes.append([2,6])
+                            brickTypes.append([2,6,bt2])
+                            # if testZ and z15 and z10:
+                            #     nextBrick0 = getNextBrick(bricksD, loc, 1, 4, 1)
+                            #     nextBrick1 = getNextBrick(bricksD, loc, 1, 4, 2)
+                            #     nextBrick2 = getNextBrick(bricksD, loc, 1, 5, 1)
+                            #     nextBrick3 = getNextBrick(bricksD, loc, 1, 5, 2)
+                            #     if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3):
+                            #         brickTypes.append([2,6,3])
+                            #         z16 = True
                             nextBrick0 = getNextBrick(bricksD, loc, 0, 6)
                             nextBrick1 = getNextBrick(bricksD, loc, 1, 6)
                             nextBrick2 = getNextBrick(bricksD, loc, 0, 7)
                             nextBrick3 = getNextBrick(bricksD, loc, 1, 7)
                             if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 15:
-                                brickTypes.append([2,8])
+                                brickTypes.append([2,8,bt2])
+                                # if testZ and z16 and z11:
+                                #     nextBrick0 = getNextBrick(bricksD, loc, 1, 6, 1)
+                                #     nextBrick1 = getNextBrick(bricksD, loc, 1, 6, 2)
+                                #     nextBrick2 = getNextBrick(bricksD, loc, 1, 7, 1)
+                                #     nextBrick3 = getNextBrick(bricksD, loc, 1, 7, 2)
+                                #     if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3):
+                                #         brickTypes.append([2,8,3])
+                                #         z17 = True
                                 nextBrick0 = getNextBrick(bricksD, loc, 0, 8)
                                 nextBrick1 = getNextBrick(bricksD, loc, 1, 8)
                                 nextBrick2 = getNextBrick(bricksD, loc, 0, 9)
                                 nextBrick3 = getNextBrick(bricksD, loc, 1, 9)
                                 if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 19:
-                                    brickTypes.append([2,10])
+                                    brickTypes.append([2,10,bt2])
+                                    # if testZ and z17 and z12:
+                                    #     nextBrick0 = getNextBrick(bricksD, loc, 1, 8, 1)
+                                    #     nextBrick1 = getNextBrick(bricksD, loc, 1, 8, 2)
+                                    #     nextBrick2 = getNextBrick(bricksD, loc, 1, 9, 1)
+                                    #     nextBrick3 = getNextBrick(bricksD, loc, 1, 9, 2)
+                                    #     if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3):
+                                    #         brickTypes.append([2,10,3])
+                                    #         z18 = True
                 nextBrick0 = getNextBrick(bricksD, loc, 2, 0)
                 nextBrick1 = getNextBrick(bricksD, loc, 2, 1)
                 if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 5:
-                    brickTypes.append([3,2])
+                    brickTypes.append([3,2,bt2])
+                    # if testZ and z13 and z3:
+                    #     nextBrick0 = getNextBrick(bricksD, loc, 2, 1, 1)
+                    #     nextBrick1 = getNextBrick(bricksD, loc, 2, 1, 2)
+                    #     if brickAvail(nextBrick0) and brickAvail(nextBrick1):
+                    #         brickTypes.append([3,2,3])
+                    #         z19 = True
                     nextBrick0 = getNextBrick(bricksD, loc, 3, 0)
                     nextBrick1 = getNextBrick(bricksD, loc, 3, 1)
                     if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 7:
-                        brickTypes.append([4,2])
+                        brickTypes.append([4,2,bt2])
+                        # if testZ and z19 and z4:
+                        #     nextBrick0 = getNextBrick(bricksD, loc, 3, 1, 1)
+                        #     nextBrick1 = getNextBrick(bricksD, loc, 3, 1, 2)
+                        #     if brickAvail(nextBrick0) and brickAvail(nextBrick1):
+                        #         brickTypes.append([4,2,3])
+                        #         z20 = True
                         nextBrick0 = getNextBrick(bricksD, loc, 4, 0)
                         nextBrick1 = getNextBrick(bricksD, loc, 4, 1)
                         nextBrick2 = getNextBrick(bricksD, loc, 5, 0)
                         nextBrick3 = getNextBrick(bricksD, loc, 5, 1)
                         if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 11:
-                            brickTypes.append([6,2])
+                            brickTypes.append([6,2,bt2])
+                            # if testZ and z20 and z4:
+                            #     nextBrick0 = getNextBrick(bricksD, loc, 4, 1, 1)
+                            #     nextBrick1 = getNextBrick(bricksD, loc, 4, 1, 2)
+                            #     nextBrick2 = getNextBrick(bricksD, loc, 5, 1, 1)
+                            #     nextBrick3 = getNextBrick(bricksD, loc, 5, 1, 2)
+                            #     if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3):
+                            #         brickTypes.append([6,2,3])
+                            #         z21 = True
                             nextBrick0 = getNextBrick(bricksD, loc, 6, 0)
                             nextBrick1 = getNextBrick(bricksD, loc, 6, 1)
                             nextBrick2 = getNextBrick(bricksD, loc, 7, 0)
                             nextBrick3 = getNextBrick(bricksD, loc, 7, 1)
                             if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 15:
-                                brickTypes.append([8,2])
+                                brickTypes.append([8,2,bt2])
+                                # if testZ and z21 and z5:
+                                #     nextBrick0 = getNextBrick(bricksD, loc, 6, 1, 1)
+                                #     nextBrick1 = getNextBrick(bricksD, loc, 6, 1, 2)
+                                #     nextBrick2 = getNextBrick(bricksD, loc, 7, 1, 1)
+                                #     nextBrick3 = getNextBrick(bricksD, loc, 7, 1, 2)
+                                #     if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3):
+                                #         brickTypes.append([8,2,3])
+                                #         z22 = True
                                 nextBrick0 = getNextBrick(bricksD, loc, 8, 0)
                                 nextBrick1 = getNextBrick(bricksD, loc, 8, 1)
                                 nextBrick2 = getNextBrick(bricksD, loc, 9, 0)
                                 nextBrick3 = getNextBrick(bricksD, loc, 9, 1)
                                 if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 19:
-                                    brickTypes.append([10,2])
+                                    brickTypes.append([10,2,bt2])
+                                    # if testZ and z22 and z6:
+                                    #     nextBrick0 = getNextBrick(bricksD, loc, 8, 1, 1)
+                                    #     nextBrick1 = getNextBrick(bricksD, loc, 8, 1, 2)
+                                    #     nextBrick2 = getNextBrick(bricksD, loc, 9, 1, 1)
+                                    #     nextBrick3 = getNextBrick(bricksD, loc, 9, 1, 2)
+                                    #     if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3):
+                                    #         brickTypes.append([10,2,3])
+                                    #         z23 = True
 
             # # if it's only going to be a 1x1, skip merging for this brick
             # if len(brickTypes) == 0:
             #     continue
             # sort brick types from smallest to largest
+            # if testZ:
+            #     for idx in range(len(brickTypes)):
+            #         brickTypes[idx] = brickTypes[idx][::-1]
+
             brickTypes.sort()
 
             # ranInt = random.randint(1,len(brickTypes)*cm.maxBrickScale)
@@ -193,21 +359,30 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
             # else:
             #     brickType = brickTypes[ranInt-1]
             brickType = brickTypes[-1]
+            # if testZ:
+            #     brickType = brickType[::-1]
+            print(brickTypes)
 
             topExposed = False
             botExposed = False
 
             # Iterate through merged bricks
+            idxZa = str(loc[2] + 1)
+            idxZb = str(loc[2] - 1)
+            idxZc = str(loc[2])
             for x in range(brickType[0]):
                 for y in range(brickType[1]):
+                    idxX = str(loc[0] + x)
+                    idxY = str(loc[1] + y)
+
                     # check if brick top or bottom is exposed
                     try:
-                        if bricksD[str(loc[0] + x) + "," + str(loc[1] + y) + "," + str(loc[2] + 1)]["val"] == 0:
+                        if bricksD["%(idxX)s,%(idxY)s,%(idxZa)s" % locals()]["val"] == 0:
                             topExposed = True
                     except:
                         topExposed = True
                     try:
-                        if bricksD[str(loc[0] + x) + "," + str(loc[1] + y) + "," + str(loc[2] - 1)]["val"] == 0:
+                        if bricksD["%(idxX)s,%(idxY)s,%(idxZb)s" % locals()]["val"] == 0:
                             botExposed = True
                     except:
                         botExposed = True
@@ -216,7 +391,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                         brickD["connected"] = True
                         continue
                     # get brick at x,y location
-                    curBrick = bricksD[str(loc[0] + x) + "," + str(loc[1] + y) + "," + str(loc[2])]
+                    curBrick = bricksD["%(idxX)s,%(idxY)s,%(idxZc)s" % locals()]
                     # add brick to connected bricks
                     curBrick["connected"] = True
                     # set name of deleted brick to 'DNE'
@@ -279,4 +454,4 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                 scn.objects.link(brick)
                 brick.parent = parent
 
-    stopWatch("Time Elapsed (merge)", time.time()-ct)
+    stopWatch("Time Elapsed (building)", time.time()-ct)

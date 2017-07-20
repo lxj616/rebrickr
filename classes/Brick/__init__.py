@@ -45,15 +45,15 @@ class Bricks:
         return brickObjs
 
     @staticmethod
-    def new_mesh(name='new_brick', height=1, gap_percentage=0.01, type=[1,1], logo=False, undersideDetail="Flat", stud=True, returnType="mesh", meshToOverwrite=None):
+    def new_mesh(name='new_brick', height=1, gap_percentage=0.01, type=[1,1,3], logo=False, undersideDetail="Flat", stud=True, returnType="mesh", meshToOverwrite=None):
         m = Brick().new_brick(name=name, height=height, gap_percentage=gap_percentage, type=type, logo=logo, undersideDetail=undersideDetail, stud=stud, returnType=returnType, brickMesh=meshToOverwrite)
         return m
 
     @staticmethod
-    def get_dimensions(height=1, gap_percentage=0.01):
+    def get_dimensions(height=1, zScale=1, gap_percentage=0.01):
         scale = height/9.6
         brick_dimensions = {}
-        brick_dimensions["height"] = scale*9.6
+        brick_dimensions["height"] = scale*9.6*zScale
         brick_dimensions["width"] = scale*8
         brick_dimensions["gap"] = scale*9.6*gap_percentage
         brick_dimensions["stud_height"] = scale*1.8
@@ -67,7 +67,7 @@ class Bricks:
         brick_dimensions["support_width"] = scale*0.8
         brick_dimensions["tick_width"] = scale*0.6
         brick_dimensions["tick_depth"] = scale*0.3
-        brick_dimensions["support_height"] = scale*6.25
+        brick_dimensions["support_height"] = brick_dimensions["height"]*0.65
 
         brick_dimensions["logo_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"])
         return brick_dimensions
@@ -126,16 +126,20 @@ class Brick:
     def get_dimensions(self):
         return self.brick_dimensions
 
-    def set_dimensions(self, height=1, gap_percentage=0.01):
-        self.brick_dimensions = Bricks.get_dimensions(height, gap_percentage)
+    def set_dimensions(self, height=1, zScale=1, gap_percentage=0.01):
+        self.brick_dimensions = Bricks.get_dimensions(height, zScale, gap_percentage)
         return self.brick_dimensions
 
-    def new_brick(self, name="brick", height=1, gap_percentage=0.01, type=[1,1], logo=False, undersideDetail="Flat", stud=True, returnType="mesh", brickMesh=None):
+    def new_brick(self, name="brick", height=1, gap_percentage=0.01, type=[1,1,3], logo=False, undersideDetail="Flat", stud=True, returnType="mesh", brickMesh=None):
         """ create unlinked LEGO Brick at origin """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         settings = Brick.get_settings(cm)
-        self.set_dimensions(height, gap_percentage)
+        if cm.brickType == "Plates" or cm.brickType == "Bricks and Plates":
+            zScale = 0.333
+        elif cm.brickType == "Bricks":
+            zScale = 1
+        self.set_dimensions(height/zScale, zScale, gap_percentage)
 
         bm = bmesh.new()
 

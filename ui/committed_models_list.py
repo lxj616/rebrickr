@@ -332,6 +332,14 @@ class CreatedModels(bpy.types.PropertyGroup):
         default="",
         update=setNameIfEmpty)
 
+    brickType = EnumProperty(
+        name="Brick Type",
+        description="Choose what type of bricks to use to build the model",
+        items=[("Plates", "Plates", "Use plates to build the model"),
+              ("Bricks", "Bricks", "Use bricks to build the model")],
+              #("Bricks and Plates", "Bricks and Plates", "Use bricks and plates to build the model")],
+        default="Bricks")
+
     preHollow = BoolProperty(
         name="Pre Hollow",
         description="Hollow out LEGO model with user defined shell thickness",
@@ -444,6 +452,7 @@ class CreatedModels(bpy.types.PropertyGroup):
     lastSmoothCylinders = BoolProperty(default=True)
     lastBrickShell = StringProperty(default="Inside Mesh")
     lastSplitModel = BoolProperty(default=False)
+    lastBrickType = StringProperty(default="Bricks")
 
     # Bevel Settings
     lastBevelWidth = FloatProperty()
