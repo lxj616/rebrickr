@@ -58,13 +58,13 @@ class Bricks:
         brickBM = makeBrick(dimensions=dimensions, brickSize=type, numStudVerts=cm.studVerts, detail=undersideDetail, stud=stud)
         if logo and stud:
             # get logo rotation angle based on type of brick
-            if type == [1,1]:
+            if type[0] == 1 and type[1] == 1:
                 zRot = random.randint(0,3) * 90
             elif type[0] == 2 and type[1] > 2:
                 zRot = random.randint(0,1) * 180 + 90
             elif type[1] == 2 and type[0] > 2:
                 zRot = random.randint(0,1) * 180
-            elif type == [2,2]:
+            elif type[0] == 2 and type[1] == 2:
                 zRot = random.randint(0,1) * 180
             elif type[0] == 1:
                 zRot = random.randint(0,1) * 180 + 90
@@ -72,6 +72,7 @@ class Bricks:
                 zRot = random.randint(0,1) * 180
             else:
                 print("shouldn't get here")
+                print(type)
             for x in range(type[0]):
                 for y in range(type[1]):
                     logoBM = bmesh.new()

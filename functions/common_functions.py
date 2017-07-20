@@ -148,7 +148,6 @@ def select(objList=[], active=None, deselect=False, only=True):
             # select objects in list
             print(objList)
             for obj in objList:
-                print("HERE TOO")
                 obj.select = True
         elif deselect:
             # deselect objects in list
