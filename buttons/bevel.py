@@ -42,6 +42,11 @@ def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limit
     dMod.segments = segments
     dMod.profile = profile
     dMod.limit_method = limitMethod
+    if vertexGroup:
+        try:
+            dMod.vertex_group = vertexGroup
+        except:
+            dMod.limit_method = "ANGLE"
     dMod.angle_limit = angleLimit
     dMod.offset_type = offsetType
 
@@ -90,7 +95,11 @@ class legoizerBevel(bpy.types.Operator):
                 segments = 1
             else:
                 segments = cm.bevelResolution
-            createBevelMod(obj=brick, width=cm.bevelWidth, segments=segments, limitMethod="ANGLE", angleLimit=1.55334)
+            if not cm.lastSplitModel:
+                vGroupName = "LEGOizer_%(n)s_bricks_combined_bevel" % locals()
+            else:
+                vGroupName = brick.name + "_bevel"
+            createBevelMod(obj=brick, width=cm.bevelWidth, segments=segments, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
 
     def execute(self, context):
         # get bricks to bevel

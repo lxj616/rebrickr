@@ -373,7 +373,7 @@ class CreatedModels(bpy.types.PropertyGroup):
         min=0.1, max=1,
         step=1,
         precision=2,
-        default=0.5)
+        default=0.2)
 
     hiddenUndersideDetail = EnumProperty(
         name="Hidden Underside Detailing",
@@ -398,7 +398,7 @@ class CreatedModels(bpy.types.PropertyGroup):
         name="Stud Verts",
         description="Number of vertices on LEGO stud",
         min=4, max=64,
-        default=16)
+        default=8)
 
     brickHeight = FloatProperty(
         name="Brick Height",

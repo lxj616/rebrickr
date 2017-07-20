@@ -17,7 +17,8 @@ Blender add-on for automated generation of LEGO Bricks from object (Blender vers
     * 'UP' and 'DOWN' arrows in UI don't move models, they just change the 'cmlist_index'
   * Future improvements:
     * Priority 1:
-      * Improve bevel so that number of verts doesn't affect it
+      * None!
+      * Fix 'UP' and 'DOWN' arrows in UI so they move cmlist items instead of changing 'cmlist_index'
     * Priority 2:
       * Apply closest LEGO color based on color of nearest vertex
       * Improve logo resolution (currently uses decimate)

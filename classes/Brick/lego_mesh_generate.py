@@ -23,10 +23,12 @@ def makeCylinder(r, N, h, co=(0,0,0), botFace=True, topFace=True, bme=None):
         vertListB.append(bme.verts.new(coordB))
 
     # create top and bottom faces
+    topVerts = vertListT[:]
+    botVerts = vertListB[::-1]
     if topFace:
-        bme.faces.new(vertListT)
+        bme.faces.new(topVerts)
     if botFace:
-        bme.faces.new(vertListB[::-1])
+        bme.faces.new(botVerts)
 
     # create faces on the sides
     bme.faces.new((vertListT[-1], vertListB[-1], vertListB[0], vertListT[0]))
@@ -34,7 +36,7 @@ def makeCylinder(r, N, h, co=(0,0,0), botFace=True, topFace=True, bme=None):
         bme.faces.new((vertListT.pop(0), vertListB.pop(0), vertListB[0], vertListT[0]))
 
     # return bmesh
-    return bme
+    return bme, botVerts, topVerts
 
 # r = radius, N = numVerts, h = height, t = thickness, co = target cylinder position
 def makeTube(r, N, h, t, co=(0,0,0), wings=False, bme=None):
@@ -67,6 +69,11 @@ def makeTube(r, N, h, t, co=(0,0,0), wings=False, bme=None):
         # create faces between them
         if i > 0:
             bme.faces.new((vertListBOuter[-2], vertListBInner[-2], vertListBInner[-1], vertListBOuter[-1]))
+    # select top verts for exclusion from vert group
+    for lst in [vertListTOuter, vertListTInner]:
+        for v in lst:
+            v.select = True
+
     bme.faces.new((vertListBOuter[-1], vertListBInner[-1], vertListBInner[0], vertListBOuter[0]))
 
     # create faces on the outer and inner sides
@@ -149,6 +156,10 @@ def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
         else:
             vertListBDict["x-"] = [vertListBDict["--"].pop(-1)]
 
+    # select bottom verts for vertex group
+    for v in vertListB:
+        v.select = True
+
 #    # create lower circle faces with square
 #    lastKey = "x-y"
 #    for key in ["xy", "-xy", "-x-y", "x-y"]:
@@ -208,7 +219,9 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
         studInset = thickZ * 0.9
         for xNum in range(brickSize[0]):
             for yNum in range(brickSize[1]):
-                makeCylinder(r=dimensions["stud_radius"], N=numStudVerts, h=dimensions["stud_height"]+studInset, co=(xNum*dX*2,yNum*dY*2,dimensions["stud_offset"]-(studInset/2)), botFace=False, bme=bme)
+                _,botVerts,_ = makeCylinder(r=dimensions["stud_radius"], N=numStudVerts, h=dimensions["stud_height"]+studInset, co=(xNum*dX*2,yNum*dY*2,dimensions["stud_offset"]-(studInset/2)), botFace=False, bme=bme)
+                for v in botVerts:
+                    v.select = True
 
     if detail == "Flat":
         bme.faces.new((v8, v7, v6, v5))
@@ -241,6 +254,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
         if detail == "Full Detail" and ((brickSize[0] == 2 and brickSize[1] > 1) or (brickSize[1] == 2 and brickSize[0] > 1)) and brickSize[2] != 1:
             for xNum in range(brickSize[0]):
                 for yNum in range(brickSize[1]):
+                    to_select = []
                     if xNum == 0:
                         # initialize x, y, z
                         x1 = -dX+thickXY
@@ -262,6 +276,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         bme.faces.new((v4, v3, v7, v8))
                         bme.faces.new((v5, v7, v3, v1))
                         bme.faces.new((v6, v8, v7, v5))
+                        to_select += [v1, v2, v3, v4]
                         if yNum == 0:
                             bme.faces.new((v4, ppi, ppo))
                             pass
@@ -296,6 +311,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         bme.faces.new((v8, v7, v3, v4))
                         bme.faces.new((v1, v3, v7, v5))
                         bme.faces.new((v5, v7, v8, v6))
+                        to_select += [v1, v2, v3, v4]
                         if yNum == 0:
                             bme.faces.new((npi, v4, npo))
                             pass
@@ -330,6 +346,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         bme.faces.new((v8, v7, v3, v4))
                         bme.faces.new((v1, v3, v7, v5))
                         bme.faces.new((v5, v7, v8, v6))
+                        to_select += [v1, v2, v3, v4]
                         if xNum == 0:
                             bme.faces.new((ppi, v4, ppo))
                             pass
@@ -365,6 +382,8 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         bme.faces.new((v8, v7, v3, v4))
                         bme.faces.new((v8, v6, v5, v7))
                         bme.faces.new((v2, v4, v3, v1))
+                        # select bottom connecting verts for exclusion from vertex group
+                        to_select += [v1, v2, v3, v7]
                         if xNum == 0:
                             bme.faces.new((v7, pni, pno))
                             pass
@@ -378,6 +397,9 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                             bme.faces.new((v3, v7, pno))
                             pass
                         yN1v = v3
+                    # select verts for exclusion from vertex group
+                    for v in to_select:
+                        v.select = True
         else:
             # make faces on bottom edges of brick
             bme.faces.new((v5, v9, v10, v6))
@@ -473,7 +495,10 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                 barY = (y * dY * 2) - dY
                 barZ = -thickZ/2
                 r = dimensions["bar_radius"]
-                makeCylinder(r=r, N=numStudVerts, h=(dZ*2)-thickZ, co=(barX, barY, barZ), botFace=True, topFace=False, bme=bme)
+                _,_,topVerts = makeCylinder(r=r, N=numStudVerts, h=(dZ*2)-thickZ, co=(barX, barY, barZ), botFace=True, topFace=False, bme=bme)
+                # select top verts for exclusion from vert group
+                for v in topVerts:
+                    v.select = True
                 if detail == "High Detail" or detail == "Full Detail":
                     if brickSize[1] == 3 or brickSize[1] == 2 or y % 2 == 0 or ((y == 1 or y == brickSize[1]-1) and brickSize[1] == 8):
                         # initialize x, y, z
@@ -501,7 +526,10 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                 barY = 0
                 barZ = -thickZ/2
                 r = dimensions["bar_radius"]
-                makeCylinder(r=r, N=numStudVerts, h=(dZ*2)-thickZ, co=(barX, barY, barZ), botFace=True, topFace=False, bme=bme)
+                _,_,topVerts = makeCylinder(r=r, N=numStudVerts, h=(dZ*2)-thickZ, co=(barX, barY, barZ), botFace=True, topFace=False, bme=bme)
+                # select top verts for exclusion from vert group
+                for v in topVerts:
+                    v.select = True
                 # add supports next to odd bars
                 if detail == "High Detail" or detail == "Full Detail":
                     if brickSize[0] == 3 or brickSize[0] == 2 or x % 2 == 0 or ((x == 1 or x == brickSize[0]-1) and brickSize[0] == 8):

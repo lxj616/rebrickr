@@ -439,7 +439,13 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
 
     if not split:
         m = combineMeshes(allBrickMeshes)
-        allBricksObj = bpy.data.objects.new('LEGOizer_%(n)s_bricks_combined' % locals(), m)
+        name = 'LEGOizer_%(n)s_bricks_combined' % locals()
+        allBricksObj = bpy.data.objects.new(name, m)
+        # create vert group for bevel mod (assuming only logo verts are selected):
+        vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())
+        for v in allBricksObj.data.vertices:
+            if not v.select:
+                vg.add([v.index], 1, "ADD")
         if cm.smoothCylinders and cm.studVerts > 12:
             addEdgeSplitMod(allBricksObj)
         bGroup.objects.link(allBricksObj)
@@ -448,7 +454,13 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
     else:
         for key in bricksD:
             if bricksD[key]["name"] != "DNE":
-                brick = bpy.data.objects[bricksD[key]["name"]]
+                name = bricksD[key]["name"]
+                brick = bpy.data.objects[name]
+                # create vert group for bevel mod (assuming only logo verts are selected):
+                vg = brick.vertex_groups.new("%(name)s_bevel" % locals())
+                for v in brick.data.vertices:
+                    if not v.select:
+                        vg.add([v.index], 1, "ADD")
                 bGroup.objects.link(brick)
                 scn.objects.link(brick)
                 brick.parent = parent
