@@ -50,8 +50,7 @@ class legoizerLegoize(bpy.types.Operator):
     action = bpy.props.EnumProperty(
         items=(
             ("CREATE", "Create", ""),
-            ("UPDATE", "Update", ""),
-            ("SPLIT", "Split", "")
+            ("UPDATE", "Update", "")
         )
     )
 
@@ -92,7 +91,7 @@ class legoizerLegoize(bpy.types.Operator):
                 self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
 
-        if self.action == "UPDATE" or self.action == "SPLIT":
+        if self.action == "UPDATE":
             # make sure 'LEGOizer_[source name]_bricks' group exists
             if not groupExists(LEGOizer_bricks_gn):
                 self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
@@ -121,11 +120,34 @@ class legoizerLegoize(bpy.types.Operator):
             source.location = (0,0,0)
             select(source, active=source)
             bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
-        elif self.action == "UPDATE":
+        # if there are no changes to apply, simply return "FINISHED"
+        elif not (cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (self.action == "UPDATE" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)):
+        #    cm.lastBrickHeight == cm.brickHeight and
+        #    cm.lastGap == cm.gap and
+        #    cm.lastPreHollow == cm.preHollow and
+        #    cm.lastShellThickness == cm.shellThickness and
+        #    cm.lastBrickShell == cm.brickShell and
+        #    (cm.lastBrickShell != "Inside Mesh" or cm.lastCalculationAxes == cm.calculationAxes) and
+        #    cm.lastExposedUndersideDetail == cm.exposedUndersideDetail and
+        #    cm.lastHiddenUndersideDetail == cm.hiddenUndersideDetail and
+        #    cm.lastStudDetail == cm.studDetail and
+        #    cm.lastStudVerts == cm.studVerts and
+        #    cm.lastLogoDetail == cm.logoDetail and
+        #    cm.lastLogoResolution == cm.logoResolution and
+        #    cm.lastMergeSeed == cm.mergeSeed and
+        #    cm.lastMaxBrickScale == cm.maxBrickScale and
+        #    cm.lastSmoothCylinders == cm.smoothCylinders and
+        #    cm.lastSplitModel == cm.splitModel and
+        #    cm.lastBrickType == cm.brickType and
+        #    not (self.action == "UPDATE" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)): # no bricks in model
+            return{"FINISHED"}
+
+        if self.action == "UPDATE":
             bpy.context.scene.objects.link(source)
             scn.update()
             bpy.context.scene.objects.unlink(source)
 
+        # if nonexistent, create new source group and add source
         if not groupExists(LEGOizer_source_gn):
             # link source to new 'source' group
             sGroup = bpy.data.groups.new(LEGOizer_source_gn)
@@ -149,9 +171,6 @@ class legoizerLegoize(bpy.types.Operator):
             pGroup.objects.link(parent)
         else:
             parent = bpy.data.groups[LEGOizer_parent_gn].objects[0]
-
-        if self.action == "UPDATE" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0:
-            self.action = "CREATE"
 
         # update refLogo
         if cm.logoDetail == "None":
@@ -252,54 +271,36 @@ class legoizerLegoize(bpy.types.Operator):
         #     rbGroup.objects.link(refBrickLower)
         #     rbGroup.objects.link(refBrickUpperLower)
 
-        # if any related source data or settings have changed
-        if (cm.brickHeight != cm.lastBrickHeight or
-           cm.gap != cm.lastGap or
-           cm.preHollow != cm.lastPreHollow or
-           cm.shellThickness != cm.lastShellThickness or
-           cm.lastBrickShell != cm.brickShell or
-           (cm.brickShell != "Inside Mesh" and cm.lastCalculationAxes != cm.calculationAxes) or
-           cm.exposedUndersideDetail != cm.lastExposedUndersideDetail or
-           cm.hiddenUndersideDetail != cm.lastHiddenUndersideDetail or
-           cm.studDetail != cm.lastStudDetail or
-           cm.studVerts != cm.lastStudVerts or
-           cm.logoDetail != cm.lastLogoDetail or
-           cm.logoResolution != cm.lastLogoResolution or
-           cm.lastMergeSeed != cm.mergeSeed or
-           cm.lastMaxBrickScale != cm.maxBrickScale or
-           cm.lastSmoothCylinders != cm.smoothCylinders or
-           cm.lastSplitModel != cm.splitModel or
-           cm.lastBrickType != cm.brickType or
-           self.action == "CREATE"):
-            # delete old bricks if present
-            if groupExists(LEGOizer_bricks_gn):
-                bricks = list(bpy.data.groups[LEGOizer_bricks_gn].objects)
-                delete(bricks)
-            # create new bricks
-            R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
-            # slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
-            bricksDict = makeBricksDict(source, source_details, dimensions, R, cm.preHollow)
-            makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel)
+        # delete old bricks if present
+        if groupExists(LEGOizer_bricks_gn):
+            bricks = list(bpy.data.groups[LEGOizer_bricks_gn].objects)
+            delete(bricks)
+        # create new bricks
+        R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
+        # slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
+        bricksDict = makeBricksDict(source, source_details, dimensions, R, cm.preHollow)
+        makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel)
 
-
-        # set final variables
-        cm.lastBrickHeight = cm.brickHeight
-        cm.lastGap = cm.gap
-        cm.lastPreHollow = cm.preHollow
-        cm.lastShellThickness = cm.shellThickness
-        cm.lastCalculationAxes = cm.calculationAxes
-        cm.lastBrickShell = cm.brickShell
-        cm.lastExposedUndersideDetail = cm.exposedUndersideDetail
-        cm.lastHiddenUndersideDetail = cm.hiddenUndersideDetail
+        # # set final variables
+        # cm.lastBrickHeight = cm.brickHeight
+        # cm.lastGap = cm.gap
+        # cm.lastPreHollow = cm.preHollow
+        # cm.lastShellThickness = cm.shellThickness
+        # cm.lastCalculationAxes = cm.calculationAxes
+        # cm.lastBrickShell = cm.brickShell
+        # cm.lastExposedUndersideDetail = cm.exposedUndersideDetail
+        # cm.lastHiddenUndersideDetail = cm.hiddenUndersideDetail
         cm.lastLogoResolution = cm.logoResolution
         cm.lastLogoDetail = cm.logoDetail
-        cm.lastStudVerts = cm.studVerts
-        cm.lastStudDetail = cm.studDetail
-        cm.lastMergeSeed = cm.mergeSeed
-        cm.lastMaxBrickScale = cm.maxBrickScale
-        cm.lastSmoothCylinders = cm.smoothCylinders
-        cm.lastSplitModel = cm.splitModel
-        cm.lastBrickType = cm.brickType
+        # cm.lastStudVerts = cm.studVerts
+        # cm.lastStudDetail = cm.studDetail
+        # cm.lastMergeSeed = cm.mergeSeed
+        # cm.lastSmoothCylinders = cm.smoothCylinders
+        # cm.lastSplitModel = cm.splitModel
+        # cm.lastBrickType = cm.brickType
+        cm.modelIsDirty = False
+        cm.buildIsDirty = False
+        cm.bricksAreDirty = False
 
         disableRelationshipLines()
 

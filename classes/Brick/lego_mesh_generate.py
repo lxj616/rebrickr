@@ -174,9 +174,10 @@ def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
 
     return vertListBDict
 
-def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", logo=None, stud=True):
+def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", logo=None, stud=True, bme=None):
     # create new bmesh object
-    bme = bmesh.new()
+    if not bme:
+        bme = bmesh.new()
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
 
@@ -722,7 +723,8 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
     ny = (dimensions["width"] + dimensions["gap"]) * brickSize[1] - dimensions["gap"]
     dx = dimensions["width"] * brickSize[0]
     dy = dimensions["width"] * brickSize[1]
-    bmesh.ops.scale(bme, verts=bme.verts, vec=(nx/dx, ny/dy, 1.0))
+    if brickSize[0] != 1 or brickSize[1] != 1:
+        bmesh.ops.scale(bme, verts=bme.verts, vec=(nx/dx, ny/dy, 1.0))
 
     # return bmesh
     return bme

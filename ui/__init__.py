@@ -174,6 +174,8 @@ class ModelSettingsPanel(Panel):
         row.prop(cm, "brickHeight")
         row = col.row(align=True)
         row.prop(cm, "gap")
+        row = col.row(align=True)
+        row.prop(cm, "mergeSeed")
         col = layout.column(align=True)
         row = col.row(align=True)
         row.prop(cm, "preHollow")
@@ -181,16 +183,6 @@ class ModelSettingsPanel(Panel):
             row = col.row(align=True)
             row.prop(cm, "shellThickness")
 
-
-        col = layout.column(align=True)
-        row = col.row(align=True)
-        row.label("Brick Settings:")
-        row = col.row(align=True)
-        row.prop(cm, "brickType", text="")
-        row = col.row(align=True)
-        row.prop(cm, "maxBrickScale")
-        row = col.row(align=True)
-        row.prop(cm, "mergeSeed")
         col = layout.column(align=True)
         row = col.row(align=True)
         row.label("Brick Shell:")
@@ -201,6 +193,48 @@ class ModelSettingsPanel(Panel):
             row.prop(cm, "calculationAxes", text="")
         row = col.row(align=True)
         row.prop(cm, "splitModel")
+
+class BrickTypesPanel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "Brick Types"
+    bl_idname      = "VIEW3D_PT_tools_LEGOizer_brick_types"
+    bl_context     = "objectmode"
+    bl_category    = "LEGOizer"
+    bl_options     = {"DEFAULT_CLOSED"}
+    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
+
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        if bversion() < '002.078.00':
+            return False
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop(cm, "brickType", text="")
+
+        col = layout.column(align=True)
+        col.label("Max Brick Scales:")
+        split = col.split(align=True, percentage=0.5)
+
+        col1 = split.column(align=True)
+        row1 = col1.row(align=True)
+        row1.prop(cm, "maxBrickScale1", text="1x")
+
+        col2 = split.column(align=True)
+        row2 = col2.row(align=True)
+        row2.prop(cm, "maxBrickScale2", text="2x")
+
+
 
 class DetailingPanel(Panel):
     bl_space_type  = "VIEW_3D"

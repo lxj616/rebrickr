@@ -84,6 +84,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
     if groupExists(LEGOizer_bricks):
         bpy.data.groups.remove(group=bpy.data.groups[LEGOizer_bricks], do_unlink=True)
     bGroup = bpy.data.groups.new(LEGOizer_bricks)
+    tempMesh = bpy.data.meshes.new("tempMesh")
 
     if not split:
         allBrickMeshes = []
@@ -106,7 +107,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
             #         brickTypes.append([1,1,3])
             #         z1 = True
             nextBrick = getNextBrick(bricksD, loc, 1, 0)
-            if brickAvail(nextBrick) and cm.maxBrickScale > 1:
+            if brickAvail(nextBrick) and cm.maxBrickScale1 > 1:
                 brickTypes.append([2,1,bt2])
                 # if testZ and z1:
                 #     nextBrick0 = getNextBrick(bricksD, loc, 1, 0, 1)
@@ -115,7 +116,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                 #         brickTypes.append([2,1,3])
                 #         z2 = True
                 nextBrick = getNextBrick(bricksD, loc, 2, 0)
-                if brickAvail(nextBrick) and cm.maxBrickScale > 2:
+                if brickAvail(nextBrick) and cm.maxBrickScale1 > 2:
                     brickTypes.append([3,1,bt2])
                     # if testZ and z2:
                     #     nextBrick0 = getNextBrick(bricksD, loc, 2, 0, 1)
@@ -124,7 +125,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                     #         brickTypes.append([3,1,3])
                     #         z3 = True
                     nextBrick = getNextBrick(bricksD, loc, 3, 0)
-                    if brickAvail(nextBrick) and cm.maxBrickScale > 3:
+                    if brickAvail(nextBrick) and cm.maxBrickScale1 > 3:
                         brickTypes.append([4,1,bt2])
                         # if testZ and z3:
                         #     nextBrick0 = getNextBrick(bricksD, loc, 3, 0, 1)
@@ -134,7 +135,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                         #         z4 = True
                         nextBrick0 = getNextBrick(bricksD, loc, 4, 0)
                         nextBrick1 = getNextBrick(bricksD, loc, 5, 0)
-                        if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 5:
+                        if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale1 > 5:
                             brickTypes.append([6,1,bt2])
                             # if testZ and z4:
                             #     nextBrick0 = getNextBrick(bricksD, loc, 4, 0, 1)
@@ -146,7 +147,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                             #         z5 = True
                             nextBrick0 = getNextBrick(bricksD, loc, 6, 0)
                             nextBrick1 = getNextBrick(bricksD, loc, 7, 0)
-                            if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 7:
+                            if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale1 > 7:
                                 brickTypes.append([8,1,bt2])
                                 # if testZ and z5:
                                 #     nextBrick0 = getNextBrick(bricksD, loc, 6, 0, 1)
@@ -157,7 +158,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                                 #         brickTypes.append([6,1,3])
                                 #         z6 = True
             nextBrick = getNextBrick(bricksD, loc, 0, 1)
-            if brickAvail(nextBrick) and cm.maxBrickScale > 1:
+            if brickAvail(nextBrick) and cm.maxBrickScale1 > 1:
                 brickTypes.append([1,2,bt2])
                 # if testZ and z1:
                 #     nextBrick0 = getNextBrick(bricksD, loc, 0, 1, 1)
@@ -166,7 +167,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                 #         brickTypes.append([1,2,3])
                 #         z7 = True
                 nextBrick = getNextBrick(bricksD, loc, 0, 2)
-                if brickAvail(nextBrick) and cm.maxBrickScale > 2:
+                if brickAvail(nextBrick) and cm.maxBrickScale1 > 2:
                     brickTypes.append([1,3,bt2])
                     # if testZ and z7:
                     #     nextBrick0 = getNextBrick(bricksD, loc, 0, 2, 1)
@@ -175,7 +176,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                     #         brickTypes.append([1,3,3])
                     #         z8 = True
                     nextBrick = getNextBrick(bricksD, loc, 0, 3)
-                    if brickAvail(nextBrick) and cm.maxBrickScale > 3:
+                    if brickAvail(nextBrick) and cm.maxBrickScale1 > 3:
                         brickTypes.append([1,4,bt2])
                         # if testZ and z8:
                         #     nextBrick0 = getNextBrick(bricksD, loc, 0, 3, 1)
@@ -185,7 +186,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                         #         z9 = True
                         nextBrick0 = getNextBrick(bricksD, loc, 0, 4)
                         nextBrick1 = getNextBrick(bricksD, loc, 0, 5)
-                        if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 5:
+                        if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale1 > 5:
                             brickTypes.append([1,6,bt2])
                             # if testZ and z10:
                             #     nextBrick0 = getNextBrick(bricksD, loc, 0, 4, 1)
@@ -197,7 +198,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                             #         z11 = True
                             nextBrick0 = getNextBrick(bricksD, loc, 0, 6)
                             nextBrick1 = getNextBrick(bricksD, loc, 0, 7)
-                            if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 7:
+                            if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale1 > 7:
                                 brickTypes.append([1,8,bt2])
                                 # if testZ and z11:
                                 #     nextBrick0 = getNextBrick(bricksD, loc, 0, 6, 1)
@@ -210,7 +211,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
             nextBrick0 = getNextBrick(bricksD, loc, 0, 1)
             nextBrick1 = getNextBrick(bricksD, loc, 1, 0)
             nextBrick2 = getNextBrick(bricksD, loc, 1, 1)
-            if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and cm.maxBrickScale > 3:
+            if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and cm.maxBrickScale2 > 1:
                 brickTypes.append([2,2,bt2])
                 # if testZ and z1 and z2 and z7:
                 #     nextBrick0 = getNextBrick(bricksD, loc, 1, 1, 1)
@@ -220,7 +221,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                 #         z13 = True
                 nextBrick0 = getNextBrick(bricksD, loc, 0, 2)
                 nextBrick1 = getNextBrick(bricksD, loc, 1, 2)
-                if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 5:
+                if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale2 > 2:
                     brickTypes.append([2,3,bt2])
                     # if testZ and z13 and z8:
                     #     nextBrick0 = getNextBrick(bricksD, loc, 1, 2, 1)
@@ -230,7 +231,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                     #         z14 = True
                     nextBrick0 = getNextBrick(bricksD, loc, 0, 3)
                     nextBrick1 = getNextBrick(bricksD, loc, 1, 3)
-                    if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 7:
+                    if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale2 > 3:
                         brickTypes.append([2,4,bt2])
                         # if testZ and z14 and z9:
                         #     nextBrick0 = getNextBrick(bricksD, loc, 1, 3, 1)
@@ -242,7 +243,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                         nextBrick1 = getNextBrick(bricksD, loc, 1, 4)
                         nextBrick2 = getNextBrick(bricksD, loc, 0, 5)
                         nextBrick3 = getNextBrick(bricksD, loc, 1, 5)
-                        if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 11:
+                        if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale2 > 5:
                             brickTypes.append([2,6,bt2])
                             # if testZ and z15 and z10:
                             #     nextBrick0 = getNextBrick(bricksD, loc, 1, 4, 1)
@@ -256,7 +257,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                             nextBrick1 = getNextBrick(bricksD, loc, 1, 6)
                             nextBrick2 = getNextBrick(bricksD, loc, 0, 7)
                             nextBrick3 = getNextBrick(bricksD, loc, 1, 7)
-                            if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 15:
+                            if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale2 > 7:
                                 brickTypes.append([2,8,bt2])
                                 # if testZ and z16 and z11:
                                 #     nextBrick0 = getNextBrick(bricksD, loc, 1, 6, 1)
@@ -270,7 +271,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                                 nextBrick1 = getNextBrick(bricksD, loc, 1, 8)
                                 nextBrick2 = getNextBrick(bricksD, loc, 0, 9)
                                 nextBrick3 = getNextBrick(bricksD, loc, 1, 9)
-                                if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 19:
+                                if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale2 > 9:
                                     brickTypes.append([2,10,bt2])
                                     # if testZ and z17 and z12:
                                     #     nextBrick0 = getNextBrick(bricksD, loc, 1, 8, 1)
@@ -282,7 +283,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                                     #         z18 = True
                 nextBrick0 = getNextBrick(bricksD, loc, 2, 0)
                 nextBrick1 = getNextBrick(bricksD, loc, 2, 1)
-                if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 5:
+                if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale2 > 2:
                     brickTypes.append([3,2,bt2])
                     # if testZ and z13 and z3:
                     #     nextBrick0 = getNextBrick(bricksD, loc, 2, 1, 1)
@@ -292,7 +293,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                     #         z19 = True
                     nextBrick0 = getNextBrick(bricksD, loc, 3, 0)
                     nextBrick1 = getNextBrick(bricksD, loc, 3, 1)
-                    if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale > 7:
+                    if brickAvail(nextBrick0) and brickAvail(nextBrick1) and cm.maxBrickScale2 > 3:
                         brickTypes.append([4,2,bt2])
                         # if testZ and z19 and z4:
                         #     nextBrick0 = getNextBrick(bricksD, loc, 3, 1, 1)
@@ -304,7 +305,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                         nextBrick1 = getNextBrick(bricksD, loc, 4, 1)
                         nextBrick2 = getNextBrick(bricksD, loc, 5, 0)
                         nextBrick3 = getNextBrick(bricksD, loc, 5, 1)
-                        if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 11:
+                        if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale2 > 5:
                             brickTypes.append([6,2,bt2])
                             # if testZ and z20 and z4:
                             #     nextBrick0 = getNextBrick(bricksD, loc, 4, 1, 1)
@@ -318,7 +319,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                             nextBrick1 = getNextBrick(bricksD, loc, 6, 1)
                             nextBrick2 = getNextBrick(bricksD, loc, 7, 0)
                             nextBrick3 = getNextBrick(bricksD, loc, 7, 1)
-                            if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 15:
+                            if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale2 > 7:
                                 brickTypes.append([8,2,bt2])
                                 # if testZ and z21 and z5:
                                 #     nextBrick0 = getNextBrick(bricksD, loc, 6, 1, 1)
@@ -332,7 +333,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                                 nextBrick1 = getNextBrick(bricksD, loc, 8, 1)
                                 nextBrick2 = getNextBrick(bricksD, loc, 9, 0)
                                 nextBrick3 = getNextBrick(bricksD, loc, 9, 1)
-                                if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale > 19:
+                                if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and brickAvail(nextBrick3) and cm.maxBrickScale2 > 9:
                                     brickTypes.append([10,2,bt2])
                                     # if testZ and z22 and z6:
                                     #     nextBrick0 = getNextBrick(bricksD, loc, 8, 1, 1)
@@ -343,24 +344,31 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                                     #         brickTypes.append([10,2,3])
                                     #         z23 = True
 
-            # # if it's only going to be a 1x1, skip merging for this brick
-            # if len(brickTypes) == 0:
-            #     continue
             # sort brick types from smallest to largest
-            # if testZ:
-            #     for idx in range(len(brickTypes)):
-            #         brickTypes[idx] = brickTypes[idx][::-1]
-
+            order = random.randint(1,2)
+            if order == 2:
+                for idx in range(len(brickTypes)):
+                    brickTypes[idx] = brickTypes[idx][::-1]
             brickTypes.sort()
 
-            # ranInt = random.randint(1,len(brickTypes)*cm.maxBrickScale)
-            # if ranInt > len(brickTypes):
-            #     brickType = brickTypes[-1]
-            # else:
-            #     brickType = brickTypes[ranInt-1]
             brickType = brickTypes[-1]
-            # if testZ:
-            #     brickType = brickType[::-1]
+            if order == 2:
+                brickType = brickType[::-1]
+
+            # # get largest brick type in brickTypes
+            # maxS = 1
+            # minS = 1
+            # brickType = [1,1]
+            # for bt in brickTypes:
+            #     maxCur = max(bt)
+            #     minCur = min(bt)
+            #     if minCur >= minS:
+            #         if maxCur > maxS:
+            #             minS = minCur
+            #             maxS = maxCur
+            #             brickType = bt
+
+
 
             topExposed = False
             botExposed = False
@@ -409,9 +417,9 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
             else:
                 undersideDetail = cm.hiddenUndersideDetail
 
-            # Remesh brick at original location
+            # add brick with new mesh data at original location
             if split or j == 0:
-                m = Bricks().new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
+                m = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
                 brick = bpy.data.objects.new(brickD["name"], m)
                 brick.location = Vector(brickD["co"])
 
@@ -419,8 +427,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                 if cm.smoothCylinders and cm.studVerts > 12:
                     addEdgeSplitMod(brick)
             else:
-                bm = Bricks().new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail, returnType="bmesh")
-                bmesh.ops.transform(bm, matrix=Matrix.Translation(brickD["co"]), verts=bm.verts)
+                bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, transform=brickD["co"], undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail, returnType="bmesh")
                 tempMesh = bpy.data.meshes.new(brickD["name"])
                 bm.to_mesh(tempMesh)
                 allBrickMeshes.append(tempMesh)
@@ -449,8 +456,8 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
         if cm.smoothCylinders and cm.studVerts > 12:
             addEdgeSplitMod(allBricksObj)
         bGroup.objects.link(allBricksObj)
-        scn.objects.link(allBricksObj)
         allBricksObj.parent = parent
+        scn.objects.link(allBricksObj)
     else:
         for key in bricksD:
             if bricksD[key]["name"] != "DNE":
@@ -462,7 +469,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                     if not v.select:
                         vg.add([v.index], 1, "ADD")
                 bGroup.objects.link(brick)
-                scn.objects.link(brick)
                 brick.parent = parent
+                scn.objects.link(brick)
 
     stopWatch("Time Elapsed (building)", time.time()-ct)

@@ -45,7 +45,7 @@ class Bricks:
         return brickObjs
 
     @staticmethod
-    def new_mesh(dimensions, name='new_brick', gap_percentage=0.01, type=[1,1,3], logo=False, undersideDetail="Flat", stud=True, returnType="mesh", brickMesh=None):
+    def new_mesh(dimensions, name='new_brick', gap_percentage=0.01, type=[1,1,3], transform=False, logo=False, undersideDetail="Flat", stud=True, returnType="mesh", brickMesh=None):
         """ create unlinked LEGO Brick at origin """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
@@ -84,7 +84,8 @@ class Bricks:
                     # rotate logo around stud
                     if zRot != 0:
                         bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(0.0, 0.0, 1.0), matrix=Matrix.Rotation(math.radians(zRot), 3, 'Z'))
-                    bmesh.ops.translate(logoBM, vec=Vector((x*dimensions["width"], y*dimensions["width"], dimensions["logo_offset"]*0.998)), verts=logoBM.verts)
+                    for v in logoBM.verts:
+                        v.co = ((v.co.x + x*dimensions["width"]), (v.co.y + y*dimensions["width"]), (v.co.z + dimensions["logo_offset"]*0.998))
                     lastLogoBM = logoBM
                     # add logoBM mesh to bm mesh
                     logoMesh = bpy.data.meshes.new('LEGOizer_tempMesh')
@@ -97,6 +98,10 @@ class Bricks:
         brickBM.to_mesh(cube)
         bm.from_mesh(cube)
         bpy.data.meshes.remove(cube)
+
+        if transform:
+            for v in bm.verts:
+                v.co = (v.co[0] + transform[0], v.co[1] + transform[1], v.co[2] + transform[2])
 
         if returnType == "mesh":
             # create apply mesh data to 'legoizer_brick1x1' data

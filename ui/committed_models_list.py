@@ -321,6 +321,22 @@ def updateBevel(self, context):
     except:
         pass
 
+def dirtyModel(self, context):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    cm.modelIsDirty = True
+
+def dirtyBuild(self, context):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    cm.buildIsDirty = True
+
+def dirtyBricks(self, context):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    cm.bricksAreDirty = True
+
+
 # Create custom property group
 class CreatedModels(bpy.types.PropertyGroup):
     name = StringProperty(update=uniquifyName)
@@ -332,22 +348,16 @@ class CreatedModels(bpy.types.PropertyGroup):
         default="",
         update=setNameIfEmpty)
 
-    brickType = EnumProperty(
-        name="Brick Type",
-        description="Choose what type of bricks to use to build the model",
-        items=[("Plates", "Plates", "Use plates to build the model"),
-              ("Bricks", "Bricks", "Use bricks to build the model")],
-              #("Bricks and Plates", "Bricks and Plates", "Use bricks and plates to build the model")],
-        default="Bricks")
-
     preHollow = BoolProperty(
         name="Pre Hollow",
         description="Hollow out LEGO model with user defined shell thickness",
+        update=dirtyBuild,
         default=True)
 
     shellThickness = IntProperty(
         name="Shell Thickness",
         description="Thickness of the LEGO shell",
+        update=dirtyBuild,
         min=1, max=100,
         default=2)
 
@@ -357,6 +367,7 @@ class CreatedModels(bpy.types.PropertyGroup):
         items=[("On All Bricks", "On All Bricks", "Include LEGO Logo only on bricks with studs exposed"),
               ("On Exposed Bricks", "On Exposed Bricks", "Include LEGO Logo only on bricks with studs exposed"),
               ("None", "None", "Don't include LEGO Logo on bricks")],
+        update=dirtyBricks,
         default="On Exposed Bricks")
 
     logoDetail = EnumProperty(
@@ -365,11 +376,13 @@ class CreatedModels(bpy.types.PropertyGroup):
         items=[("On All Studs", "On All Studs", "Include LEGO Logo on all studs"),
               ("On Exposed Studs", "On Exposed Studs", "Include LEGO Logo only on exposed studs"),
               ("None", "None", "Don't include LEGO Logo on bricks")],
+        update=dirtyBricks,
         default="None")
 
     logoResolution = FloatProperty(
         name="Logo Resolution",
         description="Resolution of the LEGO Logo",
+        update=dirtyBricks,
         min=0.1, max=1,
         step=1,
         precision=2,
@@ -383,6 +396,7 @@ class CreatedModels(bpy.types.PropertyGroup):
               ("Medium Detail", "Medium Detail", "Draw most details on brick underside"),
               ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
               ("Flat", "Flat", "draw single face on brick underside")],
+        update=dirtyBricks,
         default="Flat")
     exposedUndersideDetail = EnumProperty(
         name="Eposed Underside Detailing",
@@ -392,23 +406,27 @@ class CreatedModels(bpy.types.PropertyGroup):
               ("Medium Detail", "Medium Detail", "Draw most details on brick underside"),
               ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
               ("Flat", "Flat", "draw single face on brick underside")],
+        update=dirtyBricks,
         default="Flat")
 
     studVerts = IntProperty(
         name="Stud Verts",
         description="Number of vertices on LEGO stud",
+        update=dirtyBricks,
         min=4, max=64,
         default=8)
 
     brickHeight = FloatProperty(
         name="Brick Height",
         description="Height of the bricks in the final LEGO model",
+        update=dirtyModel,
         precision=3,
         min=0.001, max=10,
         default=.1)
     gap = FloatProperty(
         name="Gap Between Bricks",
         description="Height of the bricks in the final LEGO model",
+        update=dirtyModel,
         step=1,
         precision=3,
         min=0, max=0.1,
@@ -417,42 +435,131 @@ class CreatedModels(bpy.types.PropertyGroup):
     mergeSeed = IntProperty(
         name="Random Seed",
         description="Random seed for brick merging calculations",
+        update=dirtyBuild,
         min=-1, max=5000,
         default=1000)
 
-    maxBrickScale = IntProperty(
-        name="Max Brick Scale",
-        description="Maximum scale of the generated LEGO bricks (equivalent to num studs on top)",
-        min=1, max=20,
-        default=16)
+    brickType = EnumProperty(
+        name="Brick Type",
+        description="Choose what type of bricks to use to build the model",
+        items=[("Plates", "Plates", "Use plates to build the model"),
+              ("Bricks", "Bricks", "Use bricks to build the model")],
+              #("Bricks and Plates", "Bricks and Plates", "Use bricks and plates to build the model")],
+        update=dirtyModel,
+        default="Bricks")
+
+    maxBrickScale1 = IntProperty(
+        name="Max 1 by x",
+        description="Maximum scale of the 1 by X LEGO brick",
+        update=dirtyBuild,
+        min=1, max=10,
+        default=10)
+    maxBrickScale2 = IntProperty(
+        name="Max 2 by x",
+        description="Maximum scale of the 2 by X LEGO brick",
+        update=dirtyBuild,
+        min=1, max=10,
+        default=10)
+    # b1x1 = BoolProperty(
+    #     name="1x1",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
+    # b1x2 = BoolProperty(
+    #     name="1x2",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
+    # b1x3 = BoolProperty(
+    #     name="1x3",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
+    # b1x4 = BoolProperty(
+    #     name="1x4",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
+    # b1x6 = BoolProperty(
+    #     name="1x6",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
+    # b1x8 = BoolProperty(
+    #     name="1x8",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
+    # b1x10 = BoolProperty(
+    #     name="1x10",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
+    # b2x2 = BoolProperty(
+    #     name="2x2",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
+    # b2x3 = BoolProperty(
+    #     name="2x3",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
+    # b2x4 = BoolProperty(
+    #     name="2x4",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
+    # b2x6 = BoolProperty(
+    #     name="2x6",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
+    # b2x8 = BoolProperty(
+    #     name="2x8",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
+    # b2x10 = BoolProperty(
+    #     name="2x10",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
+    # b2x12 = BoolProperty(
+    #     name="2x12",
+    #     description="Include this brick type in model",
+    #     update=dirtyBuild,
+    #     default=True)
 
     smoothCylinders = BoolProperty(
         name="Smooth Cylinders",
         description="Smooths cylinders with edge split and smooth shading (disable for bevel resolution control)",
+        update=dirtyBricks,
         default=True)
 
     splitModel = BoolProperty(
         name="Split Model",
         description="Split model into separate bricks (slower)",
+        update=dirtyModel,
         default=False)
 
-    lastBrickHeight = FloatProperty(default=0)
-    lastGap = FloatProperty(default=0)
-    lastPreHollow = BoolProperty(default=False)
-    lastShellThickness = IntProperty(default=0)
-    lastCalculationAxes = StringProperty(default="")
+    # lastBrickHeight = FloatProperty(default=0)
+    # lastGap = FloatProperty(default=0)
+    # lastPreHollow = BoolProperty(default=False)
+    # lastShellThickness = IntProperty(default=0)
+    # lastCalculationAxes = StringProperty(default="")
     lastLogoDetail = StringProperty(default="None")
     lastLogoResolution = FloatProperty(default=0)
-    lastStudDetail = StringProperty(default="None")
-    lastStudVerts = FloatProperty(default=0)
-    lastMergeSeed = IntProperty(default=1000)
-    lastMaxBrickScale = IntProperty(default=10)
-    lastExposedUndersideDetail = StringProperty(default="None")
-    lastHiddenUndersideDetail = StringProperty(default="None")
-    lastSmoothCylinders = BoolProperty(default=True)
-    lastBrickShell = StringProperty(default="Inside Mesh")
-    lastSplitModel = BoolProperty(default=False)
-    lastBrickType = StringProperty(default="Bricks")
+    # lastStudDetail = StringProperty(default="None")
+    # lastStudVerts = FloatProperty(default=0)
+    # lastMergeSeed = IntProperty(default=1000)
+    # lastMaxBrickScale = IntProperty(default=10)
+    # lastExposedUndersideDetail = StringProperty(default="None")
+    # lastHiddenUndersideDetail = StringProperty(default="None")
+    # lastSmoothCylinders = BoolProperty(default=True)
+    # lastBrickShell = StringProperty(default="Inside Mesh")
+    # lastSplitModel = BoolProperty(default=False)
+    # lastBrickType = StringProperty(default="Bricks")
 
     # Bevel Settings
     lastBevelWidth = FloatProperty()
@@ -475,6 +582,7 @@ class CreatedModels(bpy.types.PropertyGroup):
         items=[("Inside Mesh", "Inside Mesh (recommended)", "Draw brick shell inside source mesh (Recommended)"),
               ("Outside Mesh", "Outside Mesh", "Draw brick shell outside source mesh"),
               ("Inside and Outside", "Inside and Outside", "Draw brick shell inside and outside source mesh (two layers)")],
+        update=dirtyModel,
         default="Inside Mesh")
     calculationAxes = EnumProperty(
         name="Expanded Shell Axes",
@@ -486,7 +594,12 @@ class CreatedModels(bpy.types.PropertyGroup):
               ("X", "X", "PLACEHOLDER"),
               ("Y", "Y", "PLACEHOLDER"),
               ("Z", "Z", "PLACEHOLDER")],
+        update=dirtyModel,
         default="XY")
+
+    modelIsDirty = BoolProperty(default=True)
+    buildIsDirty = BoolProperty(default=True)
+    bricksAreDirty = BoolProperty(default=True)
 
 # -------------------------------------------------------------------
 # register
