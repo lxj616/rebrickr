@@ -199,31 +199,59 @@ def getBrickMatrix(source, coordMatrix, brickShell, axes="xyz"):
     ct = time.time()
     j = 1
     for idx in range(100):
-        j -= 0.01
+        j = round(j-0.01, 2)
         gotOne = False
         for x in range(len(coordMatrix)):
             for y in range(len(coordMatrix[0])):
                 for z in range(len(coordMatrix[0][0])):
                     if brickFreqMatrix[x][y][z] == -1:
-                        if (j == 0.99 and
-                           (brickFreqMatrix[x+1][y][z] == 2 or
-                           brickFreqMatrix[x-1][y][z] == 2 or
-                           brickFreqMatrix[x][y+1][z] == 2 or
-                           brickFreqMatrix[x][y-1][z] == 2 or
-                           brickFreqMatrix[x][y][z+1] == 2 or
-                           brickFreqMatrix[x][y][z-1] == 2) or
-                           (brickFreqMatrix[x+1][y][z] == j + 0.01 or
-                           brickFreqMatrix[x-1][y][z] == j + 0.01 or
-                           brickFreqMatrix[x][y+1][z] == j + 0.01 or
-                           brickFreqMatrix[x][y-1][z] == j + 0.01 or
-                           brickFreqMatrix[x][y][z+1] == j + 0.01 or
-                           brickFreqMatrix[x][y][z-1] == j + 0.01)):
-                            brickFreqMatrix[x][y][z] = round(j, 2)
-                            gotOne = True
+                        try:
+                            if ((j == 0.99 and
+                               (brickFreqMatrix[x+1][y][z] == 2 or
+                               brickFreqMatrix[x-1][y][z] == 2 or
+                               brickFreqMatrix[x][y+1][z] == 2 or
+                               brickFreqMatrix[x][y-1][z] == 2 or
+                               brickFreqMatrix[x][y][z+1] == 2 or
+                               brickFreqMatrix[x][y][z-1] == 2)) or
+                               (brickFreqMatrix[x+1][y][z] == round(j + 0.01,2) or
+                               brickFreqMatrix[x-1][y][z] == round(j + 0.01,2) or
+                               brickFreqMatrix[x][y+1][z] == round(j + 0.01,2) or
+                               brickFreqMatrix[x][y-1][z] == round(j + 0.01,2) or
+                               brickFreqMatrix[x][y][z+1] == round(j + 0.01,2) or
+                               brickFreqMatrix[x][y][z-1] == round(j + 0.01,2))):
+                                brickFreqMatrix[x][y][z] = j
+                                gotOne = True
+                        except:
+                            pass
 
 
         if not gotOne:
             break
+
+    # Draw supports
+    if cm.internalSupports == "Columns":
+        print(brickFreqMatrix[len(coordMatrix)//2][len(coordMatrix[0])//2])
+        for x in range(cm.colStep + cm.colThickness, len(coordMatrix), cm.colStep + cm.colThickness):
+            for y in range(cm.colStep + cm.colThickness, len(coordMatrix[0]), cm.colStep + cm.colThickness):
+                for z in range(0, len(coordMatrix[0][0])):
+                    for j in range(cm.colThickness):
+                        for k in range(cm.colThickness):
+                            if brickFreqMatrix[x-j][y-k][z] > 0 and brickFreqMatrix[x-j][y-k][z] < 1:
+                                brickFreqMatrix[x-j][y-k][z] = 1.5
+    elif cm.internalSupports == "Lattice":
+        if cm.alternateXY:
+            alt = 0
+        else:
+            alt = 0.5
+        for z in range(0, len(coordMatrix[0][0])):
+            alt += 1
+            for x in range(0, len(coordMatrix)):
+                for y in range(0, len(coordMatrix[0])):
+                    if x % cm.latticeStep != 0 or alt % 2 == 1:
+                        if y % cm.latticeStep != 0 or alt % 2 == 0:
+                            continue
+                    if brickFreqMatrix[x][y][z] > 0 and brickFreqMatrix[x][y][z] < 1:
+                        brickFreqMatrix[x][y][z] = 1.5
 
     # bm = bmesh.new()
     # for x in range(len(coordMatrix)):
@@ -251,7 +279,7 @@ def uniquify3DMatrix(matrix):
             matrix[i][j] = uniquify(matrix[i][j], lambda x: (round(x[0], 2), round(x[1], 2), round(x[2], 2)))
     return matrix
 
-def makeBricksDict(source, source_details, dimensions, R, preHollow=False):
+def makeBricksDict(source, source_details, dimensions, R):
     """ Make bricks """
     ct = time.time()
     scn = bpy.context.scene
@@ -274,10 +302,7 @@ def makeBricksDict(source, source_details, dimensions, R, preHollow=False):
 
     brickFreqMatrix = getBrickMatrix(source, coordMatrix, cm.brickShell, axes=calculationAxes)
     # get coordinate list from intersections of edges with faces
-    if not cm.preHollow:
-        threshold = 0.001
-    else:
-        threshold = 1.01 - (cm.shellThickness / 100)
+    threshold = 1.01 - (cm.shellThickness / 100)
 
     coList = getCOList(brickFreqMatrix, coordMatrix, threshold)
     # if no coords in coList, add a coord at center of source
@@ -316,6 +341,13 @@ def makeBricksDict(source, source_details, dimensions, R, preHollow=False):
                         "val":brickFreqMatrix[x][y][z],
                         "co":(co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
                         "connected":False}
+                else:
+                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {
+                        "name":"DNE",
+                        "val":brickFreqMatrix[x][y][z],
+                        "co":None,
+                        "connected":False}
+
 
     stopWatch("Time Elapsed (generating blueprint)", time.time()-ct)
 

@@ -12,16 +12,16 @@ Blender add-on for automated generation of LEGO Bricks from object (Blender vers
       * Click 'LEGOize Object'
       * Adjust settings for your desired result
       * Click 'Update Model' to view setting adjustments
-  * Known Bugs:
-    * long, thin plane models don't turn out correctly (inside/outsideness seems to be broken)
-    * 'UP' and 'DOWN' arrows in UI don't move models, they just change the 'cmlist_index'
   * Future improvements:
     * Priority 1:
-      * None!
-      * Fix 'UP' and 'DOWN' arrows in UI so they move cmlist items instead of changing 'cmlist_index'
+      * Figure out a way to make the brick height more clear to the user
     * Priority 2:
-      * Apply closest LEGO color based on color of nearest vertex
-      * Improve logo resolution (currently uses decimate)
+      * Add option for very slightly randomizing rotation/location of bricks.
     * Priority 3:
-      * New feature: frame-by-frame generation of LEGO models (like the explosions in the LEGO Movie)
+      * Apply closest LEGO color based on color of nearest vertex
+        * Apply unlimited materials or just LEGO material closest to original
+      * Prefer overlapping and staggering over stacking of bricks
+    * Priority 4:
+      * New feature: frame-by-frame generation of LEGO models (like the explosions in the LEGO Movie) for particle systems or animated objects
+      * New feature: SNOT (studs not on top) functionality
       * Allow for custom object to generate model from

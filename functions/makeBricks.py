@@ -90,7 +90,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
         allBrickMeshes = []
 
     denom = len(keys)/20
-    j = 0
+    supportBrickDs = []
     for i,key in enumerate(keys):
         brickD = bricksD[key]
         if brickD["name"] != "DNE" and not brickD["connected"]:
@@ -368,8 +368,6 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
             #             maxS = maxCur
             #             brickType = bt
 
-
-
             topExposed = False
             botExposed = False
 
@@ -418,21 +416,19 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
                 undersideDetail = cm.hiddenUndersideDetail
 
             # add brick with new mesh data at original location
-            if split or j == 0:
+            if split:
                 m = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
                 brick = bpy.data.objects.new(brickD["name"], m)
                 brick.location = Vector(brickD["co"])
 
                 # Add edge split modifier
-                if cm.smoothCylinders and cm.studVerts > 12:
+                if cm.smoothCylinders:
                     addEdgeSplitMod(brick)
             else:
                 bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, transform=brickD["co"], undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail, returnType="bmesh")
                 tempMesh = bpy.data.meshes.new(brickD["name"])
                 bm.to_mesh(tempMesh)
                 allBrickMeshes.append(tempMesh)
-            j += 1
-
 
         # print status to terminal
         if i % denom < 1:
@@ -453,7 +449,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
         for v in allBricksObj.data.vertices:
             if not v.select:
                 vg.add([v.index], 1, "ADD")
-        if cm.smoothCylinders and cm.studVerts > 12:
+        if cm.smoothCylinders:
             addEdgeSplitMod(allBricksObj)
         bGroup.objects.link(allBricksObj)
         allBricksObj.parent = parent

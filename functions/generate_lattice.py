@@ -23,6 +23,7 @@ Created by Christopher Gearhart
 import bpy
 import bmesh
 from mathutils import Vector
+from .common_functions import drawBMesh
 
 def tupleAdd(p1, p2):
     """ returns linear sum of two given tuples """
@@ -60,8 +61,10 @@ def generateLattice(R, s, o=(0,0,0)):
                 # create verts
                 zCO = (z-zN)*zR
                 p = Vector((o[0] + xCO, o[1] + yCO, o[2] + zCO))
+                # bme.verts.new(p)
                 coordList2.append(p)
             coordList1.append(coordList2)
         coordMatrix.append(coordList1)
+    # drawBMesh(bme)
     # return coord matrix
     return coordMatrix

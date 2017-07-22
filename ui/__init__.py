@@ -103,6 +103,46 @@ class LegoModelsPanel(Panel):
         else:
             layout.operator("cmlist.list_action", icon='ZOOMIN', text="New LEGO Model").action = 'ADD'
 
+class LEGOizeAnimationPanel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "LEGOize Animation"
+    bl_idname      = "VIEW3D_PT_tools_LEGOizer_legoize_animation"
+    bl_context     = "objectmode"
+    bl_category    = "LEGOizer"
+    bl_options     = {"DEFAULT_CLOSED"}
+    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
+
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        if bversion() < '002.078.00':
+            return False
+        # cm = scn.cmlist[scn.cmlist_index]
+        # n = cm.source_name
+        # if not groupExists('LEGOizer_%(n)s' % locals()):
+        #     return False
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        split = row.split(align=True, percentage=0.5)
+        col = split.column(align=True)
+        col.prop(cm, "startFrame")
+        col = split.column(align=True)
+        col.prop(cm, "stopFrame")
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.operator("scene.legoizer_legoize", text="LEGOize Animation", icon="MOD_BUILD").action = "ANIMATE"
+
+
 class ModelTransformationPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -131,6 +171,7 @@ class ModelTransformationPanel(Panel):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
+
         col = layout.column(align=True)
         row = col.row(align=True)
         parent = bpy.data.groups['LEGOizer_%(n)s_parent' % locals()].objects[0]
@@ -178,12 +219,9 @@ class ModelSettingsPanel(Panel):
         row.prop(cm, "mergeSeed")
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(cm, "preHollow")
-        if cm.preHollow:
-            row = col.row(align=True)
-            row.prop(cm, "shellThickness")
+        # row.prop(cm, "preHollow")
+        # if cm.preHollow:
 
-        col = layout.column(align=True)
         row = col.row(align=True)
         row.label("Brick Shell:")
         row = col.row(align=True)
@@ -191,6 +229,9 @@ class ModelSettingsPanel(Panel):
         if cm.brickShell != "Inside Mesh":
             row = col.row(align=True)
             row.prop(cm, "calculationAxes", text="")
+        row = col.row(align=True)
+        row.prop(cm, "shellThickness", text="Thickness")
+        col = layout.column(align=True)
         row = col.row(align=True)
         row.prop(cm, "splitModel")
 
@@ -260,9 +301,9 @@ class DetailingPanel(Panel):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
 
-        col = layout.column(align=True)
-        row = col.row(align=True)
-        row.prop(cm, "smoothCylinders")
+        # col = layout.column(align=True)
+        # row = col.row(align=True)
+        # row.prop(cm, "smoothCylinders")
         col = layout.column(align=True)
         row = col.row(align=True)
         row.label("Studs:")
@@ -289,6 +330,43 @@ class DetailingPanel(Panel):
         row = col.row(align=True)
         row.prop(cm, "exposedUndersideDetail", text="")
 
+class SupportsPanel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "Supports"
+    bl_idname      = "VIEW3D_PT_tools_LEGOizer_supports"
+    bl_context     = "objectmode"
+    bl_category    = "LEGOizer"
+    bl_options     = {"DEFAULT_CLOSED"}
+    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
+
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        if bversion() < '002.078.00':
+            return False
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop(cm, "internalSupports", text="")
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        if cm.internalSupports == "Lattice":
+            row.prop(cm, "latticeStep")
+            row = col.row(align=True)
+            row.prop(cm, "alternateXY")
+        elif cm.internalSupports == "Columns":
+            row.prop(cm, "colStep")
+            row = col.row(align=True)
+            row.prop(cm, "colThickness")
 
 class BevelPanel(Panel):
     bl_space_type  = "VIEW_3D"

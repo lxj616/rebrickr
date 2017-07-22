@@ -50,7 +50,8 @@ class legoizerLegoize(bpy.types.Operator):
     action = bpy.props.EnumProperty(
         items=(
             ("CREATE", "Create", ""),
-            ("UPDATE", "Update", "")
+            ("UPDATE", "Update", ""),
+            ("ANIMATE", "Animate", ""),
         )
     )
 
@@ -124,7 +125,6 @@ class legoizerLegoize(bpy.types.Operator):
         elif not (cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (self.action == "UPDATE" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)):
         #    cm.lastBrickHeight == cm.brickHeight and
         #    cm.lastGap == cm.gap and
-        #    cm.lastPreHollow == cm.preHollow and
         #    cm.lastShellThickness == cm.shellThickness and
         #    cm.lastBrickShell == cm.brickShell and
         #    (cm.lastBrickShell != "Inside Mesh" or cm.lastCalculationAxes == cm.calculationAxes) and
@@ -142,10 +142,13 @@ class legoizerLegoize(bpy.types.Operator):
         #    not (self.action == "UPDATE" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)): # no bricks in model
             return{"FINISHED"}
 
+        # update scene so mesh data is available for ray casting
         if self.action == "UPDATE":
-            bpy.context.scene.objects.link(source)
+            scn.objects.link(source)
             scn.update()
-            bpy.context.scene.objects.unlink(source)
+            scn.objects.unlink(source)
+        else:
+            scn.update()
 
         # if nonexistent, create new source group and add source
         if not groupExists(LEGOizer_source_gn):
@@ -175,33 +178,43 @@ class legoizerLegoize(bpy.types.Operator):
         # update refLogo
         if cm.logoDetail == "None":
             refLogo = None
-        elif cm.lastLogoResolution == cm.logoResolution and groupExists("LEGOizer_refLogo"):
-            rlGroup = bpy.data.groups["LEGOizer_refLogo"]
-            refLogo = rlGroup.objects[1]
         else:
+            decimate = False
             if groupExists("LEGOizer_refLogo"):
                 rlGroup = bpy.data.groups["LEGOizer_refLogo"]
-                refLogoImport = rlGroup.objects[0]
-                rlGroup.objects.unlink(rlGroup.objects[1])
-                refLogo = bpy.data.objects.new(refLogoImport.name+"2", refLogoImport.data.copy())
-                rlGroup.objects.link(refLogo)
+                r = cm.logoResolution
+                success = False
+                for obj in rlGroup.objects:
+                    if obj.name == "LEGOizer_refLogo_%(r)s" % locals():
+                        refLogo = obj
+                        success = True
+                        break
+                if not success:
+                    refLogoImport = rlGroup.objects[0]
+                    rlGroup.objects.unlink(rlGroup.objects[1])
+                    refLogo = bpy.data.objects.new("LEGOizer_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
+                    rlGroup.objects.link(refLogo)
+                    decimate = True
             else:
                 # import refLogo and add to group
                 refLogoImport = importLogo()
                 scn.objects.unlink(refLogoImport)
                 rlGroup = bpy.data.groups.new("LEGOizer_refLogo")
                 rlGroup.objects.link(refLogoImport)
-                refLogo = bpy.data.objects.new(refLogoImport.name+"2", refLogoImport.data.copy())
+                r = cm.logoResolution
+                refLogo = bpy.data.objects.new("LEGOizer_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
                 rlGroup.objects.link(refLogo)
+                decimate = True
             # decimate refLogo
             # TODO: Speed this up, if possible
-            if refLogo and cm.logoResolution < 1:
+            if refLogo is not None and decimate and cm.logoResolution < 1:
                 dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
                 dMod.ratio = cm.logoResolution * 1.6
                 scn.objects.link(refLogo)
                 select(refLogo, active=refLogo)
                 bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
                 scn.objects.unlink(refLogo)
+                print("decimated")
 
         # # set up refLogoHidden and refLogoExposed based on cm.logoDetail
         # # TODO: only do the following if necessary. If no setting is changed, update button shouldn't really do much
@@ -278,26 +291,18 @@ class legoizerLegoize(bpy.types.Operator):
         # create new bricks
         R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
         # slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
-        bricksDict = makeBricksDict(source, source_details, dimensions, R, cm.preHollow)
+        bricksDict = makeBricksDict(source, source_details, dimensions, R)
         makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel)
-
+        if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
+            self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
+        if int(round((source_details.y.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
+            self.report({"WARNING"}, "Model is too small on Y axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
+        if int(round((source_details.z.distance)/(dimensions["height"]+dimensions["gap"]))) == 0:
+            self.report({"WARNING"}, "Model is too small on Z axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
         # # set final variables
-        # cm.lastBrickHeight = cm.brickHeight
-        # cm.lastGap = cm.gap
-        # cm.lastPreHollow = cm.preHollow
-        # cm.lastShellThickness = cm.shellThickness
-        # cm.lastCalculationAxes = cm.calculationAxes
-        # cm.lastBrickShell = cm.brickShell
-        # cm.lastExposedUndersideDetail = cm.exposedUndersideDetail
-        # cm.lastHiddenUndersideDetail = cm.hiddenUndersideDetail
         cm.lastLogoResolution = cm.logoResolution
         cm.lastLogoDetail = cm.logoDetail
-        # cm.lastStudVerts = cm.studVerts
-        # cm.lastStudDetail = cm.studDetail
-        # cm.lastMergeSeed = cm.mergeSeed
-        # cm.lastSmoothCylinders = cm.smoothCylinders
-        # cm.lastSplitModel = cm.splitModel
-        # cm.lastBrickType = cm.brickType
+        cm.lastSplitModel = cm.splitModel
         cm.modelIsDirty = False
         cm.buildIsDirty = False
         cm.bricksAreDirty = False

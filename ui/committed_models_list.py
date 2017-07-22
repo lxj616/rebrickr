@@ -34,7 +34,6 @@ from bpy.props import IntProperty, CollectionProperty #, StringProperty
 from bpy.types import Panel, UIList
 
 def matchProperties(cmNew, cmOld):
-    cmNew.preHollow = cmOld.preHollow
     cmNew.shellThickness = cmOld.shellThickness
     cmNew.studDetail = cmOld.studDetail
     cmNew.logoDetail = cmOld.logoDetail
@@ -45,7 +44,8 @@ def matchProperties(cmNew, cmOld):
     cmNew.brickHeight = cmOld.brickHeight
     cmNew.gap = cmOld.gap
     cmNew.mergeSeed = cmOld.mergeSeed
-    cmNew.maxBrickScale = cmOld.maxBrickScale
+    cmNew.maxBrickScale1 = cmOld.maxBrickScale1
+    cmNew.maxBrickScale2 = cmOld.maxBrickScale2
     cmNew.smoothCylinders = cmOld.smoothCylinders
     cmNew.calculationAxes = cmOld.calculationAxes
     cmNew.bevelWidth = cmOld.bevelWidth
@@ -104,21 +104,15 @@ class Uilist_actions(bpy.types.Operator):
             else:
                 item.source_name = ""
             item.id = len(scn.cmlist)
-            info = '%s added to list' % (item.name)
             matchProperties(scn.cmlist[scn.cmlist_index], scn.cmlist[last_index])
-            self.report({'INFO'}, info)
 
         elif self.action == 'DOWN' and idx < len(scn.cmlist) - 1:
-            item_next = scn.cmlist[idx+1].source_name
+            scn.cmlist.move(scn.cmlist_index, scn.cmlist_index+1)
             scn.cmlist_index += 1
-            info = 'Item %d selected' % (scn.cmlist_index + 1)
-            self.report({'INFO'}, info)
 
         elif self.action == 'UP' and idx >= 1:
-            item_prev = scn.cmlist[idx-1].source_name
+            scn.cmlist.move(scn.cmlist_index, scn.cmlist_index-1)
             scn.cmlist_index -= 1
-            info = 'Item %d selected' % (scn.cmlist_index + 1)
-            self.report({'INFO'}, info)
 
         return {"FINISHED"}
 
@@ -348,18 +342,12 @@ class CreatedModels(bpy.types.PropertyGroup):
         default="",
         update=setNameIfEmpty)
 
-    preHollow = BoolProperty(
-        name="Pre Hollow",
-        description="Hollow out LEGO model with user defined shell thickness",
-        update=dirtyBuild,
-        default=True)
-
     shellThickness = IntProperty(
         name="Shell Thickness",
         description="Thickness of the LEGO shell",
         update=dirtyBuild,
         min=1, max=100,
-        default=2)
+        default=1)
 
     studDetail = EnumProperty(
         name="Stud Detailing",
@@ -385,7 +373,7 @@ class CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBricks,
         min=0.1, max=1,
         step=1,
-        precision=2,
+        precision=1,
         default=0.2)
 
     hiddenUndersideDetail = EnumProperty(
@@ -460,76 +448,6 @@ class CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBuild,
         min=1, max=10,
         default=10)
-    # b1x1 = BoolProperty(
-    #     name="1x1",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
-    # b1x2 = BoolProperty(
-    #     name="1x2",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
-    # b1x3 = BoolProperty(
-    #     name="1x3",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
-    # b1x4 = BoolProperty(
-    #     name="1x4",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
-    # b1x6 = BoolProperty(
-    #     name="1x6",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
-    # b1x8 = BoolProperty(
-    #     name="1x8",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
-    # b1x10 = BoolProperty(
-    #     name="1x10",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
-    # b2x2 = BoolProperty(
-    #     name="2x2",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
-    # b2x3 = BoolProperty(
-    #     name="2x3",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
-    # b2x4 = BoolProperty(
-    #     name="2x4",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
-    # b2x6 = BoolProperty(
-    #     name="2x6",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
-    # b2x8 = BoolProperty(
-    #     name="2x8",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
-    # b2x10 = BoolProperty(
-    #     name="2x10",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
-    # b2x12 = BoolProperty(
-    #     name="2x12",
-    #     description="Include this brick type in model",
-    #     update=dirtyBuild,
-    #     default=True)
 
     smoothCylinders = BoolProperty(
         name="Smooth Cylinders",
@@ -543,23 +461,37 @@ class CreatedModels(bpy.types.PropertyGroup):
         update=dirtyModel,
         default=False)
 
-    # lastBrickHeight = FloatProperty(default=0)
-    # lastGap = FloatProperty(default=0)
-    # lastPreHollow = BoolProperty(default=False)
-    # lastShellThickness = IntProperty(default=0)
-    # lastCalculationAxes = StringProperty(default="")
+    internalSupports = EnumProperty(
+        name="Internal Supports",
+        description="Choose what type of bricks to use to build the model",
+        items=[("None", "None", "No internal supports"),
+              ("Lattice", "Lattice", "Use latice inside model"),
+              ("Columns", "Columns", "Use columns inside model")],
+        update=dirtyBuild,
+        default="None")
+    latticeStep = IntProperty(
+        name="Lattice Step",
+        update=dirtyBuild,
+        min=2, max=25,
+        default=2)
+    alternateXY = BoolProperty(
+        name="Alternate X and Y",
+        update=dirtyBuild,
+        default=False)
+    colThickness = IntProperty(
+        name="Column Thickness",
+        update=dirtyBuild,
+        min=1, max=25,
+        default=2)
+    colStep = IntProperty(
+        name="Column Step",
+        update=dirtyBuild,
+        min=1, max=25,
+        default=2)
+
     lastLogoDetail = StringProperty(default="None")
     lastLogoResolution = FloatProperty(default=0)
-    # lastStudDetail = StringProperty(default="None")
-    # lastStudVerts = FloatProperty(default=0)
-    # lastMergeSeed = IntProperty(default=1000)
-    # lastMaxBrickScale = IntProperty(default=10)
-    # lastExposedUndersideDetail = StringProperty(default="None")
-    # lastHiddenUndersideDetail = StringProperty(default="None")
-    # lastSmoothCylinders = BoolProperty(default=True)
-    # lastBrickShell = StringProperty(default="Inside Mesh")
-    # lastSplitModel = BoolProperty(default=False)
-    # lastBrickType = StringProperty(default="Bricks")
+    lastSplitModel = BoolProperty(default=False)
 
     # Bevel Settings
     lastBevelWidth = FloatProperty()
@@ -575,6 +507,14 @@ class CreatedModels(bpy.types.PropertyGroup):
         min=1, max=10,
         update=updateBevel)
 
+    # ANIMATION SETTINGS
+    startFrame = IntProperty(
+        name="Start Frame",
+        default=1)
+    stopFrame = IntProperty(
+        name="Stop Frame",
+        default=5)
+
     # ADVANCED SETTINGS
     brickShell = EnumProperty(
         name="Brick Shell",
@@ -585,7 +525,7 @@ class CreatedModels(bpy.types.PropertyGroup):
         update=dirtyModel,
         default="Inside Mesh")
     calculationAxes = EnumProperty(
-        name="Expanded Shell Axes",
+        name="Expanded Axes",
         description="The brick shell will be drawn on the outside in these directions",
         items=[("XYZ", "XYZ", "PLACEHOLDER"),
               ("XY", "XY", "PLACEHOLDER"),
