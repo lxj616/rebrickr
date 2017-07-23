@@ -123,6 +123,19 @@ def insertKeyframes(objList, keyframeType, frame, interpolationMode='Default', i
                 kf = fcurve.keyframe_points[idx]
                 kf.interpolation = interpolationMode
 
+def getLayersList(layerList):
+    layerList = confirmList(layerList)
+    newLayersList = [False]*20
+    for i in range(20):
+        if i in layerList:
+            newLayersList[i] = True
+    return newLayersList
+def setActiveLayers(layerList, scn=None):
+    if not scn:
+        scn = bpy.context.scene
+    newLayersList = getLayersList(layerList)
+    scn.layers = newLayersList
+
 def deselectAll():
     bpy.ops.object.select_all(action='DESELECT')
 def selectAll():
@@ -146,7 +159,6 @@ def select(objList=[], active=None, deselect=False, only=True):
             if only and len(objList) > 0:
                 deselectAll()
             # select objects in list
-            print(objList)
             for obj in objList:
                 obj.select = True
         elif deselect:

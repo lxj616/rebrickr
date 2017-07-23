@@ -57,7 +57,7 @@ def combineMeshes(meshes):
     bm.to_mesh( finalMesh )
     return finalMesh
 
-def makeBricks(parent, logo, dimensions, bricksD, split=False):
+def makeBricks(parent, logo, dimensions, bricksD, split=False, group_name=None):
     # set up variables
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -80,10 +80,14 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False):
     random.shuffle(keys)
 
     # create group for lego bricks
-    LEGOizer_bricks = 'LEGOizer_%(n)s_bricks' % locals()
+    if group_name:
+        LEGOizer_bricks = group_name
+    else:
+        LEGOizer_bricks = 'LEGOizer_%(n)s_bricks' % locals()
     if groupExists(LEGOizer_bricks):
         bpy.data.groups.remove(group=bpy.data.groups[LEGOizer_bricks], do_unlink=True)
     bGroup = bpy.data.groups.new(LEGOizer_bricks)
+
     tempMesh = bpy.data.meshes.new("tempMesh")
 
     if not split:

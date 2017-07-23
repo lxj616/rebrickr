@@ -492,6 +492,8 @@ class CreatedModels(bpy.types.PropertyGroup):
     lastLogoDetail = StringProperty(default="None")
     lastLogoResolution = FloatProperty(default=0)
     lastSplitModel = BoolProperty(default=False)
+    lastStartFrame = IntProperty(default=-1)
+    lastStopFrame = IntProperty(default=-1)
 
     # Bevel Settings
     lastBevelWidth = FloatProperty()
@@ -514,6 +516,8 @@ class CreatedModels(bpy.types.PropertyGroup):
     stopFrame = IntProperty(
         name="Stop Frame",
         default=5)
+    animated = BoolProperty(default=False)
+    modalRunning = BoolProperty(default=False)
 
     # ADVANCED SETTINGS
     brickShell = EnumProperty(

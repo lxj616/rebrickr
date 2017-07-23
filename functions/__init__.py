@@ -293,7 +293,8 @@ def makeBricksDict(source, source_details, dimensions, R):
     print("generating blueprint...")
     lScale = (source_details.x.distance, source_details.y.distance, source_details.z.distance)
     offset = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
-    coordMatrix = generateLattice(R, lScale, offset)
+    brickScale = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
+    coordMatrix = generateLattice(R, lScale, offset, brickScale=brickScale)
     # drawBMesh(makeLattice(R, lScale, offset))
     if cm.brickShell != "Inside Mesh":
         calculationAxes = cm.calculationAxes

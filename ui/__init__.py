@@ -60,9 +60,9 @@ class LegoModelsPanel(Panel):
         col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
         col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
 
-        if scn.cmlist_index != -1:
-            cm = scn.cmlist[scn.cmlist_index]
-            n = cm.source_name
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        if scn.cmlist_index != -1 and not cm.animated:
             LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
             groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
             if not groupExistsBool:
@@ -100,6 +100,9 @@ class LegoModelsPanel(Panel):
             # if groupExists(LEGOizer_bricks) and len(bpy.data.groups[LEGOizer_bricks].objects) == 0:
             #     legoizerDelete.cleanUp()
             #     bpy.data.groups.remove(bpy.data.groups[LEGOizer_bricks], do_unlink=True)
+        elif cm.animated:
+            col = layout.column(align=True)
+            col.label("Source Object: " + cm.source_name)
         else:
             layout.operator("cmlist.list_action", icon='ZOOMIN', text="New LEGO Model").action = 'ADD'
 
@@ -120,6 +123,9 @@ class LEGOizeAnimationPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
+        # groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
+        # if groupExistsBool:
+        #     return False
         # cm = scn.cmlist[scn.cmlist_index]
         # n = cm.source_name
         # if not groupExists('LEGOizer_%(n)s' % locals()):
@@ -140,7 +146,8 @@ class LEGOizeAnimationPanel(Panel):
         col.prop(cm, "stopFrame")
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.operator("scene.legoizer_legoize", text="LEGOize Animation", icon="MOD_BUILD").action = "ANIMATE"
+        if not cm.animated:
+            row.operator("scene.legoizer_legoize", text="LEGOize Animation", icon="MOD_BUILD").action = "ANIMATE"
 
 
 class ModelTransformationPanel(Panel):
