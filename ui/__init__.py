@@ -43,12 +43,14 @@ class LegoModelsPanel(Panel):
         layout = self.layout
         scn = context.scene
 
+        # if blender version is before 2.78, ask user to upgrade Blender
         if bversion() < '002.078.00':
             col = layout.column(align=True)
             col.label('ERROR: upgrade needed', icon='ERROR')
             col.label('LEGOizer requires Blender 2.78+')
             return
 
+        # draw UI list and list actions
         rows = 3
         row = layout.row()
         row.template_list("UL_items", "", scn, "cmlist", scn, "cmlist_index", rows=rows)
@@ -60,9 +62,11 @@ class LegoModelsPanel(Panel):
         col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
         col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
 
+        # draw menu options below UI list
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        if scn.cmlist_index != -1 and not cm.animated:
+        if scn.cmlist_index != -1:
+            # first, draw source object text
             LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
             groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
             if not groupExistsBool:
@@ -74,21 +78,37 @@ class LegoModelsPanel(Panel):
                 col = split.column(align=True)
                 col.operator("cmlist.set_to_active", icon="EDIT", text="")
                 col = layout.column(align=True)
-                row = col.row(align=True)
-                row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD").action = "CREATE"
             else:
                 col = layout.column(align=True)
                 col.label("Source Object: " + cm.source_name)
-                row = col.row(align=True)
-                row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL")
-                col = layout.column(align=True)
-                # row = col.row(align=True)
-                # row.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH").action = "UPDATE"
-                split = col.split(align=True, percentage=.85)
-                col = split.column(align=True)
-                col.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH").action = "UPDATE"
-                col = split.column(align=True)
-                col.operator("cmlist.select_bricks", icon="BORDER_RECT", text="")
+
+            # if use animation is selected, draw animation options
+            if cm.useAnimation:
+                if cm.animated and not cm.modalRunning:
+                    row.operator("scene.legoizer_legoize", text="Refresh Animation", icon="MOD_BUILD").action = "RUN_MODAL"
+                elif not cm.animated:
+                    row = col.row(align=True)
+                    row.operator("scene.legoizer_legoize", text="LEGOize Animation", icon="MOD_BUILD").action = "ANIMATE"
+                else:
+                    row = col.row(align=True)
+                    row.operator("scene.legoizer_delete", text="Delete LEGOized Animation", icon="CANCEL").modelType = "ANIMATION"
+                    col = layout.column(align=True)
+                    row = col.row(align=True)
+                    row.operator("scene.legoizer_legoize", text="Update Animation", icon="FILE_REFRESH").action = "UPDATE_ANIM"
+            # if use animation is not selected, draw modeling options
+            else:
+                if not groupExistsBool:
+                    row = col.row(align=True)
+                    row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD").action = "CREATE"
+                else:
+                    row = col.row(align=True)
+                    row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL")
+                    col = layout.column(align=True)
+                    split = col.split(align=True, percentage=.85)
+                    col = split.column(align=True)
+                    col.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH").action = "UPDATE_MODEL"
+                    col = split.column(align=True)
+                    col.operator("cmlist.select_bricks", icon="BORDER_RECT", text="")
 
             # sub = row.row(align=True)
             # sub.scale_x = 0.1
@@ -100,17 +120,14 @@ class LegoModelsPanel(Panel):
             # if groupExists(LEGOizer_bricks) and len(bpy.data.groups[LEGOizer_bricks].objects) == 0:
             #     legoizerDelete.cleanUp()
             #     bpy.data.groups.remove(bpy.data.groups[LEGOizer_bricks], do_unlink=True)
-        elif cm.animated:
-            col = layout.column(align=True)
-            col.label("Source Object: " + cm.source_name)
         else:
             layout.operator("cmlist.list_action", icon='ZOOMIN', text="New LEGO Model").action = 'ADD'
 
-class LEGOizeAnimationPanel(Panel):
+class AnimationPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
-    bl_label       = "LEGOize Animation"
-    bl_idname      = "VIEW3D_PT_tools_LEGOizer_legoize_animation"
+    bl_label       = "Animation"
+    bl_idname      = "VIEW3D_PT_tools_LEGOizer_animation"
     bl_context     = "objectmode"
     bl_category    = "LEGOizer"
     bl_options     = {"DEFAULT_CLOSED"}
@@ -119,9 +136,12 @@ class LEGOizeAnimationPanel(Panel):
     @classmethod
     def poll(self, context):
         scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
         if scn.cmlist_index == -1:
             return False
         if bversion() < '002.078.00':
+            return False
+        if cm.modelCreated:
             return False
         # groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
         # if groupExistsBool:
@@ -137,18 +157,23 @@ class LEGOizeAnimationPanel(Panel):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
 
+        if not cm.animated:
+            col = layout.column(align=True)
+            col.prop(cm, "useAnimation")
         col = layout.column(align=True)
+        col.active = cm.animated or cm.useAnimation
         row = col.row(align=True)
         split = row.split(align=True, percentage=0.5)
         col = split.column(align=True)
         col.prop(cm, "startFrame")
         col = split.column(align=True)
         col.prop(cm, "stopFrame")
-        col = layout.column(align=True)
-        row = col.row(align=True)
-        if not cm.animated:
-            row.operator("scene.legoizer_legoize", text="LEGOize Animation", icon="MOD_BUILD").action = "ANIMATE"
-
+        if cm.stopFrame - cm.startFrame > 10 and not cm.animated and cm.useAnimation:
+            col = layout.column(align=True)
+            col.scale_y = 0.4
+            col.label("WARNING: May take a while.")
+            col.separator()
+            col = layout.column(align=True)
 
 class ModelTransformationPanel(Panel):
     bl_space_type  = "VIEW_3D"
@@ -238,9 +263,10 @@ class ModelSettingsPanel(Panel):
             row.prop(cm, "calculationAxes", text="")
         row = col.row(align=True)
         row.prop(cm, "shellThickness", text="Thickness")
-        col = layout.column(align=True)
-        row = col.row(align=True)
-        row.prop(cm, "splitModel")
+        if not cm.useAnimation:
+            col = layout.column(align=True)
+            row = col.row(align=True)
+            row.prop(cm, "splitModel")
 
 class BrickTypesPanel(Panel):
     bl_space_type  = "VIEW_3D"

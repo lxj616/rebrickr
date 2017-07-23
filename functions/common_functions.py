@@ -101,6 +101,21 @@ def drawBMesh(BMesh, name="drawnBMesh"):
     BMesh.to_mesh(m)         # push bmesh data into m
     return obj
 
+def copyAnimationData(source, target):
+    if source.animation_data is None:
+        return
+        
+    ad = source.animation_data
+
+    properties = [p.identifier for p in ad.bl_rna.properties if not p.is_readonly]
+
+    if target.animation_data == None :
+        target.animation_data_create()
+    ad2 = target.animation_data
+
+    for prop in properties:
+        setattr(ad2, prop, getattr(ad, prop))
+
 def confirmList(objList):
     """ if single object passed, convert to list """
     if type(objList) != list:

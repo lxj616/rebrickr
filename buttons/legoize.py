@@ -26,7 +26,8 @@ import bmesh
 import os
 import math
 from ..functions import *
-from mathutils import Matrix, Vector
+from .delete import legoizerDelete
+from mathutils import Matrix, Vector, Euler
 props = bpy.props
 
 class legoizerLegoize(bpy.types.Operator):
@@ -50,14 +51,16 @@ class legoizerLegoize(bpy.types.Operator):
     action = bpy.props.EnumProperty(
         items=(
             ("CREATE", "Create", ""),
-            ("UPDATE", "Update", ""),
+            ("UPDATE_MODEL", "Update Model", ""),
+            ("UPDATE_ANIM", "Update Animation", ""),
             ("ANIMATE", "Animate", ""),
+            ("RUN_MODAL", "Run Modal Operator", "")
         )
     )
 
     def getObjectToLegoize(self):
         scn = bpy.context.scene
-        if self.action == "CREATE":
+        if self.action in ["CREATE","ANIMATE"]:
             if bpy.data.objects.find(scn.cmlist[scn.cmlist_index].source_name) == -1:
                 objToLegoize = bpy.context.active_object
             else:
@@ -68,8 +71,85 @@ class legoizerLegoize(bpy.types.Operator):
             objToLegoize = bpy.data.groups["LEGOizer_%(n)s" % locals()].objects[0]
         return objToLegoize
 
+    def getDimensionsAndBounds(self, source):
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        # get dimensions and bounds
+        source_details = bounds(source)
+        if cm.brickType == "Plates" or cm.brickType == "Bricks and Plates":
+            zScale = 0.333
+        elif cm.brickType == "Bricks":
+            zScale = 1
+        dimensions = Bricks.get_dimensions(cm.brickHeight, zScale, cm.gap)
+        return source_details, dimensions
+
+    def getRefLogo(self):
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        # update refLogo
+        if cm.logoDetail == "None":
+            refLogo = None
+        else:
+            decimate = False
+            if groupExists("LEGOizer_refLogo") and len(bpy.data.groups["LEGOizer_refLogo"].objects) > 0:
+                rlGroup = bpy.data.groups["LEGOizer_refLogo"]
+                r = cm.logoResolution
+                success = False
+                for obj in rlGroup.objects:
+                    if obj.name == "LEGOizer_refLogo_%(r)s" % locals():
+                        refLogo = obj
+                        success = True
+                        break
+                if not success:
+                    refLogoImport = rlGroup.objects[0]
+                    rlGroup.objects.unlink(rlGroup.objects[1])
+                    refLogo = bpy.data.objects.new("LEGOizer_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
+                    rlGroup.objects.link(refLogo)
+                    decimate = True
+            else:
+                # import refLogo and add to group
+                refLogoImport = importLogo()
+                scn.objects.unlink(refLogoImport)
+                rlGroup = bpy.data.groups.new("LEGOizer_refLogo")
+                rlGroup.objects.link(refLogoImport)
+                r = cm.logoResolution
+                refLogo = bpy.data.objects.new("LEGOizer_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
+                rlGroup.objects.link(refLogo)
+                decimate = True
+            # decimate refLogo
+            # TODO: Speed this up, if possible
+            if refLogo is not None and decimate and cm.logoResolution < 1:
+                dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
+                dMod.ratio = cm.logoResolution * 1.6
+                scn.objects.link(refLogo)
+                select(refLogo, active=refLogo)
+                bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
+                scn.objects.unlink(refLogo)
+                print("decimated")
+
+        return refLogo
+
+    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, curFrame=None):
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
+        bricksDict = makeBricksDict(source, source_details, dimensions, R)
+        if curFrame:
+            group_name = 'LEGOizer_%(n)s_bricks_frame_%(curFrame)s' % locals()
+        else:
+            group_name = None
+        makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, group_name=group_name, frameNum=curFrame)
+        if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
+            self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
+        if int(round((source_details.y.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
+            self.report({"WARNING"}, "Model is too small on Y axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
+        if int(round((source_details.z.distance)/(dimensions["height"]+dimensions["gap"]))) == 0:
+            self.report({"WARNING"}, "Model is too small on Z axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
+        return group_name
+
     def isValid(self, LEGOizer_bricks_gn, source):
-        if self.action == "CREATE":
+        if self.action in ["CREATE", "ANIMATE"]:
             # verify function can run
             if groupExists(LEGOizer_bricks_gn):
                 self.report({"WARNING"}, "LEGOized Model already created.")
@@ -82,7 +162,7 @@ class legoizerLegoize(bpy.types.Operator):
                 self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
 
-        if self.action == "UPDATE":
+        if self.action == "UPDATE_MODEL":
             # make sure 'LEGOizer_[source name]_bricks' group exists
             if not groupExists(LEGOizer_bricks_gn):
                 self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
@@ -92,27 +172,33 @@ class legoizerLegoize(bpy.types.Operator):
 
     def modal(self, context, event):
         """ ??? """
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+
+        if not cm.animated:
+            self.report({"INFO"}, "Modal finished")
+            cm.modalRunning = False
+            return{"FINISHED"}
 
         if context.scene.frame_current != self.lastFrame:
-            scn = context.scene
-            cm = scn.cmlist[scn.cmlist_index]
             fn0 = self.lastFrame
             fn1 = scn.frame_current
             if fn1 < cm.lastStartFrame:
-                return{"PASS_THROUGH"}
-            if fn1 > cm.lastStopFrame:
-                return{"PASS_THROUGH"}
+                fn1 = cm.lastStartFrame
+            elif fn1 > cm.lastStopFrame:
+                fn1 = cm.lastStopFrame
             self.lastFrame = fn1
+            if self.lastFrame == fn0:
+                return{"PASS_THROUGH"}
             n = cm.source_name
 
-            print("here")
             try:
                 curBricks = bpy.data.groups["LEGOizer_%(n)s_bricks_frame_%(fn1)s" % locals()]
                 for brick in curBricks.objects:
-                    brick.hide = False
+                    scn.objects.link(brick)
                 lastBricks = bpy.data.groups["LEGOizer_%(n)s_bricks_frame_%(fn0)s" % locals()]
                 for brick in lastBricks.objects:
-                    brick.hide = True
+                    scn.objects.unlink(brick)
             except Exception as e:
                 print(e)
 
@@ -128,76 +214,47 @@ class legoizerLegoize(bpy.types.Operator):
         # set up variables
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
+        cm.splitModel = False
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         LEGOizer_parent_gn = "LEGOizer_%(n)s_parent" % locals()
         LEGOizer_source_gn = "LEGOizer_%(n)s" % locals()
+        LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
 
-        if bpy.data.objects.find(scn.cmlist[scn.cmlist_index].source_name) == -1:
-            sourceOrig = bpy.context.active_object
-        else:
-            sourceOrig = bpy.data.objects[scn.cmlist[scn.cmlist_index].source_name]
+        # if bpy.data.objects.find(scn.cmlist[scn.cmlist_index].source_name) == -1:
+        #     sourceOrig = bpy.context.active_object
+        # else:
+        #     sourceOrig = bpy.data.objects[scn.cmlist[scn.cmlist_index].source_name]
+        #
+        sourceOrig = self.getObjectToLegoize()
+        if self.action == "UPDATE_ANIM":
+            scn.objects.link(sourceOrig)
 
-        # # if there are no changes to apply, simply return "FINISHED"
-        # if not (cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (self.action == "UPDATE" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)):
-        #     return{"FINISHED"}
+        # if there are no changes to apply, simply return "FINISHED"
+        if not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty:
+            return "FINISHED"
 
         # delete old bricks if present
-        if groupExists(LEGOizer_bricks_gn):
-            bricks = list(bpy.data.groups[LEGOizer_bricks_gn].objects)
-            delete(bricks)
+        if self.action == "UPDATE_ANIM":
+            legoizerDelete.cleanUp("ANIMATION")
+        dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
+        pGroup = bpy.data.groups.new(LEGOizer_parent_gn)
 
-        # update refLogo
-        if cm.logoDetail == "None":
-            refLogo = None
-        else:
-            decimate = False
-            if groupExists("LEGOizer_refLogo"):
-                rlGroup = bpy.data.groups["LEGOizer_refLogo"]
-                r = cm.logoResolution
-                success = False
-                for obj in rlGroup.objects:
-                    if obj.name == "LEGOizer_refLogo_%(r)s" % locals():
-                        refLogo = obj
-                        success = True
-                        break
-                if not success:
-                    refLogoImport = rlGroup.objects[0]
-                    rlGroup.objects.unlink(rlGroup.objects[1])
-                    refLogo = bpy.data.objects.new("LEGOizer_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
-                    rlGroup.objects.link(refLogo)
-                    decimate = True
-            else:
-                # import refLogo and add to group
-                refLogoImport = importLogo()
-                scn.objects.unlink(refLogoImport)
-                rlGroup = bpy.data.groups.new("LEGOizer_refLogo")
-                rlGroup.objects.link(refLogoImport)
-                r = cm.logoResolution
-                refLogo = bpy.data.objects.new("LEGOizer_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
-                rlGroup.objects.link(refLogo)
-                decimate = True
-            # decimate refLogo
-            # TODO: Speed this up, if possible
-            if refLogo is not None and decimate and cm.logoResolution < 1:
-                dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
-                dMod.ratio = cm.logoResolution * 1.6
-                scn.objects.link(refLogo)
-                select(refLogo, active=refLogo)
-                bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
-                scn.objects.unlink(refLogo)
-                print("decimated")
+        refLogo = self.getRefLogo()
 
         # iterate through frames of animation and generate lego model
         for i in range(cm.stopFrame - cm.startFrame + 1):
             # duplicate source for current frame and apply transformation data
             # scn.layers = getLayersList(0)
+            # source = bpy.data.objects.new(sourceOrig.name + "_" + str(i), sourceOrig.data.copy())
+            # copyAnimationData(sourceOrig, source)
             select(sourceOrig, active=sourceOrig)
             bpy.ops.object.duplicate()
             source = scn.objects.active
+            dGroup.objects.link(source)
+            source.name = sourceOrig.name + "_" + str(i)
             # source.layers = getLayersList(i+1)
             # scn.layers = getLayersList(i+1)
-            # update scene so mesh data is available for ray casting
             # apply animated transform data
             curFrame = cm.startFrame + i
             scn.frame_set(curFrame)
@@ -205,57 +262,42 @@ class legoizerLegoize(bpy.types.Operator):
             source.animation_data_clear()
             scn.update()
             # scn.layers[0] = False
-            source["previous_location"] = (source.location.to_tuple()[0]//2, source.location.to_tuple()[1]//2, source.location.to_tuple()[2]//2)
+            # scn.objects.link(source)
+            source["previous_location"] = source.location.to_tuple()
             select(source, active=source)
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             scn.update()
             scn.objects.unlink(source)
 
-            # # create new source group and add source
-            # if not groupExists(LEGOizer_source_gn):
-            #     # link source to new 'source' group
-            #     sGroup = bpy.data.groups.new(LEGOizer_source_gn)
-            #     sGroup.objects.link(source)
-            #     # unlink source from scene
-            #     scn.objects.unlink(source)
+            # get source_details and dimensions
+            source_details, dimensions = self.getDimensionsAndBounds(source)
 
-            # get cross section
-            source_details = bounds(source)
-            if cm.brickType == "Plates" or cm.brickType == "Bricks and Plates":
-                zScale = 0.333
-            elif cm.brickType == "Bricks":
-                zScale = 1
-            dimensions = Bricks.get_dimensions(cm.brickHeight, zScale, cm.gap)
-
-            # if not groupExists(LEGOizer_parent_gn):
-                # create new empty 'parent' object and add to new group
+            # set up parent for this layer
+            # TODO: Remove these from memory in the delete function, or don't use them at all
             parent = bpy.data.objects.new(LEGOizer_parent_gn + "_" + str(i), source.data.copy())
             parent.location = (source_details.x.mid + source["previous_location"][0], source_details.y.mid + source["previous_location"][1], source_details.z.mid + source["previous_location"][2])
+            pGroup.objects.link(parent)
             scn.objects.link(parent)
             scn.update()
             scn.objects.unlink(parent)
-                # pGroup = bpy.data.groups.new(LEGOizer_parent_gn)
-                # pGroup.objects.link(parent)
-            # else:
-                # parent = bpy.data.groups[LEGOizer_parent_gn].objects[0]
 
             # create new bricks
-            R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
-            bricksDict = makeBricksDict(source, source_details, dimensions, R)
-            group_name = 'LEGOizer_%(n)s_bricks_frame_%(curFrame)s' % locals()
-            makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, group_name=group_name)
+            group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, curFrame)
             for obj in bpy.data.groups[group_name].objects:
-                obj.hide = True
+                scn.objects.unlink(obj)
             scn.update()
-            if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
-                self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
-            if int(round((source_details.y.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
-                self.report({"WARNING"}, "Model is too small on Y axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
-            if int(round((source_details.z.distance)/(dimensions["height"]+dimensions["gap"]))) == 0:
-                self.report({"WARNING"}, "Model is too small on Z axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
+
+            print("completed frame " + str(curFrame))
+
+        # create new source group and add source
+        if not groupExists(LEGOizer_source_gn):
+            # link source to new 'source' group
+            sGroup = bpy.data.groups.new(LEGOizer_source_gn)
+            sGroup.objects.link(sourceOrig)
         scn.objects.unlink(sourceOrig)
         cm.lastStartFrame = cm.startFrame
         cm.lastStopFrame = cm.stopFrame
+        cm.animated = True
 
     def legoizeModel(self):
         # set up variables
@@ -268,22 +310,24 @@ class legoizerLegoize(bpy.types.Operator):
         LEGOizer_source_gn = "LEGOizer_%(n)s" % locals()
 
         # if there are no changes to apply, simply return "FINISHED"
-        if not (self.action == "CREATE" or cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (self.action == "UPDATE" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)):
+        if not (self.action == "CREATE" or cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (self.action == "UPDATE_MODEL" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)):
             return{"FINISHED"}
 
         # delete old bricks if present
-        if groupExists(LEGOizer_bricks_gn):
-            bricks = list(bpy.data.groups[LEGOizer_bricks_gn].objects)
-            delete(bricks)
+        if self.action == "UPDATE_MODEL":
+            legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
 
         if self.action == "CREATE":
             source["previous_location"] = source.location.to_tuple()
+            rot = source.rotation_euler.copy()
+            s = source.scale.to_tuple()
             source.location = (0,0,0)
             select(source, active=source)
             bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+            scn.update()
 
         # update scene so mesh data is available for ray casting
-        if self.action == "UPDATE":
+        if self.action == "UPDATE_MODEL":
             scn.objects.link(source)
             scn.update()
             scn.objects.unlink(source)
@@ -298,13 +342,8 @@ class legoizerLegoize(bpy.types.Operator):
             # unlink source from scene
             scn.objects.unlink(source)
 
-        # get cross section
-        source_details = bounds(source)
-        if cm.brickType == "Plates" or cm.brickType == "Bricks and Plates":
-            zScale = 0.333
-        elif cm.brickType == "Bricks":
-            zScale = 1
-        dimensions = Bricks.get_dimensions(cm.brickHeight, zScale, cm.gap)
+        # get source_details and dimensions
+        source_details, dimensions = self.getDimensionsAndBounds(source)
 
         if not groupExists(LEGOizer_parent_gn):
             # create new empty 'parent' object and add to new group
@@ -316,74 +355,36 @@ class legoizerLegoize(bpy.types.Operator):
             parent = bpy.data.groups[LEGOizer_parent_gn].objects[0]
 
         # update refLogo
-        if cm.logoDetail == "None":
-            refLogo = None
-        else:
-            decimate = False
-            if groupExists("LEGOizer_refLogo"):
-                rlGroup = bpy.data.groups["LEGOizer_refLogo"]
-                r = cm.logoResolution
-                success = False
-                for obj in rlGroup.objects:
-                    if obj.name == "LEGOizer_refLogo_%(r)s" % locals():
-                        refLogo = obj
-                        success = True
-                        break
-                if not success:
-                    refLogoImport = rlGroup.objects[0]
-                    rlGroup.objects.unlink(rlGroup.objects[1])
-                    refLogo = bpy.data.objects.new("LEGOizer_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
-                    rlGroup.objects.link(refLogo)
-                    decimate = True
-            else:
-                # import refLogo and add to group
-                refLogoImport = importLogo()
-                scn.objects.unlink(refLogoImport)
-                rlGroup = bpy.data.groups.new("LEGOizer_refLogo")
-                rlGroup.objects.link(refLogoImport)
-                r = cm.logoResolution
-                refLogo = bpy.data.objects.new("LEGOizer_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
-                rlGroup.objects.link(refLogo)
-                decimate = True
-            # decimate refLogo
-            # TODO: Speed this up, if possible
-            if refLogo is not None and decimate and cm.logoResolution < 1:
-                dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
-                dMod.ratio = cm.logoResolution * 1.6
-                scn.objects.link(refLogo)
-                select(refLogo, active=refLogo)
-                bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
-                scn.objects.unlink(refLogo)
-                print("decimated")
+        refLogo = self.getRefLogo()
 
         # create new bricks
-        R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
-        # slicesDict = [{"slices":CS_slices, "axis":axis, "R":R, "lScale":lScale}]
-        bricksDict = makeBricksDict(source, source_details, dimensions, R)
-        makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel)
-        if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
-            self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
-        if int(round((source_details.y.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
-            self.report({"WARNING"}, "Model is too small on Y axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
-        if int(round((source_details.z.distance)/(dimensions["height"]+dimensions["gap"]))) == 0:
-            self.report({"WARNING"}, "Model is too small on Z axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
+        self.createNewBricks(source, parent, source_details, dimensions, refLogo)
+
+        cm.modelCreated = True
 
     def execute(self, context):
         # get start time
         startTime = time.time()
 
+        if self.action == "RUN_MODAL":
+            context.window_manager.modal_handler_add(self)
+            cm.modalRunning = True
+            self.lastFrame = cm.lastStartFrame
+            return{"RUNNING_MODAL"}
+
         # set up variables
-        # scn = context.scene
-        # cm = scn.cmlist[scn.cmlist_index]
-        # n = cm.source_name
-        # LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         # LEGOizer_parent_gn = "LEGOizer_%(n)s_parent" % locals()
         # LEGOizer_source_gn = "LEGOizer_%(n)s" % locals()
 
-        # if not self.isValid(LEGOizer_bricks_gn, source):
-        #     return {"CANCELLED"}
-        #
-        if self.action != "ANIMATE":
+        source = self.getObjectToLegoize()
+        if not self.isValid(LEGOizer_bricks_gn, source):
+            return {"CANCELLED"}
+
+        if self.action not in ["ANIMATE", "UPDATE_ANIM"]:
             self.legoizeModel()
         else:
             self.legoizeAnimation()
@@ -403,7 +404,7 @@ class legoizerLegoize(bpy.types.Operator):
         # STOPWATCH CHECK
         stopWatch("Total Time Elapsed", time.time()-startTime)
 
-        if self.action == "ANIMATE":
+        if self.action in ["ANIMATE", "UPDATE_ANIM"]:
             context.window_manager.modal_handler_add(self)
             cm.modalRunning = True
             self.lastFrame = cm.startFrame

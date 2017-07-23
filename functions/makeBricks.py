@@ -57,7 +57,7 @@ def combineMeshes(meshes):
     bm.to_mesh( finalMesh )
     return finalMesh
 
-def makeBricks(parent, logo, dimensions, bricksD, split=False, group_name=None):
+def makeBricks(parent, logo, dimensions, bricksD, split=False, group_name=None, frameNum=None):
     # set up variables
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -446,7 +446,12 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, group_name=None):
 
     if not split:
         m = combineMeshes(allBrickMeshes)
-        name = 'LEGOizer_%(n)s_bricks_combined' % locals()
+        if frameNum:
+            frameNum = str(frameNum)
+            fn = "_frame_%(frameNum)s" % locals()
+        else:
+            fn = ""
+        name = 'LEGOizer_%(n)s_bricks_combined%(fn)s' % locals()
         allBricksObj = bpy.data.objects.new(name, m)
         # create vert group for bevel mod (assuming only logo verts are selected):
         vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())

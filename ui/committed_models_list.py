@@ -516,8 +516,10 @@ class CreatedModels(bpy.types.PropertyGroup):
     stopFrame = IntProperty(
         name="Stop Frame",
         default=5)
-    animated = BoolProperty(default=False)
-    modalRunning = BoolProperty(default=False)
+    useAnimation = BoolProperty(
+        name="Use Animation",
+        description="LEGOize object animation from start to stop frame (WARNING: Calculation takes time, and may result in large blend file size)",
+        default=False)
 
     # ADVANCED SETTINGS
     brickShell = EnumProperty(
@@ -541,6 +543,10 @@ class CreatedModels(bpy.types.PropertyGroup):
         update=dirtyModel,
         default="XY")
 
+    modelCreated = BoolProperty(default=False)
+    animated = BoolProperty(default=False)
+    modalRunning = BoolProperty(default=False)
+    
     modelIsDirty = BoolProperty(default=True)
     buildIsDirty = BoolProperty(default=True)
     bricksAreDirty = BoolProperty(default=True)
