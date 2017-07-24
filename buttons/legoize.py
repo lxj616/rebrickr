@@ -58,6 +58,55 @@ class legoizerLegoize(bpy.types.Operator):
         )
     )
 
+    def modal(self, context, event):
+        """ ??? """
+        scn = context.scene
+
+        if len(self.lastFrame) != len(scn.cmlist):
+            self.lastFrame = [scn.frame_current-1]*len(scn.cmlist)
+
+        for i,cm in enumerate(scn.cmlist):
+            if cm.animated:
+                if context.scene.frame_current != self.lastFrame[i]:
+                    fn0 = self.lastFrame[i]
+                    fn1 = scn.frame_current
+                    if fn1 < cm.lastStartFrame:
+                        fn1 = cm.lastStartFrame
+                    elif fn1 > cm.lastStopFrame:
+                        fn1 = cm.lastStopFrame
+                    self.lastFrame[i] = fn1
+                    if self.lastFrame[i] == fn0:
+                        continue
+                    n = cm.source_name
+
+                    try:
+                        curBricks = bpy.data.groups["LEGOizer_%(n)s_bricks_frame_%(fn1)s" % locals()]
+                        for brick in curBricks.objects:
+                            brick.hide = False
+                            # scn.objects.link(brick)
+                    except Exception as e:
+                        print(e)
+                    try:
+                        lastBricks = bpy.data.groups["LEGOizer_%(n)s_bricks_frame_%(fn0)s" % locals()]
+                        for brick in lastBricks.objects:
+                            brick.hide = True
+                            # scn.objects.unlink(brick)
+                            brick.select = False
+                    except Exception as e:
+                        print(e)
+
+        if event.type in {"ESC"} and event.shift:
+            scn.modalRunning = False
+            bpy.context.window_manager["modal_running"] = False
+            self.report({"INFO"}, "Modal Finished")
+            return{"FINISHED"}
+        # if scn.cmlist_index == -1:
+        #     scn.modalRunning = False
+        #     bpy.context.window_manager["modal_running"] = False
+        #     self.report({"INFO"}, "Modal Finished")
+        #     return{"FINISHED"}
+        return {"PASS_THROUGH"}
+
     def getObjectToLegoize(self):
         scn = bpy.context.scene
         if self.action in ["CREATE","ANIMATE"]:
@@ -394,6 +443,12 @@ class legoizerLegoize(bpy.types.Operator):
         # LEGOizer_parent_gn = "LEGOizer_%(n)s_parent" % locals()
         # LEGOizer_source_gn = "LEGOizer_%(n)s" % locals()
 
+        if self.action == "RUN_MODAL" and not modalRunning():
+            self.lastFrame = []
+            bpy.context.window_manager["modal_running"] = True
+            context.window_manager.modal_handler_add(self)
+            return {"RUNNING_MODAL"}
+
         source = self.getObjectToLegoize()
         if not self.isValid(cm, source, LEGOizer_bricks_gn):
             return {"CANCELLED"}
@@ -404,7 +459,6 @@ class legoizerLegoize(bpy.types.Operator):
             self.legoizeAnimation()
 
         # # set final variables
-        stopAnimationModal()
         cm.lastLogoResolution = cm.logoResolution
         cm.lastLogoDetail = cm.logoDetail
         cm.lastSplitModel = cm.splitModel
@@ -417,4 +471,14 @@ class legoizerLegoize(bpy.types.Operator):
         # STOPWATCH CHECK
         stopWatch("Total Time Elapsed", time.time()-startTime)
 
-        return{"FINISHED"}
+        if not modalRunning():
+            self.lastFrame = []
+            bpy.context.window_manager["modal_running"] = True
+            context.window_manager.modal_handler_add(self)
+            return {"RUNNING_MODAL"}
+        else:
+            return{"FINISHED"}
+
+    def cancel(self, context):
+        scn = context.scene
+        bpy.context.window_manager["modal_running"] = False

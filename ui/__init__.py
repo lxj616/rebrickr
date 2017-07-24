@@ -26,8 +26,6 @@ from bpy.props import *
 from .committed_models_list import *
 from ..buttons.delete import legoizerDelete
 from ..functions import *
-from ..lib import common_utilities
-from ..lib.common_utilities import bversion
 props = bpy.props
 
 class LegoModelsPanel(Panel):
@@ -90,7 +88,7 @@ class LegoModelsPanel(Panel):
                     if not modalRunning():
                         col = layout.column(align=True)
                         row = col.row(align=True)
-                        row.operator("scene.legoizer_run_animation", text="Show Animation", icon="MOD_BUILD")
+                        row.operator("scene.legoizer_legoize", text="Show Animation", icon="MOD_BUILD").action = "RUN_MODAL"
                     else:
                         col = layout.column(align=True)
                         row = col.row(align=True)

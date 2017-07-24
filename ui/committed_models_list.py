@@ -74,7 +74,7 @@ class Uilist_actions(bpy.types.Operator):
     #         if cm.animated:
     #             return False
     #     return True
-    #
+    
     def invoke(self, context, event):
 
         scn = context.scene
