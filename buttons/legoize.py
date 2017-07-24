@@ -169,7 +169,7 @@ class legoizerLegoize(bpy.types.Operator):
             self.report({"WARNING"}, "Model is too small on Z axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
         return group_name
 
-    def isValid(self, LEGOizer_bricks_gn, source):
+    def isValid(self, cm, source, LEGOizer_bricks_gn,):
         if self.action in ["CREATE", "ANIMATE"]:
             # verify function can run
             if groupExists(LEGOizer_bricks_gn):
@@ -182,6 +182,13 @@ class legoizerLegoize(bpy.types.Operator):
             if source.type != "MESH":
                 self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
+
+        if self.action in ["ANIMATE", "UPDATE_ANIM"]:
+            # verify start frame is less than stop frame
+            if cm.startFrame > cm.stopFrame:
+                self.report({"ERROR"}, "Start frame must be less than or equal to stop frame (see animation tab below).")
+                return False
+            # TODO: Alert user to bake fluid/cloth simulation before attempting to LEGOize
 
         if self.action == "UPDATE_MODEL":
             # make sure 'LEGOizer_[source name]_bricks' group exists
@@ -356,7 +363,7 @@ class legoizerLegoize(bpy.types.Operator):
         # LEGOizer_source_gn = "LEGOizer_%(n)s" % locals()
 
         source = self.getObjectToLegoize()
-        if not self.isValid(LEGOizer_bricks_gn, source):
+        if not self.isValid(cm, source, LEGOizer_bricks_gn):
             return {"CANCELLED"}
 
         if self.action not in ["ANIMATE", "UPDATE_ANIM"]:

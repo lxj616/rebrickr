@@ -48,6 +48,9 @@ def matchProperties(cmNew, cmOld):
     cmNew.calculationAxes = cmOld.calculationAxes
     cmNew.bevelWidth = cmOld.bevelWidth
     cmNew.bevelResolution = cmOld.bevelResolution
+    cmNew.useAnimation = cmOld.useAnimation
+    cmNew.startFrame = cmOld.startFrame
+    cmNew.stopFrame = cmOld.stopFrame
 
 # ui list item actions
 class Uilist_actions(bpy.types.Operator):
@@ -112,7 +115,11 @@ class Uilist_actions(bpy.types.Operator):
                 item.source_name = ""
             item.id = len(scn.cmlist)
             item.idx = len(scn.cmlist)-1
-            matchProperties(scn.cmlist[scn.cmlist_index], scn.cmlist[last_index])
+            if last_index == -1:
+                item.startFrame = scn.frame_start
+                item.stopFrame = scn.frame_end
+            else:
+                matchProperties(scn.cmlist[scn.cmlist_index], scn.cmlist[last_index])
 
         elif self.action == 'DOWN' and idx < len(scn.cmlist) - 1:
             scn.cmlist.move(scn.cmlist_index, scn.cmlist_index+1)
@@ -340,7 +347,6 @@ def dirtyBricks(self, context):
     cm = scn.cmlist[scn.cmlist_index]
     cm.bricksAreDirty = True
 
-
 # Create custom property group
 class CreatedModels(bpy.types.PropertyGroup):
     name = StringProperty(update=uniquifyName)
@@ -523,10 +529,12 @@ class CreatedModels(bpy.types.PropertyGroup):
     # ANIMATION SETTINGS
     startFrame = IntProperty(
         name="Start Frame",
+        min=0, max=500000,
         default=1)
     stopFrame = IntProperty(
         name="Stop Frame",
-        default=5)
+        min=0, max=500000,
+        default=10)
     useAnimation = BoolProperty(
         name="Use Animation",
         description="LEGOize object animation from start to stop frame (WARNING: Calculation takes time, and may result in large blend file size)",
