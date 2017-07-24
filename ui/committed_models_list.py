@@ -117,7 +117,7 @@ class Uilist_actions(bpy.types.Operator):
             item.idx = len(scn.cmlist)-1
             if last_index == -1:
                 item.startFrame = scn.frame_start
-                item.stopFrame = scn.frame_end
+                item.stopFrame = min([scn.frame_start + 10, scn.frame_end])
             else:
                 matchProperties(scn.cmlist[scn.cmlist_index], scn.cmlist[last_index])
 

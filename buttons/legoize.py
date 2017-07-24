@@ -186,8 +186,11 @@ class legoizerLegoize(bpy.types.Operator):
 
     def isValid(self, cm, source, LEGOizer_bricks_gn,):
         if cm.brickType == "Custom":
+            if cm.customObjectName == "":
+                self.report({"WARNING"}, "Custom brick type object not specified.")
+                return False
             if bpy.data.objects.find(cm.customObjectName) == -1:
-                self.report({"WARNING"}, "Custom brick type object could not be found in file.")
+                self.report({"WARNING"}, "Custom brick type object could not be found.")
                 return False
             if bpy.data.objects[cm.customObjectName].type != "MESH":
                 self.report({"WARNING"}, "Custom brick type object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
@@ -252,7 +255,10 @@ class legoizerLegoize(bpy.types.Operator):
 
         parent0 = self.getParent(LEGOizer_parent_gn, sourceOrig, sourceOrig.location.to_tuple())
 
-        refLogo = self.getRefLogo()
+        if cm.brickType != "Custom":
+            refLogo = self.getRefLogo()
+        else:
+            refLogo = None
 
         # iterate through frames of animation and generate lego model
         for i in range(cm.stopFrame - cm.startFrame + 1):
@@ -366,7 +372,10 @@ class legoizerLegoize(bpy.types.Operator):
         parent = self.getParent(LEGOizer_parent_gn, source, parentLoc)
 
         # update refLogo
-        refLogo = self.getRefLogo()
+        if cm.brickType != "Custom":
+            refLogo = self.getRefLogo()
+        else:
+            refLogo = None
 
         # create new bricks
         self.createNewBricks(source, parent, source_details, dimensions, refLogo)
