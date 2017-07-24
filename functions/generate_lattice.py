@@ -30,12 +30,11 @@ def tupleAdd(p1, p2):
     return tuple(x+y for x,y in zip(p1, p2))
 
 # R = resolution, s = 3D scale tuple, o = offset lattice center from origin
-def generateLattice(R, s, o=(0,0,0), brickScale=None):
+def generateLattice(R, s, o=(0,0,0)):
     # TODO: Raise exception if R is less than 2
     # bme = bmesh.new()
 
-    if brickScale:
-        o = (o[0] - (o[0] % brickScale[0]), o[1] - (o[1] % brickScale[1]), o[2] - (o[2] % brickScale[2]))
+    o = (o[0] - (o[0] % R[0]), o[1] - (o[1] % R[1]), o[2] - (o[2] % R[2]))
     # initialize variables
     coordMatrix = []
     xR = R[0]
@@ -57,15 +56,15 @@ def generateLattice(R, s, o=(0,0,0), brickScale=None):
     for x in range(xL):
         coordList1 = []
         xCO = (x-xN)*xR
-        xCO -= xCO % brickScale[0]
+        xCO -= xCO % R[0]
         for y in range(yL):
             coordList2 = []
             yCO = (y-yN)*yR
-            yCO -= yCO % brickScale[1]
+            yCO -= yCO % R[1]
             for z in range(zL):
                 # create verts
                 zCO = (z-zN)*zR
-                zCO -= zCO % brickScale[2]
+                zCO -= zCO % R[2]
                 p = Vector((o[0] + xCO, o[1] + yCO, o[2] + zCO))
                 # bme.verts.new(p)
                 coordList2.append(p)

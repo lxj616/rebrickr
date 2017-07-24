@@ -126,7 +126,7 @@ def rayObjIntersections(point,direction,edgeLen,ob):
     if count%2 == 0:
         outside = True
     # return helpful information
-    return not outside, edgeIntersects, intersections, nextIntersection
+    return not outside, edgeIntersects, intersections, nextIntersection, index
 
 def updateBFMatrix(x0, y0, z0, coordMatrix, brickFreqMatrix, brickShell, source, x1, y1, z1, inside=None):
     orig = coordMatrix[x0][y0][z0]
@@ -138,7 +138,8 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, brickFreqMatrix, brickShell, source,
     ray = rayEnd - orig
     edgeLen = ray.length
 
-    origInside, edgeIntersects, intersections, nextIntersection = rayObjIntersections(orig,ray,edgeLen,source)
+    origInside, edgeIntersects, intersections, nextIntersection, index = rayObjIntersections(orig,ray,edgeLen,source)
+
     if origInside:
         if brickFreqMatrix[x0][y0][z0] == 0:
             brickFreqMatrix[x0][y0][z0] = -1
@@ -300,17 +301,13 @@ def makeBricksDict(source, source_details, dimensions, R):
     ct = time.time()
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
-    # # set refBricks
-    # refBrickHidden = refBricks[0]
-    # refBrickUpper = refBricks[1]
-    # refBrickLower = refBricks[2]
-    # refBrickUpperLower = refBricks[3]
     # get lattice bmesh
     print("generating blueprint...")
     lScale = (source_details.x.distance, source_details.y.distance, source_details.z.distance)
     offset = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
-    brickScale = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
-    coordMatrix = generateLattice(R, lScale, offset, brickScale=brickScale)
+    if cm.brickType == "Custom":
+        R = (R[0] * cm.distOffsetX, R[1] * cm.distOffsetY, R[2] * cm.distOffsetZ)
+    coordMatrix = generateLattice(R, lScale, offset)
     # drawBMesh(makeLattice(R, lScale, offset))
     if cm.brickShell != "Inside Mesh":
         calculationAxes = cm.calculationAxes
@@ -336,21 +333,6 @@ def makeBricksDict(source, source_details, dimensions, R):
                 co = coList[x][y][z]
                 if co != -1:
                     i += 1
-                    # # brick = bricks.new(name='LEGOizer_%(n)s_brick_%(i)s' % locals(), location=Vector(co))
-                    # if (z != 0 and brickFreqMatrix[x][y][z-1] != 0) and (z != len(coList[0][0])-1 and brickFreqMatrix[x][y][z+1] != 0):
-                    #     brickMesh = refBrickHidden.data
-                    #     # brick.update_data(refBrickHidden.data)
-                    # elif (z != 0 and brickFreqMatrix[x][y][z-1] != 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0):
-                    #     brickMesh = refBrickUpper.data
-                    #     # brick.update_data(refBrickUpper.data)
-                    # elif (z == 0 or brickFreqMatrix[x][y][z-1] == 0) and (z != len(coList[0][0])-1 and brickFreqMatrix[x][y][z+1] != 0):
-                    #     brickMesh = refBrickLower.data
-                    #     # brick.update_data(refBrickLower.data)
-                    # elif (z == 0 or brickFreqMatrix[x][y][z-1] == 0) and (z == len(coList[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0):
-                    #     brickMesh = refBrickUpperLower.data
-                    #     # brick.update_data(refBrickUpperLower.data)
-                    # else:
-                    #     print("shouldn't get here")
                     n = cm.source_name
                     j = str(i+1)
                     brickDict[str(x) + "," + str(y) + "," + str(z)] = {

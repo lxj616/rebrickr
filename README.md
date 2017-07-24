@@ -1,6 +1,6 @@
 # README
 
-Blender add-on for automated generation of LEGO Bricks from object (Blender version: 2.78c)
+Blender add-on for automated generation of LEGO Bricks from mesh objects (Blender version: 2.78c)
 
 ## LEGOizer
   * Features:
@@ -22,6 +22,4 @@ Blender add-on for automated generation of LEGO Bricks from object (Blender vers
         * Apply unlimited materials or just LEGO material closest to original
       * Prefer overlapping and staggering over stacking of bricks
     * Priority 4:
-      * New feature: frame-by-frame generation of LEGO models (like the explosions in the LEGO Movie) for particle systems or animated objects
       * New feature: SNOT (studs not on top) functionality
-      * Allow for custom object to generate model from

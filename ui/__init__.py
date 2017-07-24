@@ -299,17 +299,38 @@ class BrickTypesPanel(Panel):
         row = col.row(align=True)
         row.prop(cm, "brickType", text="")
 
-        col = layout.column(align=True)
-        col.label("Max Brick Scales:")
-        split = col.split(align=True, percentage=0.5)
+        if cm.brickType == "Custom":
+            col = layout.column(align=True)
+            row = col.row(align=True)
+            row.prop_search(cm, "customObjectName", scn, "objects", text='')
 
-        col1 = split.column(align=True)
-        row1 = col1.row(align=True)
-        row1.prop(cm, "maxBrickScale1", text="1x")
+            col = layout.column(align=True)
+            col.label("Distance Offset:")
+            split = col.split(align=True, percentage=0.333)
 
-        col2 = split.column(align=True)
-        row2 = col2.row(align=True)
-        row2.prop(cm, "maxBrickScale2", text="2x")
+            col = split.column(align=True)
+            row = col.row(align=True)
+            row.prop(cm, "distOffsetX", text="X")
+
+            col = split.column(align=True)
+            row = col.row(align=True)
+            row.prop(cm, "distOffsetY", text="Y")
+
+            col = split.column(align=True)
+            row = col.row(align=True)
+            row.prop(cm, "distOffsetZ", text="Z")
+        else:
+            col = layout.column(align=True)
+            col.label("Max Brick Scales:")
+            split = col.split(align=True, percentage=0.5)
+
+            col1 = split.column(align=True)
+            row1 = col1.row(align=True)
+            row1.prop(cm, "maxBrickScale1", text="1x")
+
+            col2 = split.column(align=True)
+            row2 = col2.row(align=True)
+            row2.prop(cm, "maxBrickScale2", text="2x")
 
 
 
@@ -329,6 +350,9 @@ class DetailingPanel(Panel):
         if scn.cmlist_index == -1:
             return False
         if bversion() < '002.078.00':
+            return False
+        cm = scn.cmlist[scn.cmlist_index]
+        if cm.brickType == "Custom":
             return False
         return True
 

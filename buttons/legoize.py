@@ -79,7 +79,7 @@ class legoizerLegoize(bpy.types.Operator):
         if not skipDimensions:
             if cm.brickType == "Plates" or cm.brickType == "Bricks and Plates":
                 zScale = 0.333
-            elif cm.brickType == "Bricks":
+            elif cm.brickType in ["Bricks", "Custom"]:
                 zScale = 1
             dimensions = Bricks.get_dimensions(cm.brickHeight, zScale, cm.gap)
             return source_details, dimensions
@@ -154,13 +154,23 @@ class legoizerLegoize(bpy.types.Operator):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
+        if cm.brickType == "Custom":
+            customObj = bpy.data.objects[cm.customObjectName]
+            select(customObj, active=customObj)
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            customObj_details = bounds(customObj)
+            scale = cm.brickHeight/customObj_details.z.distance
+            R = (scale * customObj_details.x.distance + dimensions["gap"], scale * customObj_details.y.distance + dimensions["gap"], scale * customObj_details.z.distance + dimensions["gap"])
+            print(R)
+        else:
+            customObj_details = None
+            R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
         bricksDict = makeBricksDict(source, source_details, dimensions, R)
         if curFrame:
             group_name = 'LEGOizer_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
             group_name = None
-        makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, group_name=group_name, frameNum=curFrame)
+        makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customObj=customObj, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame)
         if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
             self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
         if int(round((source_details.y.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
@@ -170,6 +180,14 @@ class legoizerLegoize(bpy.types.Operator):
         return group_name
 
     def isValid(self, cm, source, LEGOizer_bricks_gn,):
+        if cm.brickType == "Custom":
+            if bpy.data.objects.find(cm.customObjectName) == -1:
+                self.report({"WARNING"}, "Custom brick type object could not be found in file.")
+                return False
+            if bpy.data.objects[cm.customObjectName].type != "MESH":
+                self.report({"WARNING"}, "Custom brick type object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
+                return False
+
         if self.action in ["CREATE", "ANIMATE"]:
             # verify function can run
             if groupExists(LEGOizer_bricks_gn):
@@ -276,7 +294,7 @@ class legoizerLegoize(bpy.types.Operator):
             scn.objects.unlink(parent)
 
             # create new bricks
-            group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, curFrame)
+            group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, curFrame=curFrame)
             for obj in bpy.data.groups[group_name].objects:
                 obj.hide = True
 

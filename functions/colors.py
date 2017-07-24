@@ -24,29 +24,30 @@ import bpy
 
 def getColors():
     colors = {}
-    colors["LEGO Plastic Black"] =
-    colors["LEGO Plastic Bright Green"] =
-    colors["LEGO Plastic Brown"] =
-    colors["LEGO Plastic Dark Azur"] =
-    colors["LEGO Plastic Dark Green"] =
-    colors["LEGO Plastic Dark Grey"] =
-    colors["LEGO Plastic Dark Red"] =
-    colors["LEGO Plastic Gold"] =
-    colors["LEGO Plastic Green"] =
-    colors["LEGO Plastic Light Grey"] =
-    colors["LEGO Plastic Lime"] =
-    colors["LEGO Plastic Orange"] =
-    colors["LEGO Plastic Pink"] =
-    colors["LEGO Plastic Purple"] =
-    colors["LEGO Plastic Red"] =
-    colors["LEGO Plastic Tan"] =
-    colors["LEGO Plastic Trans-Blue"] =
-    colors["LEGO Plastic Trans-Clear"] =
-    colors["LEGO Plastic Trans-Light Green"] =
-    colors["LEGO Plastic Trans-Red"] =
-    colors["LEGO Plastic Trans-Yellow"] =
-    colors["LEGO Plastic White"] =
-    colors["LEGO Plastic Yellow"] =
+    colors["LEGO Plastic Black"] = (0, 0.0009106, 0.002)
+    colors["LEGO Plastic Blue"] = (0.033, 0.098, 0.402)
+    colors["LEGO Plastic Bright Green"] = ()
+    colors["LEGO Plastic Brown"] = ()
+    colors["LEGO Plastic Dark Azur"] = ()
+    colors["LEGO Plastic Dark Green"] = ()
+    colors["LEGO Plastic Dark Grey"] = ()
+    colors["LEGO Plastic Dark Red"] = ()
+    colors["LEGO Plastic Gold"] = ()
+    colors["LEGO Plastic Green"] = ()
+    colors["LEGO Plastic Light Grey"] = ()
+    colors["LEGO Plastic Lime"] = ()
+    colors["LEGO Plastic Orange"] = ()
+    colors["LEGO Plastic Pink"] = ()
+    colors["LEGO Plastic Purple"] = ()
+    colors["LEGO Plastic Red"] = ()
+    colors["LEGO Plastic Tan"] = ()
+    colors["LEGO Plastic Trans-Blue"] = ()
+    colors["LEGO Plastic Trans-Clear"] = ()
+    colors["LEGO Plastic Trans-Light Green"] = ()
+    colors["LEGO Plastic Trans-Red"] = ()
+    colors["LEGO Plastic Trans-Yellow"] = ()
+    colors["LEGO Plastic White"] = ()
+    colors["LEGO Plastic Yellow"] = ()
 
 
 
@@ -79,9 +80,13 @@ def getMaterial(polygon):
     print("face", polygon.index, "material_index", polygon.material_index)
     slot = obj.material_slots[polygon.material_index]
     mat = slot.material
+
     if mat is not None:
-        materialD["RGB"] = mat.diffuse_color
-        materialD["Alpha"] = mat.alpha
+        if matType == "DIFFUSE_BSDF":
+            materialD["RGB"] = mat.node_tree.nodes.find('Diffuse BSDF')
+        elif matType == "DIFFUSE":
+            materialD["RGB"] = mat.diffuse_color
+            materialD["Alpha"] = mat.alpha
         return materialD
     else:
         return None

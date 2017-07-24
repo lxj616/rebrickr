@@ -332,6 +332,11 @@ def updateBevel(self, context):
     except:
         pass
 
+def dirtyAnim(self, context):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    cm.animIsDirty = True
+
 def dirtyModel(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -448,10 +453,39 @@ class CreatedModels(bpy.types.PropertyGroup):
         name="Brick Type",
         description="Choose what type of bricks to use to build the model",
         items=[("Plates", "Plates", "Use plates to build the model"),
-              ("Bricks", "Bricks", "Use bricks to build the model")],
+              ("Bricks", "Bricks", "Use bricks to build the model"),
               #("Bricks and Plates", "Bricks and Plates", "Use bricks and plates to build the model")],
+              ("Custom", "Custom", "Use custom object to build the model")],
         update=dirtyModel,
         default="Bricks")
+
+    distOffsetX = FloatProperty(
+        name="X",
+        description="Distance Offset X",
+        update=dirtyModel,
+        precision=3,
+        min=0.001, max=1,
+        default=1)
+    distOffsetY = FloatProperty(
+        name="Y",
+        description="Distance Offset Y",
+        update=dirtyModel,
+        precision=3,
+        min=0.001, max=1,
+        default=1)
+    distOffsetZ = FloatProperty(
+        name="Z",
+        description="Distance Offset Z",
+        update=dirtyModel,
+        precision=3,
+        min=0.001, max=1,
+        default=1)
+
+    customObjectName = StringProperty(
+        name="Source Object Name",
+        description="Name of the source object to legoize (defaults to active object)",
+        update=dirtyModel,
+        default="")
 
     maxBrickScale1 = IntProperty(
         name="Max 1 by x",
@@ -529,10 +563,12 @@ class CreatedModels(bpy.types.PropertyGroup):
     # ANIMATION SETTINGS
     startFrame = IntProperty(
         name="Start Frame",
+        update=dirtyAnim,
         min=0, max=500000,
         default=1)
     stopFrame = IntProperty(
         name="Stop Frame",
+        update=dirtyAnim,
         min=0, max=500000,
         default=10)
     useAnimation = BoolProperty(
@@ -565,6 +601,7 @@ class CreatedModels(bpy.types.PropertyGroup):
     modelCreated = BoolProperty(default=False)
     animated = BoolProperty(default=False)
 
+    animIsDirty = BoolProperty(default=True)
     modelIsDirty = BoolProperty(default=True)
     buildIsDirty = BoolProperty(default=True)
     bricksAreDirty = BoolProperty(default=True)

@@ -28,6 +28,7 @@ import time
 from mathutils import Vector, Matrix
 from ..classes.Brick import Bricks
 from ..functions.common_functions import stopWatch, groupExists
+from .__init__ import bounds
 
 def brickAvail(brick):
     if brick != None:
@@ -57,14 +58,14 @@ def combineMeshes(meshes):
     bm.to_mesh( finalMesh )
     return finalMesh
 
-def makeBricks(parent, logo, dimensions, bricksD, split=False, group_name=None, frameNum=None):
+def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customObj=None, customObj_details=None, group_name=None, frameNum=None):
     # set up variables
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     n = cm.source_name
     ct = time.time()
     z1,z2,z3,z4,z5,z6,z7,z8,z9,z10,z11,z12,z13,z14,z15,z16,z17,z18,z19,z20,z21,z22,z23 = (False,)*23
-    if cm.brickType == "Bricks":
+    if cm.brickType in ["Bricks", 'Custom']:
         testZ = False
         bt2 = 3
     elif cm.brickType == "Plates":
@@ -111,7 +112,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, group_name=None, 
             #         brickTypes.append([1,1,3])
             #         z1 = True
             nextBrick = getNextBrick(bricksD, loc, 1, 0)
-            if brickAvail(nextBrick) and cm.maxBrickScale1 > 1:
+            if brickAvail(nextBrick) and cm.maxBrickScale1 > 1 and cm.brickType != "Custom":
                 brickTypes.append([2,1,bt2])
                 # if testZ and z1:
                 #     nextBrick0 = getNextBrick(bricksD, loc, 1, 0, 1)
@@ -162,7 +163,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, group_name=None, 
                                 #         brickTypes.append([6,1,3])
                                 #         z6 = True
             nextBrick = getNextBrick(bricksD, loc, 0, 1)
-            if brickAvail(nextBrick) and cm.maxBrickScale1 > 1:
+            if brickAvail(nextBrick) and cm.maxBrickScale1 > 1 and cm.brickType != "Custom":
                 brickTypes.append([1,2,bt2])
                 # if testZ and z1:
                 #     nextBrick0 = getNextBrick(bricksD, loc, 0, 1, 1)
@@ -215,7 +216,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, group_name=None, 
             nextBrick0 = getNextBrick(bricksD, loc, 0, 1)
             nextBrick1 = getNextBrick(bricksD, loc, 1, 0)
             nextBrick2 = getNextBrick(bricksD, loc, 1, 1)
-            if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and cm.maxBrickScale2 > 1:
+            if brickAvail(nextBrick0) and brickAvail(nextBrick1) and brickAvail(nextBrick2) and cm.maxBrickScale2 > 1 and cm.brickType != "Custom":
                 brickTypes.append([2,2,bt2])
                 # if testZ and z1 and z2 and z7:
                 #     nextBrick0 = getNextBrick(bricksD, loc, 1, 1, 1)
@@ -421,7 +422,10 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, group_name=None, 
 
             # add brick with new mesh data at original location
             if split:
-                m = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
+                if cm.brickType == "Custom":
+                    m = bpy.data.objects[cm.customObjectName].data
+                else:
+                    m = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
                 brick = bpy.data.objects.new(brickD["name"], m)
                 brick.location = Vector(brickD["co"])
 
@@ -429,7 +433,19 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, group_name=None, 
                 if cm.smoothCylinders:
                     addEdgeSplitMod(brick)
             else:
-                bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, transform=brickD["co"], undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail, returnType="bmesh")
+                if cm.brickType == "Custom":
+                    bm = bmesh.new()
+                    bm.from_mesh(customObj.data)
+                    for v in bm.verts:
+                        v.co = (v.co[0] - customObj_details.x.mid, v.co[1] - customObj_details.y.mid, v.co[2] - customObj_details.z.mid)
+
+                    maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
+                    # bmesh.ops.scale(bm, vec=Vector((maxDist*((R[0]-dimensions["gap"]) / customObj_details.x.distance)/2, maxDist*((R[1]-dimensions["gap"]) / customObj_details.y.distance)/2, maxDist*((R[2]-dimensions["gap"]) / customObj_details.z.distance)/2)), verts=bm.verts)
+                    bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
+                    for v in bm.verts:
+                        v.co = (v.co[0] + brickD["co"][0], v.co[1] + brickD["co"][1], v.co[2] + brickD["co"][2])
+                else:
+                    bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, transform=brickD["co"], undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail, returnType="bmesh")
                 tempMesh = bpy.data.meshes.new(brickD["name"])
                 bm.to_mesh(tempMesh)
                 allBrickMeshes.append(tempMesh)
