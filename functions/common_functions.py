@@ -29,6 +29,10 @@ import traceback
 from math import *
 props = bpy.props
 
+def bversion():
+    bversion = '%03d.%03d.%03d' % (bpy.app.version[0],bpy.app.version[1],bpy.app.version[2])
+    return bversion
+
 def stopWatch(text, value):
     '''From seconds to Days;Hours:Minutes;Seconds'''
 
@@ -104,7 +108,7 @@ def drawBMesh(BMesh, name="drawnBMesh"):
 def copyAnimationData(source, target):
     if source.animation_data is None:
         return
-        
+
     ad = source.animation_data
 
     properties = [p.identifier for p in ad.bl_rna.properties if not p.is_readonly]

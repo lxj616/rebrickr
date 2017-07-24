@@ -33,6 +33,22 @@ from mathutils import Matrix, Vector, geometry
 from mathutils.bvhtree import BVHTree
 props = bpy.props
 
+def stopAnimationModal():
+    scn = bpy.context.scene
+    scn.modalRunning = False
+def modalRunning():
+    try:
+        if bpy.context.window_manager["modal_running"] == True:
+            return True
+    except:
+        pass
+    return False
+
+#
+# def runAnimationModal():
+#     scn = bpy.context.scene
+#     scn.modalRunning = True
+
 def confirmList(objList):
     """ if single object passed, convert to list """
     if type(objList) != list:

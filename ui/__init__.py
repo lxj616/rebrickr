@@ -63,9 +63,9 @@ class LegoModelsPanel(Panel):
         col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
 
         # draw menu options below UI list
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
         if scn.cmlist_index != -1:
+            cm = scn.cmlist[scn.cmlist_index]
+            n = cm.source_name
             # first, draw source object text
             LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
             groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
@@ -84,17 +84,20 @@ class LegoModelsPanel(Panel):
 
             # if use animation is selected, draw animation options
             if cm.useAnimation:
-                if cm.animated and not cm.modalRunning:
-                    row.operator("scene.legoizer_legoize", text="Refresh Animation", icon="MOD_BUILD").action = "RUN_MODAL"
-                elif not cm.animated:
-                    row = col.row(align=True)
-                    row.operator("scene.legoizer_legoize", text="LEGOize Animation", icon="MOD_BUILD").action = "ANIMATE"
-                else:
+                if cm.animated:
                     row = col.row(align=True)
                     row.operator("scene.legoizer_delete", text="Delete LEGOized Animation", icon="CANCEL").modelType = "ANIMATION"
-                    col = layout.column(align=True)
+                    if not modalRunning():
+                        col = layout.column(align=True)
+                        row = col.row(align=True)
+                        row.operator("scene.legoizer_run_animation", text="Show Animation", icon="MOD_BUILD")
+                    else:
+                        col = layout.column(align=True)
+                        row = col.row(align=True)
+                        row.operator("scene.legoizer_legoize", text="Update Animation", icon="FILE_REFRESH").action = "UPDATE_ANIM"
+                else:
                     row = col.row(align=True)
-                    row.operator("scene.legoizer_legoize", text="Update Animation", icon="FILE_REFRESH").action = "UPDATE_ANIM"
+                    row.operator("scene.legoizer_legoize", text="LEGOize Animation", icon="MOD_BUILD").action = "ANIMATE"
             # if use animation is not selected, draw modeling options
             else:
                 if not groupExistsBool:
@@ -102,7 +105,7 @@ class LegoModelsPanel(Panel):
                     row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD").action = "CREATE"
                 else:
                     row = col.row(align=True)
-                    row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL")
+                    row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL").modelType = "MODEL"
                     col = layout.column(align=True)
                     split = col.split(align=True, percentage=.85)
                     col = split.column(align=True)
@@ -136,9 +139,9 @@ class AnimationPanel(Panel):
     @classmethod
     def poll(self, context):
         scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
         if scn.cmlist_index == -1:
             return False
+        cm = scn.cmlist[scn.cmlist_index]
         if bversion() < '002.078.00':
             return False
         if cm.modelCreated:

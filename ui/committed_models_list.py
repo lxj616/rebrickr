@@ -25,8 +25,6 @@ from bpy.types import Panel
 from bpy.props import *
 from ..functions import *
 from ..buttons.bevel import *
-from ..lib import common_utilities
-from ..lib.common_utilities import bversion
 props = bpy.props
 
 import bpy
@@ -65,6 +63,15 @@ class Uilist_actions(bpy.types.Operator):
         )
     )
 
+    # @classmethod
+    # def poll(cls, context):
+    #     """ ensures operator can execute (if not, returns false) """
+    #     scn = context.scene
+    #     for cm in scn.cmlist:
+    #         if cm.animated:
+    #             return False
+    #     return True
+    #
     def invoke(self, context, event):
 
         scn = context.scene
@@ -79,11 +86,11 @@ class Uilist_actions(bpy.types.Operator):
             cm = scn.cmlist[scn.cmlist_index]
             sn = cm.source_name
             n = cm.name
-            if not groupExists("LEGOizer_%(sn)s_bricks" % locals()):
-                info = 'Item %(n)s removed from list' % locals()
+            if not cm.modelCreated and not cm.animated:
                 scn.cmlist_index -= 1
-                self.report({'INFO'}, info)
                 scn.cmlist.remove(idx)
+                if scn.cmlist_index == -1 and len(scn.cmlist) > 0:
+                    scn.cmlist_index = 0
             else:
                 self.report({"WARNING"}, 'Please delete the LEGOized model before attempting to remove this item.' % locals())
 
@@ -104,15 +111,18 @@ class Uilist_actions(bpy.types.Operator):
             else:
                 item.source_name = ""
             item.id = len(scn.cmlist)
+            item.idx = len(scn.cmlist)-1
             matchProperties(scn.cmlist[scn.cmlist_index], scn.cmlist[last_index])
 
         elif self.action == 'DOWN' and idx < len(scn.cmlist) - 1:
             scn.cmlist.move(scn.cmlist_index, scn.cmlist_index+1)
             scn.cmlist_index += 1
+            item.idx = scn.cmlist_index
 
         elif self.action == 'UP' and idx >= 1:
             scn.cmlist.move(scn.cmlist_index, scn.cmlist_index-1)
             scn.cmlist_index -= 1
+            item.idx = scn.cmlist_index
 
         return {"FINISHED"}
 
@@ -335,6 +345,7 @@ def dirtyBricks(self, context):
 class CreatedModels(bpy.types.PropertyGroup):
     name = StringProperty(update=uniquifyName)
     id = IntProperty()
+    idx = IntProperty()
 
     source_name = StringProperty(
         name="Source Object Name",
@@ -545,8 +556,7 @@ class CreatedModels(bpy.types.PropertyGroup):
 
     modelCreated = BoolProperty(default=False)
     animated = BoolProperty(default=False)
-    modalRunning = BoolProperty(default=False)
-    
+
     modelIsDirty = BoolProperty(default=True)
     buildIsDirty = BoolProperty(default=True)
     bricksAreDirty = BoolProperty(default=True)

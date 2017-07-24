@@ -71,17 +71,38 @@ class legoizerLegoize(bpy.types.Operator):
             objToLegoize = bpy.data.groups["LEGOizer_%(n)s" % locals()].objects[0]
         return objToLegoize
 
-    def getDimensionsAndBounds(self, source):
+    def getDimensionsAndBounds(self, source, skipDimensions=False):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         # get dimensions and bounds
         source_details = bounds(source)
-        if cm.brickType == "Plates" or cm.brickType == "Bricks and Plates":
-            zScale = 0.333
-        elif cm.brickType == "Bricks":
-            zScale = 1
-        dimensions = Bricks.get_dimensions(cm.brickHeight, zScale, cm.gap)
-        return source_details, dimensions
+        if not skipDimensions:
+            if cm.brickType == "Plates" or cm.brickType == "Bricks and Plates":
+                zScale = 0.333
+            elif cm.brickType == "Bricks":
+                zScale = 1
+            dimensions = Bricks.get_dimensions(cm.brickHeight, zScale, cm.gap)
+            return source_details, dimensions
+        else:
+            return source_details
+
+    def getParent(self, LEGOizer_parent_gn, source, loc):
+        if groupExists(LEGOizer_parent_gn) and len(bpy.data.groups[LEGOizer_parent_gn].objects) > 0:
+            pGroup = bpy.data.groups[LEGOizer_parent_gn]
+            parent = pGroup.objects[0]
+            source_details = self.getDimensionsAndBounds(source, skipDimensions=True)
+            parent.location = loc
+        else:
+            if groupExists(LEGOizer_parent_gn):
+                bpy.data.groups.remove(bpy.data.groups[LEGOizer_parent_gn], True)
+            # create new empty 'parent' object and add to new group
+            parent = bpy.data.objects.new(LEGOizer_parent_gn, source.data)
+            source_details = self.getDimensionsAndBounds(source, skipDimensions=True)
+            parent.location = loc
+            pGroup = bpy.data.groups.new(LEGOizer_parent_gn)
+            pGroup.objects.link(parent)
+        return parent
+
 
     def getRefLogo(self):
         scn = bpy.context.scene
@@ -167,48 +188,7 @@ class legoizerLegoize(bpy.types.Operator):
             if not groupExists(LEGOizer_bricks_gn):
                 self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
                 return False
-
         return True
-
-    def modal(self, context, event):
-        """ ??? """
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-
-        if not cm.animated:
-            self.report({"INFO"}, "Modal finished")
-            cm.modalRunning = False
-            return{"FINISHED"}
-
-        if context.scene.frame_current != self.lastFrame:
-            fn0 = self.lastFrame
-            fn1 = scn.frame_current
-            if fn1 < cm.lastStartFrame:
-                fn1 = cm.lastStartFrame
-            elif fn1 > cm.lastStopFrame:
-                fn1 = cm.lastStopFrame
-            self.lastFrame = fn1
-            if self.lastFrame == fn0:
-                return{"PASS_THROUGH"}
-            n = cm.source_name
-
-            try:
-                curBricks = bpy.data.groups["LEGOizer_%(n)s_bricks_frame_%(fn1)s" % locals()]
-                for brick in curBricks.objects:
-                    scn.objects.link(brick)
-                lastBricks = bpy.data.groups["LEGOizer_%(n)s_bricks_frame_%(fn0)s" % locals()]
-                for brick in lastBricks.objects:
-                    scn.objects.unlink(brick)
-            except Exception as e:
-                print(e)
-
-        # if event.type in {"RET", "NUMPAD_ENTER"} and event.shift:
-        #     cm.modalRunning = False
-        #     return{"FINISHED"}
-        # if context.scene.cmlist_index == -1:
-        #     cm.modalRunning = False
-        #     return{"FINISHED"}
-        return {"PASS_THROUGH"}
 
     def legoizeAnimation(self):
         # set up variables
@@ -239,6 +219,8 @@ class legoizerLegoize(bpy.types.Operator):
             legoizerDelete.cleanUp("ANIMATION")
         dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
         pGroup = bpy.data.groups.new(LEGOizer_parent_gn)
+
+        parent0 = self.getParent(LEGOizer_parent_gn, sourceOrig, sourceOrig.location.to_tuple())
 
         refLogo = self.getRefLogo()
 
@@ -275,7 +257,12 @@ class legoizerLegoize(bpy.types.Operator):
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
             parent = bpy.data.objects.new(LEGOizer_parent_gn + "_" + str(i), source.data.copy())
-            parent.location = (source_details.x.mid + source["previous_location"][0], source_details.y.mid + source["previous_location"][1], source_details.z.mid + source["previous_location"][2])
+            if "Fluidsim" in sourceOrig.modifiers:
+                parent.location = (source_details.x.mid + source["previous_location"][0] - parent0.location.x, source_details.y.mid + source["previous_location"][1] - parent0.location.y, source_details.z.mid + source["previous_location"][2] - parent0.location.z)
+            else:
+                parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
+            parent.parent = parent0
+            pGroup = bpy.data.groups[LEGOizer_parent_gn] # TODO: This line was added to protect against segmentation fault in version 2.78. Once you're running 2.79, try it without this line!
             pGroup.objects.link(parent)
             scn.objects.link(parent)
             scn.update()
@@ -284,8 +271,7 @@ class legoizerLegoize(bpy.types.Operator):
             # create new bricks
             group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, curFrame)
             for obj in bpy.data.groups[group_name].objects:
-                scn.objects.unlink(obj)
-            scn.update()
+                obj.hide = True
 
             print("completed frame " + str(curFrame))
 
@@ -297,6 +283,7 @@ class legoizerLegoize(bpy.types.Operator):
         scn.objects.unlink(sourceOrig)
         cm.lastStartFrame = cm.startFrame
         cm.lastStopFrame = cm.stopFrame
+        scn.frame_set(cm.lastStartFrame)
         cm.animated = True
 
     def legoizeModel(self):
@@ -345,14 +332,8 @@ class legoizerLegoize(bpy.types.Operator):
         # get source_details and dimensions
         source_details, dimensions = self.getDimensionsAndBounds(source)
 
-        if not groupExists(LEGOizer_parent_gn):
-            # create new empty 'parent' object and add to new group
-            parent = bpy.data.objects.new(LEGOizer_parent_gn, source.data.copy())
-            parent.location = (source_details.x.mid + source["previous_location"][0], source_details.y.mid + source["previous_location"][1], source_details.z.mid + source["previous_location"][2])
-            pGroup = bpy.data.groups.new(LEGOizer_parent_gn)
-            pGroup.objects.link(parent)
-        else:
-            parent = bpy.data.groups[LEGOizer_parent_gn].objects[0]
+        parentLoc = (source_details.x.mid + source["previous_location"][0], source_details.y.mid + source["previous_location"][1], source_details.z.mid + source["previous_location"][2])
+        parent = self.getParent(LEGOizer_parent_gn, source, parentLoc)
 
         # update refLogo
         refLogo = self.getRefLogo()
@@ -365,12 +346,6 @@ class legoizerLegoize(bpy.types.Operator):
     def execute(self, context):
         # get start time
         startTime = time.time()
-
-        if self.action == "RUN_MODAL":
-            context.window_manager.modal_handler_add(self)
-            cm.modalRunning = True
-            self.lastFrame = cm.lastStartFrame
-            return{"RUNNING_MODAL"}
 
         # set up variables
         scn = context.scene
@@ -390,8 +365,7 @@ class legoizerLegoize(bpy.types.Operator):
             self.legoizeAnimation()
 
         # # set final variables
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        stopAnimationModal()
         cm.lastLogoResolution = cm.logoResolution
         cm.lastLogoDetail = cm.logoDetail
         cm.lastSplitModel = cm.splitModel
@@ -404,10 +378,4 @@ class legoizerLegoize(bpy.types.Operator):
         # STOPWATCH CHECK
         stopWatch("Total Time Elapsed", time.time()-startTime)
 
-        if self.action in ["ANIMATE", "UPDATE_ANIM"]:
-            context.window_manager.modal_handler_add(self)
-            cm.modalRunning = True
-            self.lastFrame = cm.startFrame
-            return{"RUNNING_MODAL"}
-        else:
-            return{"FINISHED"}
+        return{"FINISHED"}
