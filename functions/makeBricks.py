@@ -58,7 +58,7 @@ def combineMeshes(meshes):
     bm.to_mesh( finalMesh )
     return finalMesh
 
-def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customObj=None, customObj_details=None, group_name=None, frameNum=None):
+def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customData=None, customObj_details=None, group_name=None, frameNum=None):
     # set up variables
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -423,7 +423,16 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customObj
             # add brick with new mesh data at original location
             if split:
                 if cm.brickType == "Custom":
-                    m = bpy.data.objects[cm.customObjectName].data
+                    bm = bmesh.new()
+                    bm.from_mesh(customData)
+                    for v in bm.verts:
+                        v.co = (v.co[0] - customObj_details.x.mid, v.co[1] - customObj_details.y.mid, v.co[2] - customObj_details.z.mid)
+                    maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
+                    bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
+                    # for v in bm.verts:
+                    #     v.co = (v.co[0] + brickD["co"][0], v.co[1] + brickD["co"][1], v.co[2] + brickD["co"][2])
+                    m = bpy.data.meshes.new(brickD["name"])
+                    bm.to_mesh(m)
                 else:
                     m = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
                 brick = bpy.data.objects.new(brickD["name"], m)
@@ -435,12 +444,11 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customObj
             else:
                 if cm.brickType == "Custom":
                     bm = bmesh.new()
-                    bm.from_mesh(customObj.data)
+                    bm.from_mesh(customData)
                     for v in bm.verts:
                         v.co = (v.co[0] - customObj_details.x.mid, v.co[1] - customObj_details.y.mid, v.co[2] - customObj_details.z.mid)
 
                     maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
-                    # bmesh.ops.scale(bm, vec=Vector((maxDist*((R[0]-dimensions["gap"]) / customObj_details.x.distance)/2, maxDist*((R[1]-dimensions["gap"]) / customObj_details.y.distance)/2, maxDist*((R[2]-dimensions["gap"]) / customObj_details.z.distance)/2)), verts=bm.verts)
                     bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
                     for v in bm.verts:
                         v.co = (v.co[0] + brickD["co"][0], v.co[1] + brickD["co"][1], v.co[2] + brickD["co"][2])

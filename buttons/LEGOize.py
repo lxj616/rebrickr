@@ -155,14 +155,19 @@ class legoizerLegoize(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         if cm.brickType == "Custom":
-            customObj = bpy.data.objects[cm.customObjectName]
+            customObj0 = bpy.data.objects[cm.customObjectName]
+            select(customObj0, active=customObj0)
+            bpy.ops.object.duplicate()
+            customObj = scn.objects.active
             select(customObj, active=customObj)
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             customObj_details = bounds(customObj)
+            customData = customObj.data
+            bpy.data.objects.remove(customObj, True)
             scale = cm.brickHeight/customObj_details.z.distance
             R = (scale * customObj_details.x.distance + dimensions["gap"], scale * customObj_details.y.distance + dimensions["gap"], scale * customObj_details.z.distance + dimensions["gap"])
-            print(R)
         else:
+            customData = None
             customObj_details = None
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
         bricksDict = makeBricksDict(source, source_details, dimensions, R)
@@ -170,7 +175,7 @@ class legoizerLegoize(bpy.types.Operator):
             group_name = 'LEGOizer_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
             group_name = None
-        makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customObj=customObj, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame)
+        makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame)
         if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
             self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
         if int(round((source_details.y.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:

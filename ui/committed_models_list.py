@@ -464,21 +464,21 @@ class CreatedModels(bpy.types.PropertyGroup):
         description="Distance Offset X",
         update=dirtyModel,
         precision=3,
-        min=0.001, max=1,
+        min=0.001, max=2,
         default=1)
     distOffsetY = FloatProperty(
         name="Y",
         description="Distance Offset Y",
         update=dirtyModel,
         precision=3,
-        min=0.001, max=1,
+        min=0.001, max=2,
         default=1)
     distOffsetZ = FloatProperty(
         name="Z",
         description="Distance Offset Z",
         update=dirtyModel,
         precision=3,
-        min=0.001, max=1,
+        min=0.001, max=2,
         default=1)
 
     customObjectName = StringProperty(
