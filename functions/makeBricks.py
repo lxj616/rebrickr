@@ -486,6 +486,9 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             addEdgeSplitMod(allBricksObj)
         bGroup.objects.link(allBricksObj)
         allBricksObj.parent = parent
+        mat = bpy.data.materials.get(cm.material_name)
+        if mat is not None:
+            allBricksObj.data.materials.append(mat)
         scn.objects.link(allBricksObj)
     else:
         for key in bricksD:
@@ -499,6 +502,9 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                         vg.add([v.index], 1, "ADD")
                 bGroup.objects.link(brick)
                 brick.parent = parent
+                mat = bpy.data.materials.get(cm.material_name)
+                if mat is not None:
+                    brick.data.materials.append(mat)
                 scn.objects.link(brick)
 
     stopWatch("Time Elapsed (building)", time.time()-ct)

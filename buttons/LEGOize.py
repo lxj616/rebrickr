@@ -42,7 +42,8 @@ class legoizerLegoize(bpy.types.Operator):
         scn = context.scene
         try:
             cm = scn.cmlist[scn.cmlist_index]
-            if bpy.data.objects[cm.source_name].type == 'MESH':
+            obj = bpy.data.objects[cm.source_name]
+            if obj.type == 'MESH':
                 return True
         except:
             return False
@@ -233,7 +234,9 @@ class legoizerLegoize(bpy.types.Operator):
             self.report({"WARNING"}, "Model is too small on Z axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
         return group_name
 
-    def isValid(self, cm, source, LEGOizer_bricks_gn,):
+    def isValid(self, source, LEGOizer_bricks_gn,):
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
         if cm.brickType == "Custom":
             if cm.customObjectName == "":
                 self.report({"WARNING"}, "Custom brick type object not specified.")
@@ -270,6 +273,15 @@ class legoizerLegoize(bpy.types.Operator):
             if not groupExists(LEGOizer_bricks_gn):
                 self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
                 return False
+
+        success = False
+        for i in range(20):
+            if source.layers[i] == True and scn.layers[i] == True:
+                success = True
+        if not success:
+            self.report({"WARNING"}, "Object is not on active layer(s)")
+            return False
+
         return True
 
     def legoizeAnimation(self):
@@ -450,7 +462,7 @@ class legoizerLegoize(bpy.types.Operator):
             return {"RUNNING_MODAL"}
 
         source = self.getObjectToLegoize()
-        if not self.isValid(cm, source, LEGOizer_bricks_gn):
+        if not self.isValid(source, LEGOizer_bricks_gn):
             return {"CANCELLED"}
 
         if self.action not in ["ANIMATE", "UPDATE_ANIM"]:

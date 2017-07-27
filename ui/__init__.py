@@ -51,7 +51,7 @@ class LegoModelsPanel(Panel):
         # draw UI list and list actions
         rows = 3
         row = layout.row()
-        row.template_list("UL_items", "", scn, "cmlist", scn, "cmlist_index", rows=rows)
+        row.template_list("LEGOizer_UL_items", "", scn, "cmlist", scn, "cmlist_index", rows=rows)
 
         col = row.column(align=True)
         col.operator("cmlist.list_action", icon='ZOOMIN', text="").action = 'ADD'
@@ -88,19 +88,19 @@ class LegoModelsPanel(Panel):
                     if not modalRunning():
                         col = layout.column(align=True)
                         row = col.row(align=True)
-                        row.operator("scene.legoizer_legoize", text="Show Animation", icon="MOD_BUILD").action = "RUN_MODAL"
+                        row.operator("scene.legoizer_legoize", text="Show Animation", icon="MOD_REMESH").action = "RUN_MODAL"
                     else:
                         col = layout.column(align=True)
                         row = col.row(align=True)
                         row.operator("scene.legoizer_legoize", text="Update Animation", icon="FILE_REFRESH").action = "UPDATE_ANIM"
                 else:
                     row = col.row(align=True)
-                    row.operator("scene.legoizer_legoize", text="LEGOize Animation", icon="MOD_BUILD").action = "ANIMATE"
+                    row.operator("scene.legoizer_legoize", text="LEGOize Animation", icon="MOD_REMESH").action = "ANIMATE"
             # if use animation is not selected, draw modeling options
             else:
                 if not groupExistsBool:
                     row = col.row(align=True)
-                    row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_BUILD").action = "CREATE"
+                    row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_REMESH").action = "CREATE"
                 else:
                     row = col.row(align=True)
                     row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL").modelType = "MODEL"
@@ -194,8 +194,7 @@ class ModelTransformationPanel(Panel):
         if bversion() < '002.078.00':
             return False
         cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
-        if not groupExists('LEGOizer_%(n)s' % locals()):
+        if not cm.modelCreated:
             return False
         return True
 
@@ -330,7 +329,41 @@ class BrickTypesPanel(Panel):
             row2 = col2.row(align=True)
             row2.prop(cm, "maxBrickScale2", text="2x")
 
+class MaterialsPanel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "Materials"
+    bl_idname      = "VIEW3D_PT_tools_LEGOizer_materials"
+    bl_context     = "objectmode"
+    bl_category    = "LEGOizer"
+    bl_options     = {"DEFAULT_CLOSED"}
+    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
+    @classmethod
+    def poll(self, context):
+        """ ensures operator can execute (if not, returns false) """
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        if bversion() < '002.078.00':
+            return False
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop_search(cm, "material_name", bpy.data, "materials", text="")
+        if "lego_materials" in bpy.context.user_preferences.addons.keys() and ("LEGO Plastic Black" not in bpy.data.materials.keys() or "LEGO Plastic Trans-Light Green" not in bpy.data.materials.keys()):
+            row = col.row(align=True)
+            row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
+        if cm.modelCreated:
+            col = layout.column(align=True)
+            row = col.row(align=True)
+            row.operator("scene.legoizer_apply_material", icon="FILE_TICK")
 
 class DetailingPanel(Panel):
     bl_space_type  = "VIEW_3D"

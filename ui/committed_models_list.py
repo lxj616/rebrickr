@@ -53,7 +53,7 @@ def matchProperties(cmNew, cmOld):
     cmNew.stopFrame = cmOld.stopFrame
 
 # ui list item actions
-class Uilist_actions(bpy.types.Operator):
+class LEGOizer_Uilist_actions(bpy.types.Operator):
     bl_idname = "cmlist.list_action"
     bl_label = "List Action"
 
@@ -74,7 +74,7 @@ class Uilist_actions(bpy.types.Operator):
     #         if cm.animated:
     #             return False
     #     return True
-    
+
     def invoke(self, context, event):
 
         scn = context.scene
@@ -138,21 +138,21 @@ class Uilist_actions(bpy.types.Operator):
 # -------------------------------------------------------------------
 
 # custom list
-class UL_items(UIList):
+class LEGOizer_UL_items(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         # Make sure your code supports all 3 layout types
         if self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
         split = layout.split(0.9)
-        split.prop(item, "name", text="", emboss=False, translate=False, icon='MOD_BUILD')
+        split.prop(item, "name", text="", emboss=False, translate=False, icon='MOD_REMESH')
 
     def invoke(self, context, event):
         pass
 
 
 # print button
-class Uilist_printAllItems(bpy.types.Operator):
+class LEGOizer_Uilist_printAllItems(bpy.types.Operator):
     bl_idname = "cmlist.print_list"
     bl_label = "Print List"
     bl_description = "Print all items to the console"
@@ -164,7 +164,7 @@ class Uilist_printAllItems(bpy.types.Operator):
         return{'FINISHED'}
 
 # set source to active button
-class Uilist_setSourceToActive(bpy.types.Operator):
+class LEGOizer_Uilist_setSourceToActive(bpy.types.Operator):
     bl_idname = "cmlist.set_to_active"
     bl_label = "Set to Active"
     bl_description = "Set source to active object in scene"
@@ -198,7 +198,7 @@ class Uilist_setSourceToActive(bpy.types.Operator):
         return{'FINISHED'}
 
 # select button
-class Uilist_selectSource(bpy.types.Operator):
+class LEGOizer_Uilist_selectSource(bpy.types.Operator):
     bl_idname = "cmlist.select_source"
     bl_label = "Select Source Object"
     bl_description = "Select only source object for model"
@@ -232,7 +232,7 @@ class Uilist_selectSource(bpy.types.Operator):
         return{'FINISHED'}
 
 # select button
-class Uilist_selectAllBricks(bpy.types.Operator):
+class LEGOizer_Uilist_selectAllBricks(bpy.types.Operator):
     bl_idname = "cmlist.select_bricks"
     bl_label = "Select Bricks"
     bl_description = "Select only bricks in model"
@@ -264,20 +264,20 @@ class Uilist_selectAllBricks(bpy.types.Operator):
         return{'FINISHED'}
 
 # clear button
-class Uilist_clearAllItems(bpy.types.Operator):
+class LEGOizer_Uilist_clearAllItems(bpy.types.Operator):
     bl_idname = "cmlist.clear_list"
     bl_label = "Clear List"
     bl_description = "Clear all items in the list"
 
     def execute(self, context):
         scn = context.scene
-        lst = scn.custom
+        lst = scn.createdModelsCollection
         current_index = scn.cmlist_index
 
         if len(lst) > 0:
              # reverse range to remove last item first
             for i in range(len(lst)-1,-1,-1):
-                scn.custom.remove(i)
+                scn.createdModelsCollection.remove(i)
             self.report({'INFO'}, "All items removed")
 
         else:
@@ -353,7 +353,7 @@ def dirtyBricks(self, context):
     cm.bricksAreDirty = True
 
 # Create custom property group
-class CreatedModels(bpy.types.PropertyGroup):
+class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     name = StringProperty(update=uniquifyName)
     id = IntProperty()
     idx = IntProperty()
@@ -540,6 +540,11 @@ class CreatedModels(bpy.types.PropertyGroup):
         min=1, max=25,
         default=2)
 
+    material_name = StringProperty(
+        name="Material Name",
+        description="Name of the material to apply to all bricks",
+        default="")
+
     lastLogoDetail = StringProperty(default="None")
     lastLogoResolution = FloatProperty(default=0)
     lastSplitModel = BoolProperty(default=False)
@@ -600,6 +605,7 @@ class CreatedModels(bpy.types.PropertyGroup):
 
     modelCreated = BoolProperty(default=False)
     animated = BoolProperty(default=False)
+    materialApplied = BoolProperty(default=False)
 
     animIsDirty = BoolProperty(default=True)
     modelIsDirty = BoolProperty(default=True)
@@ -612,12 +618,12 @@ class CreatedModels(bpy.types.PropertyGroup):
 
 def register():
     bpy.utils.register_module(__name__)
-    bpy.types.Scene.custom = CollectionProperty(type=CreatedModels)
+    bpy.types.Scene.createdModelsCollection = CollectionProperty(type=LEGOizer_CreatedModels)
     bpy.types.Scene.cmlist_index = IntProperty()
 
 def unregister():
     bpy.utils.unregister_module(__name__)
-    del bpy.types.Scene.custom
+    del bpy.types.Scene.createdModelsCollection
     del bpy.types.Scene.cmlist_index
 
 if __name__ == "__main__":

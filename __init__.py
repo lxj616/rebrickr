@@ -52,7 +52,7 @@ def register():
     addon_keymaps.append(km)
 
     # other things (UI List)
-    bpy.types.Scene.cmlist = CollectionProperty(type=CreatedModels)
+    bpy.types.Scene.cmlist = CollectionProperty(type=LEGOizer_CreatedModels)
     bpy.types.Scene.cmlist_index = IntProperty(default=-1)
     bpy.types.Scene.modalRunning = BoolProperty(default=False)
 
