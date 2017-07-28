@@ -110,8 +110,7 @@ class legoizerLegoize(bpy.types.Operator):
                 objToLegoize = bpy.data.objects[scn.cmlist[scn.cmlist_index].source_name]
         else:
             cm = scn.cmlist[scn.cmlist_index]
-            n = cm.source_name
-            objToLegoize = bpy.data.groups["LEGOizer_%(n)s" % locals()].objects[0]
+            objToLegoize = bpy.data.objects.get(cm.source_name)
         return objToLegoize
 
     def getDimensionsAndBounds(self, source, skipDimensions=False):
@@ -129,21 +128,12 @@ class legoizerLegoize(bpy.types.Operator):
         else:
             return source_details
 
-    def getParent(self, LEGOizer_parent_gn, source, loc):
-        if groupExists(LEGOizer_parent_gn) and len(bpy.data.groups[LEGOizer_parent_gn].objects) > 0:
-            pGroup = bpy.data.groups[LEGOizer_parent_gn]
-            parent = pGroup.objects[0]
-            source_details = self.getDimensionsAndBounds(source, skipDimensions=True)
+    def getParent(self, LEGOizer_parent_on, loc):
+        parent = bpy.data.objects.get(LEGOizer_parent_on)
+        if parent is None:
+            m = bpy.data.meshes.new(LEGOizer_parent_on + "_mesh")
+            parent = bpy.data.objects.new(LEGOizer_parent_on, m)
             parent.location = loc
-        else:
-            if groupExists(LEGOizer_parent_gn):
-                bpy.data.groups.remove(bpy.data.groups[LEGOizer_parent_gn], True)
-            # create new empty 'parent' object and add to new group
-            parent = bpy.data.objects.new(LEGOizer_parent_gn, source.data)
-            source_details = self.getDimensionsAndBounds(source, skipDimensions=True)
-            parent.location = loc
-            pGroup = bpy.data.groups.new(LEGOizer_parent_gn)
-            pGroup.objects.link(parent)
         return parent
 
 
@@ -155,30 +145,19 @@ class legoizerLegoize(bpy.types.Operator):
             refLogo = None
         else:
             decimate = False
-            if groupExists("LEGOizer_refLogo") and len(bpy.data.groups["LEGOizer_refLogo"].objects) > 0:
-                rlGroup = bpy.data.groups["LEGOizer_refLogo"]
-                r = cm.logoResolution
-                success = False
-                for obj in rlGroup.objects:
-                    if obj.name == "LEGOizer_refLogo_%(r)s" % locals():
-                        refLogo = obj
-                        success = True
-                        break
-                if not success:
-                    refLogoImport = rlGroup.objects[0]
-                    rlGroup.objects.unlink(rlGroup.objects[1])
+            r = cm.logoResolution
+            refLogoImport = bpy.data.objects.get("LEGOizer_refLogo")
+            if refLogoImport is not None:
+                refLogo = bpy.data.objects.get("LEGOizer_refLogo_%(r)s" % locals())
+                if refLogo is None:
                     refLogo = bpy.data.objects.new("LEGOizer_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
-                    rlGroup.objects.link(refLogo)
                     decimate = True
             else:
                 # import refLogo and add to group
                 refLogoImport = importLogo()
+                refLogoImport.name = "LEGOizer_refLogo"
                 scn.objects.unlink(refLogoImport)
-                rlGroup = bpy.data.groups.new("LEGOizer_refLogo")
-                rlGroup.objects.link(refLogoImport)
-                r = cm.logoResolution
                 refLogo = bpy.data.objects.new("LEGOizer_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
-                rlGroup.objects.link(refLogo)
                 decimate = True
             # decimate refLogo
             # TODO: Speed this up, if possible
@@ -189,7 +168,6 @@ class legoizerLegoize(bpy.types.Operator):
                 select(refLogo, active=refLogo)
                 bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
                 scn.objects.unlink(refLogo)
-                print("decimated")
 
         return refLogo
 
@@ -288,8 +266,7 @@ class legoizerLegoize(bpy.types.Operator):
         cm.splitModel = False
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
-        LEGOizer_parent_gn = "LEGOizer_%(n)s_parent" % locals()
-        LEGOizer_source_gn = "LEGOizer_%(n)s" % locals()
+        LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
         LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
 
         # if bpy.data.objects.find(scn.cmlist[scn.cmlist_index].source_name) == -1:
@@ -309,9 +286,9 @@ class legoizerLegoize(bpy.types.Operator):
         if self.action == "UPDATE_ANIM":
             legoizerDelete.cleanUp("ANIMATION")
         dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
-        pGroup = bpy.data.groups.new(LEGOizer_parent_gn)
+        pGroup = bpy.data.groups.new(LEGOizer_parent_on)
 
-        parent0 = self.getParent(LEGOizer_parent_gn, sourceOrig, sourceOrig.location.to_tuple())
+        parent0 = self.getParent(LEGOizer_parent_on, sourceOrig.location.to_tuple())
 
         if cm.brickType != "Custom":
             refLogo = self.getRefLogo()
@@ -354,13 +331,13 @@ class legoizerLegoize(bpy.types.Operator):
 
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
-            parent = bpy.data.objects.new(LEGOizer_parent_gn + "_" + str(i), source.data.copy())
+            parent = bpy.data.objects.new(LEGOizer_parent_on + "_" + str(i), source.data.copy())
             if "Fluidsim" in sourceOrig.modifiers:
                 parent.location = (source_details.x.mid + source["previous_location"][0] - parent0.location.x, source_details.y.mid + source["previous_location"][1] - parent0.location.y, source_details.z.mid + source["previous_location"][2] - parent0.location.z)
             else:
                 parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
             parent.parent = parent0
-            pGroup = bpy.data.groups[LEGOizer_parent_gn] # TODO: This line was added to protect against segmentation fault in version 2.78. Once you're running 2.79, try it without this line!
+            pGroup = bpy.data.groups[LEGOizer_parent_on] # TODO: This line was added to protect against segmentation fault in version 2.78. Once you're running 2.79, try it without this line!
             pGroup.objects.link(parent)
             scn.objects.link(parent)
             scn.update()
@@ -373,11 +350,6 @@ class legoizerLegoize(bpy.types.Operator):
 
             print("completed frame " + str(curFrame))
 
-        # create new source group and add source
-        if not groupExists(LEGOizer_source_gn):
-            # link source to new 'source' group
-            sGroup = bpy.data.groups.new(LEGOizer_source_gn)
-            sGroup.objects.link(sourceOrig)
         scn.objects.unlink(sourceOrig)
         cm.lastStartFrame = cm.startFrame
         cm.lastStopFrame = cm.stopFrame
@@ -391,8 +363,7 @@ class legoizerLegoize(bpy.types.Operator):
         source = self.getObjectToLegoize()
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
-        LEGOizer_parent_gn = "LEGOizer_%(n)s_parent" % locals()
-        LEGOizer_source_gn = "LEGOizer_%(n)s" % locals()
+        LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
 
         # if there are no changes to apply, simply return "FINISHED"
         if not (self.action == "CREATE" or cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (self.action == "UPDATE_MODEL" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)):
@@ -412,19 +383,11 @@ class legoizerLegoize(bpy.types.Operator):
             scn.update()
 
         # update scene so mesh data is available for ray casting
-        if self.action == "UPDATE_MODEL":
+        if source.name not in scn.objects.keys():
             scn.objects.link(source)
-            scn.update()
-            scn.objects.unlink(source)
-        else:
-            scn.update()
+        scn.update()
 
-        # if nonexistent, create new source group and add source
-        if not groupExists(LEGOizer_source_gn):
-            # link source to new 'source' group
-            sGroup = bpy.data.groups.new(LEGOizer_source_gn)
-            sGroup.objects.link(source)
-            # unlink source from scene
+        if source.name in scn.objects.keys():
             scn.objects.unlink(source)
 
         # get source_details and dimensions
@@ -435,7 +398,7 @@ class legoizerLegoize(bpy.types.Operator):
             cm.modelHeight = source_details.z.distance
 
         parentLoc = (source_details.x.mid + source["previous_location"][0], source_details.y.mid + source["previous_location"][1], source_details.z.mid + source["previous_location"][2])
-        parent = self.getParent(LEGOizer_parent_gn, source, parentLoc)
+        parent = self.getParent(LEGOizer_parent_on, parentLoc)
 
         # update refLogo
         if cm.brickType != "Custom":
@@ -457,8 +420,6 @@ class legoizerLegoize(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
-        # LEGOizer_parent_gn = "LEGOizer_%(n)s_parent" % locals()
-        # LEGOizer_source_gn = "LEGOizer_%(n)s" % locals()
 
         if self.action == "RUN_MODAL" and not modalRunning():
             self.lastFrame = []

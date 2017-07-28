@@ -58,24 +58,20 @@ class legoizerDelete(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
-        LEGOizer_parent_gn = "LEGOizer_%(n)s_parent" % locals()
+        LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
         LEGOizer_refBricks_gn = "LEGOizer_%(n)s_refBricks" % locals()
         LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
-        LEGOizer_source_gn = "LEGOizer_%(n)s" % locals()
 
         # clean up 'LEGOizer_[source name]' group
-        if groupExists(LEGOizer_source_gn) and not skipSource:
-            sourceGroup = bpy.data.groups[LEGOizer_source_gn]
-            if len(sourceGroup.objects) > 0:
-                source = sourceGroup.objects[0]
-                try:
-                    source.location = source["previous_location"]
-                except:
-                    pass
-                if not source in list(scn.objects):
-                    scn.objects.link(source)
-                select(source, active=source)
-            bpy.data.groups.remove(sourceGroup, do_unlink=True)
+        if not skipSource:
+            source = bpy.data.objects[cm.source_name]
+            try:
+                source.location = source["previous_location"]
+            except:
+                pass
+            if not source in list(scn.objects):
+                scn.objects.link(source)
+            select(source, active=source)
             cm.modelHeight = -1
 
         # clean up 'LEGOizer_[source name]_dupes' group
@@ -87,14 +83,11 @@ class legoizerDelete(bpy.types.Operator):
             bpy.data.groups.remove(dGroup, do_unlink=True)
 
         # clean up LEGOizer_parent group
-        if groupExists(LEGOizer_parent_gn) and not skipParents:
-            pGroup = bpy.data.groups[LEGOizer_parent_gn]
-            try:
-                for obj in bpy.data.groups[LEGOizer_parent_gn].objects:
-                    delete(obj)
-            except:
-                pass
-            bpy.data.groups.remove(pGroup, do_unlink=True)
+        parent = bpy.data.objects.get(LEGOizer_parent_on)
+        if parent is not None:
+            m = parent.data
+            bpy.data.objects.remove(parent, True)
+            bpy.data.meshes.remove(m, True)
 
         if modelType == "MODEL":
             # clean up LEGOizer_bricks group
@@ -129,13 +122,6 @@ class legoizerDelete(bpy.types.Operator):
         #         refBrick = refBrickGroup.objects[0]
         #         delete(refBrick)
         #     bpy.data.groups.remove(refBrickGroup, do_unlink=True)
-
-        # # clean up 'LEGOizer_refLogo' group
-        # if groupExists("LEGOizer_refLogo"):
-        #     refLogoGroup = bpy.data.groups["LEGOizer_refLogo"]
-        #     refLogo = refLogoGroup.objects[0]
-        #     delete(refLogo)
-        #     bpy.data.groups.remove(refLogoGroup, do_unlink=True)
 
     def execute(self, context):
         # # get start time
