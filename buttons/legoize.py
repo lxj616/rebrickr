@@ -228,6 +228,9 @@ class legoizerLegoize(bpy.types.Operator):
             if cm.source_name == "":
                 self.report({"WARNING"}, "Please select a mesh to LEGOize")
                 return False
+            if cm.source_name[:9] == "LEGOizer_" and (cm.source_name[-7:] == "_bricks" or cm.source_name[-9:] == "_combined"):
+                self.report({"WARNING"}, "Cannot LEGOize models created with the LEGOizer")
+                return False
             if source == None:
                 n = cm.source_name
                 self.report({"WARNING"}, "'%(n)s' could not be found" % locals())
