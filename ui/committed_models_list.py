@@ -83,16 +83,15 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
     def modal(self, context, event):
         scn = bpy.context.scene
         if scn.objects.active and self.active_object_name != scn.objects.active.name:
-            print(1)
             self.active_object_name = scn.objects.active.name
             for i in range(len(scn.cmlist)):
-                print(2)
                 cm = scn.cmlist[i]
                 if cm.source_name == self.active_object_name:
-                    print(3)
                     scn.cmlist_index = i
                     bpy.context.area.tag_redraw()
-                    break
+                    return {"PASS_THROUGH"}
+            scn.cmlist_index = -1
+            bpy.context.area.tag_redraw()
         return {"PASS_THROUGH"}
 
     def execute(self, context):
