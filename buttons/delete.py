@@ -76,6 +76,7 @@ class legoizerDelete(bpy.types.Operator):
                     scn.objects.link(source)
                 select(source, active=source)
             bpy.data.groups.remove(sourceGroup, do_unlink=True)
+            cm.modelHeight = -1
 
         # clean up 'LEGOizer_[source name]_dupes' group
         if groupExists(LEGOizer_source_dupes_gn) and not skipDupes:
@@ -84,7 +85,6 @@ class legoizerDelete(bpy.types.Operator):
             if len(dObjects) > 0:
                 delete(dObjects)
             bpy.data.groups.remove(dGroup, do_unlink=True)
-
 
         # clean up LEGOizer_parent group
         if groupExists(LEGOizer_parent_gn) and not skipParents:
@@ -102,8 +102,10 @@ class legoizerDelete(bpy.types.Operator):
             if groupExists(LEGOizer_bricks_gn):
                 brickGroup = bpy.data.groups[LEGOizer_bricks_gn]
                 bgObjects = list(brickGroup.objects)
-                if len(bgObjects) > 0:
-                    delete(bgObjects)
+                for obj in bgObjects:
+                    m = obj.data
+                    bpy.data.objects.remove(obj, True)
+                    bpy.data.meshes.remove(m, True)
                 bpy.data.groups.remove(brickGroup, do_unlink=True)
                 bpy.context.area.tag_redraw()
         elif modelType == "ANIMATION":

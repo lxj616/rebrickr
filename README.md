@@ -14,9 +14,9 @@ Blender add-on for automated generation of LEGO Bricks from mesh objects (Blende
       * Click 'Update Model' to view setting adjustments
   * Future improvements:
     * Priority 1:
-      * Figure out a way to make the brick height more clear to the user
+      * None!
     * Priority 2:
-      * Add option for very slightly randomizing rotation/location of bricks.
+      * None!
     * Priority 3:
       * Apply closest LEGO color based on color of nearest vertex
         * Apply unlimited materials or just LEGO material closest to original

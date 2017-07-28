@@ -80,6 +80,8 @@ class LegoModelsPanel(Panel):
                 col = layout.column(align=True)
                 col.label("Source Object: " + cm.source_name)
 
+            obj = bpy.data.objects.get(cm.source_name)
+
             # if use animation is selected, draw animation options
             if cm.useAnimation:
                 if cm.animated:
@@ -95,11 +97,19 @@ class LegoModelsPanel(Panel):
                         row.operator("scene.legoizer_legoize", text="Update Animation", icon="FILE_REFRESH").action = "UPDATE_ANIM"
                 else:
                     row = col.row(align=True)
+                    if obj:
+                        row.active = obj.type == 'MESH'
+                    else:
+                        row.active = False
                     row.operator("scene.legoizer_legoize", text="LEGOize Animation", icon="MOD_REMESH").action = "ANIMATE"
             # if use animation is not selected, draw modeling options
             else:
                 if not groupExistsBool:
                     row = col.row(align=True)
+                    if obj:
+                        row.active = obj.type == 'MESH'
+                    else:
+                        row.active = False
                     row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_REMESH").action = "CREATE"
                 else:
                     row = col.row(align=True)
@@ -243,6 +253,25 @@ class ModelSettingsPanel(Panel):
         cm = scn.cmlist[scn.cmlist_index]
 
         col = layout.column(align=True)
+        # set up model height variable 'h'
+        if cm.modelHeight == -1:
+            source = bpy.data.objects.get(cm.source_name)
+            if source is not None:
+                source_details = bounds(source)
+                h = source_details.z.distance
+            else:
+                h = -1
+        else:
+            h = cm.modelHeight
+        # draw model height if it was set
+        if h != -1:
+            h = round(h, 2)
+            split = col.split(align=True, percentage=.625)
+            col1 = split.column(align=True)
+            col1.label(" Model Height:" % locals())
+            col2 = split.column(align=True)
+            col2.alignment = "RIGHT"
+            col2.label("%(h)s" % locals())
         row = col.row(align=True)
         row.prop(cm, "brickHeight")
         row = col.row(align=True)
@@ -253,6 +282,15 @@ class ModelSettingsPanel(Panel):
         row = col.row(align=True)
         # row.prop(cm, "preHollow")
         # if cm.preHollow:
+
+        row = col.row(align=True)
+        row.label("Randomize:")
+        row = col.row(align=True)
+        split = row.split(align=True, percentage=0.5)
+        col1 = split.column(align=True)
+        col1.prop(cm, "randomLoc", text="Location")
+        col2 = split.column(align=True)
+        col2.prop(cm, "randomRot", text="Rotation")
 
         row = col.row(align=True)
         row.label("Brick Shell:")

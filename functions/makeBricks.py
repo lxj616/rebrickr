@@ -27,7 +27,7 @@ import random
 import time
 from mathutils import Vector, Matrix
 from ..classes.Brick import Bricks
-from ..functions.common_functions import stopWatch, groupExists
+from ..functions.common_functions import stopWatch, groupExists, select
 from .__init__ import bounds
 
 def brickAvail(brick):
@@ -57,6 +57,40 @@ def combineMeshes(meshes):
     finalMesh = bpy.data.meshes.new( "newMesh" )
     bm.to_mesh( finalMesh )
     return finalMesh
+
+def randomizeLoc(width, height, bm):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    x = random.uniform(-(width/2) * cm.randomLoc, (width/2) * cm.randomLoc)
+    y = random.uniform(-(width/2) * cm.randomLoc, (width/2) * cm.randomLoc)
+    z = random.uniform(-(height/2) * cm.randomLoc, (height/2) * cm.randomLoc)
+    for v in bm.verts:
+        v.co.x += x
+        v.co.y += y
+        v.co.z += z
+
+
+def randomizeRot(center, brickType, bm):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    if max(brickType) == 0:
+        denom = 0.75
+    else:
+        denom = brickType[0]*brickType[1]
+    x=random.uniform(-0.1963495 * cm.randomRot / denom, 0.1963495 * cm.randomRot / denom)
+    y=random.uniform(-0.1963495 * cm.randomRot / denom, 0.1963495 * cm.randomRot / denom)
+    z=random.uniform(-0.785398 * cm.randomRot / denom, 0.785398 * cm.randomRot / denom)
+    # if obj:
+    #     scn.objects.link(obj)
+    #     select(obj)
+    #     bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+    #     obj.rotation_euler = (x,y,z)
+    #     select(obj, deselect=True)
+    #     scn.objects.unlink(obj)
+    bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(x, 3, 'X'))
+    bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(y, 3, 'Y'))
+    bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(z, 3, 'Z'))
+
 
 def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customData=None, customObj_details=None, group_name=None, frameNum=None):
     # set up variables
@@ -434,7 +468,18 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     m = bpy.data.meshes.new(brickD["name"])
                     bm.to_mesh(m)
                 else:
-                    m = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail)
+                    bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail, returnType="bmesh")
+                    m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
+                    if cm.randomLoc > 0:
+                        randomizeLoc(dimensions["width"], dimensions["height"], bm)
+                    if cm.randomRot > 0:
+                        d = dimensions["width"]/2
+                        sX = (brickType[0] * 2) - 1
+                        sY = (brickType[1] * 2) - 1
+                        center = ( ((d*sX)-d) / 2, ((d*sY)-d) / 2, 0.0 )
+                        randomizeRot(center, brickType, bm)
+                    bm.to_mesh(m)
+                    # return updated brick object
                 brick = bpy.data.objects.new(brickD["name"], m)
                 brick.location = Vector(brickD["co"])
 
@@ -454,6 +499,14 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                         v.co = (v.co[0] + brickD["co"][0], v.co[1] + brickD["co"][1], v.co[2] + brickD["co"][2])
                 else:
                     bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, transform=brickD["co"], undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail, returnType="bmesh")
+                if cm.randomLoc > 0:
+                    randomizeLoc(dimensions["width"], dimensions["height"], bm)
+                if cm.randomRot > 0:
+                    d = dimensions["width"]/2
+                    sX = (brickType[0] * 2) - 1
+                    sY = (brickType[1] * 2) - 1
+                    center = ( (((d*sX)-d) / 2) + brickD["co"][0], (((d*sY)-d) / 2) + brickD["co"][1], brickD["co"][2] )
+                    randomizeRot(center, brickType, bm)
                 tempMesh = bpy.data.meshes.new(brickD["name"])
                 bm.to_mesh(tempMesh)
                 allBrickMeshes.append(tempMesh)

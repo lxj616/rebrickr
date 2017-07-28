@@ -21,6 +21,7 @@
 
 # system imports
 import bpy
+import random
 import time
 import bmesh
 import os
@@ -39,15 +40,12 @@ class legoizerLegoize(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
-        scn = context.scene
-        try:
-            cm = scn.cmlist[scn.cmlist_index]
-            obj = bpy.data.objects[cm.source_name]
-            if obj.type == 'MESH':
-                return True
-        except:
-            return False
-        return False
+        # scn = context.scene
+        # cm = scn.cmlist[scn.cmlist_index]
+        # objIndex = bpy.data.objects.find(cm.source_name)
+        # if objIndex == -1:
+        #     return False
+        return True
 
     action = bpy.props.EnumProperty(
         items=(
@@ -101,11 +99,6 @@ class legoizerLegoize(bpy.types.Operator):
             bpy.context.window_manager["modal_running"] = False
             self.report({"INFO"}, "Modal Finished")
             return{"FINISHED"}
-        # if scn.cmlist_index == -1:
-        #     scn.modalRunning = False
-        #     bpy.context.window_manager["modal_running"] = False
-        #     self.report({"INFO"}, "Modal Finished")
-        #     return{"FINISHED"}
         return {"PASS_THROUGH"}
 
     def getObjectToLegoize(self):
@@ -221,7 +214,7 @@ class legoizerLegoize(bpy.types.Operator):
             customObj_details = None
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
         bricksDict = makeBricksDict(source, source_details, dimensions, R)
-        if curFrame:
+        if curFrame is not None:
             group_name = 'LEGOizer_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
             group_name = None
@@ -242,7 +235,7 @@ class legoizerLegoize(bpy.types.Operator):
                 self.report({"WARNING"}, "Custom brick type object not specified.")
                 return False
             if bpy.data.objects.find(cm.customObjectName) == -1:
-                self.report({"WARNING"}, "Custom brick type object could not be found.")
+                self.report({"WARNING"}, "Custom brick type object '%(n)s' could not be found" % locals())
                 return False
             if bpy.data.objects[cm.customObjectName].type != "MESH":
                 self.report({"WARNING"}, "Custom brick type object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
@@ -254,8 +247,12 @@ class legoizerLegoize(bpy.types.Operator):
                 self.report({"WARNING"}, "LEGOized Model already created.")
                 return False
             # verify source exists and is of type mesh
-            if source == None:
+            if cm.source_name == "":
                 self.report({"WARNING"}, "Please select a mesh to LEGOize")
+                return False
+            if source == None:
+                n = cm.source_name
+                self.report({"WARNING"}, "'%(n)s' could not be found" % locals())
                 return False
             if source.type != "MESH":
                 self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
@@ -351,6 +348,10 @@ class legoizerLegoize(bpy.types.Operator):
             # get source_details and dimensions
             source_details, dimensions = self.getDimensionsAndBounds(source)
 
+            if self.action == "CREATE":
+                # set source model height for display in UI
+                cm.modelHeight = source_details.z.distance
+
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
             parent = bpy.data.objects.new(LEGOizer_parent_gn + "_" + str(i), source.data.copy())
@@ -428,6 +429,10 @@ class legoizerLegoize(bpy.types.Operator):
 
         # get source_details and dimensions
         source_details, dimensions = self.getDimensionsAndBounds(source)
+
+        if self.action == "CREATE":
+            # set source model height for display in UI
+            cm.modelHeight = source_details.z.distance
 
         parentLoc = (source_details.x.mid + source["previous_location"][0], source_details.y.mid + source["previous_location"][1], source_details.z.mid + source["previous_location"][2])
         parent = self.getParent(LEGOizer_parent_gn, source, parentLoc)

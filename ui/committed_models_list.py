@@ -109,7 +109,7 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             last_index = scn.cmlist_index
             scn.cmlist_index = len(scn.cmlist)-1
             item.name = "<New Model>"
-            if active_object:
+            if active_object and active_object.type == "MESH":
                 item.source_name = active_object.name
             else:
                 item.source_name = ""
@@ -426,6 +426,10 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         min=4, max=64,
         default=8)
 
+    modelHeight = FloatProperty(
+        name="Model Height",
+        description="Height of the source object to LEGOize",
+        default=-1)
     brickHeight = FloatProperty(
         name="Brick Height",
         description="Height of the bricks in the final LEGO model",
@@ -448,6 +452,21 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBuild,
         min=-1, max=5000,
         default=1000)
+
+    randomLoc = FloatProperty(
+        name="Random Location",
+        description="Random location applied to each brick individually",
+        update=dirtyBuild,
+        precision=3,
+        min=0, max=1,
+        default=0.005)
+    randomRot = FloatProperty(
+        name="Random Rotation",
+        description="Random rotation applied to each brick individually",
+        update=dirtyBuild,
+        precision=3,
+        min=0, max=1,
+        default=0.025)
 
     brickType = EnumProperty(
         name="Brick Type",
