@@ -60,6 +60,10 @@ class LegoModelsPanel(Panel):
         col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
         col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
 
+        if not listModalRunning():
+            col = layout.column(align=True)
+            col.operator("cmlist.list_action", icon='FILE_REFRESH', text="Run Auto-Select").action = 'NONE'
+
         # draw menu options below UI list
         if scn.cmlist_index != -1:
             cm = scn.cmlist[scn.cmlist_index]
@@ -149,9 +153,9 @@ class AnimationPanel(Panel):
         scn = context.scene
         if scn.cmlist_index == -1:
             return False
-        cm = scn.cmlist[scn.cmlist_index]
         if bversion() < '002.078.00':
             return False
+        cm = scn.cmlist[scn.cmlist_index]
         if cm.modelCreated:
             return False
         # groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())

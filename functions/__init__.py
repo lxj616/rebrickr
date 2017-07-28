@@ -41,6 +41,14 @@ def modalRunning():
         pass
     return False
 
+def listModalRunning():
+    try:
+        if bpy.context.window_manager["list_modal_running"] == True:
+            return True
+    except:
+        pass
+    return False
+
 def confirmList(objList):
     """ if single object passed, convert to list """
     if type(objList) != list:
@@ -232,8 +240,6 @@ def getBrickMatrix(source, coordMatrix, brickShell, axes="xyz"):
                                 gotOne = True
                         except:
                             pass
-
-
         if not gotOne:
             break
 
@@ -315,7 +321,7 @@ def makeBricksDict(source, source_details, dimensions, R):
     if len(coList) == 0:
         coList.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
 
-    # make bricks at determined locations
+    # create bricks dictionary with brickFreqMatrix values
     bricks = []
     i = 0
     brickDict = {}

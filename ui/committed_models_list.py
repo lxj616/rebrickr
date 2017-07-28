@@ -67,6 +67,7 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             ('DOWN', "Down", ""),
             ('REMOVE', "Remove", ""),
             ('ADD', "Add", ""),
+            ('NONE', "None", ""),
         )
     )
 
@@ -79,10 +80,26 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
     #             return False
     #     return True
 
-    def invoke(self, context, event):
+    def modal(self, context, event):
+        scn = bpy.context.scene
+        if scn.objects.active and self.active_object_name != scn.objects.active.name:
+            print(1)
+            self.active_object_name = scn.objects.active.name
+            for i in range(len(scn.cmlist)):
+                print(2)
+                cm = scn.cmlist[i]
+                if cm.source_name == self.active_object_name:
+                    print(3)
+                    scn.cmlist_index = i
+                    bpy.context.area.tag_redraw()
+                    break
+        return {"PASS_THROUGH"}
+
+    def execute(self, context):
 
         scn = context.scene
         idx = scn.cmlist_index
+        self.active_object_name = scn.objects.active.name
 
         try:
             item = scn.cmlist[idx]
@@ -135,7 +152,14 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             scn.cmlist_index -= 1
             item.idx = scn.cmlist_index
 
-        return {"FINISHED"}
+        if listModalRunning():
+            return{"FINISHED"}
+        else:
+            # run modal
+            wm = bpy.context.window_manager
+            bpy.context.window_manager["list_modal_running"] = True
+            wm.modal_handler_add(self)
+            return {"RUNNING_MODAL"}
 
 # -------------------------------------------------------------------
 # draw
