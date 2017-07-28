@@ -42,8 +42,12 @@ def matchProperties(cmNew, cmOld):
     cmNew.brickHeight = cmOld.brickHeight
     cmNew.gap = cmOld.gap
     cmNew.mergeSeed = cmOld.mergeSeed
+    cmNew.randomRot = cmOld.randomRot
+    cmNew.randomLoc = cmOld.randomLoc
+    cmNew.splitModel = cmOld.splitModel
     cmNew.maxBrickScale1 = cmOld.maxBrickScale1
     cmNew.maxBrickScale2 = cmOld.maxBrickScale2
+    cmNew.originSet = cmOld.originSet
     cmNew.smoothCylinders = cmOld.smoothCylinders
     cmNew.calculationAxes = cmOld.calculationAxes
     cmNew.bevelWidth = cmOld.bevelWidth
@@ -477,6 +481,12 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
               ("Custom", "Custom", "Use custom object to build the model")],
         update=dirtyModel,
         default="Bricks")
+
+    originSet = BoolProperty(
+        name="Center brick origins",
+        description="Set all brick origins to center of bricks (slower)",
+        update=dirtyBricks,
+        default=False)
 
     distOffsetX = FloatProperty(
         name="X",

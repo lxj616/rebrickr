@@ -482,6 +482,12 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     # return updated brick object
                 brick = bpy.data.objects.new(brickD["name"], m)
                 brick.location = Vector(brickD["co"])
+                if cm.originSet:
+                    scn.objects.link(brick)
+                    select(brick)
+                    bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+                    select(brick, deselect=True)
+                    scn.objects.unlink(brick)
 
                 # Add edge split modifier
                 if cm.smoothCylinders:
@@ -521,7 +527,23 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     percent = 100
                 print("building... " + str(percent) + "%")
 
-    if not split:
+    if split:
+        for key in bricksD:
+            if bricksD[key]["name"] != "DNE":
+                name = bricksD[key]["name"]
+                brick = bpy.data.objects[name]
+                # create vert group for bevel mod (assuming only logo verts are selected):
+                vg = brick.vertex_groups.new("%(name)s_bevel" % locals())
+                for v in brick.data.vertices:
+                    if not v.select:
+                        vg.add([v.index], 1, "ADD")
+                bGroup.objects.link(brick)
+                brick.parent = parent
+                mat = bpy.data.materials.get(cm.material_name)
+                if mat is not None:
+                    brick.data.materials.append(mat)
+                scn.objects.link(brick)
+    else:
         m = combineMeshes(allBrickMeshes)
         if frameNum:
             frameNum = str(frameNum)
@@ -543,21 +565,5 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         if mat is not None:
             allBricksObj.data.materials.append(mat)
         scn.objects.link(allBricksObj)
-    else:
-        for key in bricksD:
-            if bricksD[key]["name"] != "DNE":
-                name = bricksD[key]["name"]
-                brick = bpy.data.objects[name]
-                # create vert group for bevel mod (assuming only logo verts are selected):
-                vg = brick.vertex_groups.new("%(name)s_bevel" % locals())
-                for v in brick.data.vertices:
-                    if not v.select:
-                        vg.add([v.index], 1, "ADD")
-                bGroup.objects.link(brick)
-                brick.parent = parent
-                mat = bpy.data.materials.get(cm.material_name)
-                if mat is not None:
-                    brick.data.materials.append(mat)
-                scn.objects.link(brick)
 
     stopWatch("Time Elapsed (building)", time.time()-ct)

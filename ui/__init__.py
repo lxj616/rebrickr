@@ -367,6 +367,11 @@ class BrickTypesPanel(Panel):
             row2 = col2.row(align=True)
             row2.prop(cm, "maxBrickScale2", text="2x")
 
+            if cm.splitModel:
+                col = layout.column(align=True)
+                row = col.row(align=True)
+                row.prop(cm, "originSet")
+
 class MaterialsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
