@@ -175,20 +175,21 @@ class AnimationPanel(Panel):
         if not cm.animated:
             col = layout.column(align=True)
             col.prop(cm, "useAnimation")
-        col = layout.column(align=True)
-        col.active = cm.animated or cm.useAnimation
-        row = col.row(align=True)
-        split = row.split(align=True, percentage=0.5)
-        col = split.column(align=True)
-        col.prop(cm, "startFrame")
-        col = split.column(align=True)
-        col.prop(cm, "stopFrame")
-        if cm.stopFrame - cm.startFrame > 10 and not cm.animated and cm.useAnimation:
+        if cm.useAnimation:
             col = layout.column(align=True)
-            col.scale_y = 0.4
-            col.label("WARNING: May take a while.")
-            col.separator()
-            col = layout.column(align=True)
+            col.active = cm.animated or cm.useAnimation
+            row = col.row(align=True)
+            split = row.split(align=True, percentage=0.5)
+            col = split.column(align=True)
+            col.prop(cm, "startFrame")
+            col = split.column(align=True)
+            col.prop(cm, "stopFrame")
+            if cm.stopFrame - cm.startFrame > 10 and not cm.animated:
+                col = layout.column(align=True)
+                col.scale_y = 0.4
+                col.label("WARNING: May take a while.")
+                col.separator()
+                col = layout.column(align=True)
 
 class ModelTransformationPanel(Panel):
     bl_space_type  = "VIEW_3D"

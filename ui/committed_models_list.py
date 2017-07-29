@@ -98,7 +98,7 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
 
         scn = context.scene
         idx = scn.cmlist_index
-        self.active_object_name = scn.objects.active.name
+        self.active_object_name = -1
 
         try:
             item = scn.cmlist[idx]
