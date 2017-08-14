@@ -69,9 +69,10 @@ class LegoModelsPanel(Panel):
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             # first, draw source object text
-            LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
-            groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
-            if not groupExistsBool:
+            if cm.animated or cm.modelCreated:
+                col = layout.column(align=True)
+                col.label("Source Object: " + cm.source_name)
+            else:
                 col = layout.column(align=True)
                 col.label("Source Object:")
                 split = col.split(align=True, percentage=0.85)
@@ -80,9 +81,6 @@ class LegoModelsPanel(Panel):
                 col = split.column(align=True)
                 col.operator("cmlist.set_to_active", icon="EDIT", text="")
                 col = layout.column(align=True)
-            else:
-                col = layout.column(align=True)
-                col.label("Source Object: " + cm.source_name)
 
             obj = bpy.data.objects.get(cm.source_name)
 
@@ -108,7 +106,7 @@ class LegoModelsPanel(Panel):
                     row.operator("scene.legoizer_legoize", text="LEGOize Animation", icon="MOD_REMESH").action = "ANIMATE"
             # if use animation is not selected, draw modeling options
             else:
-                if not groupExistsBool:
+                if not cm.animated and not cm.modelCreated:
                     row = col.row(align=True)
                     if obj:
                         row.active = obj.type == 'MESH'

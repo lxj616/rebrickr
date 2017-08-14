@@ -82,16 +82,55 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
 
     def modal(self, context, event):
         scn = bpy.context.scene
-        if scn.objects.active and self.active_object_name != scn.objects.active.name:
-            self.active_object_name = scn.objects.active.name
-            for i in range(len(scn.cmlist)):
-                cm = scn.cmlist[i]
-                if cm.source_name == self.active_object_name:
-                    scn.cmlist_index = i
-                    bpy.context.area.tag_redraw()
-                    return {"PASS_THROUGH"}
-            scn.cmlist_index = -1
-            bpy.context.area.tag_redraw()
+        if self.last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
+            self.last_cmlist_index = scn.cmlist_index
+            cm = scn.cmlist[scn.cmlist_index]
+            objIdx = bpy.data.objects.find(cm.source_name)
+            if objIdx != -1:
+                obj = bpy.data.objects[objIdx]
+                if cm.modelCreated:
+                    n = cm.source_name
+                    gn = "LEGOizer_%(n)s_bricks" % locals()
+                    select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
+                elif cm.animated:
+                    n = cm.source_name
+                    cf = scn.frame_current
+                    if cf > cm.stopFrame:
+                        cf = cm.stopFrame
+                    elif cf < cm.startFrame:
+                        cf = cm.startFrame
+                    gn = "LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals()
+                    select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
+                else:
+                    select(obj, active=obj)
+                self.last_active_object_name = obj.name
+            else:
+                for i in range(len(scn.cmlist)):
+                    cm = scn.cmlist[i]
+                    if cm.source_name == self.active_object_name:
+                        select(None)
+                        break
+        elif self.last_active_object_name != scn.objects.active.name:
+            if scn.objects.active:
+                self.last_active_object_name = scn.objects.active.name
+                if scn.objects.active.name.startswith("LEGOizer_"):
+                    if "_bricks" in scn.objects.active.name:
+                        frameLoc = scn.objects.active.name.rfind("_bricks")
+                    elif "_brick_" in scn.objects.active.name:
+                        frameLoc = scn.objects.active.name.rfind("_brick_")
+                    self.active_object_name = scn.objects.active.name[9:frameLoc]
+                else:
+                    self.active_object_name = scn.objects.active.name
+                for i in range(len(scn.cmlist)):
+                    cm = scn.cmlist[i]
+                    if cm.source_name == self.active_object_name:
+                        scn.cmlist_index = i
+                        bpy.context.area.tag_redraw()
+                        self.last_cmlist_index = scn.cmlist_index
+                        return {"PASS_THROUGH"}
+                scn.cmlist_index = -1
+                bpy.context.area.tag_redraw()
+
         return {"PASS_THROUGH"}
 
     def execute(self, context):
@@ -99,6 +138,8 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
         scn = context.scene
         idx = scn.cmlist_index
         self.active_object_name = -1
+        self.last_active_object_name = -1
+        self.last_cmlist_index = scn.cmlist_index
 
         try:
             item = scn.cmlist[idx]
@@ -128,11 +169,12 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             item = scn.cmlist.add()
             last_index = scn.cmlist_index
             scn.cmlist_index = len(scn.cmlist)-1
-            item.name = "<New Model>"
-            if active_object and active_object.type == "MESH":
+            if active_object and active_object.type == "MESH" and not active_object.name.startswith("LEGOizer_"):
                 item.source_name = active_object.name
+                item.name = active_object.name
             else:
                 item.source_name = ""
+                item.name = "<New Model>"
             item.id = len(scn.cmlist)
             item.idx = len(scn.cmlist)-1
             if last_index == -1:
