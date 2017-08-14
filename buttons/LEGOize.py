@@ -134,6 +134,8 @@ class legoizerLegoize(bpy.types.Operator):
             m = bpy.data.meshes.new(LEGOizer_parent_on + "_mesh")
             parent = bpy.data.objects.new(LEGOizer_parent_on, m)
             parent.location = loc
+            safeScn = getSafeScn()
+            safeScn.objects.link(parent)
         return parent
 
 
@@ -156,7 +158,7 @@ class legoizerLegoize(bpy.types.Operator):
                 # import refLogo and add to group
                 refLogoImport = importLogo()
                 refLogoImport.name = "LEGOizer_refLogo"
-                scn.objects.unlink(refLogoImport)
+                safeUnlink(refLogoImport)
                 refLogo = bpy.data.objects.new("LEGOizer_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
                 decimate = True
             # decimate refLogo
@@ -167,7 +169,7 @@ class legoizerLegoize(bpy.types.Operator):
                 scn.objects.link(refLogo)
                 select(refLogo, active=refLogo)
                 bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
-                scn.objects.unlink(refLogo)
+                safeUnlink(refLogo)
 
         return refLogo
 
@@ -279,7 +281,7 @@ class legoizerLegoize(bpy.types.Operator):
         #
         sourceOrig = self.getObjectToLegoize()
         if self.action == "UPDATE_ANIM":
-            scn.objects.link(sourceOrig)
+            safeLink(sourceOrig)
 
         # if there are no changes to apply, simply return "FINISHED"
         if not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty:
@@ -323,7 +325,7 @@ class legoizerLegoize(bpy.types.Operator):
             select(source, active=source)
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             scn.update()
-            scn.objects.unlink(source)
+            safeUnlink(source)
 
             # get source_details and dimensions
             source_details, dimensions = self.getDimensionsAndBounds(source)
@@ -344,7 +346,7 @@ class legoizerLegoize(bpy.types.Operator):
             pGroup.objects.link(parent)
             scn.objects.link(parent)
             scn.update()
-            scn.objects.unlink(parent)
+            safeUnlink(parent)
 
             # create new bricks
             group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, curFrame=curFrame)
@@ -353,7 +355,7 @@ class legoizerLegoize(bpy.types.Operator):
 
             print("completed frame " + str(curFrame))
 
-        scn.objects.unlink(sourceOrig)
+        safeUnlink(sourceOrig)
         cm.lastStartFrame = cm.startFrame
         cm.lastStopFrame = cm.stopFrame
         scn.frame_set(cm.lastStartFrame)
@@ -387,11 +389,11 @@ class legoizerLegoize(bpy.types.Operator):
 
         # update scene so mesh data is available for ray casting
         if source.name not in scn.objects.keys():
-            scn.objects.link(source)
+            safeLink(source)
         scn.update()
 
         if source.name in scn.objects.keys():
-            scn.objects.unlink(source)
+            safeUnlink(source)
 
         # get source_details and dimensions
         source_details, dimensions = self.getDimensionsAndBounds(source)

@@ -49,6 +49,25 @@ def listModalRunning():
         pass
     return False
 
+def getSafeScn():
+    safeScn = bpy.data.scenes.get("LEGOizer_storage")
+    if safeScn == None:
+        safeScn = bpy.data.scenes.new("LEGOizer_storage")
+    return safeScn
+def safeUnlink(obj):
+    scn = bpy.context.scene
+    safeScn = getSafeScn()
+    scn.objects.unlink(obj)
+    safeScn.objects.link(obj)
+def safeLink(obj):
+    scn = bpy.context.scene
+    safeScn = getSafeScn()
+    scn.objects.link(obj)
+    try:
+        safeScn.objects.unlink(obj)
+    except:
+        pass
+
 def confirmList(objList):
     """ if single object passed, convert to list """
     if type(objList) != list:

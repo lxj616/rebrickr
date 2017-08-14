@@ -86,12 +86,15 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             self.last_cmlist_index = scn.cmlist_index
             cm = scn.cmlist[scn.cmlist_index]
             objIdx = bpy.data.objects.find(cm.source_name)
+            print("here 0")
             if objIdx != -1:
+                print("here 0.5")
                 obj = bpy.data.objects[objIdx]
                 if cm.modelCreated:
                     n = cm.source_name
                     gn = "LEGOizer_%(n)s_bricks" % locals()
                     select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
+                    print("here 1")
                 elif cm.animated:
                     n = cm.source_name
                     cf = scn.frame_current
@@ -101,8 +104,10 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                         cf = cm.startFrame
                     gn = "LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals()
                     select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
+                    print("here 2")
                 else:
                     select(obj, active=obj)
+                    print("here 3")
                 self.last_active_object_name = obj.name
             else:
                 for i in range(len(scn.cmlist)):
@@ -110,26 +115,25 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                     if cm.source_name == self.active_object_name:
                         select(None)
                         break
-        elif self.last_active_object_name != scn.objects.active.name:
-            if scn.objects.active:
-                self.last_active_object_name = scn.objects.active.name
-                if scn.objects.active.name.startswith("LEGOizer_"):
-                    if "_bricks" in scn.objects.active.name:
-                        frameLoc = scn.objects.active.name.rfind("_bricks")
-                    elif "_brick_" in scn.objects.active.name:
-                        frameLoc = scn.objects.active.name.rfind("_brick_")
-                    self.active_object_name = scn.objects.active.name[9:frameLoc]
-                else:
-                    self.active_object_name = scn.objects.active.name
-                for i in range(len(scn.cmlist)):
-                    cm = scn.cmlist[i]
-                    if cm.source_name == self.active_object_name:
-                        scn.cmlist_index = i
-                        bpy.context.area.tag_redraw()
-                        self.last_cmlist_index = scn.cmlist_index
-                        return {"PASS_THROUGH"}
-                scn.cmlist_index = -1
-                bpy.context.area.tag_redraw()
+        elif scn.objects.active and self.last_active_object_name != scn.objects.active.name:
+            self.last_active_object_name = scn.objects.active.name
+            if scn.objects.active.name.startswith("LEGOizer_"):
+                if "_bricks" in scn.objects.active.name:
+                    frameLoc = scn.objects.active.name.rfind("_bricks")
+                elif "_brick_" in scn.objects.active.name:
+                    frameLoc = scn.objects.active.name.rfind("_brick_")
+                self.active_object_name = scn.objects.active.name[9:frameLoc]
+            else:
+                self.active_object_name = scn.objects.active.name
+            for i in range(len(scn.cmlist)):
+                cm = scn.cmlist[i]
+                if cm.source_name == self.active_object_name:
+                    scn.cmlist_index = i
+                    bpy.context.area.tag_redraw()
+                    self.last_cmlist_index = scn.cmlist_index
+                    return {"PASS_THROUGH"}
+            scn.cmlist_index = -1
+            bpy.context.area.tag_redraw()
 
         return {"PASS_THROUGH"}
 
@@ -150,7 +154,7 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             cm = scn.cmlist[scn.cmlist_index]
             sn = cm.source_name
             n = cm.name
-            if not cm.modelCreated and not cm.animated:
+            if True:#not cm.modelCreated and not cm.animated:
                 scn.cmlist_index -= 1
                 scn.cmlist.remove(idx)
                 if scn.cmlist_index == -1 and len(scn.cmlist) > 0:

@@ -70,7 +70,7 @@ class legoizerDelete(bpy.types.Operator):
             except:
                 pass
             if not source in list(scn.objects):
-                scn.objects.link(source)
+                safeLink(source)
             select(source, active=source)
             cm.modelHeight = -1
 
