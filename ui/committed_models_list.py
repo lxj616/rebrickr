@@ -154,7 +154,7 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             cm = scn.cmlist[scn.cmlist_index]
             sn = cm.source_name
             n = cm.name
-            if True:#not cm.modelCreated and not cm.animated:
+            if not cm.modelCreated and not cm.animated:
                 scn.cmlist_index -= 1
                 scn.cmlist.remove(idx)
                 if scn.cmlist_index == -1 and len(scn.cmlist) > 0:
@@ -638,6 +638,13 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         min=1, max=25,
         default=2)
 
+    materialType = EnumProperty(
+        name="Material Type",
+        description="Choose what ",
+        items=[("Custom", "Custom", "Choose a custom material to apply to all generated bricks"),
+              ("Use Source Materials", "Use Source Materials", "Apply material based on closest intersecting face")],
+        update=dirtyModel,
+        default="Use Source Materials")
     material_name = StringProperty(
         name="Material Name",
         description="Name of the material to apply to all bricks",

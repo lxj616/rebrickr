@@ -454,6 +454,20 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             else:
                 undersideDetail = cm.hiddenUndersideDetail
 
+            # get closest material
+            mat = None
+            if cm.materialType == "Use Source Materials":
+                for x in range(brickType[0]):
+                    for y in range(brickType[1]):
+                        idcs = key.split(",")
+                        faceIdx = bricksD[str(int(idcs[0])+x) + "," + str(int(idcs[1])+y) + "," + idcs[2]]["nearestFaceIdx"]
+                        o = bpy.data.objects.get(n)
+                        if faceIdx is not None and len(o.material_slots) > 0:
+                            f = o.data.polygons[faceIdx]
+                            slot = o.material_slots[f.material_index]
+                            mat = slot.material
+                            break
+
             # add brick with new mesh data at original location
             if split:
                 if cm.brickType == "Custom":
@@ -482,6 +496,9 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     # return updated brick object
                 brick = bpy.data.objects.new(brickD["name"], m)
                 brick.location = Vector(brickD["co"])
+                if mat is not None:
+                    brick.data.materials.append(mat)
+
                 if cm.originSet:
                     scn.objects.link(brick)
                     select(brick)

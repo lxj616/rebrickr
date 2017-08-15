@@ -402,14 +402,19 @@ class MaterialsPanel(Panel):
 
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop_search(cm, "material_name", bpy.data, "materials", text="")
-        if "lego_materials" in bpy.context.user_preferences.addons.keys() and ("LEGO Plastic Black" not in bpy.data.materials.keys() or "LEGO Plastic Trans-Light Green" not in bpy.data.materials.keys()):
-            row = col.row(align=True)
-            row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
-        if cm.modelCreated:
+        row.prop(cm, "materialType", text="")
+
+        if cm.materialType == "Custom":
             col = layout.column(align=True)
             row = col.row(align=True)
-            row.operator("scene.legoizer_apply_material", icon="FILE_TICK")
+            row.prop_search(cm, "material_name", bpy.data, "materials", text="")
+            if "lego_materials" in bpy.context.user_preferences.addons.keys() and ("LEGO Plastic Black" not in bpy.data.materials.keys() or "LEGO Plastic Trans-Light Green" not in bpy.data.materials.keys()):
+                row = col.row(align=True)
+                row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
+            if cm.modelCreated:
+                col = layout.column(align=True)
+                row = col.row(align=True)
+                row.operator("scene.legoizer_apply_material", icon="FILE_TICK")
 
 class DetailingPanel(Panel):
     bl_space_type  = "VIEW_3D"
