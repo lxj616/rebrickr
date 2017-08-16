@@ -203,6 +203,12 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, bric
 
     return intersections, nextIntersection
 
+def setNF(j, orig, target, faceIdxMatrix):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    if ((1-j)*100) < cm.matShellDepth:
+        faceIdxMatrix[target[0]][target[1]][target[2]] = faceIdxMatrix[orig[0]][orig[1]][orig[2]]
+
 # TODO: Make this more efficient
 def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
     ct = time.time()
@@ -264,6 +270,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
                         brickFreqMatrix[x][y][z] = 2
     stopWatch("2e", time.time()-ct)
     ct = time.time()
+    # set up brickFreqMatrix values for bricks inside shell
     j = 1
     for idx in range(100):
         j = round(j-0.01, 2)
@@ -273,20 +280,42 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
                 for z in range(len(coordMatrix[0][0])):
                     if brickFreqMatrix[x][y][z] == -1:
                         try:
-                            if ((j == 0.99 and
-                               (brickFreqMatrix[x+1][y][z] == 2 or
-                               brickFreqMatrix[x-1][y][z] == 2 or
-                               brickFreqMatrix[x][y+1][z] == 2 or
-                               brickFreqMatrix[x][y-1][z] == 2 or
-                               brickFreqMatrix[x][y][z+1] == 2 or
-                               brickFreqMatrix[x][y][z-1] == 2)) or
-                               (brickFreqMatrix[x+1][y][z] == round(j + 0.01,2) or
-                               brickFreqMatrix[x-1][y][z] == round(j + 0.01,2) or
-                               brickFreqMatrix[x][y+1][z] == round(j + 0.01,2) or
-                               brickFreqMatrix[x][y-1][z] == round(j + 0.01,2) or
-                               brickFreqMatrix[x][y][z+1] == round(j + 0.01,2) or
-                               brickFreqMatrix[x][y][z-1] == round(j + 0.01,2))):
-                                brickFreqMatrix[x][y][z] = j
+                            origVal = brickFreqMatrix[x][y][z]
+                            brickFreqMatrix[x][y][z] = j
+                            missed = False
+                            if j == 0.99:
+                                if brickFreqMatrix[x+1][y][z] == 2:
+                                    setNF(j, (x+1,y,z), (x,y,z), faceIdxMatrix)
+                                elif brickFreqMatrix[x-1][y][z] == 2:
+                                    setNF(j, (x-1,y,z), (x,y,z), faceIdxMatrix)
+                                elif brickFreqMatrix[x][y+1][z] == 2:
+                                    setNF(j, (x,y+1,z), (x,y,z), faceIdxMatrix)
+                                elif brickFreqMatrix[x][y-1][z] == 2:
+                                    setNF(j, (x,y-1,z), (x,y,z), faceIdxMatrix)
+                                elif brickFreqMatrix[x][y][z+1] == 2:
+                                    setNF(j, (x,y,z+1), (x,y,z), faceIdxMatrix)
+                                elif brickFreqMatrix[x][y][z-1] == 2:
+                                    setNF(j, (x,y,z-1), (x,y,z), faceIdxMatrix)
+                                else:
+                                    brickFreqMatrix[x][y][z] = origVal
+                                    missed = True
+                            else:
+                                if brickFreqMatrix[x+1][y][z] == round(j + 0.01,2):
+                                    setNF(j, (x+1,y,z), (x,y,z), faceIdxMatrix)
+                                elif brickFreqMatrix[x-1][y][z] == round(j + 0.01,2):
+                                    setNF(j, (x-1,y,z), (x,y,z), faceIdxMatrix)
+                                elif brickFreqMatrix[x][y+1][z] == round(j + 0.01,2):
+                                    setNF(j, (x,y+1,z), (x,y,z), faceIdxMatrix)
+                                elif brickFreqMatrix[x][y-1][z] == round(j + 0.01,2):
+                                    setNF(j, (x,y-1,z), (x,y,z), faceIdxMatrix)
+                                elif brickFreqMatrix[x][y][z+1] == round(j + 0.01,2):
+                                    setNF(j, (x,y,z+1), (x,y,z), faceIdxMatrix)
+                                elif brickFreqMatrix[x][y][z-1] == round(j + 0.01,2):
+                                    setNF(j, (x,y,z-1), (x,y,z), faceIdxMatrix)
+                                else:
+                                    brickFreqMatrix[x][y][z] = origVal
+                                    missed = True
+                            if not missed:
                                 gotOne = True
                         except:
                             pass
@@ -393,7 +422,6 @@ def makeBricksDict(source, source_details, dimensions, R):
                     # nearestFaceIdx = getClosestPolyIndex(curP, dist, o)
                     if type(faceIdxMatrix[x][y][z]) == dict:
                         nf = faceIdxMatrix[x][y][z]["idx"]
-                        print(nf)
                     else:
                         nf = None
                     brickDict[str(x) + "," + str(y) + "," + str(z)] = {

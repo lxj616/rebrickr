@@ -130,6 +130,14 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
 
     denom = len(keys)/20
     supportBrickDs = []
+    # set up internal material for this object
+    internalMat = bpy.data.materials.get(cm.internalMatName)
+    if internalMat is None:
+        internalMat = bpy.data.materials.get("LEGOizer_%(n)s_internal" % locals())
+        if internalMat is None:
+            internalMat = bpy.data.materials.new("LEGOizer_%(n)s_internal" % locals())
+    # initialize mats with first material being the internal material
+    mats = [internalMat]
     for i,key in enumerate(keys):
         brickD = bricksD[key]
         if brickD["name"] != "DNE" and not brickD["connected"]:
@@ -498,6 +506,8 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 brick.location = Vector(brickD["co"])
                 if mat is not None:
                     brick.data.materials.append(mat)
+                else:
+                    brick.data.materials.append(internalMat)
 
                 if cm.originSet:
                     scn.objects.link(brick)
@@ -532,6 +542,18 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     randomizeRot(center, brickType, bm)
                 tempMesh = bpy.data.meshes.new(brickD["name"])
                 bm.to_mesh(tempMesh)
+                if mat in mats:
+                    matIdx = mats.index(mat)
+                elif mat is not None:
+                    mats.append(mat)
+                    matIdx = len(mats) - 1
+                if mat is not None:
+                    tempMesh.materials.append(mat)
+                    for p in tempMesh.polygons:
+                        p.material_index = matIdx
+                else:
+                    for p in tempMesh.polygons:
+                        p.material_index = 0
                 allBrickMeshes.append(tempMesh)
 
         # print status to terminal
@@ -556,9 +578,10 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                         vg.add([v.index], 1, "ADD")
                 bGroup.objects.link(brick)
                 brick.parent = parent
-                mat = bpy.data.materials.get(cm.material_name)
-                if mat is not None:
-                    brick.data.materials.append(mat)
+                if cm.materialType == "Custom":
+                    mat = bpy.data.materials.get(cm.materialName)
+                    if mat is not None:
+                        brick.data.materials.append(mat)
                 scn.objects.link(brick)
     else:
         m = combineMeshes(allBrickMeshes)
@@ -578,9 +601,13 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             addEdgeSplitMod(allBricksObj)
         bGroup.objects.link(allBricksObj)
         allBricksObj.parent = parent
-        mat = bpy.data.materials.get(cm.material_name)
-        if mat is not None:
-            allBricksObj.data.materials.append(mat)
+        if cm.materialType == "Custom":
+            mat = bpy.data.materials.get(cm.materialName)
+            if mat is not None:
+                allBricksObj.data.materials.append(mat)
+        elif cm.materialType == "Use Source Materials":
+            for mat in mats:
+                allBricksObj.data.materials.append(mat)
         scn.objects.link(allBricksObj)
 
     stopWatch("Time Elapsed (building)", time.time()-ct)

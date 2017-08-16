@@ -219,7 +219,7 @@ class ModelTransformationPanel(Panel):
 
         col = layout.column(align=True)
         row = col.row(align=True)
-        parent = bpy.data.groups['LEGOizer_%(n)s_parent' % locals()].objects[0]
+        parent = bpy.data.objects['LEGOizer_%(n)s_parent' % locals()]
         row = layout.row()
         row.column().prop(parent, "location")
         if parent.rotation_mode == 'QUATERNION':
@@ -407,14 +407,33 @@ class MaterialsPanel(Panel):
         if cm.materialType == "Custom":
             col = layout.column(align=True)
             row = col.row(align=True)
-            row.prop_search(cm, "material_name", bpy.data, "materials", text="")
+            row.prop_search(cm, "materialName", bpy.data, "materials", text="")
             if "lego_materials" in bpy.context.user_preferences.addons.keys() and ("LEGO Plastic Black" not in bpy.data.materials.keys() or "LEGO Plastic Trans-Light Green" not in bpy.data.materials.keys()):
                 row = col.row(align=True)
                 row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
             if cm.modelCreated:
                 col = layout.column(align=True)
                 row = col.row(align=True)
-                row.operator("scene.legoizer_apply_material", icon="FILE_TICK")
+                row.operator("scene.legoizer_apply_material", icon="FILE_TICK").action = "CUSTOM"
+        elif cm.materialType == "Use Source Materials" and cm.shellThickness > 1:
+            col = layout.column(align=True)
+            row = col.row(align=True)
+            row.prop(cm, "matShellDepth")
+            row = col.row(align=True)
+            row.label("Internal:")
+            row = col.row(align=True)
+            row.prop_search(cm, "internalMatName", bpy.data, "materials", text="")
+            if "lego_materials" in bpy.context.user_preferences.addons.keys() and ("LEGO Plastic Black" not in bpy.data.materials.keys() or "LEGO Plastic Trans-Light Green" not in bpy.data.materials.keys()):
+                row = col.row(align=True)
+                row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
+            if cm.modelCreated:
+                if cm.splitModel:
+                    col = layout.column(align=True)
+                    col.label("Run 'Update Model' to apply changes")
+                else:
+                    col = layout.column(align=True)
+                    row = col.row(align=True)
+                    row.operator("scene.legoizer_apply_material", icon="FILE_TICK").action = "INTERNAL"
 
 class DetailingPanel(Panel):
     bl_space_type  = "VIEW_3D"

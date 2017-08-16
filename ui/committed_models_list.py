@@ -410,6 +410,11 @@ def dirtyAnim(self, context):
     cm = scn.cmlist[scn.cmlist_index]
     cm.animIsDirty = True
 
+def dirtyMaterial(self, context):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    cm.materialIsDirty = True
+
 def dirtyModel(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -641,14 +646,26 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     materialType = EnumProperty(
         name="Material Type",
         description="Choose what ",
-        items=[("Custom", "Custom", "Choose a custom material to apply to all generated bricks"),
+        items=[("None", "None", "No material applied to LEGO bricks"),
+              ("Custom", "Custom", "Choose a custom material to apply to all generated bricks"),
               ("Use Source Materials", "Use Source Materials", "Apply material based on closest intersecting face")],
-        update=dirtyModel,
+        update=dirtyMaterial,
         default="Use Source Materials")
-    material_name = StringProperty(
+    materialName = StringProperty(
         name="Material Name",
         description="Name of the material to apply to all bricks",
         default="")
+    internalMatName = StringProperty(
+        name="Material Name",
+        description="Name of the material to apply to bricks inside mat shell",
+        update=dirtyMaterial,
+        default="")
+    matShellDepth = IntProperty(
+        name="Material Shell Depth",
+        description="How deep in layers the outer materials should be applied",
+        default=2,
+        min=1, max=100,
+        update=dirtyModel)
 
     lastLogoDetail = StringProperty(default="None")
     lastLogoResolution = FloatProperty(default=0)
@@ -713,6 +730,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     materialApplied = BoolProperty(default=False)
 
     animIsDirty = BoolProperty(default=True)
+    materialIsDirty = BoolProperty(default=True)
     modelIsDirty = BoolProperty(default=True)
     buildIsDirty = BoolProperty(default=True)
     bricksAreDirty = BoolProperty(default=True)

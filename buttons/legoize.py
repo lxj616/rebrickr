@@ -284,7 +284,7 @@ class legoizerLegoize(bpy.types.Operator):
             safeLink(sourceOrig)
 
         # if there are no changes to apply, simply return "FINISHED"
-        if not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty:
+        if not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty and (cm.materialType == "Custom" or not cm.materialIsDirty):
             return "FINISHED"
 
         # delete old bricks if present
@@ -371,7 +371,7 @@ class legoizerLegoize(bpy.types.Operator):
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
 
         # if there are no changes to apply, simply return "FINISHED"
-        if not (self.action == "CREATE" or cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (self.action == "UPDATE_MODEL" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)):
+        if not self.action == "CREATE" and not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty and (cm.materialType == "Custom" or not cm.materialIsDirty) and not (self.action == "UPDATE_MODEL" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0):
             return{"FINISHED"}
 
         # delete old bricks if present
@@ -445,6 +445,7 @@ class legoizerLegoize(bpy.types.Operator):
         cm.lastLogoResolution = cm.logoResolution
         cm.lastLogoDetail = cm.logoDetail
         cm.lastSplitModel = cm.splitModel
+        cm.materialIsDirty = False
         cm.modelIsDirty = False
         cm.buildIsDirty = False
         cm.bricksAreDirty = False

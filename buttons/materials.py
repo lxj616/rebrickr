@@ -47,11 +47,12 @@ class legoizerApplyMaterial(bpy.types.Operator):
             return False
         return True
 
-    # action = bpy.props.EnumProperty(
-    #     items=(
-    #         ("APPLY", "Apply", ""),
-    #     )
-    # )
+    action = bpy.props.EnumProperty(
+        items=(
+            ("CUSTOM", "Custom", ""),
+            ("INTERNAL", "Internal", ""),
+        )
+    )
 
     def execute(self, context):
         # get start time
@@ -63,18 +64,29 @@ class legoizerApplyMaterial(bpy.types.Operator):
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         bricks = list(bpy.data.groups[LEGOizer_bricks_gn].objects)
-        if cm.material_name != "":
-            mat = bpy.data.materials.get(cm.material_name)
-            if mat is None:
-                self.report({"WARNING"}, "Specified material doesn't exist")
+        if self.action == "CUSTOM":
+            matName = cm.materialName
+        elif self.action == "INTERNAL":
+            matName = cm.internalMatName
+        mat = bpy.data.materials.get(matName)
+        if mat is None:
+            self.report({"WARNING"}, "Specified material doesn't exist")
 
         for brick in bricks:
             # if materials exist, remove them
             if brick.data.materials:
-                brick.data.materials.clear()
-            if cm.material_name != "":
-                # Assign it to object
-                brick.data.materials.append(mat)
+                if self.action == "CUSTOM":
+                    brick.data.materials.clear()
+                    # Assign it to object
+                    brick.data.materials.append(mat)
+                elif self.action == "INTERNAL":
+                    brick.data.materials.pop(0)
+                    # Assign it to object
+                    brick.data.materials.append(mat)
+                    for i in range(len(brick.data.materials)-1):
+                        brick.data.materials.append(brick.data.materials.pop(0))
+
+        cm.materialIsDirty = False
 
         # STOPWATCH CHECK
         stopWatch("Total Time Elapsed", time.time()-startTime)
