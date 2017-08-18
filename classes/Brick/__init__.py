@@ -87,7 +87,7 @@ class Bricks:
                     if zRot != 0:
                         bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(0.0, 0.0, 1.0), matrix=Matrix.Rotation(math.radians(zRot), 3, 'Z'))
                     for v in logoBM.verts:
-                        v.co = ((v.co.x + x*dimensions["width"]), (v.co.y + y*dimensions["width"]), (v.co.z + dimensions["logo_offset"]*0.998))
+                        v.co = ((v.co.x + x*(dimensions["width"]+dimensions["gap"])), (v.co.y + y*(dimensions["width"]+dimensions["gap"])), (v.co.z + dimensions["logo_offset"]*0.998))
                     lastLogoBM = logoBM
                     # add logoBM mesh to bm mesh
                     logoMesh = bpy.data.meshes.new('LEGOizer_tempMesh')
