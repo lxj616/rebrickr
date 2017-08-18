@@ -82,12 +82,13 @@ class legoizerDelete(bpy.types.Operator):
                 delete(dObjects)
             bpy.data.groups.remove(dGroup, do_unlink=True)
 
-        # clean up LEGOizer_parent group
-        parent = bpy.data.objects.get(LEGOizer_parent_on)
-        if parent is not None:
-            m = parent.data
-            bpy.data.objects.remove(parent, True)
-            bpy.data.meshes.remove(m, True)
+        if not skipParents:
+            # clean up LEGOizer_parent group
+            parent = bpy.data.objects.get(LEGOizer_parent_on)
+            if parent is not None:
+                m = parent.data
+                bpy.data.objects.remove(parent, True)
+                bpy.data.meshes.remove(m, True)
 
         if modelType == "MODEL":
             # clean up LEGOizer_bricks group

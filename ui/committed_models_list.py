@@ -48,7 +48,6 @@ def matchProperties(cmNew, cmOld):
     cmNew.maxBrickScale1 = cmOld.maxBrickScale1
     cmNew.maxBrickScale2 = cmOld.maxBrickScale2
     cmNew.originSet = cmOld.originSet
-    cmNew.smoothCylinders = cmOld.smoothCylinders
     cmNew.calculationAxes = cmOld.calculationAxes
     cmNew.bevelWidth = cmOld.bevelWidth
     cmNew.bevelResolution = cmOld.bevelResolution
@@ -86,15 +85,12 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             self.last_cmlist_index = scn.cmlist_index
             cm = scn.cmlist[scn.cmlist_index]
             objIdx = bpy.data.objects.find(cm.source_name)
-            print("here 0")
             if objIdx != -1:
-                print("here 0.5")
                 obj = bpy.data.objects[objIdx]
                 if cm.modelCreated:
                     n = cm.source_name
                     gn = "LEGOizer_%(n)s_bricks" % locals()
                     select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
-                    print("here 1")
                 elif cm.animated:
                     n = cm.source_name
                     cf = scn.frame_current
@@ -104,10 +100,8 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                         cf = cm.startFrame
                     gn = "LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals()
                     select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
-                    print("here 2")
                 else:
                     select(obj, active=obj)
-                    print("here 3")
                 self.last_active_object_name = obj.name
             else:
                 for i in range(len(scn.cmlist)):
@@ -115,7 +109,7 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                     if cm.source_name == self.active_object_name:
                         select(None)
                         break
-        elif scn.objects.active and self.last_active_object_name != scn.objects.active.name:
+        elif scn.objects.active and self.last_active_object_name != scn.objects.active.name and scn.objects.active.type == "MESH":
             self.last_active_object_name = scn.objects.active.name
             if scn.objects.active.name.startswith("LEGOizer_"):
                 if "_bricks" in scn.objects.active.name:
@@ -502,7 +496,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         description="Number of vertices on LEGO stud",
         update=dirtyBricks,
         min=4, max=64,
-        default=8)
+        default=16)
 
     modelHeight = FloatProperty(
         name="Model Height",
@@ -603,12 +597,6 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         min=1, max=10,
         default=10)
 
-    smoothCylinders = BoolProperty(
-        name="Smooth Cylinders",
-        description="Smooths cylinders with edge split and smooth shading (disable for bevel resolution control)",
-        update=dirtyBricks,
-        default=True)
-
     splitModel = BoolProperty(
         name="Split Model",
         description="Split model into separate bricks (slower)",
@@ -666,6 +654,11 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         default=2,
         min=1, max=100,
         update=dirtyModel)
+    mergeInconsistentMats = BoolProperty(
+        name="Merge Inconsistent Materials",
+        description="Only merge bricks together to form bigger bricks if they share a material",
+        default=False,
+        update=dirtyBuild)
 
     lastLogoDetail = StringProperty(default="None")
     lastLogoResolution = FloatProperty(default=0)

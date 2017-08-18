@@ -415,20 +415,22 @@ def makeBricksDict(source, source_details, dimensions, R):
                     n = cm.source_name
                     j = str(i+1)
 
-                    # get nearest face index
-                    # curP = Vector(co)
-                    # dist = max(source_details.x.distance, source_details.y.distance, source_details.z.distance)
-                    # o    = bpy.data.objects.get(n)
-                    # nearestFaceIdx = getClosestPolyIndex(curP, dist, o)
+                    # get nearest face index and mat name
+                    nf = None
+                    matName = ""
                     if type(faceIdxMatrix[x][y][z]) == dict:
                         nf = faceIdxMatrix[x][y][z]["idx"]
-                    else:
-                        nf = None
+                        if len(source.material_slots) > 0:
+                            f = source.data.polygons[nf]
+                            slot = source.material_slots[f.material_index]
+                            mat = slot.material
+                            matName = mat.name
                     brickDict[str(x) + "," + str(y) + "," + str(z)] = {
                         "name":'LEGOizer_%(n)s_brick_%(j)s' % locals(),
                         "val":brickFreqMatrix[x][y][z],
                         "co":(co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
                         "nearestFaceIdx":nf,
+                        "matName":matName,
                         "connected":False}
                 else:
                     brickDict[str(x) + "," + str(y) + "," + str(z)] = {
@@ -436,6 +438,7 @@ def makeBricksDict(source, source_details, dimensions, R):
                         "val":brickFreqMatrix[x][y][z],
                         "co":None,
                         "nearestFaceIdx":None,
+                        "matName":None,
                         "connected":False}
 
 

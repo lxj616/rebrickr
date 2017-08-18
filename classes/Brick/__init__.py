@@ -77,6 +77,8 @@ class Bricks:
                 for y in range(type[1]):
                     logoBM = bmesh.new()
                     logoBM.from_mesh(logo.data)
+                    for f in logoBM.faces:
+                        f.smooth = True
                     lw = dimensions["logo_width"]
                     # transform logo into place
                     bmesh.ops.scale(logoBM, vec=Vector((lw, lw, lw)), verts=logoBM.verts)

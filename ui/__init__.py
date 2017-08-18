@@ -420,6 +420,8 @@ class MaterialsPanel(Panel):
             row = col.row(align=True)
             row.prop(cm, "matShellDepth")
             row = col.row(align=True)
+            row.prop(cm, "mergeInconsistentMats")
+            row = col.row(align=True)
             row.label("Internal:")
             row = col.row(align=True)
             row.prop_search(cm, "internalMatName", bpy.data, "materials", text="")
@@ -462,9 +464,6 @@ class DetailingPanel(Panel):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
 
-        # col = layout.column(align=True)
-        # row = col.row(align=True)
-        # row.prop(cm, "smoothCylinders")
         col = layout.column(align=True)
         row = col.row(align=True)
         row.label("Studs:")
@@ -563,9 +562,8 @@ class BevelPanel(Panel):
             testBrick = bpy.data.groups['LEGOizer_%(n)s_bricks' % locals()].objects[0]
             testBrick.modifiers[testBrick.name + '_bevel']
             row.prop(cm, "bevelWidth")
-            if not cm.smoothCylinders:
-                row = col.row(align=True)
-                row.prop(cm, "bevelResolution")
+            row = col.row(align=True)
+            row.prop(cm, "bevelResolution")
             row = col.row(align=True)
             row.operator("scene.legoizer_bevel", text="Remove Bevel", icon="CANCEL").action = "REMOVE"
         except:

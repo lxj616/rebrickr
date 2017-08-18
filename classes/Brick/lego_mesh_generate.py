@@ -13,6 +13,7 @@ def makeCylinder(r, N, h, co=(0,0,0), botFace=True, topFace=True, bme=None):
     # create upper and lower circles
     vertListT = []
     vertListB = []
+    sideFaces = []
     for i in range(N):
         x = r * math.cos(((2 * math.pi) / N) * i)
         y = r * math.sin(((2 * math.pi) / N) * i)
@@ -31,9 +32,12 @@ def makeCylinder(r, N, h, co=(0,0,0), botFace=True, topFace=True, bme=None):
         bme.faces.new(botVerts)
 
     # create faces on the sides
-    bme.faces.new((vertListT[-1], vertListB[-1], vertListB[0], vertListT[0]))
+    sideFaces.append(bme.faces.new((vertListT[-1], vertListB[-1], vertListB[0], vertListT[0])))
     for v in range(N-1):
-        bme.faces.new((vertListT.pop(0), vertListB.pop(0), vertListB[0], vertListT[0]))
+        sideFaces.append(bme.faces.new((vertListT.pop(0), vertListB.pop(0), vertListB[0], vertListT[0])))
+
+    for f in sideFaces:
+        f.smooth = True
 
     # return bmesh
     return bme, botVerts, topVerts
@@ -77,11 +81,15 @@ def makeTube(r, N, h, t, co=(0,0,0), wings=False, bme=None):
     bme.faces.new((vertListBOuter[-1], vertListBInner[-1], vertListBInner[0], vertListBOuter[0]))
 
     # create faces on the outer and inner sides
-    bme.faces.new((vertListTOuter[-1], vertListBOuter[-1], vertListBOuter[0], vertListTOuter[0]))
-    bme.faces.new((vertListTInner[0], vertListBInner[0], vertListBInner[-1], vertListTInner[-1]))
+    sideFaces = []
+    sideFaces.append(bme.faces.new((vertListTOuter[-1], vertListBOuter[-1], vertListBOuter[0], vertListTOuter[0])))
+    sideFaces.append(bme.faces.new((vertListTInner[0], vertListBInner[0], vertListBInner[-1], vertListTInner[-1])))
     for v in range(N-1):
-        bme.faces.new((vertListTOuter.pop(0), vertListBOuter.pop(0), vertListBOuter[0], vertListTOuter[0]))
-        bme.faces.new((vertListTInner[1], vertListBInner[1], vertListBInner.pop(0), vertListTInner.pop(0)))
+        sideFaces.append(bme.faces.new((vertListTOuter.pop(0), vertListBOuter.pop(0), vertListBOuter[0], vertListTOuter[0])))
+        sideFaces.append(bme.faces.new((vertListTInner[1], vertListBInner[1], vertListBInner.pop(0), vertListTInner.pop(0))))
+
+    for f in sideFaces:
+        f.smooth = True
 
     # return bmesh
     return bme
@@ -168,9 +176,14 @@ def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
 #            bme.faces.new((vertListBDict[key][1][i-1], vertListBDict[key][1][i], vertListBDict[key][0]))
 #        lastKey = key
 
-    bme.faces.new((vertListT[0], vertListB[0], vertListB[-1], vertListT[-1]))
+    # create faces around edge
+    sideFaces = []
+    sideFaces.append(bme.faces.new((vertListT[0], vertListB[0], vertListB[-1], vertListT[-1])))
     for v in range(N-1):
-        bme.faces.new((vertListT[1], vertListB[1], vertListB.pop(0), vertListT.pop(0)))
+        sideFaces.append(bme.faces.new((vertListT[1], vertListB[1], vertListB.pop(0), vertListT.pop(0))))
+
+    for f in sideFaces:
+        f.smooth = True
 
     return vertListBDict
 

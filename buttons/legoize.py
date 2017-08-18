@@ -93,6 +93,9 @@ class legoizerLegoize(bpy.types.Operator):
                             brick.select = False
                     except Exception as e:
                         print(e)
+                    for area in bpy.context.screen.areas:
+                        if area.type == "VIEW_3D":
+                            area.tag_redraw()
 
         if event.type in {"ESC"} and event.shift:
             scn.modalRunning = False
@@ -369,6 +372,8 @@ class legoizerLegoize(bpy.types.Operator):
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
+        p = bpy.data.objects.get(LEGOizer_parent_on)
+        print(p)
 
         # if there are no changes to apply, simply return "FINISHED"
         if not self.action == "CREATE" and not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty and (cm.materialType == "Custom" or not cm.materialIsDirty) and not (self.action == "UPDATE_MODEL" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0):

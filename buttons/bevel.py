@@ -91,10 +91,7 @@ class legoizerBevel(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         for brick in bricks:
-            if cm.smoothCylinders:
-                segments = 1
-            else:
-                segments = cm.bevelResolution
+            segments = cm.bevelResolution
             if not cm.lastSplitModel:
                 vGroupName = "LEGOizer_%(n)s_bricks_combined_bevel" % locals()
             else:

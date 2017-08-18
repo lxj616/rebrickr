@@ -13,13 +13,5 @@ Blender add-on for automated generation of LEGO Bricks from mesh objects (Blende
       * Adjust settings for your desired result
       * Click 'Update Model' to view setting adjustments
   * Future improvements:
-    * Priority 1:
-      * None!
-    * Priority 2:
-      * None!
-    * Priority 3:
-      * Apply closest LEGO color based on color of nearest vertex
-        * Apply unlimited materials or just LEGO material closest to original
       * Prefer overlapping and staggering over stacking of bricks
-    * Priority 4:
       * New feature: SNOT (studs not on top) functionality
