@@ -26,6 +26,7 @@ from bpy.props import *
 from .committed_models_list import *
 from ..buttons.delete import legoizerDelete
 from ..functions import *
+from addon_utils import check, paths, enable
 props = bpy.props
 
 class LegoModelsPanel(Panel):
@@ -73,9 +74,9 @@ class LegoModelsPanel(Panel):
                 col = layout.column(align=True)
                 col.label("Source Object: " + cm.source_name)
             else:
-                col = layout.column(align=True)
-                col.label("Source Object:")
-                split = col.split(align=True, percentage=0.85)
+                col1 = layout.column(align=True)
+                col1.label("Source Object:")
+                split = col1.split(align=True, percentage=0.85)
                 col = split.column(align=True)
                 col.prop_search(cm, "source_name", scn, "objects", text='')
                 col = split.column(align=True)
@@ -286,6 +287,10 @@ class ModelSettingsPanel(Panel):
         # row.prop(cm, "preHollow")
         # if cm.preHollow:
 
+        if not cm.useAnimation:
+            row = col.row(align=True)
+            row.prop(cm, "splitModel")
+
         row = col.row(align=True)
         row.label("Randomize:")
         row = col.row(align=True)
@@ -304,10 +309,17 @@ class ModelSettingsPanel(Panel):
             row.prop(cm, "calculationAxes", text="")
         row = col.row(align=True)
         row.prop(cm, "shellThickness", text="Thickness")
-        if not cm.useAnimation:
-            col = layout.column(align=True)
+        obj = bpy.data.objects.get(cm.source_name)
+        if obj is not None and not cm.isWaterTight and listModalRunning():
             row = col.row(align=True)
-            row.prop(cm, "splitModel")
+            # row.scale_y = 0.7
+            row.label("(Source is NOT single closed mesh)")
+            # row = col.row(align=True)
+            # row.operator("scene.make_closed_mesh", text="Make Single Closed Mesh", icon="EDIT")
+        row = col.row(align=True)
+        row.prop(cm, "useNormals")
+        row = col.row(align=True)
+        row.prop(cm, "verifyExposure")
 
 class BrickTypesPanel(Panel):
     bl_space_type  = "VIEW_3D"
@@ -415,27 +427,29 @@ class MaterialsPanel(Panel):
                 col = layout.column(align=True)
                 row = col.row(align=True)
                 row.operator("scene.legoizer_apply_material", icon="FILE_TICK").action = "CUSTOM"
-        elif cm.materialType == "Use Source Materials" and cm.shellThickness > 1:
+        if cm.materialType == "Use Source Materials":
             col = layout.column(align=True)
             row = col.row(align=True)
-            row.prop(cm, "matShellDepth")
-            row = col.row(align=True)
             row.prop(cm, "mergeInconsistentMats")
-            row = col.row(align=True)
-            row.label("Internal:")
-            row = col.row(align=True)
-            row.prop_search(cm, "internalMatName", bpy.data, "materials", text="")
-            if "lego_materials" in bpy.context.user_preferences.addons.keys() and ("LEGO Plastic Black" not in bpy.data.materials.keys() or "LEGO Plastic Trans-Light Green" not in bpy.data.materials.keys()):
+            if cm.shellThickness > 1:
+                col = layout.column(align=True)
                 row = col.row(align=True)
-                row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
-            if cm.modelCreated:
-                if cm.splitModel:
-                    col = layout.column(align=True)
-                    col.label("Run 'Update Model' to apply changes")
-                else:
-                    col = layout.column(align=True)
+                row.prop(cm, "matShellDepth")
+                row = col.row(align=True)
+                row.label("Internal:")
+                row = col.row(align=True)
+                row.prop_search(cm, "internalMatName", bpy.data, "materials", text="")
+                if "lego_materials" in bpy.context.user_preferences.addons.keys() and ("LEGO Plastic Black" not in bpy.data.materials.keys() or "LEGO Plastic Trans-Light Green" not in bpy.data.materials.keys()):
                     row = col.row(align=True)
-                    row.operator("scene.legoizer_apply_material", icon="FILE_TICK").action = "INTERNAL"
+                    row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
+                if cm.modelCreated:
+                    if cm.splitModel:
+                        col = layout.column(align=True)
+                        col.label("Run 'Update Model' to apply changes")
+                    else:
+                        col = layout.column(align=True)
+                        row = col.row(align=True)
+                        row.operator("scene.legoizer_apply_material", icon="FILE_TICK").action = "INTERNAL"
 
 class DetailingPanel(Panel):
     bl_space_type  = "VIEW_3D"
@@ -545,8 +559,7 @@ class BevelPanel(Panel):
         if bversion() < '002.078.00':
             return False
         cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
-        if not groupExists('LEGOizer_%(n)s_bricks' % locals()):
+        if not cm.modelCreated and not cm.animated:
             return False
         return True
 
@@ -561,9 +574,11 @@ class BevelPanel(Panel):
         try:
             testBrick = bpy.data.groups['LEGOizer_%(n)s_bricks' % locals()].objects[0]
             testBrick.modifiers[testBrick.name + '_bevel']
-            row.prop(cm, "bevelWidth")
+            row.prop(cm, "bevelWidth", text="Width")
             row = col.row(align=True)
-            row.prop(cm, "bevelResolution")
+            row.prop(cm, "bevelSegments", text="Segments")
+            row = col.row(align=True)
+            row.prop(cm, "bevelProfile", text="Profile")
             row = col.row(align=True)
             row.operator("scene.legoizer_bevel", text="Remove Bevel", icon="CANCEL").action = "REMOVE"
         except:

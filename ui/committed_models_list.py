@@ -50,7 +50,8 @@ def matchProperties(cmNew, cmOld):
     cmNew.originSet = cmOld.originSet
     cmNew.calculationAxes = cmOld.calculationAxes
     cmNew.bevelWidth = cmOld.bevelWidth
-    cmNew.bevelResolution = cmOld.bevelResolution
+    cmNew.bevelSegments = cmOld.bevelSegments
+    cmNew.bevelProfile = cmOld.bevelProfile
     cmNew.useAnimation = cmOld.useAnimation
     cmNew.startFrame = cmOld.startFrame
     cmNew.stopFrame = cmOld.stopFrame
@@ -90,7 +91,8 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                 if cm.modelCreated:
                     n = cm.source_name
                     gn = "LEGOizer_%(n)s_bricks" % locals()
-                    select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
+                    if len(bpy.data.groups[gn].objects) > 0:
+                        select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
                 elif cm.animated:
                     n = cm.source_name
                     cf = scn.frame_current
@@ -99,7 +101,8 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                     elif cf < cm.startFrame:
                         cf = cm.startFrame
                     gn = "LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals()
-                    select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
+                    if len(bpy.data.groups[gn].objects) > 0:
+                        select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
                 else:
                     select(obj, active=obj)
                 self.last_active_object_name = obj.name
@@ -123,11 +126,22 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                 cm = scn.cmlist[i]
                 if cm.source_name == self.active_object_name:
                     scn.cmlist_index = i
-                    bpy.context.area.tag_redraw()
+                    redraw_areas("VIEW_3D")
                     self.last_cmlist_index = scn.cmlist_index
                     return {"PASS_THROUGH"}
             scn.cmlist_index = -1
-            bpy.context.area.tag_redraw()
+            redraw_areas("VIEW_3D")
+
+        if scn.cmlist_index != -1:
+            cm = scn.cmlist[scn.cmlist_index]
+            obj = bpy.data.objects.get(cm.source_name)
+            if obj is not None and (len(obj.data.vertices) != cm.objVerts or len(obj.data.polygons) != cm.objPolys or len(obj.data.edges) != cm.objEdges):
+                print("running_test")
+                cm.objVerts = len(obj.data.vertices)
+                cm.objPolys = len(obj.data.polygons)
+                cm.objEdges = len(obj.data.edges)
+                cm.isWaterTight = cm.objVerts + cm.objPolys - cm.objEdges == 2
+                redraw_areas("VIEW_3D")
 
         return {"PASS_THROUGH"}
 
@@ -391,11 +405,12 @@ def updateBevel(self, context):
     try:
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        if cm.lastBevelWidth != cm.bevelWidth or cm.lastBevelResolution != cm.bevelResolution:
+        if cm.lastBevelWidth != cm.bevelWidth or cm.lastBevelSegments != cm.bevelSegments or cm.lastBevelProfile != cm.bevelProfile:
             bricks = list(bpy.data.groups["LEGOizer_%(n)s_bricks" % locals()].objects)
             legoizerBevel.setBevelMods(bricks)
             cm.lastBevelWidth = cm.bevelWidth
-            cm.lastBevelResolution = cm.bevelResolution
+            cm.lastBevelSegments = cm.bevelSegments
+            cm.lastBevelProfile = cm.bevelProfile
     except:
         pass
 
@@ -660,6 +675,24 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         default=False,
         update=dirtyBuild)
 
+    useNormals = BoolProperty(
+        name="Use Normals",
+        description="Use normals to calculate insideness of bricks (WARNING: May produce inaccurate model if source mesh is not water-tight)",
+        default=False,
+        update=dirtyBuild)
+    verifyExposure = BoolProperty(
+        name="Verify Exposure",
+        description="Run additional calculations to verify insideness of bricks (WARNING: May compromise 'Shell Thickness' functionality if source mesh is not water-tight)",
+        default=False,
+        update=dirtyBuild)
+
+    objVerts = IntProperty(default=0)
+    objPolys = IntProperty(default=0)
+    objEdges = IntProperty(default=0)
+    isOneMesh = BoolProperty(default=False)
+    isWaterTight = BoolProperty(default=False)
+    maxDepthExceeded = BoolProperty(default=False)
+
     lastLogoDetail = StringProperty(default="None")
     lastLogoResolution = FloatProperty(default=0)
     lastSplitModel = BoolProperty(default=False)
@@ -673,11 +706,17 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         default=0.001,
         min=0.000001, max=10,
         update=updateBevel)
-    lastBevelResolution = IntProperty()
-    bevelResolution = IntProperty(
+    lastBevelSegments = IntProperty()
+    bevelSegments = IntProperty(
         name="Bevel Resolution",
         default=1,
         min=1, max=10,
+        update=updateBevel)
+    lastBevelProfile = IntProperty()
+    bevelProfile = FloatProperty(
+        name="Bevel Profile",
+        default=0.7,
+        min=0, max=1,
         update=updateBevel)
 
     # ANIMATION SETTINGS

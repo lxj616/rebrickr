@@ -91,12 +91,21 @@ class legoizerBevel(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         for brick in bricks:
-            segments = cm.bevelResolution
+            segments = cm.bevelSegments
+            profile = cm.bevelProfile
             if not cm.lastSplitModel:
                 vGroupName = "LEGOizer_%(n)s_bricks_combined_bevel" % locals()
             else:
                 vGroupName = brick.name + "_bevel"
-            createBevelMod(obj=brick, width=cm.bevelWidth, segments=segments, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
+            createBevelMod(obj=brick, width=cm.bevelWidth, segments=segments, profile=profile, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
+
+    def runBevelAction(self, bGroup, action):
+        if bGroup is not None:
+            bricks = list(bGroup.objects)
+            if action == "REMOVE":
+                removeBevelMods(objs=bricks)
+            else:
+                legoizerBevel.setBevelMods(bricks)
 
     def execute(self, context):
         # get bricks to bevel
@@ -104,12 +113,13 @@ class legoizerBevel(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         cm.bevelWidth = cm.brickHeight/100
-        # cm.bevelResolution = round(cm.studVerts/10)
-        bricks = list(bpy.data.groups["LEGOizer_%(n)s_bricks" % locals()].objects)
-
-        if self.action == "REMOVE":
-            removeBevelMods(objs=bricks)
-        else:
-            legoizerBevel.setBevelMods(bricks)
+        # cm.bevelSegments = round(cm.studVerts/10)
+        if cm.modelCreated:
+            bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks" % locals())
+            self.runBevelAction(bGroup, self.action)
+        elif cm.animated:
+            for cf in range(cm.lastStartFrame, cm.lastStopFrame+1):
+                bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals())
+                self.runBevelAction(bGroup, self.action)
 
         return{"FINISHED"}

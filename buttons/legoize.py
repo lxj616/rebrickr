@@ -93,9 +93,7 @@ class legoizerLegoize(bpy.types.Operator):
                             brick.select = False
                     except Exception as e:
                         print(e)
-                    for area in bpy.context.screen.areas:
-                        if area.type == "VIEW_3D":
-                            area.tag_redraw()
+                    redraw_areas("VIEW_3D")
 
         if event.type in {"ESC"} and event.shift:
             scn.modalRunning = False

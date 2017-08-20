@@ -101,7 +101,7 @@ class legoizerDelete(bpy.types.Operator):
                     bpy.data.objects.remove(obj, True)
                     bpy.data.meshes.remove(m, True)
                 bpy.data.groups.remove(brickGroup, do_unlink=True)
-                bpy.context.area.tag_redraw()
+                redraw_areas("VIEW_3D")
         elif modelType == "ANIMATION":
             # clean up LEGOizer_bricks group
             cm.animated = False
@@ -114,7 +114,7 @@ class legoizerDelete(bpy.types.Operator):
                     if len(bgObjects) > 0:
                         delete(bgObjects)
                     bpy.data.groups.remove(brickGroup, do_unlink=True)
-            bpy.context.area.tag_redraw()
+            redraw_areas("VIEW_3D")
 
         # # clean up 'LEGOizer_refBrick' group
         # if groupExists(LEGOizer_refBricks_gn) and not skipRefBrick:

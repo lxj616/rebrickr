@@ -41,7 +41,7 @@ from .lib.common_utilities import print_exception, showErrorMessage
 class ModalOperator(Operator):
 
     initialized = False
-    
+
     def initialize(self, helpText=None, FSM=None):
         # create a log file for error writing
         if 'RetopoFlow_log' not in bpy.data.texts:
@@ -95,10 +95,10 @@ class ModalOperator(Operator):
             #self.help_box.snap_to_corner(context, corner = [1,1])
         else:
             self.help_box = None
-        
+
         self.exceptions_caught = []
         self.exception_quit = False
-        
+
         self.initialized = True
 
 
@@ -183,10 +183,10 @@ class ModalOperator(Operator):
         Determine/handle navigation events.
         FSM passes control through to underlying panel if we're in 'nav' state
         '''
- 
+
         handle_nav = False
         handle_nav |= eventd['ftype'] in self.events_nav
-        
+
         if handle_nav:
             self.post_update   = True
             self.is_navigating = True
@@ -219,7 +219,7 @@ class ModalOperator(Operator):
         if eventd['press'] in self.keymap['cancel']: # {'ESC'}:
             # cancel the operator
             return 'cancel'
-        
+
         # help textbox
         if self.help_box:
             if eventd['press'] in self.keymap['help']:
@@ -264,7 +264,7 @@ class ModalOperator(Operator):
 
         self.footer = ''
         self.footer_last = ''
-        
+
         try:
             self.start(context)
         except:
@@ -291,7 +291,7 @@ class ModalOperator(Operator):
 
         if not context.area: return {'RUNNING_MODAL'}
 
-        context.area.tag_redraw()       # force redraw
+        redraw_areas("VIEW_3D")
 
         eventd = self.get_event_details(context, event)
 
@@ -322,12 +322,12 @@ class ModalOperator(Operator):
                 except:
                     self.handle_exception()
                     return {'RUNNING_MODAL'}
-            
+
             try:
                 self.modal_end(context)
             except:
                 self.handle_exception()
-            
+
             return {'FINISHED'} if nmode == 'finish' else {'CANCELLED'}
 
         if nmode: self.fsm_mode = nmode
@@ -339,14 +339,14 @@ class ModalOperator(Operator):
         called by Blender when the user invokes (calls/runs) our tool
         '''
         assert self.initialized, 'Must initialize operator before invoking'
-        
+
         if not self.start_poll(context):    # can the tool get started?
             return {'CANCELLED'}
-        
+
         if self.help_box:
             self.help_box.collapse()
             self.help_box.snap_to_corner(context, corner = [1,1])
-        
+
         self.modal_start(context)
-        
+
         return {'RUNNING_MODAL'}    # tell Blender to continue running our tool in modal

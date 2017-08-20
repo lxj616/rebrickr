@@ -86,6 +86,11 @@ def uniquify1(seq):
        keys[e] = 1
    return keys.keys()
 
+def redraw_areas(areaType="ALL"):
+    for area in bpy.context.screen.areas:
+        if areaType == "ALL" or area.type == areaType:
+            area.tag_redraw()
+
 def disableRelationshipLines():
     # disable relationship lines
     for area in bpy.context.screen.areas:

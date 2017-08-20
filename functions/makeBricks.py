@@ -428,23 +428,58 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     idxX = str(loc[0] + x)
                     idxY = str(loc[1] + y)
 
-                    # check if brick top or bottom is exposed
-                    try:
-                        if bricksD["%(idxX)s,%(idxY)s,%(idxZa)s" % locals()]["val"] == 0:
+                    # get brick at x,y location
+                    curBrick = bricksD["%(idxX)s,%(idxY)s,%(idxZc)s" % locals()]
+
+                    if curBrick["val"] == 2:
+                        # check if brick top or bottom is exposed
+                        try:
+                            valKeysChecked1 = []
+                            val = bricksD["%(idxX)s,%(idxY)s,%(idxZa)s" % locals()]["val"]
+                            if val == 0:
+                                topExposed = True
+                            # Check bricks on Z axis above this brick until shell (2) hit. If ouside (0) hit first, top is exposed
+                            elif val < 1 and val > 0:
+                                idxZab = idxZa
+                                while val < 1 and val > 0:
+                                    idxZab = idxZab+1
+                                    # NOTE: if key does not exist, we will be sent to 'except'
+                                    valKeysChecked1.append("%(idxX)s,%(idxY)s,%(idxZab)s" % locals())
+                                    val = bricksD[valKeysChecked1[-1]]["val"]
+                                    if val == 0:
+                                        topExposed = True
+                        except:
                             topExposed = True
-                    except:
-                        topExposed = True
-                    try:
-                        if bricksD["%(idxX)s,%(idxY)s,%(idxZb)s" % locals()]["val"] == 0:
+                        # if outside (0) hit before shell (2) above exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
+                        if topExposed and len(valKeysChecked1) > 0:
+                            for k in valKeysChecked1:
+                                val = bricksD[k]["val"] = 0
+
+                        try:
+                            valKeysChecked2 = []
+                            val = bricksD["%(idxX)s,%(idxY)s,%(idxZb)s" % locals()]["val"]
+                            if val == 0:
+                                botExposed = True
+                            # Check bricks on Z axis below this brick until shell (2) hit. If ouside (0) hit first, bottom is exposed
+                            elif val < 1 and val > 0:
+                                idxZbb = idxZb
+                                while val < 1 and val > 0:
+                                    idxZbb = idxZbb+1
+                                    # NOTE: if key does not exist, we will be sent to 'except'
+                                    valKeysChecked2.append("%(idxX)s,%(idxY)s,%(idxZbb)s" % locals())
+                                    val = bricksD[valKeysChecked2[-1]]["val"]
+                                    if val == 0:
+                                        botExposed = True
+                        except:
                             botExposed = True
-                    except:
-                        botExposed = True
+                        # if outside (0) hit before shell (2) below exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
+                        if botExposed and len(valKeysChecked2) > 0:
+                            for k in valKeysChecked2:
+                                val = bricksD[k]["val"] = 0
                     # skip the original brick
                     if x == 0 and y == 0:
                         brickD["connected"] = True
                         continue
-                    # get brick at x,y location
-                    curBrick = bricksD["%(idxX)s,%(idxY)s,%(idxZc)s" % locals()]
                     # add brick to connected bricks
                     curBrick["connected"] = True
                     # set name of deleted brick to 'DNE'

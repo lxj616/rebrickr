@@ -27,6 +27,7 @@ import time
 from copy import copy, deepcopy
 from .common_functions import *
 from .generate_lattice import generateLattice
+from .checkWaterTight import isOneMesh
 from .makeBricks import *
 from ..classes.Brick import Bricks
 from mathutils import Matrix, Vector, geometry
@@ -119,7 +120,7 @@ def getClosestPolyIndex(point,maxLen,ob):
     closestPolyIdx = None
     # run initial intersection check
     for direction in [(1,0,0), (0,1,0), (0,0,1), (-1,0,0), (0,-1,0), (0,0,-1)]:
-        _,location,_,index = ob.ray_cast(point,direction)#,distance=edgeLen*1.00000000001)
+        _,location,normal,index = ob.ray_cast(point,direction)#,distance=edgeLen*1.00000000001)
         if index == -1: continue
         nextLen = (Vector(point) - Vector(location)).length
         if nextLen < shortestLen:
@@ -130,6 +131,8 @@ def getClosestPolyIndex(point,maxLen,ob):
 
 def rayObjIntersections(point,direction,edgeLen,ob):
     """ returns True if ray intersects obj """
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
     # initialize variables
     intersections = 0
     nextIntersection = None
@@ -139,10 +142,14 @@ def rayObjIntersections(point,direction,edgeLen,ob):
     outside = False
     orig = point
     doubleCheckDirection = -direction
+    firstDirection0 = False
+    firstDirection1 = False
     # run initial intersection check
     while True:
-        _,location,_,index = ob.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
+        _,location,normal,index = ob.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
         if index == -1: break
+        if intersections == 0:
+            firstDirection0 = direction.dot(normal)
         # get first and last intersection (used when getting materials of nearest (first or last intersected) face)
         if (location-point).length <= edgeLen*1.00001:
             if intersections == 0:
@@ -154,18 +161,22 @@ def rayObjIntersections(point,direction,edgeLen,ob):
             nextIntersection = location.copy()
         intersections += 1
         orig = location + direction*0.00001
-    if intersections%2 == 0:
+    if intersections%2 == 0 and (not cm.useNormals or firstDirection0 <= 0):
         outside = True
-    # double check vert is inside mesh
-    count = 0
-    orig = point
-    while True:
-        _,location,_,index = ob.ray_cast(orig,doubleCheckDirection)#distance=edgeLen*1.00000000001)
-        if index == -1: break
-        count += 1
-        orig = location + doubleCheckDirection*0.00001
-    if count%2 == 0:
-        outside = True
+    else:
+        # double check vert is inside mesh
+        count = 0
+        orig = point
+        while True:
+            _,location,normal,index = ob.ray_cast(orig,doubleCheckDirection)#distance=edgeLen*1.00000000001)
+            if index == -1: break
+            if count == 0:
+                firstDirection1 = doubleCheckDirection.dot(normal)
+            count += 1
+            orig = location + doubleCheckDirection*0.00001
+        if count%2 == 0 and (not cm.useNormals or firstDirection1 <= 0):
+            outside = True
+
     # return helpful information
     return not outside, edgeIntersects, intersections, nextIntersection, index, firstIntersection, lastIntersection
 
@@ -185,6 +196,9 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, bric
         if brickFreqMatrix[x0][y0][z0] == 0:
             # define brick as inside shell
             brickFreqMatrix[x0][y0][z0] = -1
+    # else:
+    #     if brickFreqMatrix[x0][y0][z0] == -1:
+    #         brickFreqMatrix[x0][y0][z0] = -0.1
     if edgeIntersects:
         if (origInside and brickShell == "Inside Mesh") or (not origInside and brickShell == "Outside Mesh") or brickShell == "Inside and Outside":
             # define brick as part of shell
@@ -198,8 +212,8 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, bric
             # set or update nearest face to brick
             if type(faceIdxMatrix[x1][y1][z1]) != dict or faceIdxMatrix[x1][y1][z1]["dist"] > lastIntersection["dist"]:
                 faceIdxMatrix[x1][y1][z1] = lastIntersection
-    # elif not origInside:
-    #     brickFreqMatrix[x0][y0][z0] = 0
+    # if not origInside and brickFreqMatrix[x0][y0][z0] <= 0:
+    #     brickFreqMatrix[x0][y0][z0] = -0.1
 
     return intersections, nextIntersection
 
@@ -258,16 +272,31 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
                     intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1)
                     if intersections == 0:
                         break
+
     stopWatch("2d", time.time()-ct)
     ct = time.time()
+    # adjust brickFreqMatrix values
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
+                # if not all axes checked, set internal boundary freqs to 2
                 if brickFreqMatrix[x][y][z] == -1:
                     if ((((z == len(coordMatrix[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0) or (z == 0 or brickFreqMatrix[x][y][z-1] == 0)) and "z" not in axes) or
                         (((y == len(coordMatrix[0])-1 or brickFreqMatrix[x][y+1][z] == 0) or (y == 0 or brickFreqMatrix[x][y-1][z] == 0)) and "y" not in axes) or
                         (((x == len(coordMatrix)-1 or brickFreqMatrix[x+1][y][z] == 0) or (x == 0 or brickFreqMatrix[x-1][y][z] == 0)) and "x" not in axes)):
                         brickFreqMatrix[x][y][z] = 2
+                # # reset values of -0.1 to 0
+                # if brickFreqMatrix[x][y][z] == -0.1:
+                #     brickFreqMatrix[x][y][z] = 0
+                if cm.verifyExposure:
+                    # If inside location (-1) intersects outside location (0), make it ouside (0)
+                    if brickFreqMatrix[x][y][z] == -1:
+                        if brickFreqMatrix[x+1][y][z] == 0 or brickFreqMatrix[x-1][y][z] == 0 or brickFreqMatrix[x][y+1][z] == 0 or brickFreqMatrix[x][y-1][z] == 0 or brickFreqMatrix[x][y][z+1] == 0 or brickFreqMatrix[x][y][z-1] == 0:
+                            brickFreqMatrix[x][y][z] = 0
+                    # If shell location (2) does not intersect outside location (0), make it inside (-1)
+                    if brickFreqMatrix[x][y][z] == 2 and brickFreqMatrix[x+1][y][z] != 0 and brickFreqMatrix[x-1][y][z] != 0 and brickFreqMatrix[x][y+1][z] != 0 and brickFreqMatrix[x][y-1][z] != 0 and brickFreqMatrix[x][y][z+1] != 0 and brickFreqMatrix[x][y][z-1] != 0:
+                        brickFreqMatrix[x][y][z] = -1
+
     stopWatch("2e", time.time()-ct)
     ct = time.time()
     # set up brickFreqMatrix values for bricks inside shell
