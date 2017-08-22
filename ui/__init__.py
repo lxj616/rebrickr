@@ -137,6 +137,9 @@ class LegoModelsPanel(Panel):
         else:
             layout.operator("cmlist.list_action", icon='ZOOMIN', text="New LEGO Model").action = 'ADD'
 
+def cloth_is_baked(mod):
+    return mod.point_cache.is_baked is not False
+
 class AnimationPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -175,15 +178,36 @@ class AnimationPanel(Panel):
             col = layout.column(align=True)
             col.prop(cm, "useAnimation")
         if cm.useAnimation:
-            col = layout.column(align=True)
-            col.active = cm.animated or cm.useAnimation
-            row = col.row(align=True)
+            col1 = layout.column(align=True)
+            col1.active = cm.animated or cm.useAnimation
+            row = col1.row(align=True)
             split = row.split(align=True, percentage=0.5)
             col = split.column(align=True)
             col.prop(cm, "startFrame")
             col = split.column(align=True)
             col.prop(cm, "stopFrame")
-            if cm.stopFrame - cm.startFrame > 10 and not cm.animated:
+            source = bpy.data.objects.get(cm.source_name)
+            if source is not None:
+                self.clothMod = None
+                for mod in source.modifiers:
+                    if mod.type == "CLOTH" and mod.show_viewport:
+                        self.clothMod = mod
+                        break
+                if self.clothMod is not None:
+                    if not cloth_is_baked(self.clothMod):
+                        row = col1.row(align=True)
+                        row.label("Bake cloth anim to stop frame first!")
+                    if self.clothMod.point_cache.frame_end < cm.stopFrame:
+                        s = str(self.clothMod.point_cache.frame_end+1)
+                        e = str(cm.stopFrame)
+                        row = col1.row(align=True)
+                        row.label("Frames %(s)s-%(e)s of cloth anim not baked" % locals())
+                    elif self.clothMod.point_cache.frame_start > cm.startFrame:
+                        s = str(cm.startFrame)
+                        e = str(self.clothMod.point_cache.frame_start-1)
+                        row = col1.row(align=True)
+                        row.label("Frames %(s)s-%(e)s of cloth anim not baked" % locals())
+            if (cm.stopFrame - cm.startFrame > 10 and not cm.animated) or self.clothMod:
                 col = layout.column(align=True)
                 col.scale_y = 0.4
                 col.label("WARNING: May take a while.")

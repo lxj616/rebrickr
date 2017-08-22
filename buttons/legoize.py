@@ -226,6 +226,7 @@ class legoizerLegoize(bpy.types.Operator):
                 self.report({"WARNING"}, "Custom brick type object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
 
+        self.clothMod = False
         if self.action in ["CREATE", "ANIMATE"]:
             # verify function can run
             if groupExists(LEGOizer_bricks_gn):
@@ -245,11 +246,22 @@ class legoizerLegoize(bpy.types.Operator):
             if source.type != "MESH":
                 self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
+            ignoredMods = []
             for mod in source.modifiers:
-                if mod.type in ["MIRROR", "ARMATURE"] and mod.show_viewport:
+                if mod.type in ["ARRAY", "BEVEL", "BOOLEAN", "MIRROR", "SKIN", "ARMATURE", "OCEAN"] and mod.show_viewport:
                     self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier(s) or disable from view before LEGOizing the object.")
                     return False
-
+                if mod.type in ["BUILD"] and mod.show_viewport:
+                    mod.show_viewport = False
+                if mod.type in ["SMOKE"] and mod.show_viewport:
+                    ignoredMods.append(mod.type)
+                if mod.type in ["CLOTH"] and mod.show_viewport:
+                    self.clothMod = mod
+            if len(ignoredMods) > 0:
+                warningMsg = "The following modifier types were ignored: "
+                for i in ignoredMods:
+                    warningMsg += "'%(i)s', " % locals()
+                self.report({"WARNING"}, warningMsg)
         if self.action in ["ANIMATE", "UPDATE_ANIM"]:
             # verify start frame is less than stop frame
             if cm.startFrame > cm.stopFrame:
@@ -334,6 +346,15 @@ class legoizerLegoize(bpy.types.Operator):
             source["previous_location"] = source.location.to_tuple()
             select(source, active=source)
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            for mod in source.modifiers:
+                if mod.type == "CLOTH":
+                    if not mod.point_cache.use_disk_cache:
+                        mod.point_cache.use_disk_cache = True
+                    if mod.point_cache.frame_end >= scn.frame_current:
+                        mod.point_cache.frame_end = scn.frame_current
+                        override = {'scene': scn, 'active_object': source, 'point_cache': mod.point_cache}
+                        bpy.ops.ptcache.bake(override, bake=True)
+                        bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
             scn.update()
             safeUnlink(source)
 
