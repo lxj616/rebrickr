@@ -411,6 +411,9 @@ def makeBricksDict(source, source_details, dimensions, R):
     print("generating blueprint...")
     lScale = (source_details.x.distance, source_details.y.distance, source_details.z.distance)
     offset = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
+    if source.parent is not None:
+        offset = Vector(offset)-source.parent.location
+        offset = offset.to_tuple()
     if cm.brickType == "Custom":
         R = (R[0] * cm.distOffsetX, R[1] * cm.distOffsetY, R[2] * cm.distOffsetZ)
     coordMatrix = generateLattice(R, lScale, offset)

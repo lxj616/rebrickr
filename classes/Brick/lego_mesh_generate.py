@@ -768,7 +768,7 @@ def newObjFromBmesh(layer, bme, meshName, objName=False):
         else:
             layerList.append(False)
     bpy.ops.object.move_to_layer(layers=layerList)
-    bpy.context.scene.layers = layerList
+    scn.layers = layerList
     bpy.ops.object.select_all(action='TOGGLE')
     return ob
 

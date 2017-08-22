@@ -119,7 +119,10 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                     frameLoc = scn.objects.active.name.rfind("_bricks")
                 elif "_brick_" in scn.objects.active.name:
                     frameLoc = scn.objects.active.name.rfind("_brick_")
-                self.active_object_name = scn.objects.active.name[9:frameLoc]
+                else:
+                    frameLoc = None
+                if frameLoc is not None:
+                    self.active_object_name = scn.objects.active.name[9:frameLoc]
             else:
                 self.active_object_name = scn.objects.active.name
             for i in range(len(scn.cmlist)):
@@ -682,7 +685,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBuild)
     verifyExposure = BoolProperty(
         name="Verify Exposure",
-        description="Run additional calculations to verify insideness of bricks (WARNING: May compromise 'Shell Thickness' functionality if source mesh is not water-tight)",
+        description="Run additional calculations to verify exposure of studs and underside detailing (WARNING: May compromise 'Shell Thickness' functionality if source mesh is not water-tight)",
         default=False,
         update=dirtyBuild)
 

@@ -180,6 +180,8 @@ class legoizerLegoize(bpy.types.Operator):
         n = cm.source_name
         if cm.brickType == "Custom":
             customObj0 = bpy.data.objects[cm.customObjectName]
+            oldLayers = list(scn.layers) # store scene layers for later reset
+            scn.layers = customObj0.layers # set scene layers to sourceOrig layers
             select(customObj0, active=customObj0)
             bpy.ops.object.duplicate()
             customObj = scn.objects.active
@@ -190,6 +192,7 @@ class legoizerLegoize(bpy.types.Operator):
             bpy.data.objects.remove(customObj, True)
             scale = cm.brickHeight/customObj_details.z.distance
             R = (scale * customObj_details.x.distance + dimensions["gap"], scale * customObj_details.y.distance + dimensions["gap"], scale * customObj_details.z.distance + dimensions["gap"])
+            scn.layers = oldLayers
         else:
             customData = None
             customObj_details = None
@@ -216,6 +219,7 @@ class legoizerLegoize(bpy.types.Operator):
                 self.report({"WARNING"}, "Custom brick type object not specified.")
                 return False
             if bpy.data.objects.find(cm.customObjectName) == -1:
+                n = cm.customObjectName
                 self.report({"WARNING"}, "Custom brick type object '%(n)s' could not be found" % locals())
                 return False
             if bpy.data.objects[cm.customObjectName].type != "MESH":
@@ -241,6 +245,10 @@ class legoizerLegoize(bpy.types.Operator):
             if source.type != "MESH":
                 self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
+            for mod in source.modifiers:
+                if mod.type in ["MIRROR", "ARMATURE"] and mod.show_viewport:
+                    self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier(s) or disable from view before LEGOizing the object.")
+                    return False
 
         if self.action in ["ANIMATE", "UPDATE_ANIM"]:
             # verify start frame is less than stop frame
@@ -307,6 +315,7 @@ class legoizerLegoize(bpy.types.Operator):
             # scn.layers = getLayersList(0)
             # source = bpy.data.objects.new(sourceOrig.name + "_" + str(i), sourceOrig.data.copy())
             # copyAnimationData(sourceOrig, source)
+
             select(sourceOrig, active=sourceOrig)
             bpy.ops.object.duplicate()
             source = scn.objects.active
@@ -356,7 +365,6 @@ class legoizerLegoize(bpy.types.Operator):
 
             print("completed frame " + str(curFrame))
 
-        safeUnlink(sourceOrig)
         cm.lastStartFrame = cm.startFrame
         cm.lastStopFrame = cm.stopFrame
         scn.frame_set(cm.lastStartFrame)
@@ -394,9 +402,6 @@ class legoizerLegoize(bpy.types.Operator):
         if source.name not in scn.objects.keys():
             safeLink(source)
         scn.update()
-
-        if source.name in scn.objects.keys():
-            safeUnlink(source)
 
         # get source_details and dimensions
         source_details, dimensions = self.getDimensionsAndBounds(source)
@@ -436,8 +441,34 @@ class legoizerLegoize(bpy.types.Operator):
             return {"RUNNING_MODAL"}
 
         source = self.getObjectToLegoize()
+
         if not self.isValid(source, LEGOizer_bricks_gn):
             return {"CANCELLED"}
+
+        # set up source["old_parent"] and remove source parent
+        if source.parent is not None:
+            source["old_parent"] = source.parent.name
+            # old_parent = bpy.data.objects.get(source["old_parent"])
+            # oldLayers = list(scn.layers)
+            # for i in range(len(scn.layers)):
+            #     scn.layers[i] = old_parent.layers[i] or scn.layers[i]
+            select(source, active=source)
+            bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+            # select(old_parent, active=old_parent)
+            # # create new parent
+            # bpy.ops.object.duplicate()
+            # source["new_parent"] = scn.objects.active.name
+            # print(source["old_parent"], source["new_parent"])
+            # new_parent = bpy.data.objects.get(source["new_parent"])
+            # # set source parent to new parent object
+            # select([source, new_parent], active=new_parent)
+            # bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+            # # move new parent to safe scene
+            # safeUnlink(new_parent)
+            # scn.layers = oldLayers
+        else:
+            source["old_parent"] = ""
+            # source["new_parent"] = ""
 
         if self.action not in ["ANIMATE", "UPDATE_ANIM"]:
             self.legoizeModel()
@@ -452,6 +483,10 @@ class legoizerLegoize(bpy.types.Operator):
         cm.modelIsDirty = False
         cm.buildIsDirty = False
         cm.bricksAreDirty = False
+
+        # unlink source from scene and link to safe scene
+        if source.name in scn.objects.keys():
+            safeUnlink(source)
 
         disableRelationshipLines()
 

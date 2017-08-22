@@ -73,6 +73,14 @@ class legoizerDelete(bpy.types.Operator):
                 safeLink(source)
             select(source, active=source)
             cm.modelHeight = -1
+            # reset source parent to original parent object
+            old_parent = bpy.data.objects.get(source["old_parent"])
+            if old_parent is not None:
+                select([source, old_parent], active=old_parent)
+                try:
+                    bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+                except:
+                    pass
 
         # clean up 'LEGOizer_[source name]_dupes' group
         if groupExists(LEGOizer_source_dupes_gn) and not skipDupes:
