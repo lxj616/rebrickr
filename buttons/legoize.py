@@ -246,6 +246,11 @@ class legoizerLegoize(bpy.types.Operator):
             if source.type != "MESH":
                 self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
+            # verify source is not a rigid body
+            if source.rigid_body is not None:
+                self.report({"WARNING"}, "Rigid body physics not supported")
+                return False
+            # verify all appropriate modifiers have been applied
             ignoredMods = []
             for mod in source.modifiers:
                 if mod.type in ["ARRAY", "BEVEL", "BOOLEAN", "MIRROR", "SKIN", "ARMATURE", "OCEAN"] and mod.show_viewport:
@@ -261,7 +266,15 @@ class legoizerLegoize(bpy.types.Operator):
                 warningMsg = "The following modifier types were ignored: "
                 for i in ignoredMods:
                     warningMsg += "'%(i)s', " % locals()
-                self.report({"WARNING"}, warningMsg)
+                self.report({"WARNING"}, warningMsg[:-2])
+
+        if self.action == "CREATE":
+            # if source is soft body and
+            for mod in source.modifiers:
+                if mod.type == "SOFT_BODY":
+                    self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier or disable from view before LEGOizing the object.")
+                    return False
+
         if self.action in ["ANIMATE", "UPDATE_ANIM"]:
             # verify start frame is less than stop frame
             if cm.startFrame > cm.stopFrame:
@@ -347,7 +360,7 @@ class legoizerLegoize(bpy.types.Operator):
             select(source, active=source)
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             for mod in source.modifiers:
-                if mod.type == "CLOTH":
+                if mod.type in ["CLOTH", "SOFT_BODY"]:
                     if not mod.point_cache.use_disk_cache:
                         mod.point_cache.use_disk_cache = True
                     if mod.point_cache.frame_end >= scn.frame_current:
@@ -395,12 +408,12 @@ class legoizerLegoize(bpy.types.Operator):
         # set up variables
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        source = self.getObjectToLegoize()
+        source = None
+        sourceOrig = self.getObjectToLegoize()
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
         p = bpy.data.objects.get(LEGOizer_parent_on)
-        print(p)
 
         # if there are no changes to apply, simply return "FINISHED"
         if not self.action == "CREATE" and not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty and (cm.materialType == "Custom" or not cm.materialIsDirty) and not (self.action == "UPDATE_MODEL" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0):
@@ -411,13 +424,31 @@ class legoizerLegoize(bpy.types.Operator):
             legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
 
         if self.action == "CREATE":
-            source["previous_location"] = source.location.to_tuple()
-            rot = source.rotation_euler.copy()
-            s = source.scale.to_tuple()
-            source.location = (0,0,0)
-            select(source, active=source)
+            sourceOrig["previous_location"] = sourceOrig.location.to_tuple()
+            rot = sourceOrig.rotation_euler.copy()
+            s = sourceOrig.scale.to_tuple()
+            sourceOrig.location = (0,0,0)
+            select(sourceOrig, active=sourceOrig)
             bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
             scn.update()
+        #     # create duplicate source if necessary and apply modifiers
+        #     if sourceOrig.soft_body:
+        #         # create dupes group
+        #         LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
+        #         dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
+        #         # duplicate source and add to dupes group
+        #         select(sourceOrig, active=sourceOrig)
+        #         bpy.ops.object.duplicate()
+        #         source = scn.objects.active
+        #         dGroup.objects.link(source)
+        #         source.name = sourceOrig.name + "_duplicate"
+        #         # apply all unapplied modifiers that need to be applied
+        #         for mod in source.modifiers:
+        #             if mod.type in ["SOFT_BODY"]:
+        #                 bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
+        # if duplicate not created, source is just original source
+        if source is None:
+            source = sourceOrig
 
         # update scene so mesh data is available for ray casting
         if source.name not in scn.objects.keys():
@@ -442,6 +473,9 @@ class legoizerLegoize(bpy.types.Operator):
 
         # create new bricks
         self.createNewBricks(source, parent, source_details, dimensions, refLogo)
+
+        if source != sourceOrig:
+            safeUnlink(sourceOrig)
 
         cm.modelCreated = True
 

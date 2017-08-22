@@ -137,7 +137,7 @@ class LegoModelsPanel(Panel):
         else:
             layout.operator("cmlist.list_action", icon='ZOOMIN', text="New LEGO Model").action = 'ADD'
 
-def cloth_is_baked(mod):
+def is_baked(mod):
     return mod.point_cache.is_baked is not False
 
 class AnimationPanel(Panel):
@@ -180,6 +180,7 @@ class AnimationPanel(Panel):
         if cm.useAnimation:
             col1 = layout.column(align=True)
             col1.active = cm.animated or cm.useAnimation
+            col1.scale_y = 0.85
             row = col1.row(align=True)
             split = row.split(align=True, percentage=0.5)
             col = split.column(align=True)
@@ -188,31 +189,45 @@ class AnimationPanel(Panel):
             col.prop(cm, "stopFrame")
             source = bpy.data.objects.get(cm.source_name)
             if source is not None:
-                self.clothMod = None
+                self.appliedMods = False
                 for mod in source.modifiers:
-                    if mod.type == "CLOTH" and mod.show_viewport:
-                        self.clothMod = mod
-                        break
-                if self.clothMod is not None:
-                    if not cloth_is_baked(self.clothMod):
+                    if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
+                        self.appliedMods = True
+                        t = mod.type
+                        if mod.point_cache.frame_end < cm.stopFrame:
+                            s = str(max([mod.point_cache.frame_end+1, cm.startFrame]))
+                            e = str(cm.stopFrame)
+                        elif mod.point_cache.frame_start > cm.startFrame:
+                            s = str(cm.startFrame)
+                            e = str(min([mod.point_cache.frame_start-1, cm.stopFrame]))
+                        else:
+                            s = "0"
+                            e = "-1"
+                        totalSkipped = int(e) - int(s) + 1
+                        if totalSkipped > 0:
+                            row = col1.row(align=True)
+                            row.label("Frames %(s)s-%(e)s outside of %(t)s simulation" % locals())
+                        numF = (int(e))-(int(s))+1
+                        numF = (cm.stopFrame - cm.startFrame + 1) - totalSkipped
+                        if numF == 1:
+                            numTimes = "once"
+                        elif numF == 2:
+                            numTimes = "twice"
+                        else:
+                            numTimes = "%(numF)s times" % locals()
                         row = col1.row(align=True)
-                        row.label("Bake cloth anim to stop frame first!")
-                    if self.clothMod.point_cache.frame_end < cm.stopFrame:
-                        s = str(self.clothMod.point_cache.frame_end+1)
-                        e = str(cm.stopFrame)
+                        row.label("%(t)s simulation will bake %(numTimes)s" % locals())
+                        # calculate number of frames to bake
+                        totalFramesToBake = 0
+                        for i in range(cm.startFrame, cm.stopFrame + 1):
+                            totalFramesToBake += i - mod.point_cache.frame_start + 1
                         row = col1.row(align=True)
-                        row.label("Frames %(s)s-%(e)s of cloth anim not baked" % locals())
-                    elif self.clothMod.point_cache.frame_start > cm.startFrame:
-                        s = str(cm.startFrame)
-                        e = str(self.clothMod.point_cache.frame_start-1)
-                        row = col1.row(align=True)
-                        row.label("Frames %(s)s-%(e)s of cloth anim not baked" % locals())
-            if (cm.stopFrame - cm.startFrame > 10 and not cm.animated) or self.clothMod:
+                        row.label("Num frames to bake: %(totalFramesToBake)s" % locals())
+            if (cm.stopFrame - cm.startFrame > 10 and not cm.animated) or self.appliedMods:
                 col = layout.column(align=True)
-                col.scale_y = 0.4
+                # col.scale_y = 0.6
                 col.label("WARNING: May take a while.")
                 col.separator()
-                col = layout.column(align=True)
 
 class ModelTransformationPanel(Panel):
     bl_space_type  = "VIEW_3D"

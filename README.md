@@ -13,5 +13,6 @@ Blender add-on for automated generation of LEGO Bricks from mesh objects (Blende
       * Adjust settings for your desired result
       * Click 'Update Model' to view setting adjustments
   * Future improvements:
+      * For animation, if last frame's brickFreqMatrix matches current frame's brickFreqMatrix, save time by just keeping that model around for another frame or duplicating it for the next frame or something
       * Prefer overlapping and staggering over stacking of bricks
       * New feature: SNOT (studs not on top) functionality
