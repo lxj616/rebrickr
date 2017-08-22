@@ -93,6 +93,7 @@ class legoizerLegoize(bpy.types.Operator):
                             brick.select = False
                     except Exception as e:
                         print(e)
+                    scn.update()
                     redraw_areas("VIEW_3D")
 
         if event.type in {"ESC"} and event.shift:
@@ -247,6 +248,10 @@ class legoizerLegoize(bpy.types.Operator):
             if source.type != "MESH":
                 self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
+            # verify source data only has one user
+            if source.data.users > 1:
+                self.report({"WARNING"}, "LEGOized model cannot be generated from multi-user data")
+                return False
             # verify source is not a rigid body
             if source.rigid_body is not None:
                 self.report({"WARNING"}, "LEGOizer: Rigid body physics not supported")
@@ -333,7 +338,7 @@ class legoizerLegoize(bpy.types.Operator):
 
         # delete old bricks if present
         if self.action == "UPDATE_ANIM":
-            legoizerDelete.cleanUp("ANIMATION")
+            legoizerDelete.cleanUp("ANIMATION", skipDupes=True)
         dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
         pGroup = bpy.data.groups.new(LEGOizer_parent_on)
 
@@ -346,40 +351,44 @@ class legoizerLegoize(bpy.types.Operator):
 
         # iterate through frames of animation and generate lego model
         for i in range(cm.stopFrame - cm.startFrame + 1):
-            # duplicate source for current frame and apply transformation data
-            # scn.layers = getLayersList(0)
-            # source = bpy.data.objects.new(sourceOrig.name + "_" + str(i), sourceOrig.data.copy())
-            # copyAnimationData(sourceOrig, source)
-
-            select(sourceOrig, active=sourceOrig)
-            bpy.ops.object.duplicate()
-            source = scn.objects.active
-            dGroup.objects.link(source)
-            source.name = sourceOrig.name + "_" + str(i)
-            # source.layers = getLayersList(i+1)
-            # scn.layers = getLayersList(i+1)
-            # apply animated transform data
             curFrame = cm.startFrame + i
             scn.frame_set(curFrame)
-            source.matrix_world = sourceOrig.matrix_world
-            source.animation_data_clear()
-            scn.update()
-            # scn.layers[0] = False
-            # scn.objects.link(source)
-            source["previous_location"] = source.location.to_tuple()
-            select(source, active=source)
-            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-            for mod in source.modifiers:
-                if mod.type in ["CLOTH", "SOFT_BODY"]:
-                    if not mod.point_cache.use_disk_cache:
-                        mod.point_cache.use_disk_cache = True
-                    if mod.point_cache.frame_end >= scn.frame_current:
-                        mod.point_cache.frame_end = scn.frame_current
-                        override = {'scene': scn, 'active_object': source, 'point_cache': mod.point_cache}
-                        bpy.ops.ptcache.bake(override, bake=True)
-                        bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
-            scn.update()
-            safeUnlink(source)
+            # get duplicated source
+            if self.action == "UPDATE_ANIM":
+                # retrieve previously duplicated source
+                source = bpy.data.objects.get("LEGOizer_" + sourceOrig.name + "_" + str(i))
+            else:
+                source = None
+            if source is None:
+                # duplicate source for current frame
+                select(sourceOrig, active=sourceOrig)
+                bpy.ops.object.duplicate()
+                source = scn.objects.active
+                dGroup.objects.link(source)
+                source.name = "LEGOizer_" + sourceOrig.name + "_" + str(i)
+                if source.parent is not None:
+                    # # apply parent transformation
+                    select(source, active=source)
+                    bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+                # apply animated transform data
+                source.matrix_world = sourceOrig.matrix_world
+                source.animation_data_clear()
+                scn.update()
+                source["previous_location"] = source.location.to_tuple()
+                select(source, active=source)
+                bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+                # apply cloth and soft body modifiers
+                for mod in source.modifiers:
+                    if mod.type in ["CLOTH", "SOFT_BODY"]:
+                        if not mod.point_cache.use_disk_cache:
+                            mod.point_cache.use_disk_cache = True
+                        if mod.point_cache.frame_end >= scn.frame_current:
+                            mod.point_cache.frame_end = scn.frame_current
+                            override = {'scene': scn, 'active_object': source, 'point_cache': mod.point_cache}
+                            bpy.ops.ptcache.bake(override, bake=True)
+                            bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
+                scn.update()
+                safeUnlink(source)
 
             # get source_details and dimensions
             source_details, dimensions = self.getDimensionsAndBounds(source)
@@ -391,9 +400,13 @@ class legoizerLegoize(bpy.types.Operator):
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
             parent = bpy.data.objects.new(LEGOizer_parent_on + "_" + str(i), source.data.copy())
-            if "Fluidsim" in sourceOrig.modifiers:
-                parent.location = (source_details.x.mid + source["previous_location"][0] - parent0.location.x, source_details.y.mid + source["previous_location"][1] - parent0.location.y, source_details.z.mid + source["previous_location"][2] - parent0.location.z)
-            else:
+            fluidSim = False
+            for mod in sourceOrig.modifiers:
+                if mod.type == "FLUID_SIMULATION":
+                    parent.location = (source_details.x.mid + source["previous_location"][0] - parent0.location.x, source_details.y.mid + source["previous_location"][1] - parent0.location.y, source_details.z.mid + source["previous_location"][2] - parent0.location.z)
+                    fluidSim = True
+                    break
+            if not fluidSim:
                 parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
             parent.parent = parent0
             pGroup = bpy.data.groups[LEGOizer_parent_on] # TODO: This line was added to protect against segmentation fault in version 2.78. Once you're running 2.79, try it without this line!
@@ -424,6 +437,16 @@ class legoizerLegoize(bpy.types.Operator):
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
         p = bpy.data.objects.get(LEGOizer_parent_on)
+
+        # set up source["old_parent"] and remove source parent
+        sourceOrig["frame_parent_cleared"] = None
+        if sourceOrig.parent is not None:
+            sourceOrig["old_parent"] = sourceOrig.parent.name
+            sourceOrig["frame_parent_cleared"] = scn.frame_current
+            select(sourceOrig, active=sourceOrig)
+            bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+        else:
+            sourceOrig["old_parent"] = ""
 
         # if there are no changes to apply, simply return "FINISHED"
         if not self.action == "CREATE" and not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty and (cm.materialType == "Custom" or not cm.materialIsDirty) and not (self.action == "UPDATE_MODEL" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0):
@@ -509,31 +532,6 @@ class legoizerLegoize(bpy.types.Operator):
 
         if not self.isValid(source, LEGOizer_bricks_gn):
             return {"CANCELLED"}
-
-        # set up source["old_parent"] and remove source parent
-        if source.parent is not None:
-            source["old_parent"] = source.parent.name
-            # old_parent = bpy.data.objects.get(source["old_parent"])
-            # oldLayers = list(scn.layers)
-            # for i in range(len(scn.layers)):
-            #     scn.layers[i] = old_parent.layers[i] or scn.layers[i]
-            select(source, active=source)
-            bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
-            # select(old_parent, active=old_parent)
-            # # create new parent
-            # bpy.ops.object.duplicate()
-            # source["new_parent"] = scn.objects.active.name
-            # print(source["old_parent"], source["new_parent"])
-            # new_parent = bpy.data.objects.get(source["new_parent"])
-            # # set source parent to new parent object
-            # select([source, new_parent], active=new_parent)
-            # bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
-            # # move new parent to safe scene
-            # safeUnlink(new_parent)
-            # scn.layers = oldLayers
-        else:
-            source["old_parent"] = ""
-            # source["new_parent"] = ""
 
         if self.action not in ["ANIMATE", "UPDATE_ANIM"]:
             self.legoizeModel()

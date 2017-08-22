@@ -78,7 +78,10 @@ class legoizerDelete(bpy.types.Operator):
             if old_parent is not None:
                 select([source, old_parent], active=old_parent)
                 try:
+                    origFrame = scn.frame_current
+                    scn.frame_set(source["frame_parent_cleared"])
                     bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+                    scn.frame_set(origFrame)
                 except:
                     pass
             # if modifiers were ignored/disabled from view, enable in view
@@ -128,6 +131,9 @@ class legoizerDelete(bpy.types.Operator):
                         delete(bgObjects)
                     bpy.data.groups.remove(brickGroup, do_unlink=True)
             redraw_areas("VIEW_3D")
+
+        select(source, active=source)
+        scn.update()
 
         # # clean up 'LEGOizer_refBrick' group
         # if groupExists(LEGOizer_refBricks_gn) and not skipRefBrick:
