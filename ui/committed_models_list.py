@@ -161,7 +161,7 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
         except IndexError:
             pass
 
-        if self.action == 'REMOVE':
+        if self.action == 'REMOVE' and len(scn.cmlist) > 0 and scn.cmlist_index >= 0:
             cm = scn.cmlist[scn.cmlist_index]
             sn = cm.source_name
             n = cm.name

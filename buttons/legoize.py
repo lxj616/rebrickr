@@ -260,7 +260,7 @@ class legoizerLegoize(bpy.types.Operator):
             ignoredMods = []
             for mod in source.modifiers:
                 # abort render if these modifiers are enabled but not applied
-                if mod.type in ["ARRAY", "BEVEL", "BOOLEAN", "MIRROR", "SKIN", "ARMATURE", "OCEAN"] and mod.show_viewport:
+                if mod.type in ["ARRAY", "BEVEL", "BOOLEAN", "MIRROR", "SKIN", "OCEAN"] and mod.show_viewport:
                     self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier(s) or disable from view before LEGOizing the object.")
                     return False
                 # ignore these modifiers (disable from view until LEGOized model deleted)
@@ -317,7 +317,6 @@ class legoizerLegoize(bpy.types.Operator):
         # set up variables
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        cm.splitModel = False
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
@@ -333,11 +332,19 @@ class legoizerLegoize(bpy.types.Operator):
             safeLink(sourceOrig)
 
         # if there are no changes to apply, simply return "FINISHED"
-        if not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty and (cm.materialType == "Custom" or not cm.materialIsDirty):
-            return "FINISHED"
+        self.updatedFramesOnly = False
+        if not self.action == "ANIMATE" and not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty and (cm.materialType == "Custom" or not cm.materialIsDirty):
+            if cm.animIsDirty:
+                self.updatedFramesOnly = True
+            else:
+                return "FINISHED"
+
+        if cm.splitModel:
+            cm.splitModel = False
 
         # delete old bricks if present
-        if self.action == "UPDATE_ANIM":
+
+        if self.action == "UPDATE_ANIM" and not self.updatedFramesOnly:
             legoizerDelete.cleanUp("ANIMATION", skipDupes=True)
         dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
         pGroup = bpy.data.groups.new(LEGOizer_parent_on)
@@ -350,13 +357,15 @@ class legoizerLegoize(bpy.types.Operator):
             refLogo = None
 
         # iterate through frames of animation and generate lego model
-        for i in range(cm.stopFrame - cm.startFrame + 1):
-            curFrame = cm.startFrame + i
+        for curFrame in range(cm.startFrame, cm.stopFrame + 1):
+            if self.updatedFramesOnly and cm.lastStartFrame <= curFrame and curFrame <= cm.lastStopFrame:
+                print("skipped frame %(curFrame)s" % locals())
+                continue
             scn.frame_set(curFrame)
             # get duplicated source
             if self.action == "UPDATE_ANIM":
                 # retrieve previously duplicated source
-                source = bpy.data.objects.get("LEGOizer_" + sourceOrig.name + "_" + str(i))
+                source = bpy.data.objects.get("LEGOizer_" + sourceOrig.name + "_frame_" + str(curFrame))
             else:
                 source = None
             if source is None:
@@ -365,7 +374,7 @@ class legoizerLegoize(bpy.types.Operator):
                 bpy.ops.object.duplicate()
                 source = scn.objects.active
                 dGroup.objects.link(source)
-                source.name = "LEGOizer_" + sourceOrig.name + "_" + str(i)
+                source.name = "LEGOizer_" + sourceOrig.name + "_frame_" + str(curFrame)
                 if source.parent is not None:
                     # # apply parent transformation
                     select(source, active=source)
@@ -399,7 +408,7 @@ class legoizerLegoize(bpy.types.Operator):
 
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
-            parent = bpy.data.objects.new(LEGOizer_parent_on + "_" + str(i), source.data.copy())
+            parent = bpy.data.objects.new(LEGOizer_parent_on + "_frame_" + str(curFrame), source.data.copy())
             fluidSim = False
             for mod in sourceOrig.modifiers:
                 if mod.type == "FLUID_SIMULATION":
@@ -537,6 +546,7 @@ class legoizerLegoize(bpy.types.Operator):
             self.legoizeModel()
         else:
             self.legoizeAnimation()
+            cm.animIsDirty = False
 
         # # set final variables
         cm.lastLogoResolution = cm.logoResolution

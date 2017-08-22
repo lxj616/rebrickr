@@ -57,6 +57,7 @@ class legoizerDelete(bpy.types.Operator):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
+        source = bpy.data.objects[cm.source_name]
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
         LEGOizer_refBricks_gn = "LEGOizer_%(n)s_refBricks" % locals()
@@ -64,7 +65,6 @@ class legoizerDelete(bpy.types.Operator):
 
         # clean up 'LEGOizer_[source name]' group
         if not skipSource:
-            source = bpy.data.objects[cm.source_name]
             try:
                 source.location = source["previous_location"]
             except:
@@ -99,7 +99,7 @@ class legoizerDelete(bpy.types.Operator):
             bpy.data.groups.remove(dGroup, do_unlink=True)
 
         if not skipParents:
-            # clean up LEGOizer_parent group
+            # clean up LEGOizer_parent object
             parent = bpy.data.objects.get(LEGOizer_parent_on)
             if parent is not None:
                 m = parent.data
@@ -132,9 +132,6 @@ class legoizerDelete(bpy.types.Operator):
                     bpy.data.groups.remove(brickGroup, do_unlink=True)
             redraw_areas("VIEW_3D")
 
-        select(source, active=source)
-        scn.update()
-
         # # clean up 'LEGOizer_refBrick' group
         # if groupExists(LEGOizer_refBricks_gn) and not skipRefBrick:
         #     refBrickGroup = bpy.data.groups[LEGOizer_refBricks_gn]
@@ -143,11 +140,16 @@ class legoizerDelete(bpy.types.Operator):
         #         delete(refBrick)
         #     bpy.data.groups.remove(refBrickGroup, do_unlink=True)
 
+        return source
+
     def execute(self, context):
         # # get start time
         # startTime = time.time()
 
-        self.cleanUp(self.modelType)
+        source = self.cleanUp(self.modelType)
+
+        select(source, active=source)
+        context.scene.update()
 
         # # STOPWATCH CHECK
         # stopWatch("Time Elapsed (DELETE)", time.time()-startTime)

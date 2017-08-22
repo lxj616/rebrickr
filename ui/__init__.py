@@ -188,8 +188,8 @@ class AnimationPanel(Panel):
             col = split.column(align=True)
             col.prop(cm, "stopFrame")
             source = bpy.data.objects.get(cm.source_name)
+            self.appliedMods = False
             if source is not None:
-                self.appliedMods = False
                 for mod in source.modifiers:
                     if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
                         self.appliedMods = True
