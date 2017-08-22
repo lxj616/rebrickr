@@ -227,6 +227,7 @@ class legoizerLegoize(bpy.types.Operator):
                 return False
 
         self.clothMod = False
+        source["ignored_mods"] = None
         if self.action in ["CREATE", "ANIMATE"]:
             # verify function can run
             if groupExists(LEGOizer_bricks_gn):
@@ -248,22 +249,31 @@ class legoizerLegoize(bpy.types.Operator):
                 return False
             # verify source is not a rigid body
             if source.rigid_body is not None:
-                self.report({"WARNING"}, "Rigid body physics not supported")
+                self.report({"WARNING"}, "LEGOizer: Rigid body physics not supported")
                 return False
             # verify all appropriate modifiers have been applied
             ignoredMods = []
             for mod in source.modifiers:
+                # abort render if these modifiers are enabled but not applied
                 if mod.type in ["ARRAY", "BEVEL", "BOOLEAN", "MIRROR", "SKIN", "ARMATURE", "OCEAN"] and mod.show_viewport:
                     self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier(s) or disable from view before LEGOizing the object.")
                     return False
+                # ignore these modifiers (disable from view until LEGOized model deleted)
                 if mod.type in ["BUILD"] and mod.show_viewport:
                     mod.show_viewport = False
+                    ignoredMods.append(mod.name)
+                # these modifiers are unsupported - abort render if enabled
                 if mod.type in ["SMOKE"] and mod.show_viewport:
-                    ignoredMods.append(mod.type)
-                if mod.type in ["CLOTH"] and mod.show_viewport:
+                    self.report({"WARNING"}, "'" + str(mod.type) + "' modifier not supported by the LEGOizer.")
+                    return False
+                # handle cloth modifier
+                if mod.type == "CLOTH" and mod.show_viewport:
                     self.clothMod = mod
             if len(ignoredMods) > 0:
-                warningMsg = "The following modifier types were ignored: "
+                # store disabled mods to source so they can be enabled in delete operation
+                source["ignored_mods"] = ignoredMods
+                # warn user that modifiers were ignored
+                warningMsg = "The following modifiers were ignored (apply to respect changes): "
                 for i in ignoredMods:
                     warningMsg += "'%(i)s', " % locals()
                 self.report({"WARNING"}, warningMsg[:-2])
@@ -271,7 +281,7 @@ class legoizerLegoize(bpy.types.Operator):
         if self.action == "CREATE":
             # if source is soft body and
             for mod in source.modifiers:
-                if mod.type == "SOFT_BODY":
+                if mod.type in ["SOFT_BODY", "CLOTH"]:
                     self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier or disable from view before LEGOizing the object.")
                     return False
 

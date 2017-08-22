@@ -81,6 +81,11 @@ class legoizerDelete(bpy.types.Operator):
                     bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
                 except:
                     pass
+            # if modifiers were ignored/disabled from view, enable in view
+            if source["ignored_mods"] is not None:
+                for mn in source["ignored_mods"]:
+                    source.modifiers[mn].show_viewport = True
+
 
         # clean up 'LEGOizer_[source name]_dupes' group
         if groupExists(LEGOizer_source_dupes_gn) and not skipDupes:
