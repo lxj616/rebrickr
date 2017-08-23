@@ -131,13 +131,11 @@ class legoizerLegoize(bpy.types.Operator):
             return source_details
 
     def getParent(self, LEGOizer_parent_on, loc):
-        parent = bpy.data.objects.get(LEGOizer_parent_on)
-        if parent is None:
-            m = bpy.data.meshes.new(LEGOizer_parent_on + "_mesh")
-            parent = bpy.data.objects.new(LEGOizer_parent_on, m)
-            parent.location = loc
-            safeScn = getSafeScn()
-            safeScn.objects.link(parent)
+        m = bpy.data.meshes.new(LEGOizer_parent_on + "_mesh")
+        parent = bpy.data.objects.new(LEGOizer_parent_on, m)
+        parent.location = loc
+        safeScn = getSafeScn()
+        safeScn.objects.link(parent)
         return parent
 
 
@@ -248,10 +246,6 @@ class legoizerLegoize(bpy.types.Operator):
             if source.type != "MESH":
                 self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
-            # verify source data only has one user
-            if source.data.users > 1:
-                self.report({"WARNING"}, "LEGOized model cannot be generated from multi-user data")
-                return False
             # verify source is not a rigid body
             if source.rigid_body is not None:
                 self.report({"WARNING"}, "LEGOizer: Rigid body physics not supported")
@@ -322,11 +316,6 @@ class legoizerLegoize(bpy.types.Operator):
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
         LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
 
-        # if bpy.data.objects.find(scn.cmlist[scn.cmlist_index].source_name) == -1:
-        #     sourceOrig = bpy.context.active_object
-        # else:
-        #     sourceOrig = bpy.data.objects[scn.cmlist[scn.cmlist_index].source_name]
-        #
         sourceOrig = self.getObjectToLegoize()
         if self.action == "UPDATE_ANIM":
             safeLink(sourceOrig)
@@ -343,13 +332,22 @@ class legoizerLegoize(bpy.types.Operator):
             cm.splitModel = False
 
         # delete old bricks if present
-
         if self.action == "UPDATE_ANIM" and not self.updatedFramesOnly:
             legoizerDelete.cleanUp("ANIMATION", skipDupes=True)
-        dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
-        pGroup = bpy.data.groups.new(LEGOizer_parent_on)
 
-        parent0 = self.getParent(LEGOizer_parent_on, sourceOrig.location.to_tuple())
+        # get or create duplicate and parent groups
+        dGroup = bpy.data.groups.get(LEGOizer_source_dupes_gn)
+        if dGroup is None:
+            dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
+        pGroup = bpy.data.groups.get(LEGOizer_parent_on)
+        if pGroup is None:
+            pGroup = bpy.data.groups.new(LEGOizer_parent_on)
+
+        # get parent object
+        parent0 = bpy.data.objects.get(LEGOizer_parent_on)
+        if parent0 is None:
+            parent0 = self.getParent(LEGOizer_parent_on, (0,0,0))#sourceOrig.location.to_tuple())
+            pGroup.objects.link(parent0)
 
         if cm.brickType != "Custom":
             refLogo = self.getRefLogo()
@@ -376,7 +374,7 @@ class legoizerLegoize(bpy.types.Operator):
                 dGroup.objects.link(source)
                 source.name = "LEGOizer_" + sourceOrig.name + "_frame_" + str(curFrame)
                 if source.parent is not None:
-                    # # apply parent transformation
+                    # apply parent transformation
                     select(source, active=source)
                     bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
                 for mod in source.modifiers:
@@ -417,14 +415,7 @@ class legoizerLegoize(bpy.types.Operator):
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
             parent = bpy.data.objects.new(LEGOizer_parent_on + "_frame_" + str(curFrame), source.data.copy())
-            fluidSim = False
-            for mod in sourceOrig.modifiers:
-                if mod.type == "FLUID_SIMULATION":
-                    parent.location = (source_details.x.mid + source["previous_location"][0] - parent0.location.x, source_details.y.mid + source["previous_location"][1] - parent0.location.y, source_details.z.mid + source["previous_location"][2] - parent0.location.z)
-                    fluidSim = True
-                    break
-            if not fluidSim:
-                parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
+            parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
             parent.parent = parent0
             pGroup = bpy.data.groups[LEGOizer_parent_on] # TODO: This line was added to protect against segmentation fault in version 2.78. Once you're running 2.79, try it without this line!
             pGroup.objects.link(parent)
@@ -453,15 +444,11 @@ class legoizerLegoize(bpy.types.Operator):
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
-        p = bpy.data.objects.get(LEGOizer_parent_on)
 
-        # set up source["old_parent"] and remove source parent
-        sourceOrig["frame_parent_cleared"] = None
-        if sourceOrig.parent is not None:
-            sourceOrig["old_parent"] = sourceOrig.parent.name
-            sourceOrig["frame_parent_cleared"] = scn.frame_current
-            select(sourceOrig, active=sourceOrig)
-            bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+        # get or create parent group
+        pGroup = bpy.data.groups.get(LEGOizer_parent_on)
+        if pGroup is None:
+            pGroup = bpy.data.groups.new(LEGOizer_parent_on)
 
         # if there are no changes to apply, simply return "FINISHED"
         if not self.action == "CREATE" and not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty and (cm.materialType == "Custom" or not cm.materialIsDirty) and not (self.action == "UPDATE_MODEL" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0):
@@ -482,6 +469,13 @@ class legoizerLegoize(bpy.types.Operator):
             dGroup.objects.link(source)
             select(source, active=source)
             source.name = sourceOrig.name + "_duplicate"
+            # set up source["old_parent"] and remove source parent
+            source["frame_parent_cleared"] = None
+            if source.parent is not None:
+                source["old_parent"] = source.parent.name
+                source["frame_parent_cleared"] = scn.frame_current
+                select(source, active=source)
+                bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
             # list modifiers that need to be applied
             for mod in sourceOrig.modifiers:
                 if mod.type in ["ARMATURE", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN"] and mod.show_viewport:
@@ -495,6 +489,8 @@ class legoizerLegoize(bpy.types.Operator):
             select(source, active=source)
             bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
             scn.update()
+        else:
+            source = bpy.data.objects.get(sourceOrig.name + "_duplicate")
         # if duplicate not created, source is just original source
         if source is None:
             source = sourceOrig
@@ -511,8 +507,12 @@ class legoizerLegoize(bpy.types.Operator):
             # set source model height for display in UI
             cm.modelHeight = source_details.z.distance
 
-        parentLoc = (source_details.x.mid + source["previous_location"][0], source_details.y.mid + source["previous_location"][1], source_details.z.mid + source["previous_location"][2])
-        parent = self.getParent(LEGOizer_parent_on, parentLoc)
+        # get parent object
+        parent = bpy.data.objects.get(LEGOizer_parent_on)
+        if parent is None:
+            parentLoc = (source_details.x.mid + source["previous_location"][0], source_details.y.mid + source["previous_location"][1], source_details.z.mid + source["previous_location"][2])
+            parent = self.getParent(LEGOizer_parent_on, parentLoc)
+            pGroup.objects.link(parent)
 
         # update refLogo
         if cm.brickType != "Custom":

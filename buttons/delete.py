@@ -89,7 +89,6 @@ class legoizerDelete(bpy.types.Operator):
                 for mn in source["ignored_mods"]:
                     source.modifiers[mn].show_viewport = True
 
-
         # clean up 'LEGOizer_[source name]_dupes' group
         if groupExists(LEGOizer_source_dupes_gn) and not skipDupes:
             dGroup = bpy.data.groups[LEGOizer_source_dupes_gn]
@@ -100,11 +99,12 @@ class legoizerDelete(bpy.types.Operator):
 
         if not skipParents:
             # clean up LEGOizer_parent object
-            parent = bpy.data.objects.get(LEGOizer_parent_on)
-            if parent is not None:
-                m = parent.data
-                bpy.data.objects.remove(parent, True)
-                bpy.data.meshes.remove(m, True)
+            pGroup = bpy.data.groups.get(LEGOizer_parent_on)
+            if pGroup:
+                for parent in pGroup.objects:
+                    m = parent.data
+                    bpy.data.objects.remove(parent, True)
+                    bpy.data.meshes.remove(m, True)
 
         if modelType == "MODEL":
             # clean up LEGOizer_bricks group
