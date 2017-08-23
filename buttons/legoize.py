@@ -260,9 +260,9 @@ class legoizerLegoize(bpy.types.Operator):
             ignoredMods = []
             for mod in source.modifiers:
                 # abort render if these modifiers are enabled but not applied
-                if mod.type in ["ARRAY", "BEVEL", "BOOLEAN", "MIRROR", "SKIN", "OCEAN"] and mod.show_viewport:
-                    self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier(s) or disable from view before LEGOizing the object.")
-                    return False
+                # if mod.type in ["ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN"] and mod.show_viewport:
+                #     self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier(s) or disable from view before LEGOizing the object.")
+                #     return False
                 # ignore these modifiers (disable from view until LEGOized model deleted)
                 if mod.type in ["BUILD"] and mod.show_viewport:
                     mod.show_viewport = False
@@ -286,7 +286,7 @@ class legoizerLegoize(bpy.types.Operator):
         if self.action == "CREATE":
             # if source is soft body and
             for mod in source.modifiers:
-                if mod.type in ["SOFT_BODY", "CLOTH"]:
+                if mod.type in ["SOFT_BODY", "CLOTH"] and mod.show_viewport:
                     self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier or disable from view before LEGOizing the object.")
                     return False
 
@@ -379,6 +379,24 @@ class legoizerLegoize(bpy.types.Operator):
                     # # apply parent transformation
                     select(source, active=source)
                     bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+                for mod in source.modifiers:
+                    # apply cloth and soft body modifiers
+                    if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
+                        if not mod.point_cache.use_disk_cache:
+                            mod.point_cache.use_disk_cache = True
+                        if mod.point_cache.frame_end >= scn.frame_current:
+                            mod.point_cache.frame_end = scn.frame_current
+                            override = {'scene': scn, 'active_object': source, 'point_cache': mod.point_cache}
+                            bpy.ops.ptcache.bake(override, bake=True)
+                            try:
+                                bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
+                            except:
+                                mod.show_viewport = False
+                    if mod.type in ["ARMATURE", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN"] and mod.show_viewport:
+                        try:
+                            bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
+                        except:
+                            mod.show_viewport = False
                 # apply animated transform data
                 source.matrix_world = sourceOrig.matrix_world
                 source.animation_data_clear()
@@ -386,16 +404,6 @@ class legoizerLegoize(bpy.types.Operator):
                 source["previous_location"] = source.location.to_tuple()
                 select(source, active=source)
                 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-                # apply cloth and soft body modifiers
-                for mod in source.modifiers:
-                    if mod.type in ["CLOTH", "SOFT_BODY"]:
-                        if not mod.point_cache.use_disk_cache:
-                            mod.point_cache.use_disk_cache = True
-                        if mod.point_cache.frame_end >= scn.frame_current:
-                            mod.point_cache.frame_end = scn.frame_current
-                            override = {'scene': scn, 'active_object': source, 'point_cache': mod.point_cache}
-                            bpy.ops.ptcache.bake(override, bake=True)
-                            bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
                 scn.update()
                 safeUnlink(source)
 
@@ -454,8 +462,6 @@ class legoizerLegoize(bpy.types.Operator):
             sourceOrig["frame_parent_cleared"] = scn.frame_current
             select(sourceOrig, active=sourceOrig)
             bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
-        else:
-            sourceOrig["old_parent"] = ""
 
         # if there are no changes to apply, simply return "FINISHED"
         if not self.action == "CREATE" and not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty and (cm.materialType == "Custom" or not cm.materialIsDirty) and not (self.action == "UPDATE_MODEL" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0):
@@ -466,28 +472,29 @@ class legoizerLegoize(bpy.types.Operator):
             legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
 
         if self.action == "CREATE":
-            sourceOrig["previous_location"] = sourceOrig.location.to_tuple()
-            rot = sourceOrig.rotation_euler.copy()
-            s = sourceOrig.scale.to_tuple()
-            sourceOrig.location = (0,0,0)
+            # create dupes group
+            LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
+            dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
+            # duplicate source and add duplicate to group
             select(sourceOrig, active=sourceOrig)
+            bpy.ops.object.duplicate()
+            source = scn.objects.active
+            dGroup.objects.link(source)
+            select(source, active=source)
+            source.name = sourceOrig.name + "_duplicate"
+            # list modifiers that need to be applied
+            for mod in sourceOrig.modifiers:
+                if mod.type in ["ARMATURE", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN"] and mod.show_viewport:
+                    try:
+                        bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
+                    except:
+                        mod.show_viewport = False
+            # apply transformation data
+            source["previous_location"] = source.location.to_tuple()
+            source.location = (0,0,0)
+            select(source, active=source)
             bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
             scn.update()
-        #     # create duplicate source if necessary and apply modifiers
-        #     if sourceOrig.soft_body:
-        #         # create dupes group
-        #         LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
-        #         dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
-        #         # duplicate source and add to dupes group
-        #         select(sourceOrig, active=sourceOrig)
-        #         bpy.ops.object.duplicate()
-        #         source = scn.objects.active
-        #         dGroup.objects.link(source)
-        #         source.name = sourceOrig.name + "_duplicate"
-        #         # apply all unapplied modifiers that need to be applied
-        #         for mod in source.modifiers:
-        #             if mod.type in ["SOFT_BODY"]:
-        #                 bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
         # if duplicate not created, source is just original source
         if source is None:
             source = sourceOrig
@@ -517,7 +524,7 @@ class legoizerLegoize(bpy.types.Operator):
         self.createNewBricks(source, parent, source_details, dimensions, refLogo)
 
         if source != sourceOrig:
-            safeUnlink(sourceOrig)
+            safeUnlink(source)
 
         cm.modelCreated = True
 
@@ -537,7 +544,9 @@ class legoizerLegoize(bpy.types.Operator):
             context.window_manager.modal_handler_add(self)
             return {"RUNNING_MODAL"}
 
+        # get source and initialize values
         source = self.getObjectToLegoize()
+        source["old_parent"] = ""
 
         if not self.isValid(source, LEGOizer_bricks_gn):
             return {"CANCELLED"}
