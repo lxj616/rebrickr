@@ -233,9 +233,6 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, bric
         if brickFreqMatrix[x0][y0][z0] == 0:
             # define brick as inside shell
             brickFreqMatrix[x0][y0][z0] = -1
-    # else:
-    #     if brickFreqMatrix[x0][y0][z0] == -1:
-    #         brickFreqMatrix[x0][y0][z0] = -0.1
     if edgeIntersects:
         if (origInside and brickShell == "Inside Mesh") or (not origInside and brickShell == "Outside Mesh") or brickShell == "Inside and Outside":
             # define brick as part of shell
@@ -249,8 +246,6 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, bric
             # set or update nearest face to brick
             if type(faceIdxMatrix[x1][y1][z1]) != dict or faceIdxMatrix[x1][y1][z1]["dist"] > lastIntersection["dist"]:
                 faceIdxMatrix[x1][y1][z1] = lastIntersection
-    # if not origInside and brickFreqMatrix[x0][y0][z0] <= 0:
-    #     brickFreqMatrix[x0][y0][z0] = -0.1
 
     return intersections, nextIntersection
 
@@ -316,15 +311,14 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
-                # if not all axes checked, set internal boundary freqs to 2
-                if brickFreqMatrix[x][y][z] == -1:
-                    if ((((z == len(coordMatrix[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0) or (z == 0 or brickFreqMatrix[x][y][z-1] == 0)) and "z" not in axes) or
-                        (((y == len(coordMatrix[0])-1 or brickFreqMatrix[x][y+1][z] == 0) or (y == 0 or brickFreqMatrix[x][y-1][z] == 0)) and "y" not in axes) or
-                        (((x == len(coordMatrix)-1 or brickFreqMatrix[x+1][y][z] == 0) or (x == 0 or brickFreqMatrix[x-1][y][z] == 0)) and "x" not in axes)):
+                # if current location is inside (-1) and adjacent location is out of bounds, current location is shell (2)
+                if ((((z == len(coordMatrix[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0) or (z == 0 or brickFreqMatrix[x][y][z-1] == 0))) or
+                    (((y == len(coordMatrix[0])-1 or brickFreqMatrix[x][y+1][z] == 0) or (y == 0 or brickFreqMatrix[x][y-1][z] == 0))) or
+                    (((x == len(coordMatrix)-1 or brickFreqMatrix[x+1][y][z] == 0) or (x == 0 or brickFreqMatrix[x-1][y][z] == 0)))):
+                    if brickFreqMatrix[x][y][z] == -1:
                         brickFreqMatrix[x][y][z] = 2
-                # # reset values of -0.1 to 0
-                # if brickFreqMatrix[x][y][z] == -0.1:
-                #     brickFreqMatrix[x][y][z] = 0
+                    # break from current location, as boundary locs should not be verified
+                    continue
                 if cm.verifyExposure:
                     # If inside location (-1) intersects outside location (0), make it ouside (0)
                     if brickFreqMatrix[x][y][z] == -1:

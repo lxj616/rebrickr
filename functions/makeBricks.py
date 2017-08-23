@@ -442,7 +442,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                             elif val < 1 and val > 0:
                                 idxZab = idxZa
                                 while val < 1 and val > 0:
-                                    idxZab = idxZab+1
+                                    idxZab = str(int(idxZab)+1)
                                     # NOTE: if key does not exist, we will be sent to 'except'
                                     valKeysChecked1.append("%(idxX)s,%(idxY)s,%(idxZab)s" % locals())
                                     val = bricksD[valKeysChecked1[-1]]["val"]
@@ -464,7 +464,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                             elif val < 1 and val > 0:
                                 idxZbb = idxZb
                                 while val < 1 and val > 0:
-                                    idxZbb = idxZbb+1
+                                    idxZbb = str(int(idxZbb)+1)
                                     # NOTE: if key does not exist, we will be sent to 'except'
                                     valKeysChecked2.append("%(idxX)s,%(idxY)s,%(idxZbb)s" % locals())
                                     val = bricksD[valKeysChecked2[-1]]["val"]
