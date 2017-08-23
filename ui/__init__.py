@@ -229,14 +229,13 @@ class AnimationPanel(Panel):
                 col.label("WARNING: May take a while.")
                 col.separator()
 
-class ModelTransformationPanel(Panel):
+class ModelTransformPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
-    bl_label       = "Model Transformation"
-    bl_idname      = "VIEW3D_PT_tools_LEGOizer_model_transformation"
+    bl_label       = "Model Transform"
+    bl_idname      = "VIEW3D_PT_tools_LEGOizer_model_transform"
     bl_context     = "objectmode"
     bl_category    = "LEGOizer"
-    bl_options     = {"DEFAULT_CLOSED"}
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
@@ -247,9 +246,9 @@ class ModelTransformationPanel(Panel):
         if bversion() < '002.078.00':
             return False
         cm = scn.cmlist[scn.cmlist_index]
-        if not cm.modelCreated:
-            return False
-        return True
+        if cm.animated or (cm.modelCreated and cm.lastSplitModel):
+            return True
+        return False
 
     def draw(self, context):
         layout = self.layout
@@ -258,6 +257,8 @@ class ModelTransformationPanel(Panel):
         n = cm.source_name
 
         col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop(cm, "applyToSourceObject")
         row = col.row(align=True)
         parent = bpy.data.objects['LEGOizer_%(n)s_parent' % locals()]
         row = layout.row()

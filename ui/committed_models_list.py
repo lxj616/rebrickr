@@ -702,6 +702,14 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     lastStartFrame = IntProperty(default=-1)
     lastStopFrame = IntProperty(default=-1)
 
+    modelLoc = StringProperty(default="-1,-1,-1")
+    modelRot = StringProperty(default="-1,-1,-1")
+    modelScale = StringProperty(default="-1,-1,-1")
+    applyToSourceObject = BoolProperty(
+        name="Apply to source",
+        description="Apply transformations to source object when LEGO Model is deleted",
+        default=True)
+
     # Bevel Settings
     lastBevelWidth = FloatProperty()
     bevelWidth = FloatProperty(

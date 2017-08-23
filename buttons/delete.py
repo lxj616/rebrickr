@@ -22,7 +22,7 @@
 # system imports
 import bpy
 import time
-from mathutils import Euler
+from mathutils import Vector
 from ..functions import *
 props = bpy.props
 
@@ -98,7 +98,10 @@ class legoizerDelete(bpy.types.Operator):
             bpy.data.groups.remove(dGroup, do_unlink=True)
 
         if not skipParents:
-            # clean up LEGOizer_parent object
+            if modelType == "ANIMATION" or cm.lastSplitModel:
+                # store transform data of transformation parent object
+                storeTransformData(bpy.data.objects.get(LEGOizer_parent_on))
+            # clean up LEGOizer_parent objects
             pGroup = bpy.data.groups.get(LEGOizer_parent_on)
             if pGroup:
                 for parent in pGroup.objects:
@@ -112,6 +115,9 @@ class legoizerDelete(bpy.types.Operator):
             if groupExists(LEGOizer_bricks_gn):
                 brickGroup = bpy.data.groups[LEGOizer_bricks_gn]
                 bgObjects = list(brickGroup.objects)
+                if not cm.lastSplitModel:
+                    storeTransformData(bgObjects[0])
+                # remove objects
                 for obj in bgObjects:
                     m = obj.data
                     bpy.data.objects.remove(obj, True)
@@ -123,7 +129,6 @@ class legoizerDelete(bpy.types.Operator):
             cm.animated = False
             for i in range(cm.lastStartFrame, cm.lastStopFrame + 1):
                 LEGOizer_bricks_cur_frame_gn = LEGOizer_bricks_gn + "_frame_" + str(i)
-                print(LEGOizer_bricks_cur_frame_gn)
                 if groupExists(LEGOizer_bricks_cur_frame_gn):
                     brickGroup = bpy.data.groups[LEGOizer_bricks_cur_frame_gn]
                     bgObjects = list(brickGroup.objects)
@@ -143,11 +148,26 @@ class legoizerDelete(bpy.types.Operator):
         return source
 
     def execute(self, context):
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+
         # # get start time
         # startTime = time.time()
 
         source = self.cleanUp(self.modelType)
 
+        if (self.modelType == "MODEL" and ((cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel)) or (self.modelType == "ANIMATION" and cm.applyToSourceObject):
+
+            # update location of source to reflect stored transformation data
+            l,r,s = getTransformData()
+            if self.modelType == "MODEL" and not cm.lastSplitModel:
+                source.location = source.location + Vector(l)
+            else:
+                source.location = Vector(l)
+            source.rotation_euler = Vector(source.rotation_euler) + Vector(r)
+            source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
+
+        # select source and update scene
         select(source, active=source)
         context.scene.update()
 

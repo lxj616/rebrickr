@@ -129,6 +129,43 @@ def getClosestPolyIndex(point,maxLen,ob):
     # return helpful information
     return closestPolyIdx
 
+def storeTransformData(obj):
+    """ store location, rotation, and scale data for model """
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    if obj is not None:
+        cm.modelLoc = str(obj.location.to_tuple())[1:-1]
+        cm.modelRot = str(tuple(obj.rotation_euler))[1:-1]
+        cm.modelScale = str(obj.scale.to_tuple())[1:-1]
+    elif obj is None:
+        cm.modelLoc = "0,0,0"
+        cm.modelRot = "0,0,0"
+        cm.modelScale = "1,1,1"
+
+def convertToFloats(lst):
+    for i in range(len(lst)):
+        lst[i] = float(lst[i])
+    return lst
+
+def setTransformData(objects):
+    """ set location, rotation, and scale data for model """
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    for obj in objects:
+        l,r,s = getTransformData()
+        obj.location = obj.location + Vector(l)
+        obj.rotation_euler = Vector(obj.rotation_euler) + Vector(r)
+        obj.scale = (obj.scale[0] * s[0], obj.scale[1] * s[1], obj.scale[2] * s[2])
+
+def getTransformData():
+    """ set location, rotation, and scale data for model """
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    l = tuple(convertToFloats(cm.modelLoc.split(",")))
+    r = tuple(convertToFloats(cm.modelRot.split(",")))
+    s = tuple(convertToFloats(cm.modelScale.split(",")))
+    return l,r,s
+
 def rayObjIntersections(point,direction,edgeLen,ob):
     """ returns True if ray intersects obj """
     scn = bpy.context.scene

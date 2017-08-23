@@ -346,7 +346,7 @@ class legoizerLegoize(bpy.types.Operator):
         # get parent object
         parent0 = bpy.data.objects.get(LEGOizer_parent_on)
         if parent0 is None:
-            parent0 = self.getParent(LEGOizer_parent_on, (0,0,0))#sourceOrig.location.to_tuple())
+            parent0 = self.getParent(LEGOizer_parent_on, sourceOrig.location.to_tuple())
             pGroup.objects.link(parent0)
 
         if cm.brickType != "Custom":
@@ -414,10 +414,10 @@ class legoizerLegoize(bpy.types.Operator):
 
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
-            parent = bpy.data.objects.new(LEGOizer_parent_on + "_frame_" + str(curFrame), source.data.copy())
+            parent = bpy.data.objects.new(LEGOizer_parent_on + "_frame_" + str(curFrame), source.data)
             parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
             parent.parent = parent0
-            pGroup = bpy.data.groups[LEGOizer_parent_on] # TODO: This line was added to protect against segmentation fault in version 2.78. Once you're running 2.79, try it without this line!
+            pGroup = bpy.data.groups[LEGOizer_parent_on] # redefine pGroup since it was removed
             pGroup.objects.link(parent)
             scn.objects.link(parent)
             scn.update()
@@ -426,7 +426,12 @@ class legoizerLegoize(bpy.types.Operator):
             # create new bricks
             group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, curFrame=curFrame)
             for obj in bpy.data.groups[group_name].objects:
-                obj.hide = True
+                if curFrame != cm.startFrame:
+                    obj.hide = True
+                # lock location, rotation, and scale of created bricks
+                obj.lock_location = [True, True, True]
+                obj.lock_rotation = [True, True, True]
+                obj.lock_scale    = [True, True, True]
 
             print("completed frame " + str(curFrame))
 
@@ -443,6 +448,7 @@ class legoizerLegoize(bpy.types.Operator):
         sourceOrig = self.getObjectToLegoize()
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
+        bGroup = bpy.data.groups.get(LEGOizer_bricks_gn)
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
 
         # get or create parent group
@@ -454,9 +460,11 @@ class legoizerLegoize(bpy.types.Operator):
         if not self.action == "CREATE" and not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty and (cm.materialType == "Custom" or not cm.materialIsDirty) and not (self.action == "UPDATE_MODEL" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0):
             return{"FINISHED"}
 
-        # delete old bricks if present
+        # delete old bricks if present and store
         if self.action == "UPDATE_MODEL":
             legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
+        else:
+            storeTransformData(None)
 
         if self.action == "CREATE":
             # create dupes group
@@ -522,6 +530,9 @@ class legoizerLegoize(bpy.types.Operator):
 
         # create new bricks
         self.createNewBricks(source, parent, source_details, dimensions, refLogo)
+
+        bGroup = bpy.data.groups.get(LEGOizer_bricks_gn) # redefine bGroup since it was removed
+        setTransformData(list(bGroup.objects))
 
         if source != sourceOrig:
             safeUnlink(source)
