@@ -390,7 +390,7 @@ class legoizerLegoize(bpy.types.Operator):
                                 bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
                             except:
                                 mod.show_viewport = False
-                    if mod.type in ["ARMATURE", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN"] and mod.show_viewport:
+                    if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN"] and mod.show_viewport:
                         try:
                             bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
                         except:
@@ -486,7 +486,7 @@ class legoizerLegoize(bpy.types.Operator):
                 bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
             # list modifiers that need to be applied
             for mod in sourceOrig.modifiers:
-                if mod.type in ["ARMATURE", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN"] and mod.show_viewport:
+                if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN"] and mod.show_viewport:
                     try:
                         bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
                     except:
@@ -532,7 +532,8 @@ class legoizerLegoize(bpy.types.Operator):
         self.createNewBricks(source, parent, source_details, dimensions, refLogo)
 
         bGroup = bpy.data.groups.get(LEGOizer_bricks_gn) # redefine bGroup since it was removed
-        setTransformData(list(bGroup.objects))
+        if bGroup is not None:
+            setTransformData(list(bGroup.objects))
 
         if source != sourceOrig:
             safeUnlink(source)

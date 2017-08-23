@@ -257,7 +257,6 @@ def setNF(j, orig, target, faceIdxMatrix):
 
 # TODO: Make this more efficient
 def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
-    ct = time.time()
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     brickFreqMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
@@ -267,11 +266,15 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
     bmesh.ops.triangulate(sourceBM, faces=sourceBM.faces)
 
     axes = axes.lower()
-    stopWatch("2a", time.time()-ct)
     ct = time.time()
     breakNextTime = True
+    denom = (len(coordMatrix[0][0]) + len(coordMatrix[0]) + len(coordMatrix))/100
     if "x" in axes:
         for z in range(len(coordMatrix[0][0])):
+            # print status to terminal
+            if not scn.printTimes:
+                percent0 = len(coordMatrix)/denom * (z/len(coordMatrix[0][0]))
+                update_progress("Shell", round(percent0/100.0, 2))
             for y in range(len(coordMatrix[0])):
                 for x in range(len(coordMatrix)):
                     if x != 0:
@@ -280,10 +283,17 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
                     intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z)
                     if intersections == 0:
                         break
-    stopWatch("2b", time.time()-ct)
-    ct = time.time()
+    # print status to terminal
+    if scn.printTimes:
+        stopWatch("X Axis", time.time()-ct)
+        ct = time.time()
+
     if "y" in axes:
         for z in range(len(coordMatrix[0][0])):
+            # print status to terminal
+            if not scn.printTimes:
+                percent1 = percent0 + (len(coordMatrix[0])/denom * (z/len(coordMatrix[0][0])))
+                update_progress("Shell", round(percent1/100.0, 2))
             for x in range(len(coordMatrix)):
                 for y in range(len(coordMatrix[0])):
                     if y != 0:
@@ -292,10 +302,17 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
                     intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z)
                     if intersections == 0:
                         break
-    stopWatch("2c", time.time()-ct)
-    ct = time.time()
+    # print status to terminal
+    if scn.printTimes:
+        stopWatch("Y Axis", time.time()-ct)
+        ct = time.time()
+
     if "z" in axes:
         for x in range(len(coordMatrix)):
+            # print status to terminal
+            if not scn.printTimes:
+                percent2 = percent1 + (len(coordMatrix[0][0])/denom * (x/len(coordMatrix)))
+                update_progress("Shell", round(percent2/100.0, 2))
             for y in range(len(coordMatrix[0])):
                 for z in range(len(coordMatrix[0][0])):
                     if z != 0:
@@ -304,9 +321,11 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
                     intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1)
                     if intersections == 0:
                         break
+    # print status to terminal
+    if scn.printTimes:
+        stopWatch("Z Axis", time.time()-ct)
+        ct = time.time()
 
-    stopWatch("2d", time.time()-ct)
-    ct = time.time()
     # adjust brickFreqMatrix values
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
@@ -328,11 +347,18 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
                     if brickFreqMatrix[x][y][z] == 2 and brickFreqMatrix[x+1][y][z] != 0 and brickFreqMatrix[x-1][y][z] != 0 and brickFreqMatrix[x][y+1][z] != 0 and brickFreqMatrix[x][y-1][z] != 0 and brickFreqMatrix[x][y][z+1] != 0 and brickFreqMatrix[x][y][z-1] != 0:
                         brickFreqMatrix[x][y][z] = -1
 
-    stopWatch("2e", time.time()-ct)
-    ct = time.time()
+    # print status to terminal
+    if not scn.printTimes:
+        update_progress("Shell", 1)
+
     # set up brickFreqMatrix values for bricks inside shell
     j = 1
-    for idx in range(100):
+    for idx in range(cm.shellThickness-1): # TODO: set to 100 if brickFreqMatrix should be prepared for higher thickness values
+        # print status to terminal
+        if not scn.printTimes:
+            linPercent = idx/(cm.shellThickness-1)
+            expPercent = linPercent + linPercent*(10/(linPercent*100))
+            update_progress("Internal", round(expPercent,2))
         j = round(j-0.01, 2)
         gotOne = False
         for x in range(len(coordMatrix)):
@@ -382,22 +408,43 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
         if not gotOne:
             break
 
+    # print status to terminal
+    if scn.printTimes:
+        stopWatch("Internal", time.time()-ct)
+        ct = time.time()
+    elif cm.shellThickness-1:
+        sys.stdout.write("\rCalculating thickness... DONE\r\n")
+        sys.stdout.flush()
+
     # Draw supports
     if cm.internalSupports == "Columns":
-        # print(brickFreqMatrix[len(coordMatrix)//2][len(coordMatrix[0])//2])
-        for x in range(cm.colStep + cm.colThickness, len(coordMatrix), cm.colStep + cm.colThickness):
-            for y in range(cm.colStep + cm.colThickness, len(coordMatrix[0]), cm.colStep + cm.colThickness):
+        start = cm.colStep + cm.colThickness
+        stop = len(coordMatrix)
+        step = cm.colStep + cm.colThickness
+        for x in range(start, stop, step):
+            # print status to terminal
+            if not scn.printTimes:
+                percent = (x-start)/((stop-start)/step)
+                update_progress("Columns", round(percent,2))
+            for y in range(start, len(coordMatrix[0]), step):
                 for z in range(0, len(coordMatrix[0][0])):
                     for j in range(cm.colThickness):
                         for k in range(cm.colThickness):
                             if brickFreqMatrix[x-j][y-k][z] > 0 and brickFreqMatrix[x-j][y-k][z] < 1:
                                 brickFreqMatrix[x-j][y-k][z] = 1.5
+        # print status to terminal
+        if not scn.printTimes:
+            update_progress("Columns", 1)
     elif cm.internalSupports == "Lattice":
         if cm.alternateXY:
             alt = 0
         else:
             alt = 0.5
         for z in range(0, len(coordMatrix[0][0])):
+            # print status to terminal
+            if not scn.printTimes:
+                percent = x/len(coordMatrix[0][0])
+                update_progress("Lattice", round(percent,2))
             alt += 1
             for x in range(0, len(coordMatrix)):
                 for y in range(0, len(coordMatrix[0])):
@@ -406,6 +453,9 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
                             continue
                     if brickFreqMatrix[x][y][z] > 0 and brickFreqMatrix[x][y][z] < 1:
                         brickFreqMatrix[x][y][z] = 1.5
+        # print status to terminal
+        if not scn.printTimes:
+            update_progress("Lattice", 1)
 
     # bm = bmesh.new()
     # for x in range(len(coordMatrix)):
@@ -414,8 +464,12 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
     #             if brickFreqMatrix[x][y][z] > 1:
     #                 bm.verts.new(coordMatrix[x][y][z])
     # drawBMesh(bm)
-    stopWatch("2f", time.time()-ct)
-    ct = time.time()
+
+    # print status to terminal
+    if scn.printTimes:
+        stopWatch("Supports", time.time()-ct)
+        ct = time.time()
+
     return brickFreqMatrix
 
 def getCOList(brickFreqMatrix, coordMatrix, threshold):
@@ -439,7 +493,7 @@ def makeBricksDict(source, source_details, dimensions, R):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     # get lattice bmesh
-    print("generating blueprint...")
+    print("\ngenerating blueprint...")
     lScale = (source_details.x.distance, source_details.y.distance, source_details.z.distance)
     offset = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
     if source.parent is not None:
@@ -505,7 +559,7 @@ def makeBricksDict(source, source_details, dimensions, R):
                         "connected":False}
 
 
-    stopWatch("Time Elapsed (generating blueprint)", time.time()-ct)
+    stopWatch("Time Elapsed", time.time()-ct)
 
     # return list of created Brick objects
     return brickDict

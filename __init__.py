@@ -44,6 +44,8 @@ addon_keymaps = []
 def register():
     bpy.utils.register_module(__name__)
 
+    bpy.types.Scene.printTimes = BoolProperty(default=False)
+
     # handle the keymap
     wm = bpy.context.window_manager
     km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')

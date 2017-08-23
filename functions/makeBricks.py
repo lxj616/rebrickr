@@ -22,12 +22,13 @@ Created by Christopher Gearhart
 # system imports
 import bpy
 import time
+import sys
 import bmesh
 import random
 import time
 from mathutils import Vector, Matrix
 from ..classes.Brick import Bricks
-from ..functions.common_functions import stopWatch, groupExists, select
+from ..functions.common_functions import stopWatch, groupExists, select, update_progress
 from .__init__ import bounds
 
 def brickAvail(sourceBrick, brick):
@@ -92,7 +93,6 @@ def randomizeRot(center, brickType, bm):
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(y, 3, 'Y'))
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(z, 3, 'Z'))
 
-
 def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customData=None, customObj_details=None, group_name=None, frameNum=None):
     # set up variables
     scn = bpy.context.scene
@@ -129,16 +129,20 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     if not split:
         allBrickMeshes = []
 
-    denom = len(keys)/20
-    supportBrickDs = []
+    # initialize progress bar around cursor
+    denom = len(keys)/50
+    wm = bpy.context.window_manager
+    wm.progress_begin(0, 100)
+
     # set up internal material for this object
     internalMat = bpy.data.materials.get(cm.internalMatName)
     if internalMat is None:
         internalMat = bpy.data.materials.get("LEGOizer_%(n)s_internal" % locals())
         if internalMat is None:
             internalMat = bpy.data.materials.new("LEGOizer_%(n)s_internal" % locals())
-    # initialize mats with first material being the internal material
+    # initialize supportBrickDs, and mats with first material being the internal material
     mats = [internalMat]
+    supportBrickDs = []
     for i,key in enumerate(keys):
         brickD = bricksD[key]
         if brickD["name"] != "DNE" and not brickD["connected"]:
@@ -597,15 +601,15 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 allBrickMeshes.append(tempMesh)
 
         # print status to terminal
-        if i % denom < 1:
-            if i == len(keys):
-                print("building... 100%")
-            else:
-                percent = i*100//len(keys)+5
-                if percent > 100:
-                    percent = 100
-                print("building... " + str(percent) + "%")
-
+        if i == len(keys)-1:
+            update_progress("Building", 1)
+        elif i % denom < 1:
+            percent = i*100//len(keys)+5
+            if percent < 100:
+                wm.progress_update(percent)
+                update_progress("Building", percent/100.0)
+    # end progress bar around cursor
+    wm.progress_end()
     if split:
         for key in bricksD:
             if bricksD[key]["name"] != "DNE":
@@ -649,4 +653,4 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 allBricksObj.data.materials.append(mat)
         scn.objects.link(allBricksObj)
 
-    stopWatch("Time Elapsed (building)", time.time()-ct)
+    stopWatch("Time Elapsed", time.time()-ct)
