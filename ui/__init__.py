@@ -330,6 +330,8 @@ class ModelSettingsPanel(Panel):
         if not cm.useAnimation:
             row = col.row(align=True)
             row.prop(cm, "splitModel")
+            row = col.row(align=True)
+            row.prop(cm, "useGlobalGrid")
 
         row = col.row(align=True)
         row.label("Randomize:")

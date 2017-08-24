@@ -460,13 +460,18 @@ class legoizerLegoize(bpy.types.Operator):
         if not self.action == "CREATE" and not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty and (cm.materialType == "Custom" or not cm.materialIsDirty) and not (self.action == "UPDATE_MODEL" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0):
             return{"FINISHED"}
 
-        # delete old bricks if present and store
+        # delete old bricks if present
         if self.action == "UPDATE_MODEL":
-            legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
+            if cm.lastUseGlobalGrid != cm.useGlobalGrid:
+                # if cm.useGlobalGrid has changed, delete source as well
+                legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=False)
+            else:
+                # else, skip source
+                legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
         else:
             storeTransformData(None)
 
-        if self.action == "CREATE":
+        if self.action == "CREATE" or cm.lastUseGlobalGrid != cm.useGlobalGrid:
             # create dupes group
             LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
             dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
@@ -492,10 +497,14 @@ class legoizerLegoize(bpy.types.Operator):
                     except:
                         mod.show_viewport = False
             # apply transformation data
-            source["previous_location"] = source.location.to_tuple()
-            source.location = (0,0,0)
+            if cm.useGlobalGrid:
+                applyLoc = True
+            else:
+                source["previous_location"] = source.location.to_tuple()
+                source.location = (0,0,0)
+                applyLoc = False
             select(source, active=source)
-            bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+            bpy.ops.object.transform_apply(location=applyLoc, rotation=True, scale=True)
             scn.update()
         else:
             source = bpy.data.objects.get(sourceOrig.name + "_duplicate")
@@ -517,10 +526,17 @@ class legoizerLegoize(bpy.types.Operator):
 
         # get parent object
         parent = bpy.data.objects.get(LEGOizer_parent_on)
-        if parent is None:
-            parentLoc = (source_details.x.mid + source["previous_location"][0], source_details.y.mid + source["previous_location"][1], source_details.z.mid + source["previous_location"][2])
-            parent = self.getParent(LEGOizer_parent_on, parentLoc)
-            pGroup.objects.link(parent)
+        # if parent doesn't exist, or parent exists but useGlobalGrid has changed, get parent with new location
+        if parent is None or (parent is not None and cm.lastUseGlobalGrid != cm.useGlobalGrid):
+            if cm.useGlobalGrid:
+                parentLoc = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
+            else:
+                parentLoc = (source_details.x.mid + source["previous_location"][0], source_details.y.mid + source["previous_location"][1], source_details.z.mid + source["previous_location"][2])
+            if parent is None:
+                parent = self.getParent(LEGOizer_parent_on, parentLoc)
+                pGroup.objects.link(parent)
+            else:
+                parent.location = parentLoc
 
         # update refLogo
         if cm.brickType != "Custom":
@@ -573,6 +589,7 @@ class legoizerLegoize(bpy.types.Operator):
         cm.lastLogoResolution = cm.logoResolution
         cm.lastLogoDetail = cm.logoDetail
         cm.lastSplitModel = cm.splitModel
+        cm.lastUseGlobalGrid = cm.useGlobalGrid
         cm.materialIsDirty = False
         cm.modelIsDirty = False
         cm.buildIsDirty = False

@@ -621,6 +621,12 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyModel,
         default=False)
 
+    useGlobalGrid = BoolProperty(
+        name="Use Global Grid",
+        description="Use global grid so bricks from different models automatically align",
+        update=dirtyBuild,
+        default=False)
+
     internalSupports = EnumProperty(
         name="Internal Supports",
         description="Choose what type of bricks to use to build the model",
@@ -699,6 +705,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     lastLogoDetail = StringProperty(default="None")
     lastLogoResolution = FloatProperty(default=0)
     lastSplitModel = BoolProperty(default=False)
+    lastUseGlobalGrid = BoolProperty(default=False)
     lastStartFrame = IntProperty(default=-1)
     lastStopFrame = IntProperty(default=-1)
 

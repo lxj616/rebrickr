@@ -364,7 +364,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
 
     # set up brickFreqMatrix values for bricks inside shell
     j = 1
-    denom = min([(cm.shellThickness-2), max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)])/2
+    denom = min([(cm.shellThickness-1), max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)])/2
     for idx in range(cm.shellThickness-1): # TODO: set to 100 if brickFreqMatrix should be prepared for higher thickness values
         # print status to terminal
         if not scn.printTimes:
