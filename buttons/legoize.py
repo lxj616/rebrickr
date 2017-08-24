@@ -550,6 +550,8 @@ class legoizerLegoize(bpy.types.Operator):
         bGroup = bpy.data.groups.get(LEGOizer_bricks_gn) # redefine bGroup since it was removed
         if bGroup is not None:
             setTransformData(list(bGroup.objects))
+            if not cm.splitModel:
+                select(bGroup.objects[0], active=bGroup.objects[0])
 
         if source != sourceOrig:
             safeUnlink(source)
