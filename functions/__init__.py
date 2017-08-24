@@ -265,16 +265,22 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
     sourceBM.from_mesh(source.data)
     bmesh.ops.triangulate(sourceBM, faces=sourceBM.faces)
 
+    # initialize values used for printing status
+    denom = (len(coordMatrix[0][0]) + len(coordMatrix[0]) + len(coordMatrix))/100
+    wm = bpy.context.window_manager
+    wm.progress_begin(0, 100)
+
     axes = axes.lower()
     ct = time.time()
     breakNextTime = True
-    denom = (len(coordMatrix[0][0]) + len(coordMatrix[0]) + len(coordMatrix))/100
     if "x" in axes:
         for z in range(len(coordMatrix[0][0])):
             # print status to terminal
             if not scn.printTimes:
-                percent0 = len(coordMatrix)/denom * (z/len(coordMatrix[0][0]))
-                update_progress("Shell", round(percent0/100.0, 2))
+                percent0 = len(coordMatrix)/denom * (z/(len(coordMatrix[0][0])-1))
+                if percent0 < 100:
+                    update_progress("Shell", percent0/100.0)
+                    wm.progress_update(percent0)
             for y in range(len(coordMatrix[0])):
                 for x in range(len(coordMatrix)):
                     if x != 0:
@@ -292,8 +298,10 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
         for z in range(len(coordMatrix[0][0])):
             # print status to terminal
             if not scn.printTimes:
-                percent1 = percent0 + (len(coordMatrix[0])/denom * (z/len(coordMatrix[0][0])))
-                update_progress("Shell", round(percent1/100.0, 2))
+                percent1 = percent0 + (len(coordMatrix[0])/denom * (z/(len(coordMatrix[0][0])-1)))
+                if percent1 < 100:
+                    update_progress("Shell", percent1/100.0)
+                    wm.progress_update(percent1)
             for x in range(len(coordMatrix)):
                 for y in range(len(coordMatrix[0])):
                     if y != 0:
@@ -311,8 +319,10 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
         for x in range(len(coordMatrix)):
             # print status to terminal
             if not scn.printTimes:
-                percent2 = percent1 + (len(coordMatrix[0][0])/denom * (x/len(coordMatrix)))
-                update_progress("Shell", round(percent2/100.0, 2))
+                percent2 = percent1 + (len(coordMatrix[0][0])/denom * (x/(len(coordMatrix)-1)))
+                if percent2 < 100:
+                    update_progress("Shell", percent2/100.0)
+                    wm.progress_update(percent2)
             for y in range(len(coordMatrix[0])):
                 for z in range(len(coordMatrix[0][0])):
                     if z != 0:
@@ -350,15 +360,22 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
     # print status to terminal
     if not scn.printTimes:
         update_progress("Shell", 1)
+        wm.progress_end()
 
     # set up brickFreqMatrix values for bricks inside shell
     j = 1
+    denom = min([(cm.shellThickness-2), max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)])/2
     for idx in range(cm.shellThickness-1): # TODO: set to 100 if brickFreqMatrix should be prepared for higher thickness values
         # print status to terminal
         if not scn.printTimes:
-            linPercent = idx/(cm.shellThickness-1)
-            expPercent = linPercent + linPercent*(10/(linPercent*100))
-            update_progress("Internal", round(expPercent,2))
+            linPercent = idx/denom
+            update_progress("Internal", linPercent)
+            # if linPercent == 0:
+            #     update_progress("Internal", 0.0)
+            # else:
+            #     expPercent = linPercent + linPercent*(10/(linPercent*100))
+            #     if expPercent < 100:
+            #         update_progress("Internal", expPercent)
         j = round(j-0.01, 2)
         gotOne = False
         for x in range(len(coordMatrix)):
@@ -413,8 +430,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
         stopWatch("Internal", time.time()-ct)
         ct = time.time()
     elif cm.shellThickness-1:
-        sys.stdout.write("\rCalculating thickness... DONE\r\n")
-        sys.stdout.flush()
+        update_progress("Internal", 1)
 
     # Draw supports
     if cm.internalSupports == "Columns":
@@ -422,29 +438,30 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
         stop = len(coordMatrix)
         step = cm.colStep + cm.colThickness
         for x in range(start, stop, step):
-            # print status to terminal
-            if not scn.printTimes:
-                percent = (x-start)/((stop-start)/step)
-                update_progress("Columns", round(percent,2))
+            # # print status to terminal
+            # if not scn.printTimes:
+            #     percent = (x-start)/((stop-start)-1)
+            #     update_progress("Columns", percent/100.0)
             for y in range(start, len(coordMatrix[0]), step):
                 for z in range(0, len(coordMatrix[0][0])):
                     for j in range(cm.colThickness):
                         for k in range(cm.colThickness):
                             if brickFreqMatrix[x-j][y-k][z] > 0 and brickFreqMatrix[x-j][y-k][z] < 1:
                                 brickFreqMatrix[x-j][y-k][z] = 1.5
-        # print status to terminal
-        if not scn.printTimes:
-            update_progress("Columns", 1)
+        # # print status to terminal
+        # if not scn.printTimes:
+        #     update_progress("Columns", 1)
     elif cm.internalSupports == "Lattice":
         if cm.alternateXY:
             alt = 0
         else:
             alt = 0.5
         for z in range(0, len(coordMatrix[0][0])):
-            # print status to terminal
-            if not scn.printTimes:
-                percent = x/len(coordMatrix[0][0])
-                update_progress("Lattice", round(percent,2))
+            # # print status to terminal
+            # if not scn.printTimes:
+            #     percent = z/(len(coordMatrix[0][0])-1)
+            #     if percent < 1:
+            #         update_progress("Lattice", percent)
             alt += 1
             for x in range(0, len(coordMatrix)):
                 for y in range(0, len(coordMatrix[0])):
@@ -453,9 +470,9 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
                             continue
                     if brickFreqMatrix[x][y][z] > 0 and brickFreqMatrix[x][y][z] < 1:
                         brickFreqMatrix[x][y][z] = 1.5
-        # print status to terminal
-        if not scn.printTimes:
-            update_progress("Lattice", 1)
+        # # print status to terminal
+        # if not scn.printTimes:
+        #     update_progress("Lattice", 1)
 
     # bm = bmesh.new()
     # for x in range(len(coordMatrix)):

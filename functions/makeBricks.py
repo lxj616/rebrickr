@@ -21,11 +21,11 @@ Created by Christopher Gearhart
 
 # system imports
 import bpy
+import bmesh
+import math
 import time
 import sys
-import bmesh
 import random
-import time
 from mathutils import Vector, Matrix
 from ..classes.Brick import Bricks
 from ..functions.common_functions import stopWatch, groupExists, select, update_progress
@@ -130,7 +130,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         allBrickMeshes = []
 
     # initialize progress bar around cursor
-    denom = len(keys)/50
+    denom = len(keys)/1000
     wm = bpy.context.window_manager
     wm.progress_begin(0, 100)
 
@@ -143,6 +143,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     # initialize supportBrickDs, and mats with first material being the internal material
     mats = [internalMat]
     supportBrickDs = []
+    update_progress("Building", 0.0)
     for i,key in enumerate(keys):
         brickD = bricksD[key]
         if brickD["name"] != "DNE" and not brickD["connected"]:
@@ -599,19 +600,22 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     for p in tempMesh.polygons:
                         p.material_index = 0
                 allBrickMeshes.append(tempMesh)
-
         # print status to terminal
-        if i == len(keys)-1:
-            update_progress("Building", 1)
-        elif i % denom < 1:
-            percent = i*100//len(keys)+5
-            if percent < 100:
-                wm.progress_update(percent)
-                update_progress("Building", percent/100.0)
+        if i % denom < 1:
+            percent = i/len(keys)
+            if percent < 1:
+                update_progress("Building", percent)
+                wm.progress_update(percent*100)
+
     # end progress bar around cursor
+    update_progress("Building", 1)
     wm.progress_end()
     if split:
-        for key in bricksD:
+        for i,key in enumerate(bricksD):
+            # print status to terminal
+            percent = i/len(bricksD)
+            if percent < 1:
+                update_progress("Linking to Scene", percent)
             if bricksD[key]["name"] != "DNE":
                 name = bricksD[key]["name"]
                 brick = bpy.data.objects[name]
@@ -638,9 +642,13 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         allBricksObj = bpy.data.objects.new(name, m)
         # create vert group for bevel mod (assuming only logo verts are selected):
         vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())
-        for v in allBricksObj.data.vertices:
+        for i,v in enumerate(allBricksObj.data.vertices):
             if not v.select:
                 vg.add([v.index], 1, "ADD")
+            # print status to terminal
+            percent = i/len(bricksD)
+            if percent < 1:
+                update_progress("Linking to Scene", percent)
         addEdgeSplitMod(allBricksObj)
         bGroup.objects.link(allBricksObj)
         allBricksObj.parent = parent
@@ -652,5 +660,6 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             for mat in mats:
                 allBricksObj.data.materials.append(mat)
         scn.objects.link(allBricksObj)
+    update_progress("Linking to Scene", 1)
 
     stopWatch("Time Elapsed", time.time()-ct)
