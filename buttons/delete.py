@@ -109,6 +109,11 @@ class legoizerDelete(bpy.types.Operator):
                     bpy.data.objects.remove(parent, True)
                     bpy.data.meshes.remove(m, True)
 
+        # initialize variables for cursor status updates
+        wm = bpy.context.window_manager
+        wm.progress_begin(0, 100)
+        print()
+
         if modelType == "MODEL":
             # clean up LEGOizer_bricks group
             cm.modelCreated = False
@@ -118,7 +123,11 @@ class legoizerDelete(bpy.types.Operator):
                 if not cm.lastSplitModel:
                     storeTransformData(bgObjects[0])
                 # remove objects
-                for obj in bgObjects:
+                for i,obj in enumerate(bgObjects):
+                    percent = i/len(bgObjects)
+                    if percent < 1:
+                        update_progress("Deleting", percent)
+                        wm.progress_update(percent*100)
                     m = obj.data
                     bpy.data.objects.remove(obj, True)
                     bpy.data.meshes.remove(m, True)
@@ -128,6 +137,10 @@ class legoizerDelete(bpy.types.Operator):
             # clean up LEGOizer_bricks group
             cm.animated = False
             for i in range(cm.lastStartFrame, cm.lastStopFrame + 1):
+                percent = (i-cm.lastStartFrame)/(cm.lastStopFrame - cm.lastStartFrame - 1)
+                if percent < 1:
+                    update_progress("Deleting", percent)
+                    wm.progress_update(percent*100)
                 LEGOizer_bricks_cur_frame_gn = LEGOizer_bricks_gn + "_frame_" + str(i)
                 if groupExists(LEGOizer_bricks_cur_frame_gn):
                     brickGroup = bpy.data.groups[LEGOizer_bricks_cur_frame_gn]
@@ -136,6 +149,8 @@ class legoizerDelete(bpy.types.Operator):
                         delete(bgObjects)
                     bpy.data.groups.remove(brickGroup, do_unlink=True)
             redraw_areas("VIEW_3D")
+        update_progress("Deleting", 1)
+        wm.progress_end()
 
         # # clean up 'LEGOizer_refBrick' group
         # if groupExists(LEGOizer_refBricks_gn) and not skipRefBrick:
