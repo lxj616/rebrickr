@@ -52,6 +52,8 @@ class legoizerLegoize(bpy.types.Operator):
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
         cm = scn.cmlist[scn.cmlist_index]
         if ((cm.animated and (not updateCanRun("ANIMATION") and not cm.animIsDirty))
            or (cm.modelCreated and not updateCanRun("MODEL"))):
@@ -116,7 +118,10 @@ class legoizerLegoize(bpy.types.Operator):
 
     def getObjectToLegoize(self):
         scn = bpy.context.scene
-        if self.action in ["CREATE","ANIMATE"]:
+        if self.action == "UPDATE_MODEL":
+            cm = scn.cmlist[scn.cmlist_index]
+            objToLegoize = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+        elif self.action in ["CREATE","ANIMATE"]:
             if bpy.data.objects.find(scn.cmlist[scn.cmlist_index].source_name) == -1:
                 objToLegoize = bpy.context.active_object
             else:
@@ -597,6 +602,9 @@ class legoizerLegoize(bpy.types.Operator):
         else:
             self.legoizeAnimation()
             cm.animIsDirty = False
+
+        if self.action == "CREATE" or cm.sourceIsDirty:
+            source.name = cm.source_name + " (DO NOT RENAME)"
 
         # # set final variables
         cm.lastLogoResolution = cm.logoResolution

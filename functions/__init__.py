@@ -51,21 +51,24 @@ def listModalRunning():
     return False
 
 def getSafeScn():
-    safeScn = bpy.data.scenes.get("LEGOizer_storage")
+    safeScn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
     if safeScn == None:
-        safeScn = bpy.data.scenes.new("LEGOizer_storage")
+        safeScn = bpy.data.scenes.new("LEGOizer_storage (DO NOT RENAME)")
     return safeScn
-def safeUnlink(obj, hide=True):
+def safeUnlink(obj, hide=True, protected=True):
     scn = bpy.context.scene
     safeScn = getSafeScn()
     scn.objects.unlink(obj)
     safeScn.objects.link(obj)
+    if protected:
+        obj.protected = True
     if hide:
         obj.hide = True
 def safeLink(obj):
     scn = bpy.context.scene
     safeScn = getSafeScn()
     scn.objects.link(obj)
+    obj.protected = False
     try:
         safeScn.objects.unlink(obj)
     except:

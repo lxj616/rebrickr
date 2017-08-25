@@ -57,7 +57,7 @@ class legoizerDelete(bpy.types.Operator):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        source = bpy.data.objects[cm.source_name]
+        source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
         LEGOizer_refBricks_gn = "LEGOizer_%(n)s_refBricks" % locals()
@@ -88,6 +88,7 @@ class legoizerDelete(bpy.types.Operator):
             if source["ignored_mods"] is not None:
                 for mn in source["ignored_mods"]:
                     source.modifiers[mn].show_viewport = True
+            source.name = n
 
         # clean up 'LEGOizer_[source name]_dupes' group
         if groupExists(LEGOizer_source_dupes_gn) and not skipDupes:
@@ -165,9 +166,11 @@ class legoizerDelete(bpy.types.Operator):
     def execute(self, context):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
 
-        # # get start time
-        # startTime = time.time()
+        lastLayers = list(scn.layers)
+        source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
+        scn.layers = source.layers
 
         source = self.cleanUp(self.modelType)
 
@@ -182,11 +185,9 @@ class legoizerDelete(bpy.types.Operator):
             source.rotation_euler = Vector(source.rotation_euler) + Vector(r)
             source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
 
-        # select source and update scene
+        # select source, update scene, and return open layers to original
         select(source, active=source)
         context.scene.update()
-
-        # # STOPWATCH CHECK
-        # stopWatch("Time Elapsed (DELETE)", time.time()-startTime)
+        scn.layers = lastLayers
 
         return{"FINISHED"}

@@ -41,6 +41,35 @@ props = bpy.props
 # store keymaps here to access after registration
 addon_keymaps = []
 
+bpy.types.Object.protected = props.BoolProperty(name = 'protected', default = False)
+def deleteUnprotected(context):
+    protected = []
+    for obj in context.selected_objects:
+        if not obj.protected :
+            bpy.context.scene.objects.unlink(obj)
+            bpy.data.objects.remove(obj)
+        else :
+            print(obj.name +' is protected')
+            protected.append(obj.name)
+
+    return protected
+
+class delete_override(bpy.types.Operator):
+    """delete unprotected objects"""
+    bl_idname = "object.delete"
+    bl_label = "Object Delete Operator"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None
+
+    def execute(self, context):
+        protected = deleteUnprotected(context)
+        if len(protected) > 0:
+            self.report({"WARNING"})
+        return {'FINISHED'}
+
+
 def register():
     bpy.utils.register_module(__name__)
 

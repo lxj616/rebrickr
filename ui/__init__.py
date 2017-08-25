@@ -38,6 +38,13 @@ class LegoModelsPanel(Panel):
     bl_category    = "LEGOizer"
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if scn.name == "LEGOizer_storage (DO NOT RENAME)":
+            return False
+        return True
+
     def draw(self, context):
         layout = self.layout
         scn = context.scene
