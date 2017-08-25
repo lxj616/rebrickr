@@ -51,6 +51,7 @@ def register():
     km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
     kmi = km.keymap_items.new("scene.legoizer_legoize", 'L', 'PRESS', alt=True, shift=True)
     kmi = km.keymap_items.new("scene.legoizer_delete", 'L', 'PRESS', alt=True, shift=True)#, ctrl=True)
+    kmi = km.keymap_items.new("scene.legoizer_edit_source", 'TAB', 'PRESS', alt=True)#, ctrl=True)
     addon_keymaps.append(km)
 
     # other things (UI List)

@@ -174,7 +174,7 @@ def unhide(objList):
     for obj in objList:
         obj.hide = False
 
-def select(objList=[], active=None, deselect=False, only=True):
+def select(objList=[], active=None, deselect=False, only=True, scene=None):
     """ selects objs in list and deselects the rest """
     objList = confirmList(objList)
     try:
@@ -193,7 +193,9 @@ def select(objList=[], active=None, deselect=False, only=True):
         # set active object
         if active:
             try:
-                bpy.context.scene.objects.active = active
+                if scene is None:
+                    scene = bpy.context.scene
+                scene.objects.active = active
             except:
                 print("argument passed to 'active' parameter not valid (" + str(active) + ")")
     except:

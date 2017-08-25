@@ -31,6 +31,17 @@ from .delete import legoizerDelete
 from mathutils import Matrix, Vector, Euler
 props = bpy.props
 
+def updateCanRun(type):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    if type == "ANIMATION":
+        return cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType == "Custom" and cm.materialIsDirty)
+    elif type == "MODEL":
+        # set up variables
+        n = cm.source_name
+        LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
+        return cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType == "Custom" and cm.materialIsDirty) or (groupExists(LEGOizer_bricks_gn) and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)
+
 class legoizerLegoize(bpy.types.Operator):
     """Select objects layer by layer and shift by given values"""               # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "scene.legoizer_legoize"                                        # unique identifier for buttons and menu items to reference.
@@ -40,19 +51,19 @@ class legoizerLegoize(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
-        # scn = context.scene
-        # cm = scn.cmlist[scn.cmlist_index]
-        # objIndex = bpy.data.objects.find(cm.source_name)
-        # if objIndex == -1:
-        #     return False
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        if ((cm.animated and (not updateCanRun("ANIMATION") and not cm.animIsDirty))
+           or (cm.modelCreated and not updateCanRun("MODEL"))):
+            return False
         return True
 
     action = bpy.props.EnumProperty(
         items=(
             ("CREATE", "Create", ""),
             ("UPDATE_MODEL", "Update Model", ""),
-            ("UPDATE_ANIM", "Update Animation", ""),
             ("ANIMATE", "Animate", ""),
+            ("UPDATE_ANIM", "Update Animation", ""),
             ("RUN_MODAL", "Run Modal Operator", "")
         )
     )
@@ -322,7 +333,7 @@ class legoizerLegoize(bpy.types.Operator):
 
         # if there are no changes to apply, simply return "FINISHED"
         self.updatedFramesOnly = False
-        if not self.action == "ANIMATE" and not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty and (cm.materialType == "Custom" or not cm.materialIsDirty):
+        if self.action == "UPDATE_ANIM" and not updateCanRun("ANIMATION"):
             if cm.animIsDirty:
                 self.updatedFramesOnly = True
             else:
@@ -457,21 +468,21 @@ class legoizerLegoize(bpy.types.Operator):
             pGroup = bpy.data.groups.new(LEGOizer_parent_on)
 
         # if there are no changes to apply, simply return "FINISHED"
-        if not self.action == "CREATE" and not cm.modelIsDirty and not cm.buildIsDirty and not cm.bricksAreDirty and (cm.materialType == "Custom" or not cm.materialIsDirty) and not (self.action == "UPDATE_MODEL" and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0):
+        if self.action == "UPDATE_MODEL" and not updateCanRun("MODEL"):
             return{"FINISHED"}
 
         # delete old bricks if present
         if self.action == "UPDATE_MODEL":
-            if cm.lastUseGlobalGrid != cm.useGlobalGrid:
-                # if cm.useGlobalGrid has changed, delete source as well
-                legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=False)
+            if cm.sourceIsDirty:
+                # if source is dirty, delete source as well
+                legoizerDelete.cleanUp("MODEL")
             else:
                 # else, skip source
                 legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
         else:
             storeTransformData(None)
 
-        if self.action == "CREATE" or cm.lastUseGlobalGrid != cm.useGlobalGrid:
+        if self.action == "CREATE" or cm.sourceIsDirty:
             # create dupes group
             LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
             dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
@@ -595,11 +606,12 @@ class legoizerLegoize(bpy.types.Operator):
         cm.materialIsDirty = False
         cm.modelIsDirty = False
         cm.buildIsDirty = False
+        cm.sourceIsDirty = False
         cm.bricksAreDirty = False
 
         # unlink source from scene and link to safe scene
         if source.name in scn.objects.keys():
-            safeUnlink(source)
+            safeUnlink(source, hide=False)
 
         disableRelationshipLines()
 

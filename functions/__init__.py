@@ -55,11 +55,13 @@ def getSafeScn():
     if safeScn == None:
         safeScn = bpy.data.scenes.new("LEGOizer_storage")
     return safeScn
-def safeUnlink(obj):
+def safeUnlink(obj, hide=True):
     scn = bpy.context.scene
     safeScn = getSafeScn()
     scn.objects.unlink(obj)
     safeScn.objects.link(obj)
+    if hide:
+        obj.hide = True
 def safeLink(obj):
     scn = bpy.context.scene
     safeScn = getSafeScn()

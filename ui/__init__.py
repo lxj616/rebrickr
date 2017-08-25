@@ -122,7 +122,7 @@ class LegoModelsPanel(Panel):
                     col = split.column(align=True)
                     col.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH").action = "UPDATE_MODEL"
                     col = split.column(align=True)
-                    col.operator("cmlist.select_bricks", icon="BORDER_RECT", text="")
+                    col.operator("scene.legoizer_edit_source", icon="EDIT", text="")
 
             # sub = row.row(align=True)
             # sub.scale_x = 0.1

@@ -437,6 +437,11 @@ def dirtyBuild(self, context):
     cm = scn.cmlist[scn.cmlist_index]
     cm.buildIsDirty = True
 
+def dirtySource(self, context):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    cm.sourceIsDirty = True
+
 def dirtyBricks(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -624,7 +629,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     useGlobalGrid = BoolProperty(
         name="Use Global Grid",
         description="Use global grid so bricks from different models automatically align",
-        update=dirtyBuild,
+        update=dirtySource,
         default=False)
 
     internalSupports = EnumProperty(
@@ -783,6 +788,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     materialIsDirty = BoolProperty(default=True)
     modelIsDirty = BoolProperty(default=True)
     buildIsDirty = BoolProperty(default=True)
+    sourceIsDirty = BoolProperty(default=True)
     bricksAreDirty = BoolProperty(default=True)
 
 # -------------------------------------------------------------------
