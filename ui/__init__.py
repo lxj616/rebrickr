@@ -29,6 +29,51 @@ from ..functions import *
 from addon_utils import check, paths, enable
 props = bpy.props
 
+class LEGOizerStoragePanel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "LEGOizer Actions"
+    bl_idname      = "VIEW3D_PT_tools_LEGOizer_storage_actions"
+    # bl_context     = "objectmode"
+    bl_category    = "LEGOizer"
+    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
+
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if scn.name == "LEGOizer_storage (DO NOT RENAME)":
+            return True
+        return False
+
+    def draw(self, context):
+        layout = self.layout
+        scn = context.scene
+
+        col = layout.column(align=True)
+        col.scale_y = 0.7
+        try:
+            editingSourceInStorage = bpy.context.window_manager["editingSourceInStorage"]
+        except:
+            editingSourceInStorage = False
+        if editingSourceInStorage:
+            row = col.row(align=True)
+            row.label("Press 'ALT-TAB' to")
+            row = col.row(align=True)
+            row.label("commit changes")
+        else:
+            row = col.row(align=True)
+            row.label("WARNING: Please")
+            row = col.row(align=True)
+            row.label("don't touch anything")
+            row = col.row(align=True)
+            row.label("in this scene!")
+            row = col.row(align=True)
+            row.label("You may break the")
+            row = col.row(align=True)
+            row.label("LEGOizer or cause")
+            row = col.row(align=True)
+            row.label("Blender to crash.")
+
 class LegoModelsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"

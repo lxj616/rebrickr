@@ -80,18 +80,56 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
     #             return False
     #     return True
 
+    def isObjVisible(self, cm):
+        scn = bpy.context.scene
+        n = cm.source_name
+        objVisible = False
+        if cm.modelCreated or cm.animated:
+            gn = "LEGOizer_%(n)s_bricks" % locals()
+            if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
+                obj = bpy.data.groups[gn].objects[0]
+            else:
+                obj = None
+        else:
+            obj = bpy.data.objects.get(cm.source_name)
+        if obj is not None:
+            objVisible = False
+            for i in range(20):
+                if obj.layers[i] and scn.layers[i]:
+                    objVisible = True
+        return objVisible, obj
+
     def modal(self, context, event):
         scn = bpy.context.scene
-        if self.last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
+        # if scn.layers changes and active object is no longer visible, set scn.cmlist_index to -1
+        if self.last_layers != list(scn.layers):
+            self.last_layers = list(scn.layers)
+            curObjVisible = False
+            if scn.cmlist_index != -1:
+                cm0 = scn.cmlist[scn.cmlist_index]
+                curObjVisible,_ = self.isObjVisible(cm0)
+            if not curObjVisible or scn.cmlist_index == -1:
+                setIndex = False
+                for i,cm in enumerate(scn.cmlist):
+                    if i != scn.cmlist_index:
+                        nextObjVisible,obj = self.isObjVisible(cm)
+                        if nextObjVisible and bpy.context.active_object == obj:
+                            scn.cmlist_index = i
+                            setIndex = True
+                            break
+                if not setIndex:
+                    scn.cmlist_index = -1
+                redraw_areas("VIEW_3D")
+        # select and make source or LEGO model active if scn.cmlist_index changes
+        elif self.last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
             self.last_cmlist_index = scn.cmlist_index
             cm = scn.cmlist[scn.cmlist_index]
-            objIdx = bpy.data.objects.find(cm.source_name)
-            if objIdx != -1:
-                obj = bpy.data.objects[objIdx]
+            obj = bpy.data.objects.get(cm.source_name)
+            if obj is not None:
                 if cm.modelCreated:
                     n = cm.source_name
                     gn = "LEGOizer_%(n)s_bricks" % locals()
-                    if len(bpy.data.groups[gn].objects) > 0:
+                    if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
                         select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
                 elif cm.animated:
                     n = cm.source_name
@@ -112,7 +150,8 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                     if cm.source_name == self.active_object_name:
                         select(None)
                         break
-        elif scn.objects.active and self.last_active_object_name != scn.objects.active.name and scn.objects.active.type == "MESH":
+        # open LEGO model settings for active object if active object changes
+        elif scn.objects.active and self.last_active_object_name != scn.objects.active.name and ( scn.cmlist_index == -1 or scn.cmlist[scn.cmlist_index].source_name != "") and scn.objects.active.type == "MESH":
             self.last_active_object_name = scn.objects.active.name
             if scn.objects.active.name.startswith("LEGOizer_"):
                 if "_bricks" in scn.objects.active.name:
@@ -139,7 +178,6 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             cm = scn.cmlist[scn.cmlist_index]
             obj = bpy.data.objects.get(cm.source_name)
             if obj is not None and (len(obj.data.vertices) != cm.objVerts or len(obj.data.polygons) != cm.objPolys or len(obj.data.edges) != cm.objEdges):
-                print("running_test")
                 cm.objVerts = len(obj.data.vertices)
                 cm.objPolys = len(obj.data.polygons)
                 cm.objEdges = len(obj.data.edges)
@@ -155,6 +193,7 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
         self.active_object_name = -1
         self.last_active_object_name = -1
         self.last_cmlist_index = scn.cmlist_index
+        self.last_layers = list(scn.layers)
 
         try:
             item = scn.cmlist[idx]
@@ -175,7 +214,16 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
 
         if self.action == 'ADD':
             active_object = scn.objects.active
-            # if active object already has a model, don't set it as default source for new model
+            # if active object isn't on visible layer, don't set it as default source for new model
+            if active_object != None:
+                objVisible = False
+                for i in range(20):
+                    if active_object.layers[i] and scn.layers[i]:
+                        objVisible = True
+                if not objVisible:
+                    active_object = None
+            # if active object already has a model or isn't on visible layer, don't set it as default source for new model
+            # NOTE: active object may have been removed, so we need to re-check if none
             if active_object != None:
                 for cm in scn.cmlist:
                     if cm.source_name == active_object.name:
@@ -259,8 +307,12 @@ class LEGOizer_Uilist_setSourceToActive(bpy.types.Operator):
         scn = context.scene
         if scn.cmlist_index == -1:
             return False
-        if context.scene.objects.active == None:
+        active_obj = context.scene.objects.active
+        if active_obj == None:
             return False
+        for i in range(20):
+            if scn.layers[i] and active_obj.layers[i]:
+                return True
         # cm = scn.cmlist[scn.cmlist_index]
         # n = cm.source_name
         # LEGOizer_source = "LEGOizer_%(n)s" % locals()
@@ -271,7 +323,7 @@ class LEGOizer_Uilist_setSourceToActive(bpy.types.Operator):
         #         return True
         # except:
         #     return False
-        return True
+        return False
 
     def execute(self, context):
         scn = context.scene

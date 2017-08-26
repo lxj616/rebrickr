@@ -314,8 +314,15 @@ class legoizerLegoize(bpy.types.Operator):
                 return False
 
         success = False
+        if cm.modelCreated or cm.animated:
+            if groupExists(LEGOizer_bricks_gn) and len(bpy.data.groups[LEGOizer_bricks_gn].objects) > 0:
+                obj = bpy.data.groups[LEGOizer_bricks_gn].objects[0]
+            else:
+                obj = None
+        else:
+            obj = source
         for i in range(20):
-            if source.layers[i] == True and scn.layers[i] == True:
+            if obj is not None and obj.layers[i] == True and scn.layers[i] == True:
                 success = True
         if not success:
             self.report({"WARNING"}, "Object is not on active layer(s)")
@@ -406,7 +413,7 @@ class legoizerLegoize(bpy.types.Operator):
                                 bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
                             except:
                                 mod.show_viewport = False
-                    if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN"] and mod.show_viewport:
+                    if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"] and mod.show_viewport:
                         try:
                             bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
                         except:
@@ -507,7 +514,7 @@ class legoizerLegoize(bpy.types.Operator):
                 bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
             # list modifiers that need to be applied
             for mod in sourceOrig.modifiers:
-                if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN"] and mod.show_viewport:
+                if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"] and mod.show_viewport:
                     try:
                         bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
                     except:
@@ -523,7 +530,7 @@ class legoizerLegoize(bpy.types.Operator):
             bpy.ops.object.transform_apply(location=applyLoc, rotation=True, scale=True)
             scn.update()
         else:
-            source = bpy.data.objects.get(sourceOrig.name + "_duplicate")
+            source = bpy.data.objects.get(n + "_duplicate")
         # if duplicate not created, source is just original source
         if source is None:
             source = sourceOrig
@@ -553,6 +560,11 @@ class legoizerLegoize(bpy.types.Operator):
                 pGroup.objects.link(parent)
             else:
                 parent.location = parentLoc
+        oldCursorLocation = tuple(scn.cursor_location)
+        scn.cursor_location = parent.location
+        select(sourceOrig, active=sourceOrig)
+        bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+        scn.cursor_location = oldCursorLocation
 
         # update refLogo
         if cm.brickType != "Custom":

@@ -346,11 +346,12 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
                 # if current location is inside (-1) and adjacent location is out of bounds, current location is shell (2)
-                if ((((z == len(coordMatrix[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0) or (z == 0 or brickFreqMatrix[x][y][z-1] == 0))) or
-                    (((y == len(coordMatrix[0])-1 or brickFreqMatrix[x][y+1][z] == 0) or (y == 0 or brickFreqMatrix[x][y-1][z] == 0))) or
-                    (((x == len(coordMatrix)-1 or brickFreqMatrix[x+1][y][z] == 0) or (x == 0 or brickFreqMatrix[x-1][y][z] == 0)))):
+                if ((((z == len(coordMatrix[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0) or (z == 0 or brickFreqMatrix[x][y][z-1] == 0)) and ("z" not in axes or cm.verifyExposure)) or
+                    (((y == len(coordMatrix[0])-1 or brickFreqMatrix[x][y+1][z] == 0) or (y == 0 or brickFreqMatrix[x][y-1][z] == 0)) and ("y" not in axes or cm.verifyExposure)) or
+                    (((x == len(coordMatrix)-1 or brickFreqMatrix[x+1][y][z] == 0) or (x == 0 or brickFreqMatrix[x-1][y][z] == 0))) and ("x" not in axes or cm.verifyExposure)):
                     if brickFreqMatrix[x][y][z] == -1:
                         brickFreqMatrix[x][y][z] = 2
+                        # TODO: set faceIdxMatrix value to nearest shell value using some sort of built in nearest poly to point function
                     # break from current location, as boundary locs should not be verified
                     continue
                 if cm.verifyExposure:

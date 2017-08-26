@@ -167,9 +167,17 @@ class legoizerDelete(bpy.types.Operator):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-
-        lastLayers = list(scn.layers)
         source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
+
+        # store last active layers
+        lastLayers = list(scn.layers)
+        # match source layers to brick layers
+        brick = None
+        gn = "LEGOizer_%(n)s_bricks" % locals()
+        if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
+            brick = bpy.data.groups[gn].objects[0]
+            source.layers = brick.layers
+        # set active layers to source layers
         scn.layers = source.layers
 
         source = self.cleanUp(self.modelType)

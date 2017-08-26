@@ -74,6 +74,7 @@ def register():
     bpy.utils.register_module(__name__)
 
     bpy.types.Scene.printTimes = BoolProperty(default=False)
+    bpy.props.editingSourceInStorage = BoolProperty(default=False)
 
     # handle the keymap
     wm = bpy.context.window_manager
