@@ -73,6 +73,12 @@ class LEGOizerStoragePanel(Panel):
             row.label("LEGOizer or cause")
             row = col.row(align=True)
             row.label("Blender to crash.")
+            layout.separator()
+            col = layout.column(align=True)
+            row = col.row(align=True)
+            row.label("Return to scene:")
+            row = col.row(align=True)
+            row.template_ID(context.screen, "scene")
 
 class LegoModelsPanel(Panel):
     bl_space_type  = "VIEW_3D"

@@ -121,3 +121,11 @@ class legoizerEditSource(bpy.types.Operator):
         # run modal
         context.window_manager.modal_handler_add(self)
         return {"RUNNING_MODAL"}
+
+    def cancel(self, context):
+        if self.lastSourceLocation is not None:
+            source.location = self.lastSourceLocation
+            source.rotation_euler = self.lastSourceRotation
+            source.scale = self.lastSourceScale
+        for screen in bpy.data.screens:
+            screen.scene = self.origScene

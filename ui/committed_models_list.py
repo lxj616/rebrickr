@@ -183,7 +183,6 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                 cm.objEdges = len(obj.data.edges)
                 cm.isWaterTight = cm.objVerts + cm.objPolys - cm.objEdges == 2
                 redraw_areas("VIEW_3D")
-
         return {"PASS_THROUGH"}
 
     def execute(self, context):

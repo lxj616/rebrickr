@@ -73,6 +73,11 @@ class delete_override(bpy.types.Operator):
 def register():
     bpy.utils.register_module(__name__)
 
+    bpy.types.Scene.scene_to_return_to = StringProperty(
+        name="Scene to return to",
+        description="Scene to return to",
+        default="")
+
     bpy.types.Scene.printTimes = BoolProperty(default=False)
     bpy.props.editingSourceInStorage = BoolProperty(default=False)
 
