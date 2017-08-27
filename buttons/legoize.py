@@ -33,14 +33,19 @@ props = bpy.props
 
 def updateCanRun(type):
     scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
-    if type == "ANIMATION":
-        return cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType == "Custom" and cm.materialIsDirty)
-    elif type == "MODEL":
-        # set up variables
-        n = cm.source_name
-        LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
-        return cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType == "Custom" and cm.materialIsDirty) or (groupExists(LEGOizer_bricks_gn) and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)
+    if scn.name == "LEGOizer_storage (DO NOT RENAME)":
+        return True
+    elif scn.cmlist_index == -1:
+        return False
+    else:
+        cm = scn.cmlist[scn.cmlist_index]
+        if type == "ANIMATION":
+            return cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType == "Custom" and cm.materialIsDirty)
+        elif type == "MODEL":
+            # set up variables
+            n = cm.source_name
+            LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
+            return cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType == "Custom" and cm.materialIsDirty) or (groupExists(LEGOizer_bricks_gn) and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)
 
 class legoizerLegoize(bpy.types.Operator):
     """Select objects layer by layer and shift by given values"""               # blender will use this as a tooltip for menu items and buttons.
@@ -51,7 +56,12 @@ class legoizerLegoize(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
-        scn = context.scene
+        if context.scene.name == "LEGOizer_storage (DO NOT RENAME)":
+            scn = bpy.data.scenes.get(bpy.props.origScene)
+            if scn is None:
+                return False
+        else:
+            scn = context.scene
         if scn.cmlist_index == -1:
             return False
         cm = scn.cmlist[scn.cmlist_index]
@@ -64,6 +74,7 @@ class legoizerLegoize(bpy.types.Operator):
         items=(
             ("CREATE", "Create", ""),
             ("UPDATE_MODEL", "Update Model", ""),
+            ("COMMIT_UPDATE_MODEL", "Commit and Update Model", ""),
             ("ANIMATE", "Animate", ""),
             ("UPDATE_ANIM", "Update Animation", ""),
             ("RUN_MODAL", "Run Modal Operator", "")
@@ -118,7 +129,7 @@ class legoizerLegoize(bpy.types.Operator):
 
     def getObjectToLegoize(self):
         scn = bpy.context.scene
-        if self.action == "UPDATE_MODEL":
+        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
             cm = scn.cmlist[scn.cmlist_index]
             objToLegoize = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         elif self.action in ["CREATE","ANIMATE"]:
@@ -307,7 +318,7 @@ class legoizerLegoize(bpy.types.Operator):
                 return False
             # TODO: Alert user to bake fluid/cloth simulation before attempting to LEGOize
 
-        if self.action == "UPDATE_MODEL":
+        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
             # make sure 'LEGOizer_[source name]_bricks' group exists
             if not groupExists(LEGOizer_bricks_gn):
                 self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
@@ -480,11 +491,11 @@ class legoizerLegoize(bpy.types.Operator):
             pGroup = bpy.data.groups.new(LEGOizer_parent_on)
 
         # if there are no changes to apply, simply return "FINISHED"
-        if self.action == "UPDATE_MODEL" and not updateCanRun("MODEL"):
+        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] and not updateCanRun("MODEL"):
             return{"FINISHED"}
 
         # delete old bricks if present
-        if self.action == "UPDATE_MODEL":
+        if self.action  in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
             if cm.sourceIsDirty:
                 # if source is dirty, delete source as well
                 legoizerDelete.cleanUp("MODEL")
@@ -589,6 +600,10 @@ class legoizerLegoize(bpy.types.Operator):
     def execute(self, context):
         # get start time
         startTime = time.time()
+
+        if self.action == "COMMIT_UPDATE_MODEL":
+            for screen in bpy.data.screens:
+                screen.scene = bpy.data.scenes.get(bpy.props.origScene)
 
         # set up variables
         scn = context.scene

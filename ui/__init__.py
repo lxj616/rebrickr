@@ -49,18 +49,20 @@ class LEGOizerStoragePanel(Panel):
         layout = self.layout
         scn = context.scene
 
-        col = layout.column(align=True)
-        col.scale_y = 0.7
         try:
             editingSourceInStorage = bpy.context.window_manager["editingSourceInStorage"]
         except:
             editingSourceInStorage = False
         if editingSourceInStorage:
+            col = layout.column(align=True)
             row = col.row(align=True)
-            row.label("Press 'ALT-TAB' to")
+            col.operator("scene.legoizer_commit_edits", text="Commit Changes", icon="FILE_REFRESH")
             row = col.row(align=True)
-            row.label("commit changes")
+            col.operator("scene.legoizer_legoize", text="Commit and Update Model", icon="FILE_REFRESH").action = "COMMIT_UPDATE_MODEL"
+            row = col.row(align=True)
         else:
+            col = layout.column(align=True)
+            col.scale_y = 0.7
             row = col.row(align=True)
             row.label("WARNING: Please")
             row = col.row(align=True)

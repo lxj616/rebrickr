@@ -778,7 +778,7 @@ def deleteExisting():
     bpy.context.scene.layers = tmpList
     for i in range(2):
         bpy.ops.object.select_all(action='TOGGLE')
-        bpy.ops.object.delete(use_global=False)
+        bpy.ops.object.delete()
     bpy.context.scene.layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True]
 
 def get_dimensions(height=1, zScale=1, gap_percentage=0.01):

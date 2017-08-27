@@ -681,7 +681,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         name="Use Global Grid",
         description="Use global grid so bricks from different models automatically align",
         update=dirtySource,
-        default=False)
+        default=True)
 
     internalSupports = EnumProperty(
         name="Internal Supports",

@@ -48,14 +48,16 @@ class legoizerEditSource(bpy.types.Operator):
     def modal(self, context, event):
         scn = bpy.context.scene
         source = bpy.data.objects.get(self.source_name)
-        if source is None or bpy.context.scene.name != "LEGOizer_storage (DO NOT RENAME)" or source.mode != "EDIT" or event.type in {"ESC"} or (event.type in {"TAB"} and event.value == "PRESS"):
+        if bpy.props.commitEdits or source is None or bpy.context.scene.name != "LEGOizer_storage (DO NOT RENAME)" or source.mode != "EDIT" or event.type in {"ESC"} or (event.type in {"TAB"} and event.value == "PRESS"):
             self.report({"INFO"}, "Edits Committed")
             if self.lastSourceLocation is not None:
                 source.location = self.lastSourceLocation
                 source.rotation_euler = self.lastSourceRotation
                 source.scale = self.lastSourceScale
-            for screen in bpy.data.screens:
-                screen.scene = self.origScene
+            if bpy.context.scene.name == "LEGOizer_storage (DO NOT RENAME)":
+                for screen in bpy.data.screens:
+                    screen.scene = bpy.data.scenes.get(bpy.props.origScene)
+            bpy.props.commitEdits = False
             bpy.context.window_manager["editingSourceInStorage"] = False
             redraw_areas("VIEW_3D")
             scn.update()
@@ -66,7 +68,7 @@ class legoizerEditSource(bpy.types.Operator):
     def execute(self, context):
         # initialize variables
         scn = context.scene
-        self.origScene = scn
+        bpy.props.origScene = scn.name
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         bpy.context.window_manager["editingSourceInStorage"] = True
@@ -128,4 +130,23 @@ class legoizerEditSource(bpy.types.Operator):
             source.rotation_euler = self.lastSourceRotation
             source.scale = self.lastSourceScale
         for screen in bpy.data.screens:
-            screen.scene = self.origScene
+            screen.scene = bpy.data.scenes.get(bpy.props.origScene)
+
+class legoizerCommitEdits(bpy.types.Operator):
+    """ Edit Source Object Mesh """                                             # blender will use this as a tooltip for menu items and buttons.
+    bl_idname = "scene.legoizer_commit_edits"                                   # unique identifier for buttons and menu items to reference.
+    bl_label = "Edit Source Object Mesh"                                        # display name in the interface.
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        """ ensures operator can execute (if not, returns false) """
+        scn = context.scene
+        if scn.name != "LEGOizer_storage (DO NOT RENAME)":
+            return False
+        return True
+
+    def execute(self, context):
+        print("executing")
+        bpy.props.commitEdits = True
+        return{"FINISHED"}
