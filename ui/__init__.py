@@ -285,7 +285,6 @@ class AnimationPanel(Panel):
                         row.label("Num frames to bake: %(totalFramesToBake)s" % locals())
             if (cm.stopFrame - cm.startFrame > 10 and not cm.animated) or self.appliedMods:
                 col = layout.column(align=True)
-                # col.scale_y = 0.6
                 col.label("WARNING: May take a while.")
                 col.separator()
 

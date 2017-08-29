@@ -582,15 +582,11 @@ class legoizerLegoize(bpy.types.Operator):
                 sourceOrig["previous_location"] = source.location.to_tuple()
             sourceOrig["previous_rotation"] = tuple(source.rotation_euler)
             sourceOrig["previous_scale"] = source.scale.to_tuple()
-            if cm.useGlobalGrid:
-                applyLoc = True
-            else:
-                source.location = (0,0,0)
-                applyLoc = False
             select(source, active=source)
-            bpy.ops.object.transform_apply(location=applyLoc, rotation=True, scale=True)
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             scn.update()
         else:
+            # get previously greated source duplicate
             source = bpy.data.objects.get(n + "_duplicate")
         # if duplicate not created, source is just original source
         if source is None:
@@ -610,27 +606,11 @@ class legoizerLegoize(bpy.types.Operator):
 
         # get parent object
         parent = bpy.data.objects.get(LEGOizer_parent_on)
-        # if self.action == "CREATE" or cm.sourceIsDirty:
-        #     parent["previous_location"] = parent.location.to_tuple()
         # if parent doesn't exist, or parent exists but useGlobalGrid has changed, get parent with new location
-        if parent is None:# or (parent is not None and cm.lastUseGlobalGrid != cm.useGlobalGrid):
-            # if cm.useGlobalGrid:
+        if parent is None:
             parentLoc = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
-            # else:
-            #     parentLoc = (source_details.x.mid + sourceOrig["previous_location"][0], source_details.y.mid + sourceOrig["previous_location"][1], source_details.z.mid + sourceOrig["previous_location"][2])
-            # if parent is None:
             parent = self.getParent(LEGOizer_parent_on, parentLoc)
             pGroup.objects.link(parent)
-            # else:
-            #     parent.location = parentLoc
-        oldCursorLocation = tuple(scn.cursor_location)
-        scn.cursor_location = parent.location
-        bGroup = bpy.data.groups.get(LEGOizer_bricks_gn) # redefine bGroup since it was removed
-        if not cm.splitModel and bGroup is not None and len(bGroup.objects) > 0:
-            scn.cursor_location += bGroup.objects[0].location
-        select(sourceOrig, active=sourceOrig)
-        bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
-        scn.cursor_location = oldCursorLocation
 
         # update refLogo
         if cm.brickType != "Custom":
@@ -665,6 +645,7 @@ class legoizerLegoize(bpy.types.Operator):
                     obj.lock_rotation = [True, True, True]
                     obj.lock_scale    = [True, True, True]
 
+        # unlink source duplicate if created
         if source != sourceOrig and source.name in scn.objects.keys():
             safeUnlink(source)
 

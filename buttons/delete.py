@@ -46,9 +46,6 @@ class legoizerDelete(bpy.types.Operator):
         scn = context.scene
         if scn.cmlist_index == -1:
             return False
-        # n = scn.cmlist[scn.cmlist_index].source_name
-        # if groupExists("LEGOizer_%(n)s_bricks" % locals()) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals()):
-        #     return True
         return True
 
     @classmethod
@@ -149,14 +146,6 @@ class legoizerDelete(bpy.types.Operator):
             redraw_areas("VIEW_3D")
         update_progress("Deleting", 1)
         wm.progress_end()
-
-        # # clean up 'LEGOizer_refBrick' group
-        # if groupExists(LEGOizer_refBricks_gn) and not skipRefBrick:
-        #     refBrickGroup = bpy.data.groups[LEGOizer_refBricks_gn]
-        #     if len(refBrickGroup.objects) > 0:
-        #         refBrick = refBrickGroup.objects[0]
-        #         delete(refBrick)
-        #     bpy.data.groups.remove(refBrickGroup, do_unlink=True)
 
         return source, oldOrigin, newOrigin
 
