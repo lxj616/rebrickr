@@ -50,6 +50,11 @@ class legoizerEditSource(bpy.types.Operator):
         source = bpy.data.objects.get(self.source_name)
         if bpy.props.commitEdits or source is None or bpy.context.scene.name != "LEGOizer_storage (DO NOT RENAME)" or source.mode != "EDIT" or event.type in {"ESC"} or (event.type in {"TAB"} and event.value == "PRESS"):
             self.report({"INFO"}, "Edits Committed")
+            # set source to object mode
+            select(source, active=source)
+            bpy.ops.object.mode_set(mode='OBJECT')
+            setOriginToObjOrigin(toObj=source, fromLoc=self.lastSourceOrigLoc)
+            # reset source origin to adjusted location
             if source["before_edit_location"] != -1:
                 source.location = source["before_edit_location"]
             source.rotation_euler = source["previous_rotation"]
@@ -100,16 +105,22 @@ class legoizerEditSource(bpy.types.Operator):
         source.hide = False
         bGroup = bpy.data.groups.get(LEGOizer_bricks_gn)
         source["before_edit_location"] = -1
+        self.last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
         if bGroup is not None and len(bGroup.objects) > 0:
             if not cm.lastSplitModel:
                 obj = bGroup.objects[0]
             else:
                 obj = None
             objParent = bpy.data.objects.get("LEGOizer_%(n)s_parent" % locals())
-            last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
             source["before_edit_location"] = source.location.to_tuple()
-            setSourceTransform(source, obj=obj, objParent=objParent, last_origin_obj=last_origin_obj)
+            setSourceTransform(source, obj=obj, objParent=objParent)
         select(source, active=source)
+
+        # set sourceOrig origin to previous origin location
+        scn.update()
+        self.lastSourceOrigLoc = source.location.to_tuple()
+        setOriginToObjOrigin(toObj=source, fromObj=self.last_origin_obj)
+        scn.update()
 
         # enter edit mode
         bpy.ops.object.mode_set(mode='EDIT')

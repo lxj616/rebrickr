@@ -135,7 +135,7 @@ class legoizerDelete(bpy.types.Operator):
             # clean up LEGOizer_bricks group
             cm.animated = False
             for i in range(cm.lastStartFrame, cm.lastStopFrame + 1):
-                percent = (i-cm.lastStartFrame)/(cm.lastStopFrame - cm.lastStartFrame - 1)
+                percent = (i-cm.lastStartFrame)/(cm.lastStopFrame - cm.lastStartFrame)
                 if percent < 1:
                     update_progress("Deleting", percent)
                     wm.progress_update(percent*100)
@@ -180,7 +180,7 @@ class legoizerDelete(bpy.types.Operator):
 
         source,oldOrigin,newOrigin = self.cleanUp(self.modelType)
 
-        if (self.modelType == "MODEL" and ((cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) and not cm.armature) or (self.modelType == "ANIMATION" and cm.applyToSourceObject):
+        if (self.modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (self.modelType == "ANIMATION" and cm.applyToSourceObject):
             l,r,s = getTransformData()
             if self.modelType == "MODEL" and not cm.lastSplitModel:
                 source.location = Vector(source.location) + Vector(l)
@@ -191,21 +191,13 @@ class legoizerDelete(bpy.types.Operator):
 
         # set origin to previous origin location
         last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
-        if last_origin_obj is not None:
-            oldCursorLocation = tuple(scn.cursor_location)
-            safeLink(last_origin_obj, unhide=True)
-            select(last_origin_obj, active=last_origin_obj)
-            bpy.ops.view3d.snap_cursor_to_active()
-            select(source, active=source)
-            bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
-            scn.cursor_location = oldCursorLocation
-            m = last_origin_obj.data
-            bpy.data.objects.remove(last_origin_obj)
-            bpy.data.meshes.remove(m)
+        safeLink(last_origin_obj)
+        scn.update()
+        setOriginToObjOrigin(toObj=source, fromObj=last_origin_obj, deleteFromObj=True)
 
         # select source, update scene, and return open layers to original
         select(source, active=source)
-        context.scene.update()
+        scn.update()
         scn.layers = lastLayers
 
         return{"FINISHED"}

@@ -492,6 +492,7 @@ class legoizerLegoize(bpy.types.Operator):
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         bGroup = bpy.data.groups.get(LEGOizer_bricks_gn)
+        LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
         originalParentLoc = None
 
@@ -524,12 +525,8 @@ class legoizerLegoize(bpy.types.Operator):
         # delete old bricks if present
         if self.action  in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
             if cm.sourceIsDirty:
-                # if splitModel and parent exists, store parent location to originalParentLoc
-                p = bpy.data.objects.get(LEGOizer_parent_on)
-                if cm.splitModel and p is not None:
-                    originalParentLoc = p.location.to_tuple()
-                # if source is dirty, delete source/parents/dupes as well
-                legoizerDelete.cleanUp("MODEL")
+                # delete source/dupes as well if source is dirty, but only delete parent if not cm.splitModel
+                legoizerDelete.cleanUp("MODEL", skipParents=cm.splitModel)
             else:
                 # else, skip source
                 legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
@@ -540,6 +537,10 @@ class legoizerLegoize(bpy.types.Operator):
             # create dupes group
             LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
             dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
+            # set sourceOrig origin to previous origin location
+            lastSourceOrigLoc = sourceOrig.location.to_tuple()
+            last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
+            setOriginToObjOrigin(toObj=sourceOrig, fromObj=last_origin_obj)
             # duplicate source and add duplicate to group
             select(sourceOrig, active=sourceOrig)
             bpy.ops.object.duplicate()
@@ -547,6 +548,8 @@ class legoizerLegoize(bpy.types.Operator):
             dGroup.objects.link(source)
             select(source, active=source)
             source.name = sourceOrig.name + "_duplicate"
+            # reset sourceOrig origin to adjusted location
+            setOriginToObjOrigin(toObj=sourceOrig, fromLoc=lastSourceOrigLoc)
             # set up source["old_parent"] and remove source parent
             source["frame_parent_cleared"] = -1
             if source.parent is not None:
@@ -640,18 +643,22 @@ class legoizerLegoize(bpy.types.Operator):
 
         bGroup = bpy.data.groups.get(LEGOizer_bricks_gn) # redefine bGroup since it was removed
         if bGroup is not None:
+            # set transformation of objects in brick group
             if self.action == "CREATE" and cm.sourceIsDirty:
                 setTransformData(list(bGroup.objects))
             elif not cm.splitModel:
                 setTransformData(list(bGroup.objects), sourceOrig)
+            # set transformation of brick group parent
             elif not cm.lastSplitModel:
                 setTransformData(parent, sourceOrig)
+            # in this case, the parent was not removed so the transformations should stay the same
             elif cm.sourceIsDirty:
-                setTransformData(parent, sourceOrig, skipLocation=True)
-                parent.location = originalParentLoc
+                pass
+            # if not split model, select the bricks object
             if not cm.splitModel:
                 obj = bGroup.objects[0]
                 select(obj, active=obj)
+                # if the model contains armature, lock the location, rotation, and scale
                 if cm.armature:
                     # lock location, rotation, and scale of created bricks
                     obj.lock_location = [True, True, True]
@@ -696,7 +703,7 @@ class legoizerLegoize(bpy.types.Operator):
             self.legoizeAnimation()
             cm.animIsDirty = False
 
-        if self.action == "CREATE" or cm.sourceIsDirty:
+        if self.action in ["CREATE", "ANIMATE"] or cm.sourceIsDirty:
             source.name = cm.source_name + " (DO NOT RENAME)"
 
         # # set final variables

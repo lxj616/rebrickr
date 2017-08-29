@@ -136,6 +136,26 @@ def getClosestPolyIndex(point,maxLen,ob):
     # return helpful information
     return closestPolyIdx
 
+def setOriginToObjOrigin(toObj, fromObj=None, fromLoc=None, deleteFromObj=False):
+    scn = bpy.context.scene
+    oldCursorLocation = tuple(scn.cursor_location)
+    unlinkToo = False
+    if fromObj is not None:
+        scn.cursor_location = fromObj.matrix_world.to_translation().to_tuple()
+    elif fromLoc is not None:
+        scn.cursor_location = fromLoc
+    else:
+        print("ERROR in 'setOriginToObjOrigin': fromObj and fromLoc are both None")
+        return
+    select(toObj, active=toObj)
+    bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+    scn.cursor_location = oldCursorLocation
+    if fromObj is not None:
+        if deleteFromObj:
+            m = fromObj.data
+            bpy.data.objects.remove(fromObj)
+            bpy.data.meshes.remove(m)
+
 def storeTransformData(obj):
     """ store location, rotation, and scale data for model """
     scn = bpy.context.scene

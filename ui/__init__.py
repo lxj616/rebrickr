@@ -318,6 +318,11 @@ class ModelTransformPanel(Panel):
 
         col = layout.column(align=True)
         row = col.row(align=True)
+
+        if cm.armature:
+            row.label("Cannot transform LEGOized object with armature")
+            return
+
         row.prop(cm, "applyToSourceObject")
         row = col.row(align=True)
         parent = bpy.data.objects['LEGOizer_%(n)s_parent' % locals()]
