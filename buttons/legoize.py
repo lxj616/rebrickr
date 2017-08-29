@@ -493,6 +493,7 @@ class legoizerLegoize(bpy.types.Operator):
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         bGroup = bpy.data.groups.get(LEGOizer_bricks_gn)
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
+        originalParentLoc = None
 
         # get or create parent group
         pGroup = bpy.data.groups.get(LEGOizer_parent_on)
@@ -523,7 +524,11 @@ class legoizerLegoize(bpy.types.Operator):
         # delete old bricks if present
         if self.action  in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
             if cm.sourceIsDirty:
-                # if source is dirty, delete source as well
+                # if splitModel and parent exists, store parent location to originalParentLoc
+                p = bpy.data.objects.get(LEGOizer_parent_on)
+                if cm.splitModel and p is not None:
+                    originalParentLoc = p.location.to_tuple()
+                # if source is dirty, delete source/parents/dupes as well
                 legoizerDelete.cleanUp("MODEL")
             else:
                 # else, skip source
@@ -602,17 +607,19 @@ class legoizerLegoize(bpy.types.Operator):
 
         # get parent object
         parent = bpy.data.objects.get(LEGOizer_parent_on)
+        # if self.action == "CREATE" or cm.sourceIsDirty:
+        #     parent["previous_location"] = parent.location.to_tuple()
         # if parent doesn't exist, or parent exists but useGlobalGrid has changed, get parent with new location
-        if parent is None or (parent is not None and cm.lastUseGlobalGrid != cm.useGlobalGrid):
-            if cm.useGlobalGrid:
-                parentLoc = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
-            else:
-                parentLoc = (source_details.x.mid + sourceOrig["previous_location"][0], source_details.y.mid + sourceOrig["previous_location"][1], source_details.z.mid + sourceOrig["previous_location"][2])
-            if parent is None:
-                parent = self.getParent(LEGOizer_parent_on, parentLoc)
-                pGroup.objects.link(parent)
-            else:
-                parent.location = parentLoc
+        if parent is None:# or (parent is not None and cm.lastUseGlobalGrid != cm.useGlobalGrid):
+            # if cm.useGlobalGrid:
+            parentLoc = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
+            # else:
+            #     parentLoc = (source_details.x.mid + sourceOrig["previous_location"][0], source_details.y.mid + sourceOrig["previous_location"][1], source_details.z.mid + sourceOrig["previous_location"][2])
+            # if parent is None:
+            parent = self.getParent(LEGOizer_parent_on, parentLoc)
+            pGroup.objects.link(parent)
+            # else:
+            #     parent.location = parentLoc
         oldCursorLocation = tuple(scn.cursor_location)
         scn.cursor_location = parent.location
         bGroup = bpy.data.groups.get(LEGOizer_bricks_gn) # redefine bGroup since it was removed
@@ -637,8 +644,11 @@ class legoizerLegoize(bpy.types.Operator):
                 setTransformData(list(bGroup.objects))
             elif not cm.splitModel:
                 setTransformData(list(bGroup.objects), sourceOrig)
-            else:
+            elif not cm.lastSplitModel:
+                setTransformData(parent, sourceOrig)
+            elif cm.sourceIsDirty:
                 setTransformData(parent, sourceOrig, skipLocation=True)
+                parent.location = originalParentLoc
             if not cm.splitModel:
                 obj = bGroup.objects[0]
                 select(obj, active=obj)

@@ -101,7 +101,7 @@ class legoizerEditSource(bpy.types.Operator):
         bGroup = bpy.data.groups.get(LEGOizer_bricks_gn)
         source["before_edit_location"] = -1
         if bGroup is not None and len(bGroup.objects) > 0:
-            if not cm.splitModel:
+            if not cm.lastSplitModel:
                 obj = bGroup.objects[0]
             else:
                 obj = None
