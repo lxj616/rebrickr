@@ -28,7 +28,7 @@ import sys
 import random
 from mathutils import Vector, Matrix
 from ..classes.Brick import Bricks
-from ..functions.common_functions import stopWatch, groupExists, select, update_progress
+from ..functions.common_functions import stopWatch, groupExists, select, update_progress, most_common
 from .__init__ import bounds
 
 def brickAvail(sourceBrick, brick):
@@ -506,20 +506,20 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             # get closest material
             mat = None
             highestVal = 0
+            matsL = []
             if cm.materialType == "Use Source Materials":
-                breakLoop = False
                 for x in range(brickType[0]):
                     for y in range(brickType[1]):
                         idcs = key.split(",")
                         curBrickD = bricksD[str(int(idcs[0])+x) + "," + str(int(idcs[1])+y) + "," + idcs[2]]
-                        if curBrickD["val"] > highestVal:
+                        if curBrickD["val"] >= highestVal:
                             highestVal = curBrickD["val"]
                             matName = curBrickD["matName"]
                             if curBrickD["val"] == 2:
-                                breakLoop = True
-                                break
-                    if breakLoop:
-                        break
+                                matsL.append(matName)
+                # if multiple shell materials, use the most frequent one
+                if len(matsL) > 1:
+                    matName = most_common(matsL)
                 mat = bpy.data.materials.get(matName)
 
             # add brick with new mesh data at original location

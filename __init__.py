@@ -78,7 +78,7 @@ def register():
         description="Scene to return to",
         default="")
 
-    bpy.types.Scene.printTimes = BoolProperty(default=False)
+    bpy.types.Scene.printTimes = BoolProperty(default=True)
     bpy.props.origScene = StringProperty(default="")
     bpy.props.commitEdits = False
 

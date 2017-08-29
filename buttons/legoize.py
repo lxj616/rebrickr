@@ -251,7 +251,7 @@ class legoizerLegoize(bpy.types.Operator):
                 return False
 
         self.clothMod = False
-        source["ignored_mods"] = None
+        source["ignored_mods"] = ""
         if self.action in ["CREATE", "ANIMATE"]:
             # verify function can run
             if groupExists(LEGOizer_bricks_gn):
@@ -551,7 +551,7 @@ class legoizerLegoize(bpy.types.Operator):
             select(source, active=source)
             source.name = sourceOrig.name + "_duplicate"
             # set up source["old_parent"] and remove source parent
-            source["frame_parent_cleared"] = None
+            source["frame_parent_cleared"] = -1
             if source.parent is not None:
                 source["old_parent"] = source.parent.name
                 source["frame_parent_cleared"] = scn.frame_current

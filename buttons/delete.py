@@ -76,15 +76,13 @@ class legoizerDelete(bpy.types.Operator):
             old_parent = bpy.data.objects.get(source["old_parent"])
             if old_parent is not None:
                 select([source, old_parent], active=old_parent)
-                try:
+                if source["frame_parent_cleared"] != -1:
                     origFrame = scn.frame_current
                     scn.frame_set(source["frame_parent_cleared"])
                     bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
                     scn.frame_set(origFrame)
-                except:
-                    pass
             # if modifiers were ignored/disabled from view, enable in view
-            if source["ignored_mods"] is not None:
+            if source["ignored_mods"] != "":
                 for mn in source["ignored_mods"]:
                     source.modifiers[mn].show_viewport = True
             source.name = n
