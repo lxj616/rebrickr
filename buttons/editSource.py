@@ -50,7 +50,8 @@ class legoizerEditSource(bpy.types.Operator):
         source = bpy.data.objects.get(self.source_name)
         if bpy.props.commitEdits or source is None or bpy.context.scene.name != "LEGOizer_storage (DO NOT RENAME)" or source.mode != "EDIT" or event.type in {"ESC"} or (event.type in {"TAB"} and event.value == "PRESS"):
             self.report({"INFO"}, "Edits Committed")
-            source.location = source["before_edit_location"]
+            if source["before_edit_location"] != -1:
+                source.location = source["before_edit_location"]
             source.rotation_euler = source["previous_rotation"]
             source.scale = source["previous_scale"]
             scn.update()
@@ -98,12 +99,16 @@ class legoizerEditSource(bpy.types.Operator):
             obj.hide = True
         source.hide = False
         bGroup = bpy.data.groups.get(LEGOizer_bricks_gn)
+        source["before_edit_location"] = -1
         if bGroup is not None and len(bGroup.objects) > 0:
-            obj = bGroup.objects[0]
+            if not cm.splitModel:
+                obj = bGroup.objects[0]
+            else:
+                obj = None
             objParent = bpy.data.objects.get("LEGOizer_%(n)s_parent" % locals())
             last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
             source["before_edit_location"] = source.location.to_tuple()
-            setSourceTransform(source, obj, objParent, last_origin_obj)
+            setSourceTransform(source, obj=obj, objParent=objParent, last_origin_obj=last_origin_obj)
         select(source, active=source)
 
         # enter edit mode

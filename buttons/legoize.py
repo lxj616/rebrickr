@@ -499,10 +499,6 @@ class legoizerLegoize(bpy.types.Operator):
         if pGroup is None:
             pGroup = bpy.data.groups.new(LEGOizer_parent_on)
 
-        # link source if it isn't in scene
-        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
-            safeLink(sourceOrig, unhide=True)
-
         if self.action == "CREATE":
             # get origin location for source
             oldCursorLocation = tuple(scn.cursor_location)
@@ -519,10 +515,6 @@ class legoizerLegoize(bpy.types.Operator):
             select([obj, sourceOrig], active=sourceOrig)
             bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
             safeUnlink(obj)
-
-        # unlink source if it wasn't in scene
-        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
-            safeUnlink(sourceOrig, hide=False)
 
         # if there are no changes to apply, simply return "FINISHED"
         if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] and not updateCanRun("MODEL"):
@@ -643,8 +635,10 @@ class legoizerLegoize(bpy.types.Operator):
         if bGroup is not None:
             if self.action == "CREATE" and cm.sourceIsDirty:
                 setTransformData(list(bGroup.objects))
-            else:
+            elif not cm.splitModel:
                 setTransformData(list(bGroup.objects), sourceOrig)
+            else:
+                setTransformData(parent, sourceOrig, skipLocation=True)
             if not cm.splitModel:
                 obj = bGroup.objects[0]
                 select(obj, active=obj)

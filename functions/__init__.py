@@ -154,21 +154,23 @@ def convertToFloats(lst):
         lst[i] = float(lst[i])
     return lst
 
-def setTransformData(objects, source=None):
+def setTransformData(objList, source=None, skipLocation=False):
     """ set location, rotation, and scale data for model """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
-    for obj in objects:
+    objList = confirmList(objList)
+    for obj in objList:
         l,r,s = getTransformData()
-        obj.location = obj.location + Vector(l)
-        if source is not None:
-            n = cm.source_name
-            LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
-            last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
-            if last_origin_obj is not None:
-                obj.location -= Vector(last_origin_obj.location) - Vector(source["previous_location"])
-            else:
-                obj.location -= Vector(source.location) - Vector(source["previous_location"])
+        if not skipLocation:
+            obj.location = obj.location + Vector(l)
+            if source is not None:
+                n = cm.source_name
+                LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
+                last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
+                if last_origin_obj is not None:
+                    obj.location -= Vector(last_origin_obj.location) - Vector(source["previous_location"])
+                else:
+                    obj.location -= Vector(source.location) - Vector(source["previous_location"])
         obj.rotation_euler = Vector(obj.rotation_euler) + Vector(r)
         if source is not None:
             obj.rotation_euler = Vector(obj.rotation_euler) - (Vector(source.rotation_euler) - Vector(source["previous_rotation"]))
@@ -185,7 +187,15 @@ def getTransformData():
     s = tuple(convertToFloats(cm.modelScale.split(",")))
     return l,r,s
 
-def setSourceTransform(source, obj, objParent, last_origin_obj):
+def setSourceTransform(source, obj=None, objParent=None, last_origin_obj=None):
+    if obj is not None:
+        objLoc = obj.location
+        objRot = obj.rotation_euler
+        objScale = obj.scale
+    else:
+        objLoc = Vector((0,0,0))
+        objRot = Vector((0,0,0))
+        objScale = Vector((1,1,1))
     if objParent is not None:
         objParentLoc = objParent.location
         objParentRot = objParent.rotation_euler
@@ -195,11 +205,11 @@ def setSourceTransform(source, obj, objParent, last_origin_obj):
         objParentRot = Vector((0,0,0))
         objParentScale = Vector((1,1,1))
     if last_origin_obj is not None:
-        source.location = objParentLoc + obj.location - (Vector(last_origin_obj.location) - Vector(source["previous_location"]))
+        source.location = objParentLoc + objLoc - (Vector(last_origin_obj.location) - Vector(source["previous_location"]))
     else:
-        source.location = objParentLoc + obj.location
-    source.rotation_euler = (source.rotation_euler[0] + obj.rotation_euler[0] + objParentRot[0], source.rotation_euler[1] + obj.rotation_euler[1] + objParentRot[1], source.rotation_euler[2] + obj.rotation_euler[2] + objParentRot[2])
-    source.scale = (source.scale[0] * obj.scale[0] * objParentScale[0], source.scale[1] * obj.scale[1] * objParentScale[1], source.scale[2] * obj.scale[2] * objParentScale[2])
+        source.location = objParentLoc + objLoc
+    source.rotation_euler = (source.rotation_euler[0] + objRot[0] + objParentRot[0], source.rotation_euler[1] + objRot[1] + objParentRot[1], source.rotation_euler[2] + objRot[2] + objParentRot[2])
+    source.scale = (source.scale[0] * objScale[0] * objParentScale[0], source.scale[1] * objScale[1] * objParentScale[1], source.scale[2] * objScale[2] * objParentScale[2])
 
 def rayObjIntersections(point,direction,edgeLen,ob):
     """ returns True if ray intersects obj """
