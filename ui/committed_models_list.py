@@ -834,6 +834,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     modelCreated = BoolProperty(default=False)
     animated = BoolProperty(default=False)
     materialApplied = BoolProperty(default=False)
+    armature = BoolProperty(default=False)
 
     animIsDirty = BoolProperty(default=True)
     materialIsDirty = BoolProperty(default=True)

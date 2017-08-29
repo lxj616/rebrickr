@@ -57,6 +57,8 @@ class legoizerDelete(bpy.types.Operator):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
+        oldOrigin = None
+        newOrigin = None
         source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
@@ -65,10 +67,7 @@ class legoizerDelete(bpy.types.Operator):
 
         # clean up 'LEGOizer_[source name]' group
         if not skipSource:
-            try:
-                source.location = source["previous_location"]
-            except:
-                pass
+            # link source to scene
             if not source in list(scn.objects):
                 safeLink(source)
             select(source, active=source)
@@ -161,13 +160,14 @@ class legoizerDelete(bpy.types.Operator):
         #         delete(refBrick)
         #     bpy.data.groups.remove(refBrickGroup, do_unlink=True)
 
-        return source
+        return source, oldOrigin, newOrigin
 
     def execute(self, context):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
+        LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
 
         # store last active layers
         lastLayers = list(scn.layers)
@@ -180,18 +180,30 @@ class legoizerDelete(bpy.types.Operator):
         # set active layers to source layers
         scn.layers = source.layers
 
-        source = self.cleanUp(self.modelType)
+        source,oldOrigin,newOrigin = self.cleanUp(self.modelType)
 
-        if (self.modelType == "MODEL" and ((cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel)) or (self.modelType == "ANIMATION" and cm.applyToSourceObject):
-
-            # update location of source to reflect stored transformation data
+        if (self.modelType == "MODEL" and ((cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) and not cm.armature) or (self.modelType == "ANIMATION" and cm.applyToSourceObject):
             l,r,s = getTransformData()
             if self.modelType == "MODEL" and not cm.lastSplitModel:
-                source.location = source.location + Vector(l)
+                source.location = Vector(source.location) + Vector(l)
             else:
                 source.location = Vector(l)
             source.rotation_euler = Vector(source.rotation_euler) + Vector(r)
             source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
+
+        # set origin to previous origin location
+        last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
+        if last_origin_obj is not None:
+            oldCursorLocation = tuple(scn.cursor_location)
+            safeLink(last_origin_obj, unhide=True)
+            select(last_origin_obj, active=last_origin_obj)
+            bpy.ops.view3d.snap_cursor_to_active()
+            select(source, active=source)
+            bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+            scn.cursor_location = oldCursorLocation
+            m = last_origin_obj.data
+            bpy.data.objects.remove(last_origin_obj)
+            bpy.data.meshes.remove(m)
 
         # select source, update scene, and return open layers to original
         select(source, active=source)

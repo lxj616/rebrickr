@@ -64,11 +64,13 @@ def safeUnlink(obj, hide=True, protected=True):
         obj.protected = True
     if hide:
         obj.hide = True
-def safeLink(obj):
+def safeLink(obj, unhide=False):
     scn = bpy.context.scene
     safeScn = getSafeScn()
     scn.objects.link(obj)
     obj.protected = False
+    if unhide:
+        obj.hide = False
     try:
         safeScn.objects.unlink(obj)
     except:
@@ -152,15 +154,27 @@ def convertToFloats(lst):
         lst[i] = float(lst[i])
     return lst
 
-def setTransformData(objects):
+def setTransformData(objects, source=None):
     """ set location, rotation, and scale data for model """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     for obj in objects:
         l,r,s = getTransformData()
         obj.location = obj.location + Vector(l)
+        if source is not None:
+            n = cm.source_name
+            LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
+            last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
+            if last_origin_obj is not None:
+                obj.location -= Vector(last_origin_obj.location) - Vector(source["previous_location"])
+            else:
+                obj.location -= Vector(source.location) - Vector(source["previous_location"])
         obj.rotation_euler = Vector(obj.rotation_euler) + Vector(r)
+        if source is not None:
+            obj.rotation_euler = Vector(obj.rotation_euler) - (Vector(source.rotation_euler) - Vector(source["previous_rotation"]))
         obj.scale = (obj.scale[0] * s[0], obj.scale[1] * s[1], obj.scale[2] * s[2])
+        if source is not None:
+            obj.scale -= Vector(source.scale) - Vector(source["previous_scale"])
 
 def getTransformData():
     """ set location, rotation, and scale data for model """
@@ -170,6 +184,22 @@ def getTransformData():
     r = tuple(convertToFloats(cm.modelRot.split(",")))
     s = tuple(convertToFloats(cm.modelScale.split(",")))
     return l,r,s
+
+def setSourceTransform(source, obj, objParent, last_origin_obj):
+    if objParent is not None:
+        objParentLoc = objParent.location
+        objParentRot = objParent.rotation_euler
+        objParentScale = objParent.scale
+    else:
+        objParentLoc = Vector((0,0,0))
+        objParentRot = Vector((0,0,0))
+        objParentScale = Vector((1,1,1))
+    if last_origin_obj is not None:
+        source.location = objParentLoc + obj.location - (Vector(last_origin_obj.location) - Vector(source["previous_location"]))
+    else:
+        source.location = objParentLoc + obj.location
+    source.rotation_euler = (source.rotation_euler[0] + obj.rotation_euler[0] + objParentRot[0], source.rotation_euler[1] + obj.rotation_euler[1] + objParentRot[1], source.rotation_euler[2] + obj.rotation_euler[2] + objParentRot[2])
+    source.scale = (source.scale[0] * obj.scale[0] * objParentScale[0], source.scale[1] * obj.scale[1] * objParentScale[1], source.scale[2] * obj.scale[2] * objParentScale[2])
 
 def rayObjIntersections(point,direction,edgeLen,ob):
     """ returns True if ray intersects obj """
@@ -444,41 +474,26 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz"):
         stop = len(coordMatrix)
         step = cm.colStep + cm.colThickness
         for x in range(start, stop, step):
-            # # print status to terminal
-            # if not scn.printTimes:
-            #     percent = (x-start)/((stop-start)-1)
-            #     update_progress("Columns", percent/100.0)
             for y in range(start, len(coordMatrix[0]), step):
                 for z in range(0, len(coordMatrix[0][0])):
                     for j in range(cm.colThickness):
                         for k in range(cm.colThickness):
-                            if brickFreqMatrix[x-j][y-k][z] > 0 and brickFreqMatrix[x-j][y-k][z] < 1:
+                            if (brickFreqMatrix[x-j][y-k][z] > 0 and brickFreqMatrix[x-j][y-k][z] < 1) or brickFreqMatrix[x-j][y-k][z] == -1:
                                 brickFreqMatrix[x-j][y-k][z] = 1.5
-        # # print status to terminal
-        # if not scn.printTimes:
-        #     update_progress("Columns", 1)
     elif cm.internalSupports == "Lattice":
         if cm.alternateXY:
             alt = 0
         else:
             alt = 0.5
         for z in range(0, len(coordMatrix[0][0])):
-            # # print status to terminal
-            # if not scn.printTimes:
-            #     percent = z/(len(coordMatrix[0][0])-1)
-            #     if percent < 1:
-            #         update_progress("Lattice", percent)
             alt += 1
             for x in range(0, len(coordMatrix)):
                 for y in range(0, len(coordMatrix[0])):
                     if x % cm.latticeStep != 0 or alt % 2 == 1:
                         if y % cm.latticeStep != 0 or alt % 2 == 0:
                             continue
-                    if brickFreqMatrix[x][y][z] > 0 and brickFreqMatrix[x][y][z] < 1:
+                    if (brickFreqMatrix[x][y][z] > 0 and brickFreqMatrix[x][y][z] < 1) or brickFreqMatrix[x][y][z] == -1:
                         brickFreqMatrix[x][y][z] = 1.5
-        # # print status to terminal
-        # if not scn.printTimes:
-        #     update_progress("Lattice", 1)
 
     # bm = bmesh.new()
     # for x in range(len(coordMatrix)):

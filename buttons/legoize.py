@@ -129,16 +129,14 @@ class legoizerLegoize(bpy.types.Operator):
 
     def getObjectToLegoize(self):
         scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
         if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
-            cm = scn.cmlist[scn.cmlist_index]
             objToLegoize = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
-        elif self.action in ["CREATE","ANIMATE"]:
-            if bpy.data.objects.find(scn.cmlist[scn.cmlist_index].source_name) == -1:
+        elif self.action in ["CREATE", "ANIMATE"]:
+            objToLegoize = bpy.data.objects.get(cm.source_name)
+            if objToLegoize is None:
                 objToLegoize = bpy.context.active_object
-            else:
-                objToLegoize = bpy.data.objects[scn.cmlist[scn.cmlist_index].source_name]
         else:
-            cm = scn.cmlist[scn.cmlist_index]
             objToLegoize = bpy.data.objects.get(cm.source_name)
         return objToLegoize
 
@@ -411,6 +409,15 @@ class legoizerLegoize(bpy.types.Operator):
                     # apply parent transformation
                     select(source, active=source)
                     bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+                # apply shape keys if existing
+                shapeKeys = source.data.shape_keys
+                if shapeKeys is not None and len(shapeKeys.key_blocks) > 0:
+                    select(source, active=source)
+                    bpy.ops.object.shape_key_add(from_mix=True)
+                    for i in range(len(shapeKeys.key_blocks)):
+                        source.shape_key_remove(source.data.shape_keys.key_blocks[0])
+                    # bpy.ops.object.shape_key_remove(all=True)
+                # bake and apply modifiers
                 for mod in source.modifiers:
                     # apply cloth and soft body modifiers
                     if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
@@ -433,7 +440,9 @@ class legoizerLegoize(bpy.types.Operator):
                 source.matrix_world = sourceOrig.matrix_world
                 source.animation_data_clear()
                 scn.update()
-                source["previous_location"] = source.location.to_tuple()
+                sourceOrig["previous_location"] = source.location.to_tuple()
+                sourceOrig["previous_rotation"] = tuple(source.rotation_euler)
+                sourceOrig["previous_scale"] = source.scale.to_tuple()
                 select(source, active=source)
                 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
                 scn.update()
@@ -490,6 +499,31 @@ class legoizerLegoize(bpy.types.Operator):
         if pGroup is None:
             pGroup = bpy.data.groups.new(LEGOizer_parent_on)
 
+        # link source if it isn't in scene
+        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
+            safeLink(sourceOrig, unhide=True)
+
+        if self.action == "CREATE":
+            # get origin location for source
+            oldCursorLocation = tuple(scn.cursor_location)
+            select(sourceOrig, active=sourceOrig)
+            bpy.ops.view3d.snap_cursor_to_active()
+            previous_origin = tuple(scn.cursor_location)
+            scn.cursor_location = oldCursorLocation
+
+            # create empty object at source's old origin location and set as child of source
+            m = bpy.data.meshes.new("LEGOizer_%(n)s_last_origin_mesh" % locals())
+            obj = bpy.data.objects.new("LEGOizer_%(n)s_last_origin" % locals(), m)
+            obj.location = previous_origin
+            scn.objects.link(obj)
+            select([obj, sourceOrig], active=sourceOrig)
+            bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+            safeUnlink(obj)
+
+        # unlink source if it wasn't in scene
+        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
+            safeUnlink(sourceOrig, hide=False)
+
         # if there are no changes to apply, simply return "FINISHED"
         if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] and not updateCanRun("MODEL"):
             return{"FINISHED"}
@@ -523,6 +557,14 @@ class legoizerLegoize(bpy.types.Operator):
                 source["frame_parent_cleared"] = scn.frame_current
                 select(source, active=source)
                 bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+            # apply shape keys if existing
+            shapeKeys = source.data.shape_keys
+            if shapeKeys is not None and len(shapeKeys.key_blocks) > 0:
+                select(source, active=source)
+                bpy.ops.object.shape_key_add(from_mix=True)
+                for i in range(len(shapeKeys.key_blocks)):
+                    source.shape_key_remove(source.data.shape_keys.key_blocks[0])
+                # bpy.ops.object.shape_key_remove(all=True)
             # list modifiers that need to be applied
             for mod in sourceOrig.modifiers:
                 if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"] and mod.show_viewport:
@@ -530,11 +572,19 @@ class legoizerLegoize(bpy.types.Operator):
                         bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
                     except:
                         mod.show_viewport = False
+                if mod.type == "ARMATURE":
+                    cm.armature = True
+                else:
+                    cm.armature = False
+
             # apply transformation data
+            if self.action == "CREATE":
+                sourceOrig["previous_location"] = source.location.to_tuple()
+            sourceOrig["previous_rotation"] = tuple(source.rotation_euler)
+            sourceOrig["previous_scale"] = source.scale.to_tuple()
             if cm.useGlobalGrid:
                 applyLoc = True
             else:
-                source["previous_location"] = source.location.to_tuple()
                 source.location = (0,0,0)
                 applyLoc = False
             select(source, active=source)
@@ -546,9 +596,9 @@ class legoizerLegoize(bpy.types.Operator):
         if source is None:
             source = sourceOrig
 
-        # update scene so mesh data is available for ray casting
-        if source.name not in scn.objects.keys():
-            safeLink(source)
+        # link source if it isn't in scene
+        if sourceOrig.name not in scn.objects.keys():
+            safeLink(sourceOrig)
         scn.update()
 
         # get source_details and dimensions
@@ -565,7 +615,7 @@ class legoizerLegoize(bpy.types.Operator):
             if cm.useGlobalGrid:
                 parentLoc = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
             else:
-                parentLoc = (source_details.x.mid + source["previous_location"][0], source_details.y.mid + source["previous_location"][1], source_details.z.mid + source["previous_location"][2])
+                parentLoc = (source_details.x.mid + sourceOrig["previous_location"][0], source_details.y.mid + sourceOrig["previous_location"][1], source_details.z.mid + sourceOrig["previous_location"][2])
             if parent is None:
                 parent = self.getParent(LEGOizer_parent_on, parentLoc)
                 pGroup.objects.link(parent)
@@ -573,6 +623,9 @@ class legoizerLegoize(bpy.types.Operator):
                 parent.location = parentLoc
         oldCursorLocation = tuple(scn.cursor_location)
         scn.cursor_location = parent.location
+        bGroup = bpy.data.groups.get(LEGOizer_bricks_gn) # redefine bGroup since it was removed
+        if not cm.splitModel and bGroup is not None and len(bGroup.objects) > 0:
+            scn.cursor_location += bGroup.objects[0].location
         select(sourceOrig, active=sourceOrig)
         bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
         scn.cursor_location = oldCursorLocation
@@ -588,11 +641,20 @@ class legoizerLegoize(bpy.types.Operator):
 
         bGroup = bpy.data.groups.get(LEGOizer_bricks_gn) # redefine bGroup since it was removed
         if bGroup is not None:
-            setTransformData(list(bGroup.objects))
+            if self.action == "CREATE" and cm.sourceIsDirty:
+                setTransformData(list(bGroup.objects))
+            else:
+                setTransformData(list(bGroup.objects), sourceOrig)
             if not cm.splitModel:
-                select(bGroup.objects[0], active=bGroup.objects[0])
+                obj = bGroup.objects[0]
+                select(obj, active=obj)
+                if cm.armature:
+                    # lock location, rotation, and scale of created bricks
+                    obj.lock_location = [True, True, True]
+                    obj.lock_rotation = [True, True, True]
+                    obj.lock_scale    = [True, True, True]
 
-        if source != sourceOrig:
+        if source != sourceOrig and source.name in scn.objects.keys():
             safeUnlink(source)
 
         cm.modelCreated = True

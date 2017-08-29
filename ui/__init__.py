@@ -56,10 +56,10 @@ class LEGOizerStoragePanel(Panel):
         if editingSourceInStorage:
             col = layout.column(align=True)
             row = col.row(align=True)
-            col.operator("scene.legoizer_commit_edits", text="Commit Changes", icon="FILE_REFRESH")
+            col.operator("scene.legoizer_commit_edits", text="Commit Changes", icon="FILE_TICK")
+            col = layout.column(align=True)
             row = col.row(align=True)
-            col.operator("scene.legoizer_legoize", text="Commit and Update Model", icon="FILE_REFRESH").action = "COMMIT_UPDATE_MODEL"
-            row = col.row(align=True)
+            col.operator("scene.legoizer_legoize", text="Commit and Update Model", icon="FILE_TICK").action = "COMMIT_UPDATE_MODEL"
         else:
             col = layout.column(align=True)
             col.scale_y = 0.7
@@ -306,7 +306,7 @@ class ModelTransformPanel(Panel):
         if bversion() < '002.078.00':
             return False
         cm = scn.cmlist[scn.cmlist_index]
-        if cm.animated or (cm.modelCreated and cm.lastSplitModel):
+        if cm.animated or (cm.modelCreated and (cm.lastSplitModel or cm.armature)):
             return True
         return False
 
