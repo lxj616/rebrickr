@@ -121,10 +121,6 @@ class LegoModelsPanel(Panel):
         col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
         col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
 
-        if not listModalRunning():
-            col = layout.column(align=True)
-            col.operator("cmlist.list_action", icon='FILE_REFRESH', text="Run Auto-Select").action = 'NONE'
-
         # draw menu options below UI list
         if scn.cmlist_index != -1:
             cm = scn.cmlist[scn.cmlist_index]
@@ -133,6 +129,10 @@ class LegoModelsPanel(Panel):
             if cm.animated or cm.modelCreated:
                 col = layout.column(align=True)
                 col.label("Source Object: " + cm.source_name)
+                if not listModalRunning():
+                    col = layout.column(align=True)
+                    col.operator("cmlist.list_action", icon='FILE_REFRESH', text="Initialize LEGOizer").action = 'NONE'
+                    return
             else:
                 col1 = layout.column(align=True)
                 col1.label("Source Object:")
@@ -220,6 +220,8 @@ class AnimationPanel(Panel):
         cm = scn.cmlist[scn.cmlist_index]
         if cm.modelCreated:
             return False
+        if not listModalRunning():
+            return False
         # groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
         # if groupExistsBool:
         #     return False
@@ -304,6 +306,8 @@ class ModelTransformPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
+        if not listModalRunning():
+            return False
         cm = scn.cmlist[scn.cmlist_index]
         if cm.animated or (cm.modelCreated and (cm.lastSplitModel or cm.armature)):
             return True
@@ -353,6 +357,8 @@ class ModelSettingsPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
+        if not listModalRunning():
+            return False
         return True
 
     def draw(self, context):
@@ -392,8 +398,6 @@ class ModelSettingsPanel(Panel):
         if not cm.useAnimation:
             row = col.row(align=True)
             row.prop(cm, "splitModel")
-            # row = col.row(align=True)
-            # row.prop(cm, "useGlobalGrid")
 
         row = col.row(align=True)
         row.label("Randomize:")
@@ -441,6 +445,8 @@ class BrickTypesPanel(Panel):
         if scn.cmlist_index == -1:
             return False
         if bversion() < '002.078.00':
+            return False
+        if not listModalRunning():
             return False
         return True
 
@@ -509,6 +515,8 @@ class MaterialsPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
+        if not listModalRunning():
+            return False
         return True
 
     def draw(self, context):
@@ -572,6 +580,8 @@ class DetailingPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
+        if not listModalRunning():
+            return False
         cm = scn.cmlist[scn.cmlist_index]
         if cm.brickType == "Custom":
             return False
@@ -625,6 +635,8 @@ class SupportsPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
+        if not listModalRunning():
+            return False
         return True
 
     def draw(self, context):
@@ -661,6 +673,8 @@ class BevelPanel(Panel):
         if scn.cmlist_index == -1:
             return False
         if bversion() < '002.078.00':
+            return False
+        if not listModalRunning():
             return False
         cm = scn.cmlist[scn.cmlist_index]
         if not cm.modelCreated and not cm.animated:

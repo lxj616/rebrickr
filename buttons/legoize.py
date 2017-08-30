@@ -522,8 +522,12 @@ class legoizerLegoize(bpy.types.Operator):
         if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] and not updateCanRun("MODEL"):
             return{"FINISHED"}
 
+        sto_scn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
+        if sto_scn is not None:
+            sto_scn.update()
+
         # delete old bricks if present
-        if self.action  in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
+        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
             if cm.sourceIsDirty:
                 # delete source/dupes as well if source is dirty, but only delete parent if not cm.splitModel
                 legoizerDelete.cleanUp("MODEL", skipParents=cm.splitModel)
@@ -593,9 +597,9 @@ class legoizerLegoize(bpy.types.Operator):
             source = sourceOrig
 
         # link source if it isn't in scene
-        if sourceOrig.name not in scn.objects.keys():
-            safeLink(sourceOrig)
-        scn.update()
+        if source.name not in scn.objects.keys():
+            safeLink(source)
+            scn.update()
 
         # get source_details and dimensions
         source_details, dimensions = self.getDimensionsAndBounds(source)
@@ -606,7 +610,7 @@ class legoizerLegoize(bpy.types.Operator):
 
         # get parent object
         parent = bpy.data.objects.get(LEGOizer_parent_on)
-        # if parent doesn't exist, or parent exists but useGlobalGrid has changed, get parent with new location
+        # if parent doesn't exist, get parent with new location
         if parent is None:
             parentLoc = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
             parent = self.getParent(LEGOizer_parent_on, parentLoc)
@@ -691,7 +695,6 @@ class legoizerLegoize(bpy.types.Operator):
         cm.lastLogoResolution = cm.logoResolution
         cm.lastLogoDetail = cm.logoDetail
         cm.lastSplitModel = cm.splitModel
-        cm.lastUseGlobalGrid = cm.useGlobalGrid
         cm.materialIsDirty = False
         cm.modelIsDirty = False
         cm.buildIsDirty = False

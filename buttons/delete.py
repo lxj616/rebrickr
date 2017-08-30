@@ -180,9 +180,10 @@ class legoizerDelete(bpy.types.Operator):
 
         # set origin to previous origin location
         last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
-        safeLink(last_origin_obj)
-        scn.update()
-        setOriginToObjOrigin(toObj=source, fromObj=last_origin_obj, deleteFromObj=True)
+        if last_origin_obj is not None:
+            safeLink(last_origin_obj)
+            scn.update()
+            setOriginToObjOrigin(toObj=source, fromObj=last_origin_obj, deleteFromObj=True)
 
         # select source, update scene, and return open layers to original
         select(source, active=source)
