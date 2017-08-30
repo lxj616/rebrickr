@@ -76,7 +76,7 @@ class legoizerApplyMaterial(bpy.types.Operator):
             # if materials exist, remove them
             if brick.data.materials:
                 if self.action == "CUSTOM":
-                    brick.data.materials.clear()
+                    brick.data.materials.clear(1)
                     # Assign it to object
                     brick.data.materials.append(mat)
                 elif self.action == "INTERNAL":
