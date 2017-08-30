@@ -82,7 +82,8 @@ class legoizerDelete(bpy.types.Operator):
             if source["ignored_mods"] != "":
                 for mn in source["ignored_mods"]:
                     source.modifiers[mn].show_viewport = True
-            source.name = n
+            if modelType == "MODEL":
+                source.name = n
 
         # clean up 'LEGOizer_[source name]_dupes' group
         if groupExists(LEGOizer_source_dupes_gn) and not skipDupes:
@@ -137,8 +138,8 @@ class legoizerDelete(bpy.types.Operator):
                     update_progress("Deleting", percent)
                     wm.progress_update(percent*100)
                 LEGOizer_bricks_cur_frame_gn = LEGOizer_bricks_gn + "_frame_" + str(i)
-                if groupExists(LEGOizer_bricks_cur_frame_gn):
-                    brickGroup = bpy.data.groups[LEGOizer_bricks_cur_frame_gn]
+                brickGroup = bpy.data.groups.get(LEGOizer_bricks_cur_frame_gn)
+                if brickGroup is not None:
                     bgObjects = list(brickGroup.objects)
                     if len(bgObjects) > 0:
                         delete(bgObjects)

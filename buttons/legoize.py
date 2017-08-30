@@ -279,8 +279,11 @@ class legoizerLegoize(bpy.types.Operator):
                 return False
 
         success = False
+        if cm.modelCreated:
+            g = bpy.data.groups.get(LEGOizer_bricks_gn)
+        elif cm.animated:
+            g = bpy.data.groups.get(LEGOizer_bricks_gn + "_frame_" + str(cm.lastStartFrame))
         if cm.modelCreated or cm.animated:
-            g = bpy.data.groups.get(LEGOizer_bricks_gn + )
             if g is not None and len(g.objects) > 0:
                 obj = g.objects[0]
             else:
