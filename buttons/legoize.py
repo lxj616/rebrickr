@@ -45,7 +45,7 @@ def updateCanRun(type):
             # set up variables
             n = cm.source_name
             LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
-            return cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType == "Custom" and cm.materialIsDirty) or (groupExists(LEGOizer_bricks_gn) and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)
+            return cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and cm.materialIsDirty) or (groupExists(LEGOizer_bricks_gn) and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)
 
 class legoizerLegoize(bpy.types.Operator):
     """Select objects layer by layer and shift by given values"""               # blender will use this as a tooltip for menu items and buttons.
