@@ -183,6 +183,43 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                 cm.objEdges = len(obj.data.edges)
                 cm.isWaterTight = cm.objVerts + cm.objPolys - cm.objEdges == 2
                 redraw_areas("VIEW_3D")
+
+        # run animation updater
+        if len(self.lastFrame) != len(scn.cmlist):
+            self.lastFrame = [scn.frame_current-1]*len(scn.cmlist)
+
+        for i,cm in enumerate(scn.cmlist):
+            if cm.animated:
+                if context.scene.frame_current != self.lastFrame[i]:
+                    fn0 = self.lastFrame[i]
+                    fn1 = scn.frame_current
+                    if fn1 < cm.lastStartFrame:
+                        fn1 = cm.lastStartFrame
+                    elif fn1 > cm.lastStopFrame:
+                        fn1 = cm.lastStopFrame
+                    self.lastFrame[i] = fn1
+                    if self.lastFrame[i] == fn0:
+                        continue
+                    n = cm.source_name
+
+                    try:
+                        curBricks = bpy.data.groups["LEGOizer_%(n)s_bricks_frame_%(fn1)s" % locals()]
+                        for brick in curBricks.objects:
+                            brick.hide = False
+                            # scn.objects.link(brick)
+                    except Exception as e:
+                        print(e)
+                    try:
+                        lastBricks = bpy.data.groups["LEGOizer_%(n)s_bricks_frame_%(fn0)s" % locals()]
+                        for brick in lastBricks.objects:
+                            brick.hide = True
+                            # scn.objects.unlink(brick)
+                            brick.select = False
+                    except Exception as e:
+                        print(e)
+                    scn.update()
+                    redraw_areas("VIEW_3D")
+
         return {"PASS_THROUGH"}
 
     def execute(self, context):
@@ -255,9 +292,10 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             scn.cmlist_index -= 1
             item.idx = scn.cmlist_index
 
-        if listModalRunning():
+        if modalRunning():
             return{"FINISHED"}
         else:
+            self.lastFrame = []
             # run modal
             wm = bpy.context.window_manager
             bpy.context.window_manager["list_modal_running"] = True
@@ -467,6 +505,13 @@ def updateBevel(self, context):
             cm.lastBevelProfile = cm.bevelProfile
     except:
         pass
+
+def updateStartAndStopFrames(self, context):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    if cm.useAnimation:
+        cm.startFrame = scn.frame_start
+        cm.stopFrame = scn.frame_end
 
 def dirtyAnim(self, context):
     scn = bpy.context.scene
@@ -800,6 +845,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     useAnimation = BoolProperty(
         name="Use Animation",
         description="LEGOize object animation from start to stop frame (WARNING: Calculation takes time, and may result in large blend file size)",
+        update=updateStartAndStopFrames,
         default=False)
 
     # ADVANCED SETTINGS

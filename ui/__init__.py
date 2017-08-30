@@ -129,10 +129,6 @@ class LegoModelsPanel(Panel):
             if cm.animated or cm.modelCreated:
                 col = layout.column(align=True)
                 col.label("Source Object: " + cm.source_name)
-                if not listModalRunning():
-                    col = layout.column(align=True)
-                    col.operator("cmlist.list_action", icon='FILE_REFRESH', text="Initialize LEGOizer").action = 'NONE'
-                    return
             else:
                 col1 = layout.column(align=True)
                 col1.label("Source Object:")
@@ -143,6 +139,10 @@ class LegoModelsPanel(Panel):
                 col.operator("cmlist.set_to_active", icon="EDIT", text="")
                 col = layout.column(align=True)
 
+            if not modalRunning():
+                col.operator("cmlist.list_action", icon='FILE_REFRESH', text="Initialize LEGOizer").action = 'NONE'
+                return
+
             obj = bpy.data.objects.get(cm.source_name)
 
             # if use animation is selected, draw animation options
@@ -150,14 +150,9 @@ class LegoModelsPanel(Panel):
                 if cm.animated:
                     row = col.row(align=True)
                     row.operator("scene.legoizer_delete", text="Delete LEGOized Animation", icon="CANCEL").modelType = "ANIMATION"
-                    if not modalRunning():
-                        col = layout.column(align=True)
-                        row = col.row(align=True)
-                        row.operator("scene.legoizer_legoize", text="Show Animation", icon="MOD_REMESH").action = "RUN_MODAL"
-                    else:
-                        col = layout.column(align=True)
-                        row = col.row(align=True)
-                        row.operator("scene.legoizer_legoize", text="Update Animation", icon="FILE_REFRESH").action = "UPDATE_ANIM"
+                    col = layout.column(align=True)
+                    row = col.row(align=True)
+                    row.operator("scene.legoizer_legoize", text="Update Animation", icon="FILE_REFRESH").action = "UPDATE_ANIM"
                 else:
                     row = col.row(align=True)
                     if obj:
@@ -220,7 +215,7 @@ class AnimationPanel(Panel):
         cm = scn.cmlist[scn.cmlist_index]
         if cm.modelCreated:
             return False
-        if not listModalRunning():
+        if not modalRunning():
             return False
         # groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
         # if groupExistsBool:
@@ -306,7 +301,7 @@ class ModelTransformPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not listModalRunning():
+        if not modalRunning():
             return False
         cm = scn.cmlist[scn.cmlist_index]
         if cm.animated or (cm.modelCreated and (cm.lastSplitModel or cm.armature)):
@@ -357,7 +352,7 @@ class ModelSettingsPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not listModalRunning():
+        if not modalRunning():
             return False
         return True
 
@@ -418,7 +413,7 @@ class ModelSettingsPanel(Panel):
         row = col.row(align=True)
         row.prop(cm, "shellThickness", text="Thickness")
         obj = bpy.data.objects.get(cm.source_name)
-        if obj is not None and not cm.isWaterTight and listModalRunning():
+        if obj is not None and not cm.isWaterTight and modalRunning():
             row = col.row(align=True)
             # row.scale_y = 0.7
             row.label("(Source is NOT single closed mesh)")
@@ -446,7 +441,7 @@ class BrickTypesPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not listModalRunning():
+        if not modalRunning():
             return False
         return True
 
@@ -515,7 +510,7 @@ class MaterialsPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not listModalRunning():
+        if not modalRunning():
             return False
         return True
 
@@ -580,7 +575,7 @@ class DetailingPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not listModalRunning():
+        if not modalRunning():
             return False
         cm = scn.cmlist[scn.cmlist_index]
         if cm.brickType == "Custom":
@@ -635,7 +630,7 @@ class SupportsPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not listModalRunning():
+        if not modalRunning():
             return False
         return True
 
@@ -674,7 +669,7 @@ class BevelPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not listModalRunning():
+        if not modalRunning():
             return False
         cm = scn.cmlist[scn.cmlist_index]
         if not cm.modelCreated and not cm.animated:

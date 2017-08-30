@@ -93,7 +93,7 @@ def randomizeRot(center, brickType, bm):
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(y, 3, 'Y'))
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(z, 3, 'Z'))
 
-def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customData=None, customObj_details=None, group_name=None, frameNum=None):
+def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customData=None, customObj_details=None, group_name=None, frameNum=None, cursorStatus=False):
     # set up variables
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -131,8 +131,9 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
 
     # initialize progress bar around cursor
     denom = len(keys)/1000
-    wm = bpy.context.window_manager
-    wm.progress_begin(0, 100)
+    if cursorStatus:
+        wm = bpy.context.window_manager
+        wm.progress_begin(0, 100)
 
     # set up internal material for this object
     internalMat = bpy.data.materials.get(cm.internalMatName)
@@ -605,11 +606,13 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             percent = i/len(keys)
             if percent < 1:
                 update_progress("Building", percent)
-                wm.progress_update(percent*100)
+                if cursorStatus:
+                    wm.progress_update(percent*100)
 
     # end progress bar around cursor
     update_progress("Building", 1)
-    wm.progress_end()
+    if cursorStatus:
+        wm.progress_end()
     if split:
         for i,key in enumerate(bricksD):
             # print status to terminal

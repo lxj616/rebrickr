@@ -64,6 +64,8 @@ class legoizerLegoize(bpy.types.Operator):
             scn = context.scene
         if scn.cmlist_index == -1:
             return False
+        if not modalRunning():
+            return True
         cm = scn.cmlist[scn.cmlist_index]
         if ((cm.animated and (not updateCanRun("ANIMATION") and not cm.animIsDirty))
            or (cm.modelCreated and not updateCanRun("MODEL"))):
@@ -77,60 +79,13 @@ class legoizerLegoize(bpy.types.Operator):
             ("COMMIT_UPDATE_MODEL", "Commit and Update Model", ""),
             ("ANIMATE", "Animate", ""),
             ("UPDATE_ANIM", "Update Animation", ""),
-            ("RUN_MODAL", "Run Modal Operator", "")
         )
     )
-
-    def modal(self, context, event):
-        """ ??? """
-        scn = context.scene
-
-        if len(self.lastFrame) != len(scn.cmlist):
-            self.lastFrame = [scn.frame_current-1]*len(scn.cmlist)
-
-        for i,cm in enumerate(scn.cmlist):
-            if cm.animated:
-                if context.scene.frame_current != self.lastFrame[i]:
-                    fn0 = self.lastFrame[i]
-                    fn1 = scn.frame_current
-                    if fn1 < cm.lastStartFrame:
-                        fn1 = cm.lastStartFrame
-                    elif fn1 > cm.lastStopFrame:
-                        fn1 = cm.lastStopFrame
-                    self.lastFrame[i] = fn1
-                    if self.lastFrame[i] == fn0:
-                        continue
-                    n = cm.source_name
-
-                    try:
-                        curBricks = bpy.data.groups["LEGOizer_%(n)s_bricks_frame_%(fn1)s" % locals()]
-                        for brick in curBricks.objects:
-                            brick.hide = False
-                            # scn.objects.link(brick)
-                    except Exception as e:
-                        print(e)
-                    try:
-                        lastBricks = bpy.data.groups["LEGOizer_%(n)s_bricks_frame_%(fn0)s" % locals()]
-                        for brick in lastBricks.objects:
-                            brick.hide = True
-                            # scn.objects.unlink(brick)
-                            brick.select = False
-                    except Exception as e:
-                        print(e)
-                    scn.update()
-                    redraw_areas("VIEW_3D")
-
-        if event.type in {"ESC"} and event.shift:
-            scn.modalRunning = False
-            bpy.context.window_manager["modal_running"] = False
-            self.report({"INFO"}, "Modal Finished")
-            return{"FINISHED"}
-        return {"PASS_THROUGH"}
 
     def getObjectToLegoize(self):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
+        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL", "UPDATE_ANIM"]:
             objToLegoize = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         elif self.action in ["CREATE", "ANIMATE"]:
             objToLegoize = bpy.data.objects.get(cm.source_name)
@@ -221,12 +176,13 @@ class legoizerLegoize(bpy.types.Operator):
             customData = None
             customObj_details = None
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
-        bricksDict = makeBricksDict(source, source_details, dimensions, R)
+        updateCursor = self.action in ["CREATE", "UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] # evaluates to boolean value
+        bricksDict = makeBricksDict(source, source_details, dimensions, R, cursorStatus=updateCursor)
         if curFrame is not None:
             group_name = 'LEGOizer_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
             group_name = None
-        makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame)
+        makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor)
         if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
             self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
         if int(round((source_details.y.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
@@ -324,8 +280,9 @@ class legoizerLegoize(bpy.types.Operator):
 
         success = False
         if cm.modelCreated or cm.animated:
-            if groupExists(LEGOizer_bricks_gn) and len(bpy.data.groups[LEGOizer_bricks_gn].objects) > 0:
-                obj = bpy.data.groups[LEGOizer_bricks_gn].objects[0]
+            g = bpy.data.groups.get(LEGOizer_bricks_gn + )
+            if g is not None and len(g.objects) > 0:
+                obj = g.objects[0]
             else:
                 obj = None
         else:
@@ -386,8 +343,13 @@ class legoizerLegoize(bpy.types.Operator):
         else:
             refLogo = None
 
+        # begin drawing status to cursor
+        wm = bpy.context.window_manager
+        wm.progress_begin(0, cm.stopFrame + 1 - cm.startFrame)
+
         # iterate through frames of animation and generate lego model
         for curFrame in range(cm.startFrame, cm.stopFrame + 1):
+
             if self.updatedFramesOnly and cm.lastStartFrame <= curFrame and curFrame <= cm.lastStopFrame:
                 print("skipped frame %(curFrame)s" % locals())
                 continue
@@ -476,8 +438,10 @@ class legoizerLegoize(bpy.types.Operator):
                 obj.lock_rotation = [True, True, True]
                 obj.lock_scale    = [True, True, True]
 
+            wm.progress_update(curFrame-cm.startFrame)
             print("completed frame " + str(curFrame))
 
+        wm.progress_end()
         cm.lastStartFrame = cm.startFrame
         cm.lastStopFrame = cm.stopFrame
         scn.frame_set(cm.lastStartFrame)
@@ -669,12 +633,6 @@ class legoizerLegoize(bpy.types.Operator):
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
 
-        if self.action == "RUN_MODAL" and not modalRunning():
-            self.lastFrame = []
-            bpy.context.window_manager["modal_running"] = True
-            context.window_manager.modal_handler_add(self)
-            return {"RUNNING_MODAL"}
-
         # get source and initialize values
         source = self.getObjectToLegoize()
         source["old_parent"] = ""
@@ -710,13 +668,7 @@ class legoizerLegoize(bpy.types.Operator):
         # STOPWATCH CHECK
         stopWatch("Total Time Elapsed", time.time()-startTime)
 
-        if not modalRunning():
-            self.lastFrame = []
-            bpy.context.window_manager["modal_running"] = True
-            context.window_manager.modal_handler_add(self)
-            return {"RUNNING_MODAL"}
-        else:
-            return{"FINISHED"}
+        return{"FINISHED"}
 
     def cancel(self, context):
         scn = context.scene
