@@ -67,7 +67,6 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             ('DOWN', "Down", ""),
             ('REMOVE', "Remove", ""),
             ('ADD', "Add", ""),
-            ('NONE', "None", ""),
         )
     )
 
@@ -99,137 +98,10 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                     objVisible = True
         return objVisible, obj
 
-    def modal(self, context, event):
-        scn = bpy.context.scene
-        # if scn.layers changes and active object is no longer visible, set scn.cmlist_index to -1
-        if self.last_layers != list(scn.layers):
-            self.last_layers = list(scn.layers)
-            curObjVisible = False
-            if scn.cmlist_index != -1:
-                cm0 = scn.cmlist[scn.cmlist_index]
-                curObjVisible,_ = self.isObjVisible(cm0)
-            if not curObjVisible or scn.cmlist_index == -1:
-                setIndex = False
-                for i,cm in enumerate(scn.cmlist):
-                    if i != scn.cmlist_index:
-                        nextObjVisible,obj = self.isObjVisible(cm)
-                        if nextObjVisible and bpy.context.active_object == obj:
-                            scn.cmlist_index = i
-                            setIndex = True
-                            break
-                if not setIndex:
-                    scn.cmlist_index = -1
-                redraw_areas("VIEW_3D")
-        # select and make source or LEGO model active if scn.cmlist_index changes
-        elif self.last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
-            self.last_cmlist_index = scn.cmlist_index
-            cm = scn.cmlist[scn.cmlist_index]
-            obj = bpy.data.objects.get(cm.source_name)
-            if obj is not None:
-                if cm.modelCreated:
-                    n = cm.source_name
-                    gn = "LEGOizer_%(n)s_bricks" % locals()
-                    if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
-                        select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
-                elif cm.animated:
-                    n = cm.source_name
-                    cf = scn.frame_current
-                    if cf > cm.stopFrame:
-                        cf = cm.stopFrame
-                    elif cf < cm.startFrame:
-                        cf = cm.startFrame
-                    gn = "LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals()
-                    if len(bpy.data.groups[gn].objects) > 0:
-                        select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
-                else:
-                    select(obj, active=obj)
-                self.last_active_object_name = obj.name
-            else:
-                for i in range(len(scn.cmlist)):
-                    cm = scn.cmlist[i]
-                    if cm.source_name == self.active_object_name:
-                        select(None)
-                        break
-        # open LEGO model settings for active object if active object changes
-        elif scn.objects.active and self.last_active_object_name != scn.objects.active.name and ( scn.cmlist_index == -1 or scn.cmlist[scn.cmlist_index].source_name != "") and scn.objects.active.type == "MESH":
-            self.last_active_object_name = scn.objects.active.name
-            if scn.objects.active.name.startswith("LEGOizer_"):
-                if "_bricks" in scn.objects.active.name:
-                    frameLoc = scn.objects.active.name.rfind("_bricks")
-                elif "_brick_" in scn.objects.active.name:
-                    frameLoc = scn.objects.active.name.rfind("_brick_")
-                else:
-                    frameLoc = None
-                if frameLoc is not None:
-                    self.active_object_name = scn.objects.active.name[9:frameLoc]
-            else:
-                self.active_object_name = scn.objects.active.name
-            for i in range(len(scn.cmlist)):
-                cm = scn.cmlist[i]
-                if cm.source_name == self.active_object_name:
-                    scn.cmlist_index = i
-                    redraw_areas("VIEW_3D")
-                    self.last_cmlist_index = scn.cmlist_index
-                    return {"PASS_THROUGH"}
-            scn.cmlist_index = -1
-            redraw_areas("VIEW_3D")
-
-        if scn.cmlist_index != -1:
-            cm = scn.cmlist[scn.cmlist_index]
-            obj = bpy.data.objects.get(cm.source_name)
-            if obj is not None and (len(obj.data.vertices) != cm.objVerts or len(obj.data.polygons) != cm.objPolys or len(obj.data.edges) != cm.objEdges):
-                cm.objVerts = len(obj.data.vertices)
-                cm.objPolys = len(obj.data.polygons)
-                cm.objEdges = len(obj.data.edges)
-                cm.isWaterTight = cm.objVerts + cm.objPolys - cm.objEdges == 2
-                redraw_areas("VIEW_3D")
-
-        # run animation updater
-        if len(self.lastFrame) != len(scn.cmlist):
-            self.lastFrame = [scn.frame_current-1]*len(scn.cmlist)
-
-        for i,cm in enumerate(scn.cmlist):
-            if cm.animated:
-                if context.scene.frame_current != self.lastFrame[i]:
-                    fn0 = self.lastFrame[i]
-                    fn1 = scn.frame_current
-                    if fn1 < cm.lastStartFrame:
-                        fn1 = cm.lastStartFrame
-                    elif fn1 > cm.lastStopFrame:
-                        fn1 = cm.lastStopFrame
-                    self.lastFrame[i] = fn1
-                    if self.lastFrame[i] == fn0:
-                        continue
-                    n = cm.source_name
-
-                    try:
-                        curBricks = bpy.data.groups["LEGOizer_%(n)s_bricks_frame_%(fn1)s" % locals()]
-                        for brick in curBricks.objects:
-                            brick.hide = False
-                            # scn.objects.link(brick)
-                    except Exception as e:
-                        print(e)
-                    try:
-                        lastBricks = bpy.data.groups["LEGOizer_%(n)s_bricks_frame_%(fn0)s" % locals()]
-                        for brick in lastBricks.objects:
-                            brick.hide = True
-                            # scn.objects.unlink(brick)
-                            brick.select = False
-                    except Exception as e:
-                        print(e)
-                    scn.update()
-                    redraw_areas("VIEW_3D")
-
-        return {"PASS_THROUGH"}
-
     def execute(self, context):
 
         scn = context.scene
         idx = scn.cmlist_index
-        self.active_object_name = -1
-        self.last_active_object_name = -1
-        self.last_cmlist_index = scn.cmlist_index
-        self.last_layers = list(scn.layers)
 
         try:
             item = scn.cmlist[idx]
@@ -292,19 +164,7 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             scn.cmlist_index -= 1
             item.idx = scn.cmlist_index
 
-        if modalRunning():
-            return{"FINISHED"}
-        else:
-            self.lastFrame = []
-            # run modal
-            wm = bpy.context.window_manager
-            bpy.context.window_manager["modal_running"] = True
-            wm.modal_handler_add(self)
-            return {"RUNNING_MODAL"}
-
-    def cancel(self, context):
-        scn = context.scene
-        bpy.context.window_manager["modal_running"] = False
+        return{"FINISHED"}
 
 
 # -------------------------------------------------------------------
@@ -462,12 +322,23 @@ def updateBevel(self, context):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         if cm.lastBevelWidth != cm.bevelWidth or cm.lastBevelSegments != cm.bevelSegments or cm.lastBevelProfile != cm.bevelProfile:
-            bricks = list(bpy.data.groups["LEGOizer_%(n)s_bricks" % locals()].objects)
-            legoizerBevel.setBevelMods(bricks)
+            if cm.modelCreated:
+                print("here")
+                bricks = list(bpy.data.groups["LEGOizer_%(n)s_bricks" % locals()].objects)
+            elif cm.animated:
+                bricks = []
+                for cf in range(cm.lastStartFrame, cm.lastStopFrame + 1):
+                    print(cf)
+                    bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals())
+                    print(bGroup)
+                    if bGroup is not None:
+                        bricks.append(bGroup.objects[0])
+            setBevelMods(bricks)
             cm.lastBevelWidth = cm.bevelWidth
             cm.lastBevelSegments = cm.bevelSegments
             cm.lastBevelProfile = cm.bevelProfile
-    except:
+    except Exception as e:
+        print(e)
         pass
 
 def updateStartAndStopFrames(self, context):

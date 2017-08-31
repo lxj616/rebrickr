@@ -24,6 +24,7 @@ import bpy
 from bpy.types import Panel
 from bpy.props import *
 from .committed_models_list import *
+from .app_handlers import *
 from ..buttons.delete import legoizerDelete
 from ..functions import *
 from addon_utils import check, paths, enable
@@ -144,10 +145,6 @@ class LegoModelsPanel(Panel):
                 col.operator("cmlist.set_to_active", icon="EDIT", text="")
                 col = layout.column(align=True)
 
-            if not modalRunning():
-                col.operator("cmlist.list_action", icon='FILE_REFRESH', text="Initialize LEGOizer").action = 'NONE'
-                return
-
             obj = bpy.data.objects.get(cm.source_name)
 
             # if use animation is selected, draw animation options
@@ -219,8 +216,6 @@ class AnimationPanel(Panel):
             return False
         cm = scn.cmlist[scn.cmlist_index]
         if cm.modelCreated:
-            return False
-        if not modalRunning():
             return False
         # groupExistsBool = groupExists(LEGOizer_bricks) or groupExists("LEGOizer_%(n)s" % locals()) or groupExists("LEGOizer_%(n)s_refBricks" % locals())
         # if groupExistsBool:
@@ -306,8 +301,6 @@ class ModelTransformPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not modalRunning():
-            return False
         cm = scn.cmlist[scn.cmlist_index]
         if cm.animated or (cm.modelCreated and (cm.lastSplitModel or cm.armature)):
             return True
@@ -356,8 +349,6 @@ class ModelSettingsPanel(Panel):
         if scn.cmlist_index == -1:
             return False
         if bversion() < '002.078.00':
-            return False
-        if not modalRunning():
             return False
         return True
 
@@ -418,7 +409,7 @@ class ModelSettingsPanel(Panel):
         row = col.row(align=True)
         row.prop(cm, "shellThickness", text="Thickness")
         obj = bpy.data.objects.get(cm.source_name)
-        if obj is not None and not cm.isWaterTight and modalRunning():
+        if obj is not None and not cm.isWaterTight:
             row = col.row(align=True)
             # row.scale_y = 0.7
             row.label("(Source is NOT single closed mesh)")
@@ -445,8 +436,6 @@ class BrickTypesPanel(Panel):
         if scn.cmlist_index == -1:
             return False
         if bversion() < '002.078.00':
-            return False
-        if not modalRunning():
             return False
         return True
 
@@ -515,8 +504,6 @@ class MaterialsPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not modalRunning():
-            return False
         return True
 
     def draw(self, context):
@@ -580,8 +567,6 @@ class DetailingPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not modalRunning():
-            return False
         cm = scn.cmlist[scn.cmlist_index]
         if cm.brickType == "Custom":
             return False
@@ -635,8 +620,6 @@ class SupportsPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not modalRunning():
-            return False
         return True
 
     def draw(self, context):
@@ -674,8 +657,6 @@ class BevelPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not modalRunning():
-            return False
         cm = scn.cmlist[scn.cmlist_index]
         if not cm.modelCreated and not cm.animated:
             return False
@@ -690,7 +671,11 @@ class BevelPanel(Panel):
         col = layout.column(align=True)
         row = col.row(align=True)
         try:
-            testBrick = bpy.data.groups['LEGOizer_%(n)s_bricks' % locals()].objects[0]
+            ff = cm.lastStartFrame
+            if cm.modelCreated:
+                testBrick = bpy.data.groups['LEGOizer_%(n)s_bricks' % locals()].objects[0]
+            elif cm.animated:
+                testBrick = bpy.data.groups['LEGOizer_%(n)s_bricks_frame_%(ff)s' % locals()].objects[0]
             testBrick.modifiers[testBrick.name + '_bevel']
             row.prop(cm, "bevelWidth", text="Width")
             row = col.row(align=True)

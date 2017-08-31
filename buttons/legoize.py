@@ -65,8 +65,6 @@ class legoizerLegoize(bpy.types.Operator):
             scn = context.scene
         if scn.cmlist_index == -1:
             return False
-        if not modalRunning():
-            return True
         cm = scn.cmlist[scn.cmlist_index]
         if ((cm.animated and (not updateCanRun("ANIMATION") and not cm.animIsDirty))
            or (cm.modelCreated and not updateCanRun("MODEL"))):

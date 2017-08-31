@@ -82,6 +82,11 @@ def register():
     bpy.props.origScene = StringProperty(default="")
     bpy.props.commitEdits = False
 
+    bpy.types.Scene.last_layers = StringProperty(default="")
+    bpy.types.Scene.last_cmlist_index = IntProperty(default=-2)
+    bpy.types.Scene.active_object_name = StringProperty(default="")
+    bpy.types.Scene.last_active_object_name = StringProperty(default="")
+
     # handle the keymap
     wm = bpy.context.window_manager
     km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
@@ -93,7 +98,6 @@ def register():
     # other things (UI List)
     bpy.types.Scene.cmlist = CollectionProperty(type=LEGOizer_CreatedModels)
     bpy.types.Scene.cmlist_index = IntProperty(default=-1)
-    bpy.types.Scene.modalRunning = BoolProperty(default=False)
 
     # session properties
     props.addon_name = "legoizer"

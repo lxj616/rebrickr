@@ -83,7 +83,7 @@ class legoizerBevel(bpy.types.Operator):
         try:
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
-            if groupExists("LEGOizer_%(n)s_bricks" % locals()):
+            if cm.modelCreated or cm.animated:
                 return True
         except:
             return False

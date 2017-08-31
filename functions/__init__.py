@@ -34,14 +34,6 @@ from mathutils import Matrix, Vector, geometry
 from mathutils.bvhtree import BVHTree
 props = bpy.props
 
-def modalRunning():
-    try:
-        if bpy.context.window_manager["modal_running"] == True:
-            return True
-    except:
-        pass
-    return False
-
 def getSafeScn():
     safeScn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
     if safeScn == None:
