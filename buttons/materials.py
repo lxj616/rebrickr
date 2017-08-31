@@ -47,16 +47,19 @@ class legoizerApplyMaterial(bpy.types.Operator):
             return False
         return True
 
-    action = bpy.props.EnumProperty(
-        items=(
-            ("CUSTOM", "Custom", ""),
-            ("INTERNAL", "Internal", ""),
-        )
-    )
+    def setAction(self):
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        if cm.materialType == "Use Source Materials":
+            self.action = "INTERNAL"
+        elif cm.materialType == "Custom":
+            self.action = "CUSTOM"
 
     def execute(self, context):
         # get start time
         startTime = time.time()
+
+        self.setAction()
 
         # set up variables
         scn = context.scene

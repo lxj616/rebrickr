@@ -48,6 +48,21 @@ def updateCanRun(type):
             LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
             return cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and cm.materialIsDirty) or (groupExists(LEGOizer_bricks_gn) and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)
 
+def getDimensionsAndBounds(source, skipDimensions=False):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    # get dimensions and bounds
+    source_details = bounds(source)
+    if not skipDimensions:
+        if cm.brickType == "Plates" or cm.brickType == "Bricks and Plates":
+            zScale = 0.333
+        elif cm.brickType in ["Bricks", "Custom"]:
+            zScale = 1
+        dimensions = Bricks.get_dimensions(cm.brickHeight, zScale, cm.gap)
+        return source_details, dimensions
+    else:
+        return source_details
+
 class legoizerLegoize(bpy.types.Operator):
     """ Create LEGO sculpture from source object mesh """                       # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "scene.legoizer_legoize"                                        # unique identifier for buttons and menu items to reference.
@@ -83,21 +98,6 @@ class legoizerLegoize(bpy.types.Operator):
         else:
             objToLegoize = bpy.data.objects.get(cm.source_name)
         return objToLegoize
-
-    def getDimensionsAndBounds(self, source, skipDimensions=False):
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        # get dimensions and bounds
-        source_details = bounds(source)
-        if not skipDimensions:
-            if cm.brickType == "Plates" or cm.brickType == "Bricks and Plates":
-                zScale = 0.333
-            elif cm.brickType in ["Bricks", "Custom"]:
-                zScale = 1
-            dimensions = Bricks.get_dimensions(cm.brickHeight, zScale, cm.gap)
-            return source_details, dimensions
-        else:
-            return source_details
 
     def getParent(self, LEGOizer_parent_on, loc):
         m = bpy.data.meshes.new(LEGOizer_parent_on + "_mesh")
@@ -415,7 +415,7 @@ class legoizerLegoize(bpy.types.Operator):
                 safeUnlink(source)
 
             # get source_details and dimensions
-            source_details, dimensions = self.getDimensionsAndBounds(source)
+            source_details, dimensions = getDimensionsAndBounds(source)
 
             if self.action == "CREATE":
                 # set source model height for display in UI
@@ -462,7 +462,7 @@ class legoizerLegoize(bpy.types.Operator):
         bGroup = bpy.data.groups.get(LEGOizer_bricks_gn)
         LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
-        originalParentLoc = None
+        updateParentLoc = False
 
         # get or create parent group
         pGroup = bpy.data.groups.get(LEGOizer_parent_on)
@@ -471,11 +471,7 @@ class legoizerLegoize(bpy.types.Operator):
 
         if self.action == "CREATE":
             # get origin location for source
-            oldCursorLocation = tuple(scn.cursor_location)
-            select(sourceOrig, active=sourceOrig)
-            bpy.ops.view3d.snap_cursor_to_active()
-            previous_origin = tuple(scn.cursor_location)
-            scn.cursor_location = oldCursorLocation
+            previous_origin = sourceOrig.matrix_world.to_translation().to_tuple()
 
             # create empty object at source's old origin location and set as child of source
             m = bpy.data.meshes.new("LEGOizer_%(n)s_last_origin_mesh" % locals())
@@ -497,8 +493,10 @@ class legoizerLegoize(bpy.types.Operator):
         # delete old bricks if present
         if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
             if cm.sourceIsDirty:
+                # alert that parent loc needs updating at the end
+                updateParentLoc = True
                 # delete source/dupes as well if source is dirty, but only delete parent if not cm.splitModel
-                legoizerDelete.cleanUp("MODEL", skipParents=cm.splitModel)
+                legoizerDelete.cleanUp("MODEL", skipParents=True)#cm.splitModel)
             else:
                 # else, skip source
                 legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
@@ -570,7 +568,7 @@ class legoizerLegoize(bpy.types.Operator):
             scn.update()
 
         # get source_details and dimensions
-        source_details, dimensions = self.getDimensionsAndBounds(source)
+        source_details, dimensions = getDimensionsAndBounds(source)
 
         if self.action == "CREATE":
             # set source model height for display in UI
@@ -579,8 +577,9 @@ class legoizerLegoize(bpy.types.Operator):
         # get parent object
         parent = bpy.data.objects.get(LEGOizer_parent_on)
         # if parent doesn't exist, get parent with new location
+        parentLoc = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
+        print(parentLoc)
         if parent is None:
-            parentLoc = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
             parent = self.getParent(LEGOizer_parent_on, parentLoc)
             pGroup.objects.link(parent)
 
@@ -627,6 +626,8 @@ class legoizerLegoize(bpy.types.Operator):
             legoizerBevel.runBevelAction(bGroup, cm)
 
         cm.modelCreated = True
+
+        cm.lastSourceMid = str(tuple(parentLoc))[1:-1]
 
     def execute(self, context):
         # get start time

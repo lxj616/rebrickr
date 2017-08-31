@@ -209,8 +209,10 @@ def setSourceTransform(source, obj=None, objParent=None, last_origin_obj=None):
         objParentRot = Vector((0,0,0))
         objParentScale = Vector((1,1,1))
     if last_origin_obj is not None:
+        print("here")
         source.location = objParentLoc + objLoc - (Vector(last_origin_obj.location) - Vector(source["previous_location"]))
     else:
+        print("there")
         source.location = objParentLoc + objLoc
     source.rotation_euler = (source.rotation_euler[0] + objRot[0] + objParentRot[0], source.rotation_euler[1] + objRot[1] + objParentRot[1], source.rotation_euler[2] + objRot[2] + objParentRot[2])
     source.scale = (source.scale[0] * objScale[0] * objParentScale[0], source.scale[1] * objScale[1] * objParentScale[1], source.scale[2] * objScale[2] * objParentScale[2])

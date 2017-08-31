@@ -26,9 +26,7 @@ from ..functions import *
 
 @persistent
 def handle_animation(scene):
-    print("frame changed")
     scn = scene
-    cm = scn.cmlist[scn.cmlist_index]
     for i,cm in enumerate(scn.cmlist):
         if cm.animated:
             n = cm.source_name

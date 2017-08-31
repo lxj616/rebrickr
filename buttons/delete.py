@@ -32,14 +32,6 @@ class legoizerDelete(bpy.types.Operator):
     bl_label = "Delete LEGOized model from Blender"                             # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
-    modelType = bpy.props.EnumProperty(
-        items=(
-            ("MODEL", "Model", ""),
-            ("ANIMATION", "Animation", ""),
-        ),
-        default="MODEL"
-    )
-
     @classmethod
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
@@ -47,6 +39,15 @@ class legoizerDelete(bpy.types.Operator):
         if scn.cmlist_index == -1:
             return False
         return True
+
+    def setModelType(self):
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        if cm.animated:
+            self.modelType = "ANIMATION"
+        elif cm.modelCreated:
+            self.modelType = "MODEL"
+
 
     @classmethod
     def cleanUp(cls, modelType, skipSource=False, skipDupes=False, skipParents=False):
@@ -166,6 +167,8 @@ class legoizerDelete(bpy.types.Operator):
             source.layers = brick.layers
         # set active layers to source layers
         scn.layers = source.layers
+
+        self.setModelType()
 
         source,oldOrigin,newOrigin = self.cleanUp(self.modelType)
 

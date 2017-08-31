@@ -652,6 +652,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     lastSplitModel = BoolProperty(default=False)
     lastStartFrame = IntProperty(default=-1)
     lastStopFrame = IntProperty(default=-1)
+    lastSourceMid = StringProperty(default="-1,-1,-1")
 
     modelLoc = StringProperty(default="-1,-1,-1")
     modelRot = StringProperty(default="-1,-1,-1")

@@ -151,7 +151,7 @@ class LegoModelsPanel(Panel):
             if cm.useAnimation:
                 if cm.animated:
                     row = col.row(align=True)
-                    row.operator("scene.legoizer_delete", text="Delete LEGOized Animation", icon="CANCEL").modelType = "ANIMATION"
+                    row.operator("scene.legoizer_delete", text="Delete LEGOized Animation", icon="CANCEL")
                     col = layout.column(align=True)
                     row = col.row(align=True)
                     row.operator("scene.legoizer_legoize", text="Update Animation", icon="FILE_REFRESH")
@@ -173,7 +173,7 @@ class LegoModelsPanel(Panel):
                     row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_REMESH")
                 else:
                     row = col.row(align=True)
-                    row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL").modelType = "MODEL"
+                    row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL")
                     col = layout.column(align=True)
                     split = col.split(align=True, percentage=0.7)
                     col = split.column(align=True)
@@ -525,7 +525,7 @@ class MaterialsPanel(Panel):
             if cm.modelCreated:
                 col = layout.column(align=True)
                 row = col.row(align=True)
-                row.operator("scene.legoizer_apply_material", icon="FILE_TICK").action = "CUSTOM"
+                row.operator("scene.legoizer_apply_material", icon="FILE_TICK")
         if cm.materialType == "Use Source Materials":
             col = layout.column(align=True)
             row = col.row(align=True)
@@ -548,7 +548,7 @@ class MaterialsPanel(Panel):
                     else:
                         col = layout.column(align=True)
                         row = col.row(align=True)
-                        row.operator("scene.legoizer_apply_material", icon="FILE_TICK").action = "INTERNAL"
+                        row.operator("scene.legoizer_apply_material", icon="FILE_TICK")
 
 class DetailingPanel(Panel):
     bl_space_type  = "VIEW_3D"
