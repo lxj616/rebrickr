@@ -59,7 +59,7 @@ def matchProperties(cmNew, cmOld):
 # ui list item actions
 class LEGOizer_Uilist_actions(bpy.types.Operator):
     bl_idname = "cmlist.list_action"
-    bl_label = "List Action"
+    bl_label = "LEGO Model List Action"
 
     action = bpy.props.EnumProperty(
         items=(
@@ -298,9 +298,14 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             self.lastFrame = []
             # run modal
             wm = bpy.context.window_manager
-            bpy.context.window_manager["list_modal_running"] = True
+            bpy.context.window_manager["modal_running"] = True
             wm.modal_handler_add(self)
             return {"RUNNING_MODAL"}
+
+    def cancel(self, context):
+        scn = context.scene
+        bpy.context.window_manager["modal_running"] = False
+
 
 # -------------------------------------------------------------------
 # draw
@@ -319,23 +324,10 @@ class LEGOizer_UL_items(UIList):
     def invoke(self, context, event):
         pass
 
-
-# print button
-class LEGOizer_Uilist_printAllItems(bpy.types.Operator):
-    bl_idname = "cmlist.print_list"
-    bl_label = "Print List"
-    bl_description = "Print all items to the console"
-
-    def execute(self, context):
-        scn = context.scene
-        for i in scn.cmlist:
-            print (i.source_name, i.id)
-        return{'FINISHED'}
-
 # set source to active button
 class LEGOizer_Uilist_setSourceToActive(bpy.types.Operator):
     bl_idname = "cmlist.set_to_active"
-    bl_label = "Set to Active"
+    bl_label = "Set LEGOizer Source to Active Object"
     bl_description = "Set source to active object in scene"
 
     @classmethod
@@ -407,7 +399,7 @@ class LEGOizer_Uilist_selectSource(bpy.types.Operator):
 # select button
 class LEGOizer_Uilist_selectAllBricks(bpy.types.Operator):
     bl_idname = "cmlist.select_bricks"
-    bl_label = "Select Bricks"
+    bl_label = "Select All LEGO Bricks"
     bl_description = "Select only bricks in model"
 
     @classmethod
@@ -435,34 +427,6 @@ class LEGOizer_Uilist_selectAllBricks(bpy.types.Operator):
                 select(objs)
 
         return{'FINISHED'}
-
-# clear button
-class LEGOizer_Uilist_clearAllItems(bpy.types.Operator):
-    bl_idname = "cmlist.clear_list"
-    bl_label = "Clear List"
-    bl_description = "Clear all items in the list"
-
-    def execute(self, context):
-        scn = context.scene
-        lst = scn.createdModelsCollection
-        current_index = scn.cmlist_index
-
-        if len(lst) > 0:
-             # reverse range to remove last item first
-            for i in range(len(lst)-1,-1,-1):
-                scn.createdModelsCollection.remove(i)
-            self.report({'INFO'}, "All items removed")
-
-        else:
-            self.report({'INFO'}, "Nothing to remove")
-
-        return{'FINISHED'}
-
-# def setName(self, context):
-#     scn = bpy.context.scene
-#     cm = scn.cmlist[scn.cmlist_index]
-#     cm.name = cm.source_name
-#     return None
 
 def uniquifyName(self, context):
     """ if LEGO model exists with name, add '.###' to the end """
@@ -551,7 +515,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
 
     source_name = StringProperty(
         name="Source Object Name",
-        description="Name of the source object to legoize (defaults to active object)",
+        description="Name of the source object to legoize",
         default="",
         update=setNameIfEmpty)
 
@@ -612,7 +576,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
 
     studVerts = IntProperty(
         name="Stud Verts",
-        description="Number of vertices on LEGO stud",
+        description="Number of vertices on each LEGO stud",
         update=dirtyBricks,
         min=4, max=64,
         default=16)
@@ -625,12 +589,13 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         name="Brick Height",
         description="Height of the bricks in the final LEGO model",
         update=dirtyModel,
+        step=1,
         precision=3,
         min=0.001, max=10,
         default=.1)
     gap = FloatProperty(
         name="Gap Between Bricks",
-        description="Height of the bricks in the final LEGO model",
+        description="Distance between bricks",
         update=dirtyModel,
         step=1,
         precision=3,
@@ -646,22 +611,24 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
 
     randomLoc = FloatProperty(
         name="Random Location",
-        description="Random location applied to each brick individually",
+        description="Max random location applied to each brick individually",
         update=dirtyBuild,
+        step=1,
         precision=3,
         min=0, max=1,
         default=0.005)
     randomRot = FloatProperty(
         name="Random Rotation",
-        description="Random rotation applied to each brick individually",
+        description="Max random rotation applied to each brick individually",
         update=dirtyBuild,
+        step=1,
         precision=3,
         min=0, max=1,
         default=0.025)
 
     brickType = EnumProperty(
         name="Brick Type",
-        description="Choose what type of bricks to use to build the model",
+        description="Type of bricks used to build the model",
         items=[("Plates", "Plates", "Use plates to build the model"),
               ("Bricks", "Bricks", "Use bricks to build the model"),
               #("Bricks and Plates", "Bricks and Plates", "Use bricks and plates to build the model")],
@@ -677,29 +644,32 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
 
     distOffsetX = FloatProperty(
         name="X",
-        description="Distance Offset X",
+        description="Offset of custom bricks on X axis (1.0 = side-by-side)",
         update=dirtyModel,
+        step=1,
         precision=3,
         min=0.001, max=2,
         default=1)
     distOffsetY = FloatProperty(
         name="Y",
-        description="Distance Offset Y",
+        description="Offset of custom bricks on Y axis (1.0 = side-by-side)",
+        step=1,
         update=dirtyModel,
         precision=3,
         min=0.001, max=2,
         default=1)
     distOffsetZ = FloatProperty(
         name="Z",
-        description="Distance Offset Z",
+        description="Offset of custom bricks on Z axis (1.0 = side-by-side)",
+        step=1,
         update=dirtyModel,
         precision=3,
         min=0.001, max=2,
         default=1)
 
     customObjectName = StringProperty(
-        name="Source Object Name",
-        description="Name of the source object to legoize (defaults to active object)",
+        name="Custom Object Name",
+        description="Name of the object to use as bricks",
         update=dirtyModel,
         default="")
 
@@ -707,24 +677,26 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         name="Max 1 by x",
         description="Maximum scale of the 1 by X LEGO brick",
         update=dirtyBuild,
+        step=1,
         min=1, max=10,
         default=10)
     maxBrickScale2 = IntProperty(
         name="Max 2 by x",
         description="Maximum scale of the 2 by X LEGO brick",
         update=dirtyBuild,
+        step=1,
         min=1, max=10,
         default=10)
 
     splitModel = BoolProperty(
         name="Split Model",
-        description="Split model into separate bricks (slower)",
+        description="Split model into separate objects (slower)",
         update=dirtyModel,
         default=False)
 
     internalSupports = EnumProperty(
         name="Internal Supports",
-        description="Choose what type of bricks to use to build the model",
+        description="Choose what type of brick support structure to use inside your model",
         items=[("None", "None", "No internal supports"),
               ("Lattice", "Lattice", "Use latice inside model"),
               ("Columns", "Columns", "Use columns inside model")],
@@ -732,27 +704,33 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         default="None")
     latticeStep = IntProperty(
         name="Lattice Step",
+        description="Distance between cross-beams",
         update=dirtyBuild,
+        step=1,
         min=2, max=25,
         default=2)
     alternateXY = BoolProperty(
         name="Alternate X and Y",
+        description="Alternate back-and-forth and side-to-side beams",
         update=dirtyBuild,
         default=False)
     colThickness = IntProperty(
         name="Column Thickness",
+        description="Thickness of the columns",
         update=dirtyBuild,
         min=1, max=25,
         default=2)
     colStep = IntProperty(
         name="Column Step",
+        description="Distance between columns",
         update=dirtyBuild,
+        step=1,
         min=1, max=25,
         default=2)
 
     materialType = EnumProperty(
         name="Material Type",
-        description="Choose what ",
+        description="Choose what materials will be applied to model",
         items=[("None", "None", "No material applied to LEGO bricks"),
               ("Custom", "Custom", "Choose a custom material to apply to all generated bricks"),
               ("Use Source Materials", "Use Source Materials", "Apply material based on closest intersecting face")],
@@ -764,18 +742,19 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         default="")
     internalMatName = StringProperty(
         name="Material Name",
-        description="Name of the material to apply to bricks inside mat shell",
+        description="Name of the material to apply to bricks inside material shell",
         update=dirtyMaterial,
         default="")
     matShellDepth = IntProperty(
         name="Material Shell Depth",
-        description="How deep in layers the outer materials should be applied",
-        default=2,
+        description="Depth to which the outer materials should be applied (1 = Only exposed bricks",
+        step=1,
         min=1, max=100,
+        default=2,
         update=dirtyModel)
     mergeInconsistentMats = BoolProperty(
         name="Merge Inconsistent Materials",
-        description="Only merge bricks together to form bigger bricks if they share a material",
+        description="Merge 1x1 bricks to form larger bricks whether or not if they share a material",
         default=False,
         update=dirtyBuild)
 
@@ -815,43 +794,51 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     lastBevelWidth = FloatProperty()
     bevelWidth = FloatProperty(
         name="Bevel Width",
-        default=0.001,
+        description="Bevel value/amount",
+        step=1,
         min=0.000001, max=10,
+        default=0.001,
         update=updateBevel)
     lastBevelSegments = IntProperty()
     bevelSegments = IntProperty(
         name="Bevel Resolution",
-        default=1,
+        description="Number of segments for round edges/verts",
+        step=1,
         min=1, max=10,
+        default=1,
         update=updateBevel)
     lastBevelProfile = IntProperty()
     bevelProfile = FloatProperty(
         name="Bevel Profile",
-        default=0.7,
+        description="The profile shape (0.5 = round)",
+        step=1,
         min=0, max=1,
+        default=0.7,
         update=updateBevel)
 
     # ANIMATION SETTINGS
     startFrame = IntProperty(
         name="Start Frame",
+        description="Start frame of LEGO animation",
         update=dirtyAnim,
         min=0, max=500000,
         default=1)
     stopFrame = IntProperty(
         name="Stop Frame",
+        description="Stop frame of LEGO animation",
         update=dirtyAnim,
         min=0, max=500000,
         default=10)
     useAnimation = BoolProperty(
         name="Use Animation",
-        description="LEGOize object animation from start to stop frame (WARNING: Calculation takes time, and may result in large blend file size)",
+        description="Create LEGO model for each frame, from start to stop frame (WARNING: Calculation takes time, and may result in large blend file size)",
         update=updateStartAndStopFrames,
         default=False)
 
     # ADVANCED SETTINGS
     brickShell = EnumProperty(
         name="Brick Shell",
-        description="Choose whether the brick shell with be drawn inside or outside source mesh",
+        description="Choose whether the shell of the model will be inside or outside source mesh",
         items=[("Inside Mesh", "Inside Mesh (recommended)", "Draw brick shell inside source mesh (Recommended)"),
               ("Outside Mesh", "Outside Mesh", "Draw brick shell outside source mesh"),
               ("Inside and Outside", "Inside and Outside", "Draw brick shell inside and outside source mesh (two layers)")],

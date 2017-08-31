@@ -50,7 +50,7 @@ def updateCanRun(type):
 class legoizerLegoize(bpy.types.Operator):
     """Select objects layer by layer and shift by given values"""               # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "scene.legoizer_legoize"                                        # unique identifier for buttons and menu items to reference.
-    bl_label = "Create Build Animation"                                         # display name in the interface.
+    bl_label = "LEGOize Source Object"                                          # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
@@ -76,7 +76,7 @@ class legoizerLegoize(bpy.types.Operator):
         items=(
             ("CREATE", "Create", ""),
             ("UPDATE_MODEL", "Update Model", ""),
-            ("COMMIT_UPDATE_MODEL", "Commit and Update Model", ""),
+            # ("COMMIT_UPDATE_MODEL", "Commit and Update Model", ""),
             ("ANIMATE", "Animate", ""),
             ("UPDATE_ANIM", "Update Animation", ""),
         )
@@ -259,11 +259,50 @@ class legoizerLegoize(bpy.types.Operator):
                 self.report({"WARNING"}, warningMsg[:-2])
 
         if self.action == "CREATE":
-            # if source is soft body and
+            # if source is soft body or cloth and is enabled, prompt user to apply the modifiers
             for mod in source.modifiers:
                 if mod.type in ["SOFT_BODY", "CLOTH"] and mod.show_viewport:
                     self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier or disable from view before LEGOizing the object.")
                     return False
+
+        # protect against edge cases where an operation is executed outside of its proper context
+        if self.action == "CREATE":
+            if cm.modelCreated:
+                self.report({"WARNING"}, "LEGO model has already been created for this source object.")
+                return False
+            if cm.animated:
+                self.report({"WARNING"}, "Please delete the LEGO animation for this source object before creating a new LEGO model.")
+                return False
+            if cm.useAnimation:
+                self.report({"WARNING"}, "Please disable 'Use Animation' in the 'Animation' tab of the LEGOizer before executing this.")
+                return False
+        elif self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
+            if not cm.modelCreated:
+                self.report({"WARNING"}, "LEGO model has not been created.")
+                return False
+            if cm.animated:
+                self.report({"WARNING"}, "Please delete the LEGO animation for this source object before creating a new LEGO model.")
+                return False
+            if cm.useAnimation:
+                self.report({"WARNING"}, "Please disable 'Use Animation' in the 'Animation' tab of the LEGOizer before executing this.")
+                return False
+        elif self.action == "ANIMATE":
+            if cm.modelCreated:
+                self.report({"WARNING"}, "LEGO model has already been created for this source object.")
+                return False
+            if not cm.useAnimation:
+                self.report({"WARNING"}, "Please enable 'Use Animation' in the Animation tab of the LEGOizer before executing this.")
+                return False
+            if cm.animated:
+                self.report({"WARNING"}, "LEGO animation has already been created for this source object.")
+                return False
+        elif self.action == "UPDATE_ANIM":
+            if cm.modelCreated:
+                self.report({"WARNING"}, "No LEGO animation to update for this source object.")
+                return False
+            if not cm.useAnimation:
+                self.report({"WARNING"}, "Please enable 'Use Animation' in the Animation tab of the LEGOizer before performing this action.")
+                return False
 
         if self.action in ["ANIMATE", "UPDATE_ANIM"]:
             # verify start frame is less than stop frame
@@ -326,6 +365,7 @@ class legoizerLegoize(bpy.types.Operator):
         # delete old bricks if present
         if self.action == "UPDATE_ANIM" and not self.updatedFramesOnly:
             legoizerDelete.cleanUp("ANIMATION", skipDupes=True)
+            sourceOrig.name = sourceOrig.name + " (DO NOT RENAME)"
 
         # get or create duplicate and parent groups
         dGroup = bpy.data.groups.get(LEGOizer_source_dupes_gn)
@@ -595,7 +635,7 @@ class legoizerLegoize(bpy.types.Operator):
         bGroup = bpy.data.groups.get(LEGOizer_bricks_gn) # redefine bGroup since it was removed
         if bGroup is not None:
             # set transformation of objects in brick group
-            if self.action == "CREATE" and cm.sourceIsDirty:
+            if (self.action == "CREATE" and cm.sourceIsDirty) or (cm.lastSplitModel and not cm.splitModel):
                 setTransformData(list(bGroup.objects))
             elif not cm.splitModel:
                 setTransformData(list(bGroup.objects), sourceOrig)
@@ -672,7 +712,3 @@ class legoizerLegoize(bpy.types.Operator):
         stopWatch("Total Time Elapsed", time.time()-startTime)
 
         return{"FINISHED"}
-
-    def cancel(self, context):
-        scn = context.scene
-        bpy.context.window_manager["modal_running"] = False

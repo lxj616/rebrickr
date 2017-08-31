@@ -58,8 +58,13 @@ class LEGOizerStoragePanel(Panel):
             row = col.row(align=True)
             col.operator("scene.legoizer_commit_edits", text="Commit Changes", icon="FILE_TICK")
             col = layout.column(align=True)
+            col.scale_y = 0.7
             row = col.row(align=True)
-            col.operator("scene.legoizer_legoize", text="Commit and Update Model", icon="FILE_TICK").action = "COMMIT_UPDATE_MODEL"
+            row.label("Run 'Update LEGOized'")
+            row = col.row(align=True)
+            row.label("Model' after changes")
+            row = col.row(align=True)
+            row.label("are committed.")
         else:
             col = layout.column(align=True)
             col.scale_y = 0.7

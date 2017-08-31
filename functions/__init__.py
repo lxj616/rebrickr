@@ -36,7 +36,7 @@ props = bpy.props
 
 def modalRunning():
     try:
-        if bpy.context.window_manager["list_modal_running"] == True:
+        if bpy.context.window_manager["modal_running"] == True:
             return True
     except:
         pass

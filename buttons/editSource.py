@@ -50,6 +50,11 @@ class legoizerEditSource(bpy.types.Operator):
         source = bpy.data.objects.get(self.source_name)
         if bpy.props.commitEdits or source is None or bpy.context.scene.name != "LEGOizer_storage (DO NOT RENAME)" or source.mode != "EDIT" or event.type in {"ESC"} or (event.type in {"TAB"} and event.value == "PRESS"):
             self.report({"INFO"}, "Edits Committed")
+            # if LEGOizer_storage scene is not active, set to active
+            sto_scn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
+            if bpy.context.scene != sto_scn:
+                for screen in bpy.data.screens:
+                    screen.scene = sto_scn
             # set source to object mode
             select(source, active=source)
             bpy.ops.object.mode_set(mode='OBJECT')
@@ -93,6 +98,9 @@ class legoizerEditSource(bpy.types.Operator):
         if source is None:
             self.report({"WARNING"}, "Source object '" + self.source_name + "' could not be found")
             return {"CANCELLED"}
+
+        # set cursor location of LEGOizer_storage scene to cursor loc of original scene
+        sto_scn.cursor_location = tuple(scn.cursor_location)
 
         # set active scene as LEGOizer_storage (DO NOT RENAME)
         for screen in bpy.data.screens:

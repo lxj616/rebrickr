@@ -82,8 +82,7 @@ class legoizerDelete(bpy.types.Operator):
             if source["ignored_mods"] != "":
                 for mn in source["ignored_mods"]:
                     source.modifiers[mn].show_viewport = True
-            if modelType == "MODEL":
-                source.name = n
+            source.name = n
 
         # clean up 'LEGOizer_[source name]_dupes' group
         if groupExists(LEGOizer_source_dupes_gn) and not skipDupes:

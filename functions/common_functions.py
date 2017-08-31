@@ -31,6 +31,7 @@ import traceback
 from math import *
 props = bpy.props
 
+# https://github.com/CGCookie/retopoflow
 def bversion():
     bversion = '%03d.%03d.%03d' % (bpy.app.version[0],bpy.app.version[1],bpy.app.version[2])
     return bversion
@@ -242,11 +243,6 @@ def getLibraryPath():
     if not os.path.exists(libraryPath):
         raise NameError("Did not find addon from path {}".format(libraryPath))
     return libraryPath
-
-# https://github.com/CGCookie/retopoflow
-def bversion():
-    bversion = '%03d.%03d.%03d' % (bpy.app.version[0],bpy.app.version[1],bpy.app.version[2])
-    return bversion
 
 # https://github.com/CGCookie/retopoflow
 def showErrorMessage(message, wrap=80):

@@ -113,7 +113,6 @@ class legoizerBevel(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         cm.bevelWidth = cm.brickHeight/100
-        # cm.bevelSegments = round(cm.studVerts/10)
         if cm.modelCreated:
             bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks" % locals())
             self.runBevelAction(bGroup, self.action)
