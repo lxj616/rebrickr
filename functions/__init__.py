@@ -423,14 +423,9 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     for idx in range(cm.shellThickness-1): # TODO: set to 100 if brickFreqMatrix should be prepared for higher thickness values
         # print status to terminal
         if not scn.printTimes:
-            linPercent = idx/denom
-            update_progress("Internal", linPercent)
-            # if linPercent == 0:
-            #     update_progress("Internal", 0.0)
-            # else:
-            #     expPercent = linPercent + linPercent*(10/(linPercent*100))
-            #     if expPercent < 100:
-            #         update_progress("Internal", expPercent)
+            percent = idx/denom
+            if percent < 1:
+                update_progress("Internal", percent**0.9)
         j = round(j-0.01, 2)
         gotOne = False
         for x in range(len(coordMatrix)):
