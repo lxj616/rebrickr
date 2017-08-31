@@ -28,6 +28,7 @@ import os
 import math
 from ..functions import *
 from .delete import legoizerDelete
+from .bevel import legoizerBevel
 from mathutils import Matrix, Vector, Euler
 props = bpy.props
 
@@ -48,9 +49,9 @@ def updateCanRun(type):
             return cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and cm.materialIsDirty) or (groupExists(LEGOizer_bricks_gn) and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)
 
 class legoizerLegoize(bpy.types.Operator):
-    """Select objects layer by layer and shift by given values"""               # blender will use this as a tooltip for menu items and buttons.
+    """ Create LEGO sculpture from source object mesh """                       # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "scene.legoizer_legoize"                                        # unique identifier for buttons and menu items to reference.
-    bl_label = "LEGOize Source Object"                                          # display name in the interface.
+    bl_label = "Create/Update LEGO model from Source Object"                 # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
@@ -71,16 +72,6 @@ class legoizerLegoize(bpy.types.Operator):
            or (cm.modelCreated and not updateCanRun("MODEL"))):
             return False
         return True
-
-    action = bpy.props.EnumProperty(
-        items=(
-            ("CREATE", "Create", ""),
-            ("UPDATE_MODEL", "Update Model", ""),
-            # ("COMMIT_UPDATE_MODEL", "Commit and Update Model", ""),
-            ("ANIMATE", "Animate", ""),
-            ("UPDATE_ANIM", "Update Animation", ""),
-        )
-    )
 
     def getObjectToLegoize(self):
         scn = bpy.context.scene
@@ -191,6 +182,17 @@ class legoizerLegoize(bpy.types.Operator):
             self.report({"WARNING"}, "Model is too small on Z axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
         return group_name
 
+    def setAction(self, scn, cm):
+
+        if cm.modelCreated:
+            self.action = "UPDATE_MODEL"
+        elif cm.animated:
+            self.action = "UPDATE_ANIM"
+        elif not cm.useAnimation:
+            self.action = "CREATE"
+        else:
+            self.action = "ANIMATE"
+
     def isValid(self, source, LEGOizer_bricks_gn,):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
@@ -264,45 +266,6 @@ class legoizerLegoize(bpy.types.Operator):
                 if mod.type in ["SOFT_BODY", "CLOTH"] and mod.show_viewport:
                     self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier or disable from view before LEGOizing the object.")
                     return False
-
-        # protect against edge cases where an operation is executed outside of its proper context
-        if self.action == "CREATE":
-            if cm.modelCreated:
-                self.report({"WARNING"}, "LEGO model has already been created for this source object.")
-                return False
-            if cm.animated:
-                self.report({"WARNING"}, "Please delete the LEGO animation for this source object before creating a new LEGO model.")
-                return False
-            if cm.useAnimation:
-                self.report({"WARNING"}, "Please disable 'Use Animation' in the 'Animation' tab of the LEGOizer before executing this.")
-                return False
-        elif self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
-            if not cm.modelCreated:
-                self.report({"WARNING"}, "LEGO model has not been created.")
-                return False
-            if cm.animated:
-                self.report({"WARNING"}, "Please delete the LEGO animation for this source object before creating a new LEGO model.")
-                return False
-            if cm.useAnimation:
-                self.report({"WARNING"}, "Please disable 'Use Animation' in the 'Animation' tab of the LEGOizer before executing this.")
-                return False
-        elif self.action == "ANIMATE":
-            if cm.modelCreated:
-                self.report({"WARNING"}, "LEGO model has already been created for this source object.")
-                return False
-            if not cm.useAnimation:
-                self.report({"WARNING"}, "Please enable 'Use Animation' in the Animation tab of the LEGOizer before executing this.")
-                return False
-            if cm.animated:
-                self.report({"WARNING"}, "LEGO animation has already been created for this source object.")
-                return False
-        elif self.action == "UPDATE_ANIM":
-            if cm.modelCreated:
-                self.report({"WARNING"}, "No LEGO animation to update for this source object.")
-                return False
-            if not cm.useAnimation:
-                self.report({"WARNING"}, "Please enable 'Use Animation' in the Animation tab of the LEGOizer before performing this action.")
-                return False
 
         if self.action in ["ANIMATE", "UPDATE_ANIM"]:
             # verify start frame is less than stop frame
@@ -660,21 +623,25 @@ class legoizerLegoize(bpy.types.Operator):
         if source != sourceOrig and source.name in scn.objects.keys():
             safeUnlink(source)
 
+        # add bevel if it was previously added
+        if self.action == "UPDATE_MODEL" and cm.bevelAdded:
+            bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks" % locals())
+            legoizerBevel.runBevelAction(bGroup, cm)
+
         cm.modelCreated = True
 
     def execute(self, context):
         # get start time
         startTime = time.time()
 
-        if self.action == "COMMIT_UPDATE_MODEL":
-            for screen in bpy.data.screens:
-                screen.scene = bpy.data.scenes.get(bpy.props.origScene)
-
         # set up variables
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
+
+        # set self.action
+        self.setAction(scn, cm)
 
         # get source and initialize values
         source = self.getObjectToLegoize()

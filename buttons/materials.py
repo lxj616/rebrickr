@@ -31,7 +31,7 @@ from mathutils import Matrix, Vector, Euler
 props = bpy.props
 
 class legoizerApplyMaterial(bpy.types.Operator):
-    """Apply specified material to all bricks created"""                        # blender will use this as a tooltip for menu items and buttons.
+    """Apply specified material to all bricks """                        # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "scene.legoizer_apply_material"                                 # unique identifier for buttons and menu items to reference.
     bl_label = "Apply Material"                                         # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}

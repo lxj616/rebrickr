@@ -515,7 +515,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
 
     source_name = StringProperty(
         name="Source Object Name",
-        description="Name of the source object to legoize",
+        description="Name of the source object to LEGOize",
         default="",
         update=setNameIfEmpty)
 
@@ -611,7 +611,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
 
     randomLoc = FloatProperty(
         name="Random Location",
-        description="Max random location applied to each brick individually",
+        description="Max random location applied to each brick",
         update=dirtyBuild,
         step=1,
         precision=3,
@@ -619,7 +619,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         default=0.005)
     randomRot = FloatProperty(
         name="Random Rotation",
-        description="Max random rotation applied to each brick individually",
+        description="Max random rotation applied to each brick",
         update=dirtyBuild,
         step=1,
         precision=3,
@@ -628,7 +628,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
 
     brickType = EnumProperty(
         name="Brick Type",
-        description="Type of bricks used to build the model",
+        description="Type of brick used to build the model",
         items=[("Plates", "Plates", "Use plates to build the model"),
               ("Bricks", "Bricks", "Use bricks to build the model"),
               #("Bricks and Plates", "Bricks and Plates", "Use bricks and plates to build the model")],
@@ -754,7 +754,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyModel)
     mergeInconsistentMats = BoolProperty(
         name="Merge Inconsistent Materials",
-        description="Merge 1x1 bricks to form larger bricks whether or not if they share a material",
+        description="Merge 1x1 bricks to form larger bricks whether or not they share a material",
         default=False,
         update=dirtyBuild)
 
@@ -861,6 +861,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     animated = BoolProperty(default=False)
     materialApplied = BoolProperty(default=False)
     armature = BoolProperty(default=False)
+    bevelAdded = BoolProperty(default=False)
 
     animIsDirty = BoolProperty(default=True)
     materialIsDirty = BoolProperty(default=True)

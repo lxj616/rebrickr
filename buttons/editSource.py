@@ -145,9 +145,9 @@ class legoizerEditSource(bpy.types.Operator):
             screen.scene = bpy.data.scenes.get(bpy.props.origScene)
 
 class legoizerCommitEdits(bpy.types.Operator):
-    """ Edit Source Object Mesh """                                             # blender will use this as a tooltip for menu items and buttons.
+    """ Commit Edits to Source Object Mesh """                                  # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "scene.legoizer_commit_edits"                                   # unique identifier for buttons and menu items to reference.
-    bl_label = "Edit Source Object Mesh"                                        # display name in the interface.
+    bl_label = "Commit Edits to Source Object Mesh"                             # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod

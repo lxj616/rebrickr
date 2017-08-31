@@ -157,14 +157,14 @@ class LegoModelsPanel(Panel):
                     row.operator("scene.legoizer_delete", text="Delete LEGOized Animation", icon="CANCEL").modelType = "ANIMATION"
                     col = layout.column(align=True)
                     row = col.row(align=True)
-                    row.operator("scene.legoizer_legoize", text="Update Animation", icon="FILE_REFRESH").action = "UPDATE_ANIM"
+                    row.operator("scene.legoizer_legoize", text="Update Animation", icon="FILE_REFRESH")
                 else:
                     row = col.row(align=True)
                     if obj:
                         row.active = obj.type == 'MESH'
                     else:
                         row.active = False
-                    row.operator("scene.legoizer_legoize", text="LEGOize Animation", icon="MOD_REMESH").action = "ANIMATE"
+                    row.operator("scene.legoizer_legoize", text="LEGOize Animation", icon="MOD_REMESH")
             # if use animation is not selected, draw modeling options
             else:
                 if not cm.animated and not cm.modelCreated:
@@ -173,16 +173,16 @@ class LegoModelsPanel(Panel):
                         row.active = obj.type == 'MESH'
                     else:
                         row.active = False
-                    row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_REMESH").action = "CREATE"
+                    row.operator("scene.legoizer_legoize", text="LEGOize Object", icon="MOD_REMESH")
                 else:
                     row = col.row(align=True)
                     row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL").modelType = "MODEL"
                     col = layout.column(align=True)
-                    split = col.split(align=True, percentage=.85)
+                    split = col.split(align=True, percentage=0.7)
                     col = split.column(align=True)
-                    col.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH").action = "UPDATE_MODEL"
+                    col.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH")
                     col = split.column(align=True)
-                    col.operator("scene.legoizer_edit_source", icon="EDIT", text="")
+                    col.operator("scene.legoizer_edit_source", icon="EDIT", text="Edit")
 
             # sub = row.row(align=True)
             # sub.scale_x = 0.1
@@ -698,6 +698,6 @@ class BevelPanel(Panel):
             row = col.row(align=True)
             row.prop(cm, "bevelProfile", text="Profile")
             row = col.row(align=True)
-            row.operator("scene.legoizer_bevel", text="Remove Bevel", icon="CANCEL").action = "REMOVE"
+            row.operator("scene.legoizer_bevel", text="Remove Bevel", icon="CANCEL")
         except:
-            row.operator("scene.legoizer_bevel", text="Bevel bricks", icon="MOD_BEVEL").action = "CREATE"
+            row.operator("scene.legoizer_bevel", text="Bevel bricks", icon="MOD_BEVEL")

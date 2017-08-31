@@ -50,13 +50,28 @@ def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limit
     dMod.angle_limit = angleLimit
     dMod.offset_type = offsetType
 
+def setBevelMods(bricks):
+    bricks = confirmList(bricks)
+    # get bricks to bevel
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    n = cm.source_name
+    for brick in bricks:
+        segments = cm.bevelSegments
+        profile = cm.bevelProfile
+        if not cm.lastSplitModel:
+            vGroupName = "LEGOizer_%(n)s_bricks_combined_bevel" % locals()
+        else:
+            vGroupName = brick.name + "_bevel"
+        createBevelMod(obj=brick, width=cm.bevelWidth, segments=segments, profile=profile, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
+
 def removeBevelMods(objs):
     objs = confirmList(objs)
     for obj in objs:
         obj.modifiers.remove(obj.modifiers[obj.name + "_bevel"])
 
 class legoizerBevel(bpy.types.Operator):
-    """Add a bevel modifier to all bricks with the following settings"""        # blender will use this as a tooltip for menu items and buttons.
+    """Execute bevel modifier to all bricks with above settings"""              # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "scene.legoizer_bevel"                                          # unique identifier for buttons and menu items to reference.
     bl_label = "Bevel Bricks"                                                   # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
@@ -74,51 +89,39 @@ class legoizerBevel(bpy.types.Operator):
             return False
         return False
 
-    action = bpy.props.EnumProperty(
-        items=(
-            ("CREATE", "Create", ""),
-            ("UPDATE", "Update", ""),
-            ("REMOVE", "Remove", ""),
-        ),
-        default="CREATE"
-    )
-
     @staticmethod
-    def setBevelMods(bricks):
-        bricks = confirmList(bricks)
-        # get bricks to bevel
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
-        for brick in bricks:
-            segments = cm.bevelSegments
-            profile = cm.bevelProfile
-            if not cm.lastSplitModel:
-                vGroupName = "LEGOizer_%(n)s_bricks_combined_bevel" % locals()
-            else:
-                vGroupName = brick.name + "_bevel"
-            createBevelMod(obj=brick, width=cm.bevelWidth, segments=segments, profile=profile, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
-
-    def runBevelAction(self, bGroup, action):
+    def runBevelAction(bGroup, cm, action="ADD"):
         if bGroup is not None:
             bricks = list(bGroup.objects)
             if action == "REMOVE":
                 removeBevelMods(objs=bricks)
-            else:
-                legoizerBevel.setBevelMods(bricks)
+                cm.bevelAdded = False
+            elif action == "ADD":
+                setBevelMods(bricks)
+                cm.bevelAdded = True
 
     def execute(self, context):
         # get bricks to bevel
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
+
+        # set bevel action to add or remove
+        if not cm.bevelAdded:
+            action = "ADD"
+        else:
+            action = "REMOVE"
+
+        # auto-set bevel width
         cm.bevelWidth = cm.brickHeight/100
+
+        # create or remove bevel
         if cm.modelCreated:
             bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks" % locals())
-            self.runBevelAction(bGroup, self.action)
+            legoizerBevel.runBevelAction(bGroup, cm, action)
         elif cm.animated:
             for cf in range(cm.lastStartFrame, cm.lastStopFrame+1):
                 bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals())
-                self.runBevelAction(bGroup, self.action)
+                legoizerBevel.runBevelAction(bGroup, cm, action)
 
         return{"FINISHED"}
