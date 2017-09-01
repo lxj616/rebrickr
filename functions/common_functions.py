@@ -147,6 +147,17 @@ def most_common(L):
     # pick the highest-count/earliest item
     return max(groups, key=_auxfun)[0]
 
+def get_override(area_type, region_type):
+    for area in bpy.context.screen.areas:
+        if area.type == area_type:
+            for region in area.regions:
+                if region.type == region_type:
+                    override = {'area': area, 'region': region}
+                    return override
+    #error message if the area or region wasn't found
+    raise RuntimeError("Wasn't able to find", region_type," in area ", area_type,
+                        "\n Make sure it's open while executing script.")
+
 def confirmList(objList):
     """ if single object passed, convert to list """
     if type(objList) != list:

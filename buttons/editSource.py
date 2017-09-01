@@ -64,6 +64,7 @@ class legoizerEditSource(bpy.types.Operator):
                 source.location = source["before_edit_location"]
             source.rotation_euler = source["previous_rotation"]
             source.scale = source["previous_scale"]
+            setOriginToObjOrigin(toObj=source, fromLoc=source["before_origin_set_location"])
             if bpy.context.scene.name == "LEGOizer_storage (DO NOT RENAME)":
                 for screen in bpy.data.screens:
                     screen.scene = bpy.data.scenes.get(bpy.props.origScene)
@@ -122,6 +123,7 @@ class legoizerEditSource(bpy.types.Operator):
             l = cm.lastSourceMid.split(",")
             for i in range(len(l)):
                 l[i] = float(l[i])
+            source["before_origin_set_location"] = source.location.to_tuple()
             setOriginToObjOrigin(toObj=source, fromLoc=tuple(l))
             source["before_edit_location"] = source.location.to_tuple()
             setSourceTransform(source, obj=obj, objParent=objParent)

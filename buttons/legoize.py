@@ -595,8 +595,10 @@ class legoizerLegoize(bpy.types.Operator):
         bGroup = bpy.data.groups.get(LEGOizer_bricks_gn) # redefine bGroup since it was removed
         if bGroup is not None:
             # set transformation of objects in brick group
-            if (self.action == "CREATE" and cm.sourceIsDirty) or (cm.lastSplitModel and not cm.splitModel):
+            if (self.action == "CREATE" and cm.sourceIsDirty):
                 setTransformData(list(bGroup.objects))
+            elif cm.lastSplitModel and not cm.splitModel:
+                pass
             elif not cm.splitModel:
                 setTransformData(list(bGroup.objects), sourceOrig)
             # set transformation of brick group parent
@@ -615,6 +617,30 @@ class legoizerLegoize(bpy.types.Operator):
                     obj.lock_location = [True, True, True]
                     obj.lock_rotation = [True, True, True]
                     obj.lock_scale    = [True, True, True]
+            else:
+                obj = bGroup.objects[0]
+                select(obj, active=obj, only=False)
+                obj.select = False
+            # update location of bricks in case source mesh has been edited
+            if updateParentLoc:
+                l = cm.lastSourceMid.split(",")
+                for i in range(len(l)):
+                    l[i] = float(l[i])
+                lastSourceMid = tuple(l)
+                v = Vector(parentLoc) - Vector(lastSourceMid)
+                center_v = Vector((0, 0, 0))
+                v_new = v - center_v
+                eu1 = parent.rotation_euler
+                v_new.rotate(eu1)
+                if not cm.lastSplitModel:
+                    eu2 = bGroup.objects[0].rotation_euler
+                    v_new.rotate(eu2)
+                v_new += center_v
+                for brick in bGroup.objects:
+                    if not cm.lastSplitModel:
+                        brick.location += Vector((v_new.x * parent.scale[0] * bGroup.objects[0].scale[0], v_new.y * parent.scale[1] * bGroup.objects[0].scale[1], v_new.z * parent.scale[2] * bGroup.objects[0].scale[2]))
+                    else:
+                        brick.location += Vector((v_new.x * parent.scale[0], v_new.y * parent.scale[1], v_new.z * parent.scale[2]))
 
         # unlink source duplicate if created
         if source != sourceOrig and source.name in scn.objects.keys():
