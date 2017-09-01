@@ -194,6 +194,15 @@ class LegoModelsPanel(Panel):
         else:
             layout.operator("cmlist.list_action", icon='ZOOMIN', text="New LEGO Model").action = 'ADD'
 
+        if bpy.data.texts.find('LEGOizer_log') >= 0:
+            split = layout.split(align=True, percentage = 0.9)
+            col = split.column(align=True)
+            row = col.row(align=True)
+            row.operator("scene.legoizer_report_error", text="Report Error", icon="URL")
+            col = split.column(align=True)
+            row = col.row(align=True)
+            row.operator("scene.legoizer_close_report_error", text="", icon="PANEL_CLOSE")
+
 def is_baked(mod):
     return mod.point_cache.is_baked is not False
 

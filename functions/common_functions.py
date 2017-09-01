@@ -147,17 +147,6 @@ def most_common(L):
     # pick the highest-count/earliest item
     return max(groups, key=_auxfun)[0]
 
-def get_override(area_type, region_type):
-    for area in bpy.context.screen.areas:
-        if area.type == area_type:
-            for region in area.regions:
-                if region.type == region_type:
-                    override = {'area': area, 'region': region}
-                    return override
-    #error message if the area or region wasn't found
-    raise RuntimeError("Wasn't able to find", region_type," in area ", area_type,
-                        "\n Make sure it's open while executing script.")
-
 def confirmList(objList):
     """ if single object passed, convert to list """
     if type(objList) != list:
@@ -318,10 +307,13 @@ def update_progress(job_title, progress):
     sys.stdout.write(msg)
     sys.stdout.flush()
 
-def writeErrorToFile(errorReportFilePath, txtName, addonVersion):
+def writeErrorToFile(errorReportPath, txtName, addonVersion):
     # write error to log text object
-    f = open(errorReportFilePath, "w")
-    f.write("\nPlease copy the following form and paste it into a new issue at https://github.com/bblanimation/lego_add_ons/issues")
+    if not os.path.exists(errorReportPath):
+        os.makedirs(errorReportPath)
+    fullFilePath = os.path.join(errorReportPath, "LEGOizer_error_report.txt")
+    f = open(fullFilePath, "w")
+    f.write("\nPlease copy the following form and paste it into a new issue at https://github.com/bblanimation/legoizer/issues")
     f.write("\n\nDon't forget to include a description of your problem! The more information you provide (what you were trying to do, what action directly preceeded the error, etc.), the easier it will be for us to squash the bug.")
     f.write("\n\n### COPY EVERYTHING BELOW THIS LINE ###\n")
     f.write("\nDescription of the Problem:\n")

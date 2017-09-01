@@ -39,8 +39,10 @@ def handle_animation(scene):
                         if brick.hide == onCurF:
                             brick.hide = not onCurF
                             brick.hide_render = not onCurF
+                        if scn.objects.active is not None and "LEGOizer_%(n)s_bricks_combined_frame_" % locals() in scn.objects.active.name and onCurF:
+                            select(brick, active=brick)
                         # prevent bricks from being selected on frame change
-                        if brick.select:
+                        elif brick.select:
                             brick.select = False
 
 bpy.app.handlers.frame_change_pre.append(handle_animation)
@@ -67,89 +69,90 @@ def isObjVisible(scn, cm):
 @persistent
 def handle_selections(scene):
     scn = bpy.context.scene
-    # if scn.layers changes and active object is no longer visible, set scn.cmlist_index to -1
-    if scn.last_layers != str(list(scn.layers)):
-        scn.last_layers = str(list(scn.layers))
-        curObjVisible = False
-        if scn.cmlist_index != -1:
-            cm0 = scn.cmlist[scn.cmlist_index]
-            curObjVisible,_ = isObjVisible(scn, cm0)
-        if not curObjVisible or scn.cmlist_index == -1:
-            setIndex = False
-            for i,cm in enumerate(scn.cmlist):
-                if i != scn.cmlist_index:
-                    nextObjVisible,obj = isObjVisible(scn, cm)
-                    if nextObjVisible and bpy.context.active_object == obj:
-                        scn.cmlist_index = i
-                        setIndex = True
-                        break
-            if not setIndex:
-                scn.cmlist_index = -1
-    # select and make source or LEGO model active if scn.cmlist_index changes
-    elif scn.last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
-        scn.last_cmlist_index = scn.cmlist_index
-        cm = scn.cmlist[scn.cmlist_index]
-        obj = bpy.data.objects.get(cm.source_name)
-        if obj is None:
-            obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
-        if obj is not None:
-            if cm.modelCreated:
-                n = cm.source_name
-                gn = "LEGOizer_%(n)s_bricks" % locals()
-                print(gn, "MODEL")
-                if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
-                    select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
-                    scn.last_active_object_name = scn.objects.active.name
-            elif cm.animated:
-                n = cm.source_name
-                cf = scn.frame_current
-                if cf > cm.stopFrame:
-                    cf = cm.stopFrame
-                elif cf < cm.startFrame:
-                    cf = cm.startFrame
-                gn = "LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals()
-                print(gn, "ANIM")
-                if len(bpy.data.groups[gn].objects) > 0:
-                    select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
-                    scn.last_active_object_name = scn.objects.active.name
+    if not scn.runningOperation:
+        # if scn.layers changes and active object is no longer visible, set scn.cmlist_index to -1
+        if scn.last_layers != str(list(scn.layers)):
+            scn.last_layers = str(list(scn.layers))
+            curObjVisible = False
+            if scn.cmlist_index != -1:
+                cm0 = scn.cmlist[scn.cmlist_index]
+                curObjVisible,_ = isObjVisible(scn, cm0)
+            if not curObjVisible or scn.cmlist_index == -1:
+                setIndex = False
+                for i,cm in enumerate(scn.cmlist):
+                    if i != scn.cmlist_index:
+                        nextObjVisible,obj = isObjVisible(scn, cm)
+                        if nextObjVisible and bpy.context.active_object == obj:
+                            scn.cmlist_index = i
+                            setIndex = True
+                            break
+                if not setIndex:
+                    scn.cmlist_index = -1
+        # select and make source or LEGO model active if scn.cmlist_index changes
+        elif scn.last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
+            scn.last_cmlist_index = scn.cmlist_index
+            cm = scn.cmlist[scn.cmlist_index]
+            obj = bpy.data.objects.get(cm.source_name)
+            if obj is None:
+                obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+            if obj is not None:
+                if cm.modelCreated:
+                    n = cm.source_name
+                    gn = "LEGOizer_%(n)s_bricks" % locals()
+                    print(gn, "MODEL")
+                    if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
+                        select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
+                        scn.last_active_object_name = scn.objects.active.name
+                elif cm.animated:
+                    n = cm.source_name
+                    cf = scn.frame_current
+                    if cf > cm.stopFrame:
+                        cf = cm.stopFrame
+                    elif cf < cm.startFrame:
+                        cf = cm.startFrame
+                    gn = "LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals()
+                    print(gn, "ANIM")
+                    if len(bpy.data.groups[gn].objects) > 0:
+                        select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
+                        scn.last_active_object_name = scn.objects.active.name
+                else:
+                    select(obj, active=obj)
+                scn.last_active_object_name = obj.name
             else:
-                select(obj, active=obj)
-            scn.last_active_object_name = obj.name
-        else:
+                for i in range(len(scn.cmlist)):
+                    cm = scn.cmlist[i]
+                    if cm.source_name == scn.active_object_name:
+                        select(None)
+                        break
+        # open LEGO model settings for active object if active object changes
+        elif scn.objects.active and scn.last_active_object_name != scn.objects.active.name and ( scn.cmlist_index == -1 or scn.cmlist[scn.cmlist_index].source_name != "") and scn.objects.active.type == "MESH":
+            scn.last_active_object_name = scn.objects.active.name
+            if scn.objects.active.name.startswith("LEGOizer_"):
+                if "_bricks" in scn.objects.active.name:
+                    frameLoc = scn.objects.active.name.rfind("_bricks")
+                elif "_brick_" in scn.objects.active.name:
+                    frameLoc = scn.objects.active.name.rfind("_brick_")
+                else:
+                    frameLoc = None
+                if frameLoc is not None:
+                    scn.active_object_name = scn.objects.active.name[9:frameLoc]
+            else:
+                scn.active_object_name = scn.objects.active.name
             for i in range(len(scn.cmlist)):
                 cm = scn.cmlist[i]
                 if cm.source_name == scn.active_object_name:
-                    select(None)
-                    break
-    # open LEGO model settings for active object if active object changes
-    elif scn.objects.active and scn.last_active_object_name != scn.objects.active.name and ( scn.cmlist_index == -1 or scn.cmlist[scn.cmlist_index].source_name != "") and scn.objects.active.type == "MESH":
-        scn.last_active_object_name = scn.objects.active.name
-        if scn.objects.active.name.startswith("LEGOizer_"):
-            if "_bricks" in scn.objects.active.name:
-                frameLoc = scn.objects.active.name.rfind("_bricks")
-            elif "_brick_" in scn.objects.active.name:
-                frameLoc = scn.objects.active.name.rfind("_brick_")
-            else:
-                frameLoc = None
-            if frameLoc is not None:
-                scn.active_object_name = scn.objects.active.name[9:frameLoc]
-        else:
-            scn.active_object_name = scn.objects.active.name
-        for i in range(len(scn.cmlist)):
-            cm = scn.cmlist[i]
-            if cm.source_name == scn.active_object_name:
-                scn.cmlist_index = i
-                scn.last_cmlist_index = scn.cmlist_index
-                return
-        scn.cmlist_index = -1
-    # keep isWaterTight updated
-    if scn.cmlist_index != -1:
-        cm = scn.cmlist[scn.cmlist_index]
-        obj = bpy.data.objects.get(cm.source_name)
-        if obj is not None and (len(obj.data.vertices) != cm.objVerts or len(obj.data.polygons) != cm.objPolys or len(obj.data.edges) != cm.objEdges):
-            cm.objVerts = len(obj.data.vertices)
-            cm.objPolys = len(obj.data.polygons)
-            cm.objEdges = len(obj.data.edges)
-            cm.isWaterTight = cm.objVerts + cm.objPolys - cm.objEdges == 2
+                    scn.cmlist_index = i
+                    scn.last_cmlist_index = scn.cmlist_index
+                    return
+            scn.cmlist_index = -1
+        # keep isWaterTight updated
+        if scn.cmlist_index != -1:
+            cm = scn.cmlist[scn.cmlist_index]
+            obj = bpy.data.objects.get(cm.source_name)
+            if obj is not None and (len(obj.data.vertices) != cm.objVerts or len(obj.data.polygons) != cm.objPolys or len(obj.data.edges) != cm.objEdges):
+                cm.objVerts = len(obj.data.vertices)
+                cm.objPolys = len(obj.data.polygons)
+                cm.objEdges = len(obj.data.edges)
+                cm.isWaterTight = cm.objVerts + cm.objPolys - cm.objEdges == 2
 
 bpy.app.handlers.scene_update_pre.append(handle_selections)

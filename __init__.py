@@ -82,6 +82,7 @@ def register():
     bpy.props.origScene = StringProperty(default="")
     bpy.props.commitEdits = False
 
+    bpy.types.Scene.runningOperation = BoolProperty(default=False)
     bpy.types.Scene.last_layers = StringProperty(default="")
     bpy.types.Scene.last_cmlist_index = IntProperty(default=-2)
     bpy.types.Scene.active_object_name = StringProperty(default="")

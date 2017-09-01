@@ -46,101 +46,127 @@ class legoizerEditSource(bpy.types.Operator):
         return True
 
     def modal(self, context, event):
-        scn = bpy.context.scene
-        source = bpy.data.objects.get(self.source_name)
-        if bpy.props.commitEdits or source is None or bpy.context.scene.name != "LEGOizer_storage (DO NOT RENAME)" or source.mode != "EDIT" or event.type in {"ESC"} or (event.type in {"TAB"} and event.value == "PRESS"):
-            self.report({"INFO"}, "Edits Committed")
-            # if LEGOizer_storage scene is not active, set to active
-            sto_scn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
-            if bpy.context.scene != sto_scn:
-                for screen in bpy.data.screens:
-                    screen.scene = sto_scn
-            # set source to object mode
-            select(source, active=source)
-            bpy.ops.object.mode_set(mode='OBJECT')
-            setOriginToObjOrigin(toObj=source, fromLoc=self.lastSourceOrigLoc)
-            # reset source origin to adjusted location
-            if source["before_edit_location"] != -1:
-                source.location = source["before_edit_location"]
-            source.rotation_euler = source["previous_rotation"]
-            source.scale = source["previous_scale"]
-            setOriginToObjOrigin(toObj=source, fromLoc=source["before_origin_set_location"])
+        try:
+            scn = bpy.context.scene
+            source = bpy.data.objects.get(self.source_name)
+            if bpy.props.commitEdits or source is None or bpy.context.scene.name != "LEGOizer_storage (DO NOT RENAME)" or source.mode != "EDIT" or event.type in {"ESC"} or (event.type in {"TAB"} and event.value == "PRESS"):
+                self.report({"INFO"}, "Edits Committed")
+                # if LEGOizer_storage scene is not active, set to active
+                sto_scn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
+                if bpy.context.scene != sto_scn:
+                    for screen in bpy.data.screens:
+                        screen.scene = sto_scn
+                # set source to object mode
+                select(source, active=source)
+                bpy.ops.object.mode_set(mode='OBJECT')
+                setOriginToObjOrigin(toObj=source, fromLoc=self.lastSourceOrigLoc)
+                # reset source origin to adjusted location
+                if source["before_edit_location"] != -1:
+                    source.location = source["before_edit_location"]
+                source.rotation_euler = source["previous_rotation"]
+                source.scale = source["previous_scale"]
+                setOriginToObjOrigin(toObj=source, fromLoc=source["before_origin_set_location"])
+                if bpy.context.scene.name == "LEGOizer_storage (DO NOT RENAME)":
+                    for screen in bpy.data.screens:
+                        screen.scene = bpy.data.scenes.get(bpy.props.origScene)
+                bpy.props.commitEdits = False
+                bpy.context.window_manager["editingSourceInStorage"] = False
+                redraw_areas("VIEW_3D")
+                scn.update()
+                return {"FINISHED"}
+        except:
             if bpy.context.scene.name == "LEGOizer_storage (DO NOT RENAME)":
                 for screen in bpy.data.screens:
                     screen.scene = bpy.data.scenes.get(bpy.props.origScene)
-            bpy.props.commitEdits = False
-            bpy.context.window_manager["editingSourceInStorage"] = False
-            redraw_areas("VIEW_3D")
-            scn.update()
-            return {"FINISHED"}
+            self.handle_exception()
+            return {"CANCELLED"}
 
         return {"PASS_THROUGH"}
 
     def execute(self, context):
-        # initialize variables
-        scn = context.scene
-        bpy.props.origScene = scn.name
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
-        bpy.context.window_manager["editingSourceInStorage"] = True
-        self.source_name = cm.source_name + " (DO NOT RENAME)"
-        LEGOizer_bricks_gn = "LEGOizer_" + cm.source_name + "_bricks"
-        LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
-        cm.sourceIsDirty = True
+        try:
+            # initialize variables
+            scn = context.scene
+            bpy.props.origScene = scn.name
+            cm = scn.cmlist[scn.cmlist_index]
+            n = cm.source_name
+            bpy.context.window_manager["editingSourceInStorage"] = True
+            self.source_name = cm.source_name + " (DO NOT RENAME)"
+            LEGOizer_bricks_gn = "LEGOizer_" + cm.source_name + "_bricks"
+            LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
+            cm.sourceIsDirty = True
 
-        # get LEGOizer_storage (DO NOT RENAME) scene
-        sto_scn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
-        if sto_scn is None:
-            self.report({"WARNING"}, "'LEGOizer_storage (DO NOT RENAME)' scene could not be found")
+            # get LEGOizer_storage (DO NOT RENAME) scene
+            sto_scn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
+            if sto_scn is None:
+                self.report({"WARNING"}, "'LEGOizer_storage (DO NOT RENAME)' scene could not be found")
+                return {"CANCELLED"}
+            # get source object
+            source = bpy.data.objects.get(self.source_name)
+            if source is None:
+                self.report({"WARNING"}, "Source object '" + self.source_name + "' could not be found")
+                return {"CANCELLED"}
+
+            # set cursor location of LEGOizer_storage scene to cursor loc of original scene
+            sto_scn.cursor_location = tuple(scn.cursor_location)
+
+            # set active scene as LEGOizer_storage (DO NOT RENAME)
+            for screen in bpy.data.screens:
+                screen.scene = sto_scn
+
+            # make source visible and active selection
+            sto_scn.layers = source.layers
+            for obj in sto_scn.objects:
+                obj.hide = True
+            source.hide = False
+            bGroup = bpy.data.groups.get(LEGOizer_bricks_gn)
+            source["before_edit_location"] = -1
+            self.last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
+            if bGroup is not None and len(bGroup.objects) > 0:
+                if not cm.lastSplitModel:
+                    obj = bGroup.objects[0]
+                else:
+                    obj = None
+                objParent = bpy.data.objects.get("LEGOizer_%(n)s_parent" % locals())
+                l = cm.lastSourceMid.split(",")
+                for i in range(len(l)):
+                    l[i] = float(l[i])
+                source["before_origin_set_location"] = source.location.to_tuple()
+                setOriginToObjOrigin(toObj=source, fromLoc=tuple(l))
+                source["before_edit_location"] = source.location.to_tuple()
+                setSourceTransform(source, obj=obj, objParent=objParent)
+            select(source, active=source)
+
+            # set sourceOrig origin to previous origin location
+            scn.update()
+            self.lastSourceOrigLoc = source.location.to_tuple()
+            setOriginToObjOrigin(toObj=source, fromObj=self.last_origin_obj)
+            scn.update()
+
+            # enter edit mode
+            bpy.ops.object.mode_set(mode='EDIT')
+
+            # run modal
+            context.window_manager.modal_handler_add(self)
+        except:
+            if bpy.context.scene.name == "LEGOizer_storage (DO NOT RENAME)":
+                for screen in bpy.data.screens:
+                    screen.scene = bpy.data.scenes.get(bpy.props.origScene)
+            self.handle_exception()
             return {"CANCELLED"}
-        # get source object
-        source = bpy.data.objects.get(self.source_name)
-        if source is None:
-            self.report({"WARNING"}, "Source object '" + self.source_name + "' could not be found")
-            return {"CANCELLED"}
 
-        # set cursor location of LEGOizer_storage scene to cursor loc of original scene
-        sto_scn.cursor_location = tuple(scn.cursor_location)
-
-        # set active scene as LEGOizer_storage (DO NOT RENAME)
-        for screen in bpy.data.screens:
-            screen.scene = sto_scn
-
-        # make source visible and active selection
-        sto_scn.layers = source.layers
-        for obj in sto_scn.objects:
-            obj.hide = True
-        source.hide = False
-        bGroup = bpy.data.groups.get(LEGOizer_bricks_gn)
-        source["before_edit_location"] = -1
-        self.last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
-        if bGroup is not None and len(bGroup.objects) > 0:
-            if not cm.lastSplitModel:
-                obj = bGroup.objects[0]
-            else:
-                obj = None
-            objParent = bpy.data.objects.get("LEGOizer_%(n)s_parent" % locals())
-            l = cm.lastSourceMid.split(",")
-            for i in range(len(l)):
-                l[i] = float(l[i])
-            source["before_origin_set_location"] = source.location.to_tuple()
-            setOriginToObjOrigin(toObj=source, fromLoc=tuple(l))
-            source["before_edit_location"] = source.location.to_tuple()
-            setSourceTransform(source, obj=obj, objParent=objParent)
-        select(source, active=source)
-
-        # set sourceOrig origin to previous origin location
-        scn.update()
-        self.lastSourceOrigLoc = source.location.to_tuple()
-        setOriginToObjOrigin(toObj=source, fromObj=self.last_origin_obj)
-        scn.update()
-
-        # enter edit mode
-        bpy.ops.object.mode_set(mode='EDIT')
-
-        # run modal
-        context.window_manager.modal_handler_add(self)
         return {"RUNNING_MODAL"}
+
+    def handle_exception(self):
+        errormsg = print_exception('LEGOizer_log')
+        # if max number of exceptions occur within threshold of time, abort!
+        curtime = time.time()
+        print('\n'*5)
+        print('-'*100)
+        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)")
+        print('-'*100)
+        print('\n'*5)
+        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)", wrap=240)
 
     def cancel(self, context):
         source.location = source["before_edit_location"]

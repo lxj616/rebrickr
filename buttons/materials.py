@@ -56,41 +56,56 @@ class legoizerApplyMaterial(bpy.types.Operator):
             self.action = "CUSTOM"
 
     def execute(self, context):
-        # get start time
-        startTime = time.time()
+        try:
+            # get start time
+            startTime = time.time()
 
-        self.setAction()
+            self.setAction()
 
-        # set up variables
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
-        LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
-        bricks = list(bpy.data.groups[LEGOizer_bricks_gn].objects)
-        if self.action == "CUSTOM":
-            matName = cm.materialName
-        elif self.action == "INTERNAL":
-            matName = cm.internalMatName
-        mat = bpy.data.materials.get(matName)
-        if mat is None:
-            self.report({"WARNING"}, "Specified material doesn't exist")
+            # set up variables
+            scn = context.scene
+            cm = scn.cmlist[scn.cmlist_index]
+            n = cm.source_name
+            LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
+            bricks = list(bpy.data.groups[LEGOizer_bricks_gn].objects)
+            if self.action == "CUSTOM":
+                matName = cm.materialName
+            elif self.action == "INTERNAL":
+                matName = cm.internalMatName
+            mat = bpy.data.materials.get(matName)
+            if mat is None:
+                self.report({"WARNING"}, "Specified material doesn't exist")
 
-        for brick in bricks:
-            # if materials exist, remove them
-            if brick.data.materials:
-                if self.action == "CUSTOM":
-                    brick.data.materials.clear(1)
-                    # Assign it to object
-                    brick.data.materials.append(mat)
-                elif self.action == "INTERNAL":
-                    brick.data.materials.pop(0)
-                    # Assign it to object
-                    brick.data.materials.append(mat)
-                    for i in range(len(brick.data.materials)-1):
-                        brick.data.materials.append(brick.data.materials.pop(0))
+            for brick in bricks:
+                # if materials exist, remove them
+                if brick.data.materials:
+                    if self.action == "CUSTOM":
+                        brick.data.materials.clear(1)
+                        # Assign it to object
+                        brick.data.materials.append(mat)
+                    elif self.action == "INTERNAL":
+                        brick.data.materials.pop(0)
+                        # Assign it to object
+                        brick.data.materials.append(mat)
+                        for i in range(len(brick.data.materials)-1):
+                            brick.data.materials.append(brick.data.materials.pop(0))
 
-        cm.materialIsDirty = False
+            cm.materialIsDirty = False
 
-        # STOPWATCH CHECK
-        stopWatch("Total Time Elapsed", time.time()-startTime)
+            # STOPWATCH CHECK
+            stopWatch("Total Time Elapsed", time.time()-startTime)
+        except:
+            self.handle_exception()
+
         return{"FINISHED"}
+
+    def handle_exception(self):
+        errormsg = print_exception('LEGOizer_log')
+        # if max number of exceptions occur within threshold of time, abort!
+        curtime = time.time()
+        print('\n'*5)
+        print('-'*100)
+        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)")
+        print('-'*100)
+        print('\n'*5)
+        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)", wrap=240)

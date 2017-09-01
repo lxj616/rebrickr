@@ -307,6 +307,7 @@ class legoizerLegoize(bpy.types.Operator):
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
         LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
+        sceneCurFrame = scn.frame_current
 
         sourceOrig = self.getObjectToLegoize()
         if self.action == "UPDATE_ANIM":
@@ -325,7 +326,7 @@ class legoizerLegoize(bpy.types.Operator):
 
         # delete old bricks if present
         if self.action == "UPDATE_ANIM" and not self.updatedFramesOnly:
-            legoizerDelete.cleanUp("ANIMATION", skipDupes=True)
+            legoizerDelete.cleanUp("ANIMATION", skipDupes=True, skipParents=True)
             sourceOrig.name = sourceOrig.name + " (DO NOT RENAME)"
 
         # get or create duplicate and parent groups
@@ -435,7 +436,9 @@ class legoizerLegoize(bpy.types.Operator):
             # create new bricks
             group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, curFrame=curFrame)
             for obj in bpy.data.groups[group_name].objects:
-                if curFrame != cm.startFrame:
+                if (curFrame == cm.startFrame and sceneCurFrame < cm.startFrame) or curFrame == sceneCurFrame or (curFrame == cm.stopFrame and sceneCurFrame > cm.stopFrame):
+                    selectFromGroup = bpy.data.groups[group_name]
+                else:
                     obj.hide = True
                 # lock location, rotation, and scale of created bricks
                 obj.lock_location = [True, True, True]
@@ -445,10 +448,13 @@ class legoizerLegoize(bpy.types.Operator):
             wm.progress_update(curFrame-cm.startFrame)
             print("completed frame " + str(curFrame))
 
+        for obj in selectFromGroup.objects:
+            select(obj, active=obj)
+
         wm.progress_end()
         cm.lastStartFrame = cm.startFrame
         cm.lastStopFrame = cm.stopFrame
-        scn.frame_set(cm.lastStartFrame)
+        scn.frame_set(sceneCurFrame)
         cm.animated = True
 
     def legoizeModel(self):
@@ -656,51 +662,67 @@ class legoizerLegoize(bpy.types.Operator):
         cm.lastSourceMid = str(tuple(parentLoc))[1:-1]
 
     def execute(self, context):
-        # get start time
-        startTime = time.time()
+        try:
+            # get start time
+            startTime = time.time()
 
-        # set up variables
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
-        LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
+            # set up variables
+            scn = context.scene
+            scn.runningOperation = True
+            cm = scn.cmlist[scn.cmlist_index]
+            n = cm.source_name
+            LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
 
-        # set self.action
-        self.setAction(scn, cm)
+            # set self.action
+            self.setAction(scn, cm)
 
-        # get source and initialize values
-        source = self.getObjectToLegoize()
-        source["old_parent"] = ""
+            # get source and initialize values
+            source = self.getObjectToLegoize()
+            source["old_parent"] = ""
 
-        if not self.isValid(source, LEGOizer_bricks_gn):
-            return {"CANCELLED"}
+            if not self.isValid(source, LEGOizer_bricks_gn):
+                return {"CANCELLED"}
 
-        if self.action not in ["ANIMATE", "UPDATE_ANIM"]:
-            self.legoizeModel()
-        else:
-            self.legoizeAnimation()
-            cm.animIsDirty = False
+            if self.action not in ["ANIMATE", "UPDATE_ANIM"]:
+                self.legoizeModel()
+            else:
+                self.legoizeAnimation()
+                cm.animIsDirty = False
 
-        if self.action in ["CREATE", "ANIMATE"] or cm.sourceIsDirty:
-            source.name = cm.source_name + " (DO NOT RENAME)"
+            if self.action in ["CREATE", "ANIMATE"] or cm.sourceIsDirty:
+                source.name = cm.source_name + " (DO NOT RENAME)"
 
-        # # set final variables
-        cm.lastLogoResolution = cm.logoResolution
-        cm.lastLogoDetail = cm.logoDetail
-        cm.lastSplitModel = cm.splitModel
-        cm.materialIsDirty = False
-        cm.modelIsDirty = False
-        cm.buildIsDirty = False
-        cm.sourceIsDirty = False
-        cm.bricksAreDirty = False
+            # # set final variables
+            cm.lastLogoResolution = cm.logoResolution
+            cm.lastLogoDetail = cm.logoDetail
+            cm.lastSplitModel = cm.splitModel
+            cm.materialIsDirty = False
+            cm.modelIsDirty = False
+            cm.buildIsDirty = False
+            cm.sourceIsDirty = False
+            cm.bricksAreDirty = False
+            scn.runningOperation = False
 
-        # unlink source from scene and link to safe scene
-        if source.name in scn.objects.keys():
-            safeUnlink(source, hide=False)
+            # unlink source from scene and link to safe scene
+            if source.name in scn.objects.keys():
+                safeUnlink(source, hide=False)
 
-        disableRelationshipLines()
+            disableRelationshipLines()
 
-        # STOPWATCH CHECK
-        stopWatch("Total Time Elapsed", time.time()-startTime)
+            # STOPWATCH CHECK
+            stopWatch("Total Time Elapsed", time.time()-startTime)
+        except:
+            self.handle_exception()
 
         return{"FINISHED"}
+
+    def handle_exception(self):
+        errormsg = print_exception('LEGOizer_log')
+        # if max number of exceptions occur within threshold of time, abort!
+        curtime = time.time()
+        print('\n'*5)
+        print('-'*100)
+        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)")
+        print('-'*100)
+        print('\n'*5)
+        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)", wrap=240)

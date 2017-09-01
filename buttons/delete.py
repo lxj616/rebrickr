@@ -128,7 +128,6 @@ class legoizerDelete(bpy.types.Operator):
                     bpy.data.objects.remove(obj, True)
                     bpy.data.meshes.remove(m, True)
                 bpy.data.groups.remove(brickGroup, do_unlink=True)
-                redraw_areas("VIEW_3D")
         elif modelType == "ANIMATION":
             # clean up LEGOizer_bricks group
             cm.animated = False
@@ -144,53 +143,73 @@ class legoizerDelete(bpy.types.Operator):
                     if len(bgObjects) > 0:
                         delete(bgObjects)
                     bpy.data.groups.remove(brickGroup, do_unlink=True)
-            redraw_areas("VIEW_3D")
         update_progress("Deleting", 1)
         wm.progress_end()
 
         return source, oldOrigin, newOrigin
 
     def execute(self, context):
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
-        source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
-        LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
+        try:
+            scn = context.scene
+            scn.runningOperation = True
+            cm = scn.cmlist[scn.cmlist_index]
+            n = cm.source_name
+            source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
+            LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
 
-        # store last active layers
-        lastLayers = list(scn.layers)
-        # match source layers to brick layers
-        brick = None
-        gn = "LEGOizer_%(n)s_bricks" % locals()
-        if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
-            brick = bpy.data.groups[gn].objects[0]
-            source.layers = brick.layers
-        # set active layers to source layers
-        scn.layers = source.layers
+            # store last active layers
+            lastLayers = list(scn.layers)
+            # match source layers to brick layers
+            brick = None
+            gn = "LEGOizer_%(n)s_bricks" % locals()
+            if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
+                brick = bpy.data.groups[gn].objects[0]
+                source.layers = brick.layers
+            # set active layers to source layers
+            scn.layers = source.layers
 
-        self.setModelType()
+            self.setModelType()
 
-        source,oldOrigin,newOrigin = self.cleanUp(self.modelType)
+            source,oldOrigin,newOrigin = self.cleanUp(self.modelType)
 
-        if (self.modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (self.modelType == "ANIMATION" and cm.applyToSourceObject):
-            l,r,s = getTransformData()
-            if self.modelType == "MODEL" and not cm.lastSplitModel:
-                source.location = Vector(source.location) + Vector(l)
-            else:
-                source.location = Vector(l)
-            source.rotation_euler = Vector(source.rotation_euler) + Vector(r)
-            source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
+            if (self.modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (self.modelType == "ANIMATION" and cm.applyToSourceObject):
+                l,r,s = getTransformData()
+                if self.modelType == "MODEL" and not cm.lastSplitModel:
+                    source.location = Vector(source.location) + Vector(l)
+                else:
+                    source.location = Vector(l)
+                source.rotation_euler = Vector(source.rotation_euler) + Vector(r)
+                source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
 
-        # set origin to previous origin location
-        last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
-        if last_origin_obj is not None:
-            safeLink(last_origin_obj)
+            # set origin to previous origin location
+            last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
+            if last_origin_obj is not None:
+                safeLink(last_origin_obj)
+                scn.update()
+                setOriginToObjOrigin(toObj=source, fromObj=last_origin_obj, deleteFromObj=True)
+
+            # select source and return open layers to original
+            select(source, active=source)
+            scn.runningOperation = False
+            scn.layers = lastLayers
+
+
+            # reset frame (for proper update), update scene and redraw 3D view
+            scn.frame_set(scn.frame_current)
             scn.update()
-            setOriginToObjOrigin(toObj=source, fromObj=last_origin_obj, deleteFromObj=True)
-
-        # select source, update scene, and return open layers to original
-        select(source, active=source)
-        scn.update()
-        scn.layers = lastLayers
+            redraw_areas("VIEW_3D")
+        except:
+            self.handle_exception()
 
         return{"FINISHED"}
+
+    def handle_exception(self):
+        errormsg = print_exception('LEGOizer_log')
+        # if max number of exceptions occur within threshold of time, abort!
+        curtime = time.time()
+        print('\n'*5)
+        print('-'*100)
+        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)")
+        print('-'*100)
+        print('\n'*5)
+        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)", wrap=240)

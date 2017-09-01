@@ -101,27 +101,41 @@ class legoizerBevel(bpy.types.Operator):
                 cm.bevelAdded = True
 
     def execute(self, context):
-        # get bricks to bevel
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
+        try:
+            # get bricks to bevel
+            scn = context.scene
+            cm = scn.cmlist[scn.cmlist_index]
+            n = cm.source_name
 
-        # set bevel action to add or remove
-        if not cm.bevelAdded:
-            action = "ADD"
-        else:
-            action = "REMOVE"
+            # set bevel action to add or remove
+            if not cm.bevelAdded:
+                action = "ADD"
+            else:
+                action = "REMOVE"
 
-        # auto-set bevel width
-        cm.bevelWidth = cm.brickHeight/100
+            # auto-set bevel width
+            cm.bevelWidth = cm.brickHeight/100
 
-        # create or remove bevel
-        if cm.modelCreated:
-            bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks" % locals())
-            legoizerBevel.runBevelAction(bGroup, cm, action)
-        elif cm.animated:
-            for cf in range(cm.lastStartFrame, cm.lastStopFrame+1):
-                bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals())
+            # create or remove bevel
+            if cm.modelCreated:
+                bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks" % locals())
                 legoizerBevel.runBevelAction(bGroup, cm, action)
+            elif cm.animated:
+                for cf in range(cm.lastStartFrame, cm.lastStopFrame+1):
+                    bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals())
+                    legoizerBevel.runBevelAction(bGroup, cm, action)
+        except:
+            self.handle_exception()
 
         return{"FINISHED"}
+
+    def handle_exception(self):
+        errormsg = print_exception('LEGOizer_log')
+        # if max number of exceptions occur within threshold of time, abort!
+        curtime = time.time()
+        print('\n'*5)
+        print('-'*100)
+        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)")
+        print('-'*100)
+        print('\n'*5)
+        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)", wrap=240)
