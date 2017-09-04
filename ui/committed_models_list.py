@@ -44,17 +44,36 @@ def matchProperties(cmNew, cmOld):
     cmNew.mergeSeed = cmOld.mergeSeed
     cmNew.randomRot = cmOld.randomRot
     cmNew.randomLoc = cmOld.randomLoc
-    cmNew.splitModel = cmOld.splitModel
+    cmNew.originSet = cmOld.originSet
+    cmNew.distOffsetX = cmOld.distOffsetX
+    cmNew.distOffsetY = cmOld.distOffsetY
+    cmNew.distOffsetZ = cmOld.distOffsetZ
+    cmNew.customObjectName = cmOld.customObjectName
     cmNew.maxBrickScale1 = cmOld.maxBrickScale1
     cmNew.maxBrickScale2 = cmOld.maxBrickScale2
-    cmNew.originSet = cmOld.originSet
-    cmNew.calculationAxes = cmOld.calculationAxes
-    cmNew.bevelWidth = cmOld.bevelWidth
-    cmNew.bevelSegments = cmOld.bevelSegments
-    cmNew.bevelProfile = cmOld.bevelProfile
+    cmNew.splitModel = cmOld.splitModel
+    cmNew.internalSupports = cmOld.internalSupports
+    cmNew.latticeStep = cmOld.latticeStep
+    cmNew.alternateXY = cmOld.alternateXY
+    cmNew.colThickness = cmOld.colThickness
+    cmNew.colStep = cmOld.colStep
+    cmNew.materialType = cmOld.materialType
+    cmNew.materialName = cmOld.materialName
+    cmNew.internalMatName = cmOld.internalMatName
+    cmNew.matShellDepth = cmOld.matShellDepth
+    cmNew.mergeInconsistentMats = cmOld.mergeInconsistentMats
+    cmNew.useNormals = cmOld.useNormals
+    cmNew.verifyExposure = cmOld.verifyExposure
+    cmNew.applyToSourceObject = cmOld.applyToSourceObject
+    if cmNew.bevelAdded and cmOld.bevelAdded:
+        cmNew.bevelWidth = cmOld.bevelWidth
+        cmNew.bevelSegments = cmOld.bevelSegments
+        cmNew.bevelProfile = cmOld.bevelProfile
     cmNew.useAnimation = cmOld.useAnimation
     cmNew.startFrame = cmOld.startFrame
     cmNew.stopFrame = cmOld.stopFrame
+    cmNew.calculationAxes = cmOld.calculationAxes
+    cmNew.brickShell = cmOld.brickShell
 
 # ui list item actions
 class LEGOizer_Uilist_actions(bpy.types.Operator):
@@ -113,7 +132,8 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             sn = cm.source_name
             n = cm.name
             if not cm.modelCreated and not cm.animated:
-                scn.cmlist_index -= 1
+                if len(scn.cmlist) - 1 == scn.cmlist_index:
+                    scn.cmlist_index -= 1
                 scn.cmlist.remove(idx)
                 if scn.cmlist_index == -1 and len(scn.cmlist) > 0:
                     scn.cmlist_index = 0
@@ -146,13 +166,21 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             else:
                 item.source_name = ""
                 item.name = "<New Model>"
-            item.id = len(scn.cmlist)
+            # get all existing IDs
+            existingIDs = []
+            for cm in scn.cmlist:
+                existingIDs.append(cm.id)
+            i = max(existingIDs) + 1
+            # protect against massive item IDs
+            if i > 9999:
+                i = 1
+                while i in existingIDs:
+                    i += 1
+            # set item ID to unique number
+            item.id = i
             item.idx = len(scn.cmlist)-1
-            if last_index == -1:
-                item.startFrame = scn.frame_start
-                item.stopFrame = scn.frame_end
-            else:
-                matchProperties(scn.cmlist[scn.cmlist_index], scn.cmlist[last_index])
+            item.startFrame = scn.frame_start
+            item.stopFrame = scn.frame_end
 
         elif self.action == 'DOWN' and idx < len(scn.cmlist) - 1:
             scn.cmlist.move(scn.cmlist_index, scn.cmlist_index+1)
@@ -183,6 +211,73 @@ class LEGOizer_UL_items(UIList):
 
     def invoke(self, context, event):
         pass
+
+# copy settings from current index to all other indices
+class LEGOizer_Uilist_copySettingsToOthers(bpy.types.Operator):
+    bl_idname = "cmlist.copy_to_others"
+    bl_label = "Copy Settings to Other LEGO Models"
+    bl_description = "Copies the settings from the current model to all other LEGO models"
+
+    @classmethod
+    def poll(cls, context):
+        """ ensures operator can execute (if not, returns false) """
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        if len(scn.cmlist) == 1:
+            return False
+        return True
+
+    def execute(self, context):
+        scn = bpy.context.scene
+        cm0 = scn.cmlist[scn.cmlist_index]
+        for cm1 in scn.cmlist:
+            if cm0 != cm1:
+                matchProperties(cm1, cm0)
+        return{'FINISHED'}
+
+# copy settings from current index to memory
+class LEGOizer_Uilist_copySettings(bpy.types.Operator):
+    bl_idname = "cmlist.copy_settings"
+    bl_label = "Copy Settings from Current LEGO Model"
+    bl_description = "stores the ID of the current model for pasting"
+
+    @classmethod
+    def poll(cls, context):
+        """ ensures operator can execute (if not, returns false) """
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        return True
+
+    def execute(self, context):
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        scn.legoizer_copy_from_id = cm.id
+        return{'FINISHED'}
+
+# paste settings from index in memory to current index
+class LEGOizer_Uilist_pasteSettings(bpy.types.Operator):
+    bl_idname = "cmlist.paste_settings"
+    bl_label = "Paste Settings to Current LEGO Model"
+    bl_description = "Pastes the settings from stored model ID to the current index"
+
+    @classmethod
+    def poll(cls, context):
+        """ ensures operator can execute (if not, returns false) """
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        return True
+
+    def execute(self, context):
+        scn = bpy.context.scene
+        cm0 = scn.cmlist[scn.cmlist_index]
+        for cm1 in scn.cmlist:
+            if cm0 != cm1 and cm1.id == scn.legoizer_copy_from_id:
+                matchProperties(cm0, cm1)
+                break
+        return{'FINISHED'}
 
 # set source to active button
 class LEGOizer_Uilist_setSourceToActive(bpy.types.Operator):
@@ -218,7 +313,8 @@ class LEGOizer_Uilist_setSourceToActive(bpy.types.Operator):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         active_object = context.scene.objects.active
-        cm.source_name = active_object.name
+        if cm.source_name != active_object.name:
+            cm.source_name = active_object.name
 
         return{'FINISHED'}
 
@@ -314,6 +410,13 @@ def setNameIfEmpty(self, context):
             if cm1 != cm0 and cm1.source_name == cm0.source_name:
                 cm0.source_name = ""
                 scn.cmlist_index = i
+    # set up model height variable 'h'
+    source = bpy.data.objects.get(cm0.source_name)
+    if source is not None:
+        source_details = bounds(source)
+        h = max(source_details.x.distance, source_details.y.distance, source_details.z.distance)
+        # update brick height based on model height
+        cm0.brickHeight = h / 10
 
 def updateBevel(self, context):
     # get bricks to bevel
@@ -323,7 +426,6 @@ def updateBevel(self, context):
         n = cm.source_name
         if cm.lastBevelWidth != cm.bevelWidth or cm.lastBevelSegments != cm.bevelSegments or cm.lastBevelProfile != cm.bevelProfile:
             if cm.modelCreated:
-                print("here")
                 bricks = list(bpy.data.groups["LEGOizer_%(n)s_bricks" % locals()].objects)
             elif cm.animated:
                 bricks = []
@@ -338,7 +440,7 @@ def updateBevel(self, context):
             cm.lastBevelSegments = cm.bevelSegments
             cm.lastBevelProfile = cm.bevelProfile
     except Exception as e:
-        print(e)
+        # print(e)
         pass
 
 def updateStartAndStopFrames(self, context):

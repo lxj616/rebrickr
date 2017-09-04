@@ -67,7 +67,9 @@ class legoizerApplyMaterial(bpy.types.Operator):
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
+            print("trying 1")
             bricks = list(bpy.data.groups[LEGOizer_bricks_gn].objects)
+            print("trying 1")
             if self.action == "CUSTOM":
                 matName = cm.materialName
             elif self.action == "INTERNAL":

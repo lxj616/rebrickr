@@ -88,6 +88,8 @@ def register():
     bpy.types.Scene.active_object_name = StringProperty(default="")
     bpy.types.Scene.last_active_object_name = StringProperty(default="")
 
+    bpy.types.Scene.legoizer_copy_from_id = IntProperty(default=-1)
+
     # handle the keymap
     wm = bpy.context.window_manager
     km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')

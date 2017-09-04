@@ -88,6 +88,17 @@ class LEGOizerStoragePanel(Panel):
             row = col.row(align=True)
             row.template_ID(context.screen, "scene")
 
+class BasicMenu(bpy.types.Menu):
+    bl_idname = "LEGO_model_specials"
+    bl_label = "Select"
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.operator("cmlist.copy_to_others", icon="COPY_ID", text="Copy Settings to Others")
+        layout.operator("cmlist.copy_settings", icon="COPYDOWN", text="Copy Settings")
+        layout.operator("cmlist.paste_settings", icon="PASTEDOWN", text="Paste Settings")
+
 class LegoModelsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -116,16 +127,21 @@ class LegoModelsPanel(Panel):
             return
 
         # draw UI list and list actions
-        rows = 3
+        if len(scn.cmlist) < 2:
+            rows = 2
+        else:
+            rows = 4
         row = layout.row()
         row.template_list("LEGOizer_UL_items", "", scn, "cmlist", scn, "cmlist_index", rows=rows)
 
         col = row.column(align=True)
         col.operator("cmlist.list_action", icon='ZOOMIN', text="").action = 'ADD'
         col.operator("cmlist.list_action", icon='ZOOMOUT', text="").action = 'REMOVE'
-        col.separator()
-        col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
-        col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
+        col.menu("LEGO_model_specials", icon='DOWNARROW_HLT', text="")
+        if len(scn.cmlist) > 1:
+            col.separator()
+            col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
+            col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
 
         # draw menu options below UI list
         if scn.cmlist_index != -1:
@@ -382,7 +398,7 @@ class ModelSettingsPanel(Panel):
             h = round(h, 2)
             split = col.split(align=True, percentage=.625)
             col1 = split.column(align=True)
-            col1.label(" Model Height:" % locals())
+            col1.label(" Model Height:")
             col2 = split.column(align=True)
             col2.alignment = "RIGHT"
             col2.label("%(h)s" % locals())
