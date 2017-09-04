@@ -54,6 +54,8 @@ class legoizerApplyMaterial(bpy.types.Operator):
             self.action = "INTERNAL"
         elif cm.materialType == "Custom":
             self.action = "CUSTOM"
+        elif cm.materialType == "Random":
+            self.action = "RANDOM"
 
     def execute(self, context):
         try:

@@ -120,6 +120,13 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     if not split:
         allBrickMeshes = []
 
+    lego_mats = []
+    if cm.materialType == "Random" and "lego_materials" in bpy.context.user_preferences.addons.keys():
+        mats = bpy.data.materials.keys()
+        for color in bpy.props.lego_materials:
+            if color in mats and color in bpy.props.lego_materials_for_random:
+                lego_mats.append(color)
+
     # initialize progress bar around cursor
     denom = len(keys)/1000
     if cursorStatus:
@@ -348,6 +355,10 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 if len(matsL) > 1:
                     matName = most_common(matsL)
                 mat = bpy.data.materials.get(matName)
+            elif cm.materialType == "Random" and len(lego_mats) > 0:
+                randIdx = random.randint(0, len(lego_mats)-1)
+                matName = lego_mats[randIdx]
+                mat = bpy.data.materials.get(matName)
 
             # add brick with new mesh data at original location
             if split:
@@ -485,7 +496,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             mat = bpy.data.materials.get(cm.materialName)
             if mat is not None:
                 allBricksObj.data.materials.append(mat)
-        elif cm.materialType == "Use Source Materials":
+        elif cm.materialType == "Use Source Materials" or (cm.materialType == "Random" and len(lego_mats) > 0):
             for mat in mats:
                 allBricksObj.data.materials.append(mat)
         scn.objects.link(allBricksObj)

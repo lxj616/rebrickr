@@ -511,6 +511,15 @@ class BrickTypesPanel(Panel):
                 row = col.row(align=True)
                 row.prop(cm, "originSet")
 
+def promptAppendLegoMatsIfNecessary(layoutElement, mats_needed):
+    mats = bpy.data.materials.keys()
+    for color in mats_needed:
+        if color not in mats:
+            print("Color not found: " + color)
+            row = layoutElement.row(align=True)
+            row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
+            break
+
 class MaterialsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -551,7 +560,26 @@ class MaterialsPanel(Panel):
                 col = layout.column(align=True)
                 row = col.row(align=True)
                 row.operator("scene.legoizer_apply_material", icon="FILE_TICK")
-        if cm.materialType == "Use Source Materials":
+        elif cm.materialType == "Random":
+            col = layout.column(align=True)
+            if "lego_materials" in bpy.context.user_preferences.addons.keys():
+                mats = bpy.data.materials.keys()
+                for color in bpy.props.lego_materials_for_random:
+                    if color not in mats:
+                        print("Color not found: " + color)
+                        row = col.row(align=True)
+                        row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
+                        col = layout.column(align=True)
+                        col.scale_y = 0.7
+                        col.label("'LEGO Materials' must be")
+                        col.label("imported")
+                        break
+            else:
+                col.scale_y = 0.7
+                col.label("Requires the 'LEGO Materials'")
+                col.label("addon, available for purchase")
+                col.label("at the Blender Market.")
+        elif cm.materialType == "Use Source Materials":
             col = layout.column(align=True)
             row = col.row(align=True)
             row.prop(cm, "mergeInconsistentMats")
@@ -563,9 +591,14 @@ class MaterialsPanel(Panel):
                 row.label("Internal:")
                 row = col.row(align=True)
                 row.prop_search(cm, "internalMatName", bpy.data, "materials", text="")
-                if "lego_materials" in bpy.context.user_preferences.addons.keys() and ("LEGO Plastic Black" not in bpy.data.materials.keys() or "LEGO Plastic Trans-Light Green" not in bpy.data.materials.keys()):
-                    row = col.row(align=True)
-                    row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
+                if "lego_materials" in bpy.context.user_preferences.addons.keys():
+                    mats = bpy.data.materials.keys()
+                    for color in bpy.props.lego_materials:
+                        if color not in mats:
+                            print("Color not found: " + color)
+                            row = colx.row(align=True)
+                            row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
+                            break
                 if cm.modelCreated:
                     if cm.splitModel:
                         col = layout.column(align=True)
@@ -576,12 +609,13 @@ class MaterialsPanel(Panel):
                         row.operator("scene.legoizer_apply_material", icon="FILE_TICK")
 
         obj = bpy.data.objects.get(cm.source_name)
-        col = layout.column(align=True)
-        col.scale_y = 0.7
-        if len(obj.data.vertex_colors) > 0:
-            col.label("(Vertex colors not supported)")
-        if len(obj.data.uv_layers) > 0:
-            col.label("(UV Maps not supported)")
+        if obj is not None:
+            col = layout.column(align=True)
+            col.scale_y = 0.7
+            if len(obj.data.vertex_colors) > 0:
+                col.label("(Vertex colors not supported)")
+            if len(obj.data.uv_layers) > 0:
+                col.label("(UV Maps not supported)")
 
 class DetailingPanel(Panel):
     bl_space_type  = "VIEW_3D"

@@ -703,6 +703,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         name="Material Type",
         description="Choose what materials will be applied to model",
         items=[("None", "None", "No material applied to LEGO bricks"),
+              ("Random", "Random", "Apply a random material from LEGO materials to each generated brick"),
               ("Custom", "Custom", "Choose a custom material to apply to all generated bricks"),
               ("Use Source Materials", "Use Source Materials", "Apply material based on closest intersecting face")],
         update=dirtyMaterial,
