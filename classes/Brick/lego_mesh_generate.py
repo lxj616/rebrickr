@@ -856,4 +856,4 @@ def main():
         else: layerList.append(False)
     bpy.context.scene.layers = layerList
 
-main()
+# main()

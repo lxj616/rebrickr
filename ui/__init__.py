@@ -575,6 +575,14 @@ class MaterialsPanel(Panel):
                         row = col.row(align=True)
                         row.operator("scene.legoizer_apply_material", icon="FILE_TICK")
 
+        obj = bpy.data.objects.get(cm.source_name)
+        col = layout.column(align=True)
+        col.scale_y = 0.7
+        if len(obj.data.vertex_colors) > 0:
+            col.label("(Vertex colors not supported)")
+        if len(obj.data.uv_layers) > 0:
+            col.label("(UV Maps not supported)")
+
 class DetailingPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -665,6 +673,11 @@ class SupportsPanel(Panel):
             row.prop(cm, "colStep")
             row = col.row(align=True)
             row.prop(cm, "colThickness")
+        obj = bpy.data.objects.get(cm.source_name)
+        if obj is not None and not cm.isWaterTight:
+            row = col.row(align=True)
+            # row.scale_y = 0.7
+            row.label("(Source is NOT single closed mesh)")
 
 class BevelPanel(Panel):
     bl_space_type  = "VIEW_3D"

@@ -99,7 +99,6 @@ def handle_selections(scene):
                 if cm.modelCreated:
                     n = cm.source_name
                     gn = "LEGOizer_%(n)s_bricks" % locals()
-                    print(gn, "MODEL")
                     if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
                         select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
                         scn.last_active_object_name = scn.objects.active.name
@@ -111,7 +110,6 @@ def handle_selections(scene):
                     elif cf < cm.startFrame:
                         cf = cm.startFrame
                     gn = "LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals()
-                    print(gn, "ANIM")
                     if len(bpy.data.groups[gn].objects) > 0:
                         select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
                         scn.last_active_object_name = scn.objects.active.name

@@ -584,7 +584,6 @@ class legoizerLegoize(bpy.types.Operator):
         parent = bpy.data.objects.get(LEGOizer_parent_on)
         # if parent doesn't exist, get parent with new location
         parentLoc = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
-        print(parentLoc)
         if parent is None:
             parent = self.getParent(LEGOizer_parent_on, parentLoc)
             pGroup.objects.link(parent)

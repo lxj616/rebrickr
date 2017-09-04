@@ -416,7 +416,7 @@ def setNameIfEmpty(self, context):
         source_details = bounds(source)
         h = max(source_details.x.distance, source_details.y.distance, source_details.z.distance)
         # update brick height based on model height
-        cm0.brickHeight = h / 10
+        cm0.brickHeight = h / 20
 
 def updateBevel(self, context):
     # get bricks to bevel
@@ -430,9 +430,7 @@ def updateBevel(self, context):
             elif cm.animated:
                 bricks = []
                 for cf in range(cm.lastStartFrame, cm.lastStopFrame + 1):
-                    print(cf)
                     bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals())
-                    print(bGroup)
                     if bGroup is not None:
                         bricks.append(bGroup.objects[0])
             setBevelMods(bricks)
@@ -723,7 +721,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         description="Depth to which the outer materials should be applied (1 = Only exposed bricks",
         step=1,
         min=1, max=100,
-        default=2,
+        default=1,
         update=dirtyModel)
     mergeInconsistentMats = BoolProperty(
         name="Merge Inconsistent Materials",
@@ -733,12 +731,12 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
 
     useNormals = BoolProperty(
         name="Use Normals",
-        description="Use normals to calculate insideness of bricks (WARNING: May produce inaccurate model if source mesh is not water-tight)",
+        description="Use normals to calculate insideness of bricks (WARNING: May produce inaccurate model if source is not single closed mesh)",
         default=False,
         update=dirtyBuild)
     verifyExposure = BoolProperty(
         name="Verify Exposure",
-        description="Run additional calculations to verify exposure of studs and underside detailing (WARNING: May compromise 'Shell Thickness' functionality if source mesh is not water-tight)",
+        description="Run additional calculations to verify exposure of studs and underside detailing (WARNING: May compromise 'Shell Thickness' functionality if source is not single closed mesh)",
         default=False,
         update=dirtyBuild)
 

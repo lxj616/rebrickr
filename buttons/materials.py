@@ -39,7 +39,7 @@ class legoizerApplyMaterial(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
-        scn = context.scene
+        scn = bpy.context.scene
         if scn.cmlist_index == -1:
             return False
         cm = scn.cmlist[scn.cmlist_index]
@@ -48,7 +48,7 @@ class legoizerApplyMaterial(bpy.types.Operator):
         return True
 
     def setAction(self):
-        scn = context.scene
+        scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         if cm.materialType == "Use Source Materials":
             self.action = "INTERNAL"
@@ -63,13 +63,11 @@ class legoizerApplyMaterial(bpy.types.Operator):
             self.setAction()
 
             # set up variables
-            scn = context.scene
+            scn = bpy.context.scene
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
-            print("trying 1")
             bricks = list(bpy.data.groups[LEGOizer_bricks_gn].objects)
-            print("trying 1")
             if self.action == "CUSTOM":
                 matName = cm.materialName
             elif self.action == "INTERNAL":
