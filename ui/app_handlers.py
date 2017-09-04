@@ -154,3 +154,35 @@ def handle_selections(scene):
                 cm.isWaterTight = cm.objVerts + cm.objPolys - cm.objEdges == 2
 
 bpy.app.handlers.scene_update_pre.append(handle_selections)
+
+@persistent
+def handle_saving_in_edit_mode(scene):
+    sto_scn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
+    editingSourceInfo = bpy.context.window_manager["editingSourceInStorage"]
+    if editingSourceInfo and bpy.context.scene == sto_scn:
+        scn = bpy.context.scene
+        source = bpy.data.objects.get(editingSourceInfo["source_name"])
+        # if LEGOizer_storage scene is not active, set to active
+        if bpy.context.scene != sto_scn:
+            for screen in bpy.data.screens:
+                screen.scene = sto_scn
+        # set source to object mode
+        select(source, active=source)
+        bpy.ops.object.mode_set(mode='OBJECT')
+        setOriginToObjOrigin(toObj=source, fromLoc=editingSourceInfo["lastSourceOrigLoc"])
+        # reset source origin to adjusted location
+        if source["before_edit_location"] != -1:
+            source.location = source["before_edit_location"]
+        source.rotation_euler = source["previous_rotation"]
+        source.scale = source["previous_scale"]
+        setOriginToObjOrigin(toObj=source, fromLoc=source["before_origin_set_location"])
+        if bpy.context.scene.name == "LEGOizer_storage (DO NOT RENAME)":
+            for screen in bpy.data.screens:
+                screen.scene = bpy.data.scenes.get(bpy.props.origScene)
+        bpy.props.commitEdits = False
+        bpy.context.window_manager["editingSourceInStorage"] = False
+        redraw_areas("VIEW_3D")
+        scn.update()
+
+
+bpy.app.handlers.save_pre.append(handle_saving_in_edit_mode)

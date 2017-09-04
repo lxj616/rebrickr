@@ -49,6 +49,12 @@ class legoizerEditSource(bpy.types.Operator):
         try:
             scn = bpy.context.scene
             source = bpy.data.objects.get(self.source_name)
+            # if file was saved while editing source, break modal gracefully
+            if not bpy.context.window_manager["editingSourceInStorage"]:
+                bpy.props.commitEdits = False
+                redraw_areas("VIEW_3D")
+                scn.update()
+                return {"FINISHED"}
             if bpy.props.commitEdits or source is None or bpy.context.scene.name != "LEGOizer_storage (DO NOT RENAME)" or source.mode != "EDIT" or event.type in {"ESC"} or (event.type in {"TAB"} and event.value == "PRESS"):
                 self.report({"INFO"}, "Edits Committed")
                 # if LEGOizer_storage scene is not active, set to active
@@ -90,7 +96,6 @@ class legoizerEditSource(bpy.types.Operator):
             bpy.props.origScene = scn.name
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
-            bpy.context.window_manager["editingSourceInStorage"] = True
             self.source_name = cm.source_name + " (DO NOT RENAME)"
             LEGOizer_bricks_gn = "LEGOizer_" + cm.source_name + "_bricks"
             LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
@@ -146,6 +151,8 @@ class legoizerEditSource(bpy.types.Operator):
             # enter edit mode
             bpy.ops.object.mode_set(mode='EDIT')
 
+            bpy.context.window_manager["editingSourceInStorage"] = {"source_name":self.source_name, "lastSourceOrigLoc":self.lastSourceOrigLoc}
+
             # run modal
             context.window_manager.modal_handler_add(self)
         except:
@@ -167,13 +174,6 @@ class legoizerEditSource(bpy.types.Operator):
         print('-'*100)
         print('\n'*5)
         showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)", wrap=240)
-
-    def cancel(self, context):
-        source.location = source["before_edit_location"]
-        source.rotation_euler = source["previous_rotation"]
-        source.scale = source["previous_scale"]
-        for screen in bpy.data.screens:
-            screen.scene = bpy.data.scenes.get(bpy.props.origScene)
 
 class legoizerCommitEdits(bpy.types.Operator):
     """ Commit Edits to Source Object Mesh """                                  # blender will use this as a tooltip for menu items and buttons.

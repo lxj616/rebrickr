@@ -190,12 +190,16 @@ class LegoModelsPanel(Panel):
                 else:
                     row = col.row(align=True)
                     row.operator("scene.legoizer_delete", text="Delete LEGOized Model", icon="CANCEL")
-                    col = layout.column(align=True)
-                    split = col.split(align=True, percentage=0.7)
+                    col1 = layout.column(align=True)
+                    split = col1.split(align=True, percentage=0.7)
                     col = split.column(align=True)
                     col.operator("scene.legoizer_legoize", text="Update Model", icon="FILE_REFRESH")
                     col = split.column(align=True)
                     col.operator("scene.legoizer_edit_source", icon="EDIT", text="Edit")
+                    if cm.sourceIsDirty:
+                        row = col1.row(align=True)
+                        row.label("Source mesh changed; update to reflect changes")
+
 
             # sub = row.row(align=True)
             # sub.scale_x = 0.1
@@ -553,16 +557,28 @@ class MaterialsPanel(Panel):
             col = layout.column(align=True)
             row = col.row(align=True)
             row.prop_search(cm, "materialName", bpy.data, "materials", text="")
-            if "lego_materials" in bpy.context.user_preferences.addons.keys() and ("LEGO Plastic Black" not in bpy.data.materials.keys() or "LEGO Plastic Trans-Light Green" not in bpy.data.materials.keys()):
-                row = col.row(align=True)
-                row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
+            if "lego_materials" in bpy.context.user_preferences.addons.keys():
+                if bpy.context.scene.render.engine != 'CYCLES':
+                    row = col.row(align=True)
+                    row.label("Switch to 'Cycles' for LEGO materials")
+                else:
+                    mats = bpy.data.materials.keys()
+                    for color in bpy.props.lego_materials:
+                        if color not in mats:
+                            print("Color not found: " + color)
+                            row = col.row(align=True)
+                            row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
+                            break
             if cm.modelCreated:
                 col = layout.column(align=True)
                 row = col.row(align=True)
                 row.operator("scene.legoizer_apply_material", icon="FILE_TICK")
         elif cm.materialType == "Random":
             col = layout.column(align=True)
-            if "lego_materials" in bpy.context.user_preferences.addons.keys():
+            if bpy.context.scene.render.engine != 'CYCLES':
+                row = col.row(align=True)
+                row.label("Switch to 'Cycles Render' engine")
+            elif "lego_materials" in bpy.context.user_preferences.addons.keys():
                 mats = bpy.data.materials.keys()
                 for color in bpy.props.lego_materials_for_random:
                     if color not in mats:
@@ -592,13 +608,17 @@ class MaterialsPanel(Panel):
                 row = col.row(align=True)
                 row.prop_search(cm, "internalMatName", bpy.data, "materials", text="")
                 if "lego_materials" in bpy.context.user_preferences.addons.keys():
-                    mats = bpy.data.materials.keys()
-                    for color in bpy.props.lego_materials:
-                        if color not in mats:
-                            print("Color not found: " + color)
-                            row = colx.row(align=True)
-                            row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
-                            break
+                    if bpy.context.scene.render.engine != 'CYCLES':
+                        row = col.row(align=True)
+                        row.label("Switch to 'Cycles' for LEGO materials")
+                    else:
+                        mats = bpy.data.materials.keys()
+                        for color in bpy.props.lego_materials:
+                            if color not in mats:
+                                print("Color not found: " + color)
+                                row = col.row(align=True)
+                                row.operator("scene.append_lego_materials", text="Import LEGO Materials", icon="IMPORT")
+                                break
                 if cm.modelCreated:
                     if cm.splitModel:
                         col = layout.column(align=True)
