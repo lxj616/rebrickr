@@ -158,7 +158,7 @@ def convertToFloats(lst):
         lst[i] = float(lst[i])
     return lst
 
-def setTransformData(objList, source=None, skipLocation=False):
+def setTransformData(objList, source=None, skipLocation=False, byTwo=False):
     """ set location, rotation, and scale data for model """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]

@@ -610,6 +610,7 @@ class legoizerLegoize(bpy.types.Operator):
                 setTransformData(list(bGroup.objects), sourceOrig)
             # set transformation of brick group parent
             elif not cm.lastSplitModel:
+                # set transform data
                 setTransformData(parent, sourceOrig)
             # in this case, the parent was not removed so the transformations should stay the same
             elif cm.sourceIsDirty:
@@ -629,16 +630,18 @@ class legoizerLegoize(bpy.types.Operator):
                 select(obj, active=obj, only=False)
                 obj.select = False
             # update location of bricks in case source mesh has been edited
-            if updateParentLoc:
+            if updateParentLoc and False:
+                # store lastSourceMid
                 l = cm.lastSourceMid.split(",")
-                for i in range(len(l)):
-                    l[i] = float(l[i])
+                l = convertToFloats(l)
                 lastSourceMid = tuple(l)
+                # transform vector with parent loc and move bricks accordingly
                 v = Vector(parentLoc) - Vector(lastSourceMid)
                 center_v = Vector((0, 0, 0))
                 v_new = v - center_v
-                eu1 = parent.rotation_euler
-                v_new.rotate(eu1)
+                if cm.lastSplitModel:
+                    eu1 = parent.rotation_euler
+                    v_new.rotate(eu1)
                 if not cm.lastSplitModel:
                     eu2 = bGroup.objects[0].rotation_euler
                     v_new.rotate(eu2)
@@ -648,6 +651,11 @@ class legoizerLegoize(bpy.types.Operator):
                         brick.location += Vector((v_new.x * parent.scale[0] * bGroup.objects[0].scale[0], v_new.y * parent.scale[1] * bGroup.objects[0].scale[1], v_new.z * parent.scale[2] * bGroup.objects[0].scale[2]))
                     else:
                         brick.location += Vector((v_new.x * parent.scale[0], v_new.y * parent.scale[1], v_new.z * parent.scale[2]))
+            # try:
+            #     safeLink(parent, unhide=True)
+            # except:
+            #     pass
+            # select(parent, active=parent)
 
         # unlink source duplicate if created
         if source != sourceOrig and source.name in scn.objects.keys():
