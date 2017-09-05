@@ -55,8 +55,6 @@ class legoizerDelete(bpy.types.Operator):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        oldOrigin = None
-        newOrigin = None
         source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
         LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
@@ -146,7 +144,7 @@ class legoizerDelete(bpy.types.Operator):
         update_progress("Deleting", 1)
         wm.progress_end()
 
-        return source, oldOrigin, newOrigin
+        return source
 
     def execute(self, context):
         try:
@@ -170,12 +168,16 @@ class legoizerDelete(bpy.types.Operator):
 
             self.setModelType()
 
-            source,oldOrigin,newOrigin = self.cleanUp(self.modelType)
+            source = self.cleanUp(self.modelType)
 
             if (self.modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (self.modelType == "ANIMATION" and cm.applyToSourceObject):
                 l,r,s = getTransformData()
-                if self.modelType == "MODEL" and not cm.lastSplitModel:
-                    source.location = Vector(source.location) + Vector(l)
+                if self.modelType == "MODEL":
+                    loc = cm.lastSourceMid.split(",")
+                    for i in range(len(loc)):
+                        loc[i] = float(loc[i])
+                    setOriginToObjOrigin(toObj=source, fromLoc=tuple(loc))
+                    source.location = Vector(l)
                 else:
                     source.location = Vector(l)
                 source.rotation_euler = Vector(source.rotation_euler) + Vector(r)
