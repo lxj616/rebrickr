@@ -133,11 +133,12 @@ class legoizerEditSource(bpy.types.Operator):
                 else:
                     obj = None
                 objParent = bpy.data.objects.get("LEGOizer_%(n)s_parent" % locals())
-                l = cm.lastSourceMid.split(",")
-                for i in range(len(l)):
-                    l[i] = float(l[i])
                 source["before_origin_set_location"] = source.location.to_tuple()
-                setOriginToObjOrigin(toObj=source, fromLoc=tuple(l))
+                if not cm.lastSplitModel:
+                    loc = cm.lastSourceMid.split(",")
+                    for i in range(len(loc)):
+                        loc[i] = float(loc[i])
+                    setOriginToObjOrigin(toObj=source, fromLoc=tuple(loc))
                 source["before_edit_location"] = source.location.to_tuple()
                 setSourceTransform(source, obj=obj, objParent=objParent)
             select(source, active=source)
