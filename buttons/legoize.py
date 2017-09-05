@@ -424,14 +424,16 @@ class legoizerLegoize(bpy.types.Operator):
 
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
-            parent = bpy.data.objects.new(LEGOizer_parent_on + "_frame_" + str(curFrame), source.data)
-            parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
-            parent.parent = parent0
             pGroup = bpy.data.groups[LEGOizer_parent_on] # redefine pGroup since it was removed
-            pGroup.objects.link(parent)
-            scn.objects.link(parent)
-            scn.update()
-            safeUnlink(parent)
+            parent = bpy.data.objects.get(LEGOizer_parent_on + "_frame_" + str(curFrame))
+            if parent is None:
+                parent = bpy.data.objects.new(LEGOizer_parent_on + "_frame_" + str(curFrame), source.data)
+                parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
+                parent.parent = parent0
+                pGroup.objects.link(parent)
+                scn.objects.link(parent)
+                scn.update()
+                safeUnlink(parent)
 
             # create new bricks
             group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, curFrame=curFrame)
