@@ -98,8 +98,22 @@ class legoizerEditSource(bpy.types.Operator):
             n = cm.source_name
             self.source_name = cm.source_name + " (DO NOT RENAME)"
             LEGOizer_bricks_gn = "LEGOizer_" + cm.source_name + "_bricks"
+            LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
             LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
             cm.sourceIsDirty = True
+            brickLoc = None
+            parentLoc = None
+
+            # if model isn't split, get brick loc/rot/scale
+            if not cm.lastSplitModel and groupExists(LEGOizer_bricks_gn):
+                brickGroup = bpy.data.groups[LEGOizer_bricks_gn]
+                bgObjects = list(brickGroup.objects)
+                b = bgObjects[0]
+                scn.update()
+                brickLoc = b.matrix_world.to_translation().copy()
+                brickRot = b.matrix_world.to_euler().copy()
+                brickScale = b.matrix_world.to_scale().copy()
+
 
             # get LEGOizer_storage (DO NOT RENAME) scene
             sto_scn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
@@ -139,7 +153,13 @@ class legoizerEditSource(bpy.types.Operator):
                 source["before_origin_set_location"] = source.location.to_tuple()
                 setOriginToObjOrigin(toObj=source, fromLoc=tuple(l))
                 source["before_edit_location"] = source.location.to_tuple()
-                setSourceTransform(source, obj=obj, objParent=objParent)
+                if brickLoc is not None:
+                    source.location = brickLoc
+                    source.rotation_euler = brickRot
+                    source.scale = brickScale
+                else:
+                    
+
             select(source, active=source)
 
             # set sourceOrig origin to previous origin location
