@@ -538,10 +538,10 @@ class legoizerLegoize(bpy.types.Operator):
             setOriginToObjOrigin(toObj=sourceOrig, fromLoc=lastSourceOrigLoc)
             # set up source["old_parent"] and remove source parent
             source["frame_parent_cleared"] = -1
+            select(source, active=source)
             if source.parent is not None:
                 source["old_parent"] = source.parent.name
                 source["frame_parent_cleared"] = scn.frame_current
-                select(source, active=source)
                 bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
             # apply shape keys if existing
             shapeKeys = source.data.shape_keys
@@ -552,7 +552,7 @@ class legoizerLegoize(bpy.types.Operator):
                     source.shape_key_remove(source.data.shape_keys.key_blocks[0])
                 # bpy.ops.object.shape_key_remove(all=True)
             # list modifiers that need to be applied
-            for mod in sourceOrig.modifiers:
+            for mod in source.modifiers:
                 if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"] and mod.show_viewport:
                     try:
                         bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
