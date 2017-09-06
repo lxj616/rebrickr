@@ -755,6 +755,8 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     lastStopFrame = IntProperty(default=-1)
     lastSourceMid = StringProperty(default="-1,-1,-1")
 
+    vectorLocation = StringProperty(default="")
+
     modelLoc = StringProperty(default="-1,-1,-1")
     modelRot = StringProperty(default="-1,-1,-1")
     modelScale = StringProperty(default="-1,-1,-1")

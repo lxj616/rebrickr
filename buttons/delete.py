@@ -50,7 +50,7 @@ class legoizerDelete(bpy.types.Operator):
 
 
     @classmethod
-    def cleanUp(cls, modelType, skipSource=False, skipDupes=False, skipParents=False):
+    def cleanUp(cls, modelType, skipSource=False, skipDupes=False, skipParents=False, deleting=False):
         # set up variables
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
@@ -168,16 +168,15 @@ class legoizerDelete(bpy.types.Operator):
 
             self.setModelType()
 
-            source = self.cleanUp(self.modelType)
+            source = self.cleanUp(self.modelType, deleting=True)
 
             if (self.modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (self.modelType == "ANIMATION" and cm.applyToSourceObject):
                 l,r,s = getTransformData()
                 if self.modelType == "MODEL":
-                    if not cm.lastSplitModel:
-                        loc = cm.lastSourceMid.split(",")
-                        for i in range(len(loc)):
-                            loc[i] = float(loc[i])
-                        setOriginToObjOrigin(toObj=source, fromLoc=tuple(loc))
+                    loc = cm.lastSourceMid.split(",")
+                    for i in range(len(loc)):
+                        loc[i] = float(loc[i])
+                    setOriginToObjOrigin(toObj=source, fromLoc=tuple(loc))
                     source.location = Vector(l)
                 else:
                     source.location = Vector(l)

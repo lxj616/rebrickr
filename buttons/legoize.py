@@ -89,7 +89,7 @@ class legoizerLegoize(bpy.types.Operator):
     def getObjectToLegoize(self):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL", "UPDATE_ANIM"]:
+        if self.action in ["UPDATE_MODEL", "UPDATE_ANIM"]:
             objToLegoize = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         elif self.action in ["CREATE", "ANIMATE"]:
             objToLegoize = bpy.data.objects.get(cm.source_name)
@@ -165,7 +165,7 @@ class legoizerLegoize(bpy.types.Operator):
             customData = None
             customObj_details = None
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
-        updateCursor = self.action in ["CREATE", "UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] # evaluates to boolean value
+        updateCursor = self.action in ["CREATE", "UPDATE_MODEL"] # evaluates to boolean value
         bricksDict = makeBricksDict(source, source_details, dimensions, R, cursorStatus=updateCursor)
         if curFrame is not None:
             group_name = 'LEGOizer_%(n)s_bricks_frame_%(curFrame)s' % locals()
@@ -272,7 +272,7 @@ class legoizerLegoize(bpy.types.Operator):
                 return False
             # TODO: Alert user to bake fluid/cloth simulation before attempting to LEGOize
 
-        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
+        if self.action in ["UPDATE_MODEL"]:
             # make sure 'LEGOizer_[source name]_bricks' group exists
             if not groupExists(LEGOizer_bricks_gn):
                 self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
@@ -491,7 +491,7 @@ class legoizerLegoize(bpy.types.Operator):
             safeUnlink(obj)
 
         # if there are no changes to apply, simply return "FINISHED"
-        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] and not updateCanRun("MODEL"):
+        if self.action in ["UPDATE_MODEL"] and not updateCanRun("MODEL"):
             return{"FINISHED"}
 
         sto_scn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
@@ -499,12 +499,12 @@ class legoizerLegoize(bpy.types.Operator):
             sto_scn.update()
 
         # delete old bricks if present
-        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
+        if self.action in ["UPDATE_MODEL"]:
             if cm.sourceIsDirty:
                 # alert that parent loc needs updating at the end
                 updateParentLoc = True
                 # delete source/dupes as well if source is dirty, but only delete parent if not cm.splitModel
-                legoizerDelete.cleanUp("MODEL", skipParents=True)#cm.splitModel)
+                legoizerDelete.cleanUp("MODEL", skipParents=True)
             else:
                 # else, skip source
                 legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
@@ -608,6 +608,9 @@ class legoizerLegoize(bpy.types.Operator):
                 pass
             elif not cm.splitModel:
                 setTransformData(list(bGroup.objects), sourceOrig)
+                parent.location = (0,0,0)
+                parent.rotation_euler = (0,0,0)
+                parent.scale = (1,1,1)
             # set transformation of brick group parent
             elif not cm.lastSplitModel:
                 setTransformData(parent, sourceOrig)
@@ -644,11 +647,24 @@ class legoizerLegoize(bpy.types.Operator):
                     eu2 = bGroup.objects[0].rotation_euler
                     v_new.rotate(eu2)
                 v_new += center_v
-                for brick in bGroup.objects:
-                    if not cm.lastSplitModel:
-                        brick.location += Vector((v_new.x * parent.scale[0] * bGroup.objects[0].scale[0], v_new.y * parent.scale[1] * bGroup.objects[0].scale[1], v_new.z * parent.scale[2] * bGroup.objects[0].scale[2]))
-                    else:
-                        brick.location += Vector((v_new.x * parent.scale[0], v_new.y * parent.scale[1], v_new.z * parent.scale[2]))
+                if not cm.lastSplitModel:
+                    vectorAddition = Vector((v_new.x * parent.scale[0] * bGroup.objects[0].scale[0], v_new.y * parent.scale[1] * bGroup.objects[0].scale[1], v_new.z * parent.scale[2] * bGroup.objects[0].scale[2]))
+                else:
+                    vectorAddition = Vector((v_new.x * parent.scale[0], v_new.y * parent.scale[1], v_new.z * parent.scale[2]))
+                if cm.splitModel and cm.sourceIsDirty:
+                    # TODO: do this better. this is a cheat.
+                    brick = bGroup.objects[0]
+                    scn.update()
+                    firstT = brick.matrix_world.to_translation().copy()
+                    brick.location += vectorAddition
+                    scn.update()
+                    lastT = brick.matrix_world.to_translation().copy()
+                    brick.location -= vectorAddition
+                    # update parent location accordingly
+                    parent.location += lastT - firstT
+                elif not cm.splitModel:
+                    for brick in bGroup.objects:
+                        brick.location += vectorAddition
 
         # unlink source duplicate if created
         if source != sourceOrig and source.name in scn.objects.keys():
