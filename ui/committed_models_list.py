@@ -163,6 +163,13 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             if active_object and active_object.type == "MESH" and not active_object.name.startswith("LEGOizer_"):
                 item.source_name = active_object.name
                 item.name = active_object.name
+                # set up default brickHeight value
+                source = bpy.data.objects.get(item.source_name)
+                if source is not None:
+                    source_details = bounds(source)
+                    h = max(source_details.x.distance, source_details.y.distance, source_details.z.distance)
+                    # update brick height based on model height
+                    item.brickHeight = h / 20
             else:
                 item.source_name = ""
                 item.name = "<New Model>"
@@ -410,13 +417,6 @@ def setNameIfEmpty(self, context):
             if cm1 != cm0 and cm1.source_name == cm0.source_name:
                 cm0.source_name = ""
                 scn.cmlist_index = i
-    # set up model height variable 'h'
-    source = bpy.data.objects.get(cm0.source_name)
-    if source is not None:
-        source_details = bounds(source)
-        h = max(source_details.x.distance, source_details.y.distance, source_details.z.distance)
-        # update brick height based on model height
-        cm0.brickHeight = h / 20
 
 def updateBevel(self, context):
     # get bricks to bevel
@@ -552,9 +552,17 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         min=4, max=64,
         default=16)
 
-    modelHeight = FloatProperty(
-        name="Model Height",
-        description="Height of the source object to LEGOize",
+    modelScaleX = FloatProperty(
+        name="Model Scale X",
+        description="Scale of the source object to LEGOize on X axis",
+        default=-1)
+    modelScaleY = FloatProperty(
+        name="Model Scale Y",
+        description="Scale of the source object to LEGOize on Y axis",
+        default=-1)
+    modelScaleZ = FloatProperty(
+        name="Model Scale Z",
+        description="Scale of the source object to LEGOize on Z axis",
         default=-1)
     brickHeight = FloatProperty(
         name="Brick Height",
@@ -754,6 +762,8 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     lastStartFrame = IntProperty(default=-1)
     lastStopFrame = IntProperty(default=-1)
     lastSourceMid = StringProperty(default="-1,-1,-1")
+
+    vectorLocation = StringProperty(default="")
 
     modelLoc = StringProperty(default="-1,-1,-1")
     modelRot = StringProperty(default="-1,-1,-1")
