@@ -195,6 +195,54 @@ class legoizerDelete(bpy.types.Operator):
             scn.runningOperation = False
             scn.layers = lastLayers
 
+            # delete custom properties from source
+            try:
+                del source["ignored_mods"]
+            except Exception as e:
+                print(e)
+            try:
+                del source["frame_parent_cleared"]
+            except Exception as e:
+                print(e)
+            try:
+                del source["old_parent"]
+            except Exception as e:
+                print(e)
+            try:
+                del source["previous_location"]
+            except Exception as e:
+                print(e)
+            try:
+                del source["previous_rotation"]
+            except Exception as e:
+                print(e)
+            try:
+                del source["previous_scale"]
+            except Exception as e:
+                print(e)
+            try:
+                del source["before_edit_location"]
+            except Exception as e:
+                print(e)
+            try:
+                del source["before_origin_set_location"]
+            except Exception as e:
+                print(e)
+
+            # reset default values for select items in cmlist
+            cm.modelLoc = "-1,-1,-1"
+            cm.modelRot = "-1,-1,-1"
+            cm.modelScale = "-1,-1,-1"
+            cm.lastSourceMid = "-1,-1,-1"
+            cm.lastLogoResolution = 0
+            cm.lastLogoDetail = 'None'
+            cm.lastSplitModel = False
+            cm.animIsDirty = True
+            cm.materialIsDirty = True
+            cm.modelIsDirty = True
+            cm.buildIsDirty = True
+            cm.sourceIsDirty = True
+            cm.bricksAreDirty = True
 
             # reset frame (for proper update), update scene and redraw 3D view
             scn.frame_set(scn.frame_current)

@@ -603,17 +603,21 @@ class legoizerLegoize(bpy.types.Operator):
         if bGroup is not None:
             # set transformation of objects in brick group
             if (self.action == "CREATE" and cm.sourceIsDirty):
+                print(1)
                 setTransformData(list(bGroup.objects))
             elif cm.lastSplitModel and not cm.splitModel:
+                print(2)
                 pass
             elif not cm.splitModel:
                 setTransformData(list(bGroup.objects), sourceOrig)
-                parent.location = (0,0,0)
-                parent.rotation_euler = (0,0,0)
-                parent.scale = (1,1,1)
+                parent.location = (0, 0, 0)
+                parent.rotation_euler = (0, 0, 0)
+                parent.scale = (1, 1, 1)
             # set transformation of brick group parent
             elif not cm.lastSplitModel:
-                # set transform data
+                parent.location = (0, 0, 0)
+                parent.rotation_euler = (0, 0, 0)
+                parent.scale = (1, 1, 1)
                 setTransformData(parent, sourceOrig)
             # in this case, the parent was not removed so the transformations should stay the same
             elif cm.sourceIsDirty:
@@ -633,7 +637,7 @@ class legoizerLegoize(bpy.types.Operator):
                 select(obj, active=obj, only=False)
                 obj.select = False
             # update location of bricks in case source mesh has been edited
-            if updateParentLoc and False:
+            if updateParentLoc:
                 # store lastSourceMid
                 l = cm.lastSourceMid.split(",")
                 l = convertToFloats(l)
@@ -663,7 +667,7 @@ class legoizerLegoize(bpy.types.Operator):
                     lastT = brick.matrix_world.to_translation().copy()
                     brick.location -= vectorAddition
                     # update parent location accordingly
-                    parent.location += lastT - firstT
+                    parent.location += lastT - firstT + last_origin_obj.location
                 elif not cm.splitModel:
                     for brick in bGroup.objects:
                         brick.location += vectorAddition
