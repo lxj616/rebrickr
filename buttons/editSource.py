@@ -101,7 +101,7 @@ class legoizerEditSource(bpy.types.Operator):
             LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
             LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
             brickLoc = None
-            parentLoc = None
+            parentOb = None
 
             # if model isn't split, get brick loc/rot/scale
             if not cm.lastSplitModel and groupExists(LEGOizer_bricks_gn):
@@ -151,11 +151,29 @@ class legoizerEditSource(bpy.types.Operator):
                     l[i] = float(l[i])
                 source["before_origin_set_location"] = source.location.to_tuple()
                 setOriginToObjOrigin(toObj=source, fromLoc=tuple(l))
-                source["before_edit_location"] = source.location.to_tuple()
+                source["before_edit_location"] = source.matrix_world.to_translation()
                 if brickLoc is not None:
+                    if source.parent is not None:
+                        parentOb = source.parent
+                        source.parent = None
                     source.location = brickLoc
                     source.rotation_euler = brickRot
                     source.scale = brickScale
+                    if parentOb is not None:
+                        unlinkParent, unlinkSource = False, False
+                        if parentOb.name not in sto_scn.objects.keys():
+                            sto_scn.objects.link(parentOb)
+                            unlinkParent = True
+                        if source.name not in sto_scn.objects.keys():
+                            sto_scn.objects.link(source)
+                            unlinkSource = True
+                        sto_scn.update()
+                        select([source, parentOb], active=parentOb)
+                        bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+                        if unlinkParent:
+                            sto_scn.objects.unlink(parentOb)
+                        if unlinkSource:
+                            sto_scn.objects.unlink(source)
                 else:
                     setSourceTransform(source, obj=obj, objParent=objParent)
 

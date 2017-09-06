@@ -166,6 +166,7 @@ class legoizerDelete(bpy.types.Operator):
             n = cm.source_name
             source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
             LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
+            parentOb = None
 
             # store last active layers
             lastLayers = list(scn.layers)
@@ -190,14 +191,31 @@ class legoizerDelete(bpy.types.Operator):
                         loc[i] = float(loc[i])
                     setOriginToObjOrigin(toObj=source, fromLoc=tuple(loc))
                     if brickLoc is not None:
+                        if source.parent is not None:
+                            parentOb = source.parent
+                            source.parent = None
                         source.location = brickLoc
                     else:
                         source.location = Vector(l)
                 else:
                     source.location = Vector(l)
-                if brickRot is not None and brickScale is not None:
+                if brickRot is not None and brickScale is not None and self.modelType == "MODEL":
                     source.rotation_euler = brickRot
                     source.scale = brickScale
+                    if parentOb is not None:
+                        unlinkParent, unlinkSource = False, False
+                        if parentOb.name not in scn.objects.keys():
+                            scn.objects.link(parentOb)
+                            unlinkParent = True
+                        if source.name not in scn.objects.keys():
+                            scn.objects.link(source)
+                            unlinkSource = True
+                        select([source, parentOb], active=parentOb)
+                        bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+                        if unlinkParent:
+                            scn.objects.unlink(parentOb)
+                        if unlinkSource:
+                            scn.objects.unlink(source)
                 else:
                     source.rotation_euler = Vector(source.rotation_euler) + Vector(r)
                     source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
