@@ -504,7 +504,7 @@ class legoizerLegoize(bpy.types.Operator):
                 # alert that parent loc needs updating at the end
                 updateParentLoc = True
                 # delete source/dupes as well if source is dirty, but only delete parent if not cm.splitModel
-                legoizerDelete.cleanUp("MODEL", skipParents=True)
+                legoizerDelete.cleanUp("MODEL", skipParents=True)#not (cm.lastSplitModel and cm.splitModel))
             else:
                 # else, skip source
                 legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)

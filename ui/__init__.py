@@ -388,24 +388,53 @@ class ModelSettingsPanel(Panel):
 
         col = layout.column(align=True)
         # set up model height variable 'h'
-        if cm.modelHeight == -1:
-            source = bpy.data.objects.get(cm.source_name)
+        if cm.modelScaleX == -1 or cm.modelScaleY == -1 or cm.modelScaleZ == -1:
+            if not cm.modelCreated and not cm.animated:
+                source = bpy.data.objects.get(cm.source_name)
+            else:
+                source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
             if source is not None:
                 source_details = bounds(source)
-                h = source_details.z.distance
+                sX = round(source_details.x.distance, 2)
+                sY = round(source_details.y.distance, 2)
+                sZ = round(source_details.z.distance, 2)
             else:
-                h = -1
+                sX = -1
+                sY = -1
+                sZ = -1
         else:
-            h = cm.modelHeight
+            sX = cm.modelScaleX
+            sY = cm.modelScaleY
+            sZ = cm.modelScaleZ
         # draw model height if it was set
-        if h != -1:
-            h = round(h, 2)
-            split = col.split(align=True, percentage=.625)
-            col1 = split.column(align=True)
-            col1.label(" Model Height:")
-            col2 = split.column(align=True)
-            col2.alignment = "RIGHT"
-            col2.label("%(h)s" % locals())
+        if sX != -1 and sY != -1 and sZ != -1:
+            noCustomObj = False
+            if cm.brickType in ["Bricks", "Plates"]:
+                if cm.brickType == "Plates":
+                    zScale = 0.333
+                elif cm.brickType == "Bricks":
+                    zScale = 1
+                dimensions = Bricks.get_dimensions(cm.brickHeight, zScale, cm.gap)
+                rX = int(sX/dimensions["width"])
+                rY = int(sY/dimensions["width"])
+                rZ = int(sZ/dimensions["height"])
+            elif cm.brickType == "Custom":
+                customObj = bpy.data.objects.get(cm.customObjectName)
+                if customObj is not None:
+                    custom_details = bounds(customObj)
+                    multiplier = (cm.brickHeight/custom_details.z.distance)
+                    rX = int(sX/(custom_details.x.distance * multiplier))
+                    rY = int(sY/(custom_details.y.distance * multiplier))
+                    rZ = int(sZ/cm.brickHeight)
+                else:
+                    noCustomObj = True
+            if not noCustomObj:
+                split = col.split(align=True, percentage=0.5)
+                col1 = split.column(align=True)
+                col1.label("~Num Bricks:")
+                col2 = split.column(align=True)
+                col2.alignment = "RIGHT"
+                col2.label("%(rX)s x %(rY)s x %(rZ)s" % locals())
         row = col.row(align=True)
         row.prop(cm, "brickHeight")
         row = col.row(align=True)
