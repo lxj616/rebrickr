@@ -164,12 +164,12 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                 item.source_name = active_object.name
                 item.name = active_object.name
                 # set up default brickHeight values
-                source = bpy.data.objects.get(cm0.source_name)
+                source = bpy.data.objects.get(item.source_name)
                 if source is not None:
                     source_details = bounds(source)
                     h = max(source_details.x.distance, source_details.y.distance, source_details.z.distance)
                     # update brick height based on model height
-                    cm0.brickHeight = h / 20
+                    item.brickHeight = h / 20
 
             else:
                 item.source_name = ""
