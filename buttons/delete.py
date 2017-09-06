@@ -60,6 +60,9 @@ class legoizerDelete(bpy.types.Operator):
         LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
         LEGOizer_refBricks_gn = "LEGOizer_%(n)s_refBricks" % locals()
         LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
+        brickLoc = None
+        brickRot = None
+        brickScale = None
 
         # clean up 'LEGOizer_[source name]' group
         if not skipSource:
@@ -92,9 +95,18 @@ class legoizerDelete(bpy.types.Operator):
             bpy.data.groups.remove(dGroup, do_unlink=True)
 
         if not skipParents:
+            p = bpy.data.objects.get(LEGOizer_parent_on)
             if modelType == "ANIMATION" or cm.lastSplitModel:
                 # store transform data of transformation parent object
-                storeTransformData(bpy.data.objects.get(LEGOizer_parent_on))
+                storeTransformData(p)
+            if not cm.lastSplitModel and groupExists(LEGOizer_bricks_gn):
+                brickGroup = bpy.data.groups[LEGOizer_bricks_gn]
+                bgObjects = list(brickGroup.objects)
+                b = bgObjects[0]
+                scn.update()
+                brickLoc = b.matrix_world.to_translation().copy()
+                brickRot = b.matrix_world.to_euler().copy()
+                brickScale = b.matrix_world.to_scale().copy()
             # clean up LEGOizer_parent objects
             pGroup = bpy.data.groups.get(LEGOizer_parent_on)
             if pGroup:
@@ -144,7 +156,7 @@ class legoizerDelete(bpy.types.Operator):
         update_progress("Deleting", 1)
         wm.progress_end()
 
-        return source
+        return source, brickLoc, brickRot, brickScale
 
     def execute(self, context):
         try:
@@ -168,7 +180,7 @@ class legoizerDelete(bpy.types.Operator):
 
             self.setModelType()
 
-            source = self.cleanUp(self.modelType)
+            source, brickLoc, brickRot, brickScale = self.cleanUp(self.modelType)
 
             if (self.modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (self.modelType == "ANIMATION" and cm.applyToSourceObject):
                 l,r,s = getTransformData()
@@ -177,11 +189,18 @@ class legoizerDelete(bpy.types.Operator):
                     for i in range(len(loc)):
                         loc[i] = float(loc[i])
                     setOriginToObjOrigin(toObj=source, fromLoc=tuple(loc))
-                    source.location = Vector(l)
+                    if brickLoc is not None:
+                        source.location = brickLoc
+                    else:
+                        source.location = Vector(l)
                 else:
                     source.location = Vector(l)
-                source.rotation_euler = Vector(source.rotation_euler) + Vector(r)
-                source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
+                if brickRot is not None and brickScale is not None:
+                    source.rotation_euler = brickRot
+                    source.scale = brickScale
+                else:
+                    source.rotation_euler = Vector(source.rotation_euler) + Vector(r)
+                    source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
 
             # set origin to previous origin location
             last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
