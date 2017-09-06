@@ -99,6 +99,7 @@ class legoizerEditSource(bpy.types.Operator):
             self.source_name = cm.source_name + " (DO NOT RENAME)"
             LEGOizer_bricks_gn = "LEGOizer_" + cm.source_name + "_bricks"
             LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
+            cm.sourceIsDirty = True
 
             # get LEGOizer_storage (DO NOT RENAME) scene
             sto_scn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
@@ -151,11 +152,6 @@ class legoizerEditSource(bpy.types.Operator):
             bpy.ops.object.mode_set(mode='EDIT')
 
             bpy.context.window_manager["editingSourceInStorage"] = {"source_name":self.source_name, "lastSourceOrigLoc":self.lastSourceOrigLoc}
-
-            # push current
-            if not cm.sourceIsDirty:
-                bpy.ops.ed.undo_push(message="Toggle Source Editmode")
-            cm.sourceIsDirty = True
 
             # run modal
             context.window_manager.modal_handler_add(self)

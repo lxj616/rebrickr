@@ -145,21 +145,20 @@ def storeTransformData(obj):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     if obj is not None:
-        cm.modelLoc = str(obj.matrix_world.to_translation().to_tuple())[1:-1]
-        cm.modelRot = str(tuple(obj.matrix_world.to_euler()))[1:-1]
-        cm.modelScale = str(obj.matrix_world.to_scale().to_tuple())[1:-1]
+        cm.modelLoc = str(obj.location.to_tuple())[1:-1]
+        cm.modelRot = str(tuple(obj.rotation_euler))[1:-1]
+        cm.modelScale = str(obj.scale.to_tuple())[1:-1]
     elif obj is None:
         cm.modelLoc = "0,0,0"
         cm.modelRot = "0,0,0"
         cm.modelScale = "1,1,1"
-    print(cm.modelLoc)
 
 def convertToFloats(lst):
     for i in range(len(lst)):
         lst[i] = float(lst[i])
     return lst
 
-def setTransformData(objList, source=None, skipLocation=False, byTwo=False):
+def setTransformData(objList, source=None, skipLocation=False):
     """ set location, rotation, and scale data for model """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
