@@ -637,8 +637,9 @@ class legoizerLegoize(bpy.types.Operator):
                 v = Vector(parentLoc) - Vector(lastSourceMid)
                 center_v = Vector((0, 0, 0))
                 v_new = v - center_v
-                eu1 = parent.rotation_euler
-                v_new.rotate(eu1)
+                if not cm.splitModel:
+                    eu1 = parent.rotation_euler
+                    v_new.rotate(eu1)
                 if not cm.lastSplitModel:
                     eu2 = bGroup.objects[0].rotation_euler
                     v_new.rotate(eu2)
