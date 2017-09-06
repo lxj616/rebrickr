@@ -158,7 +158,8 @@ class legoizerEditSource(bpy.types.Operator):
                     source.rotation_euler = brickRot
                     source.scale = brickScale
                 else:
-                    
+                    setSourceTransform(source, obj=obj, objParent=objParent)
+
 
             select(source, active=source)
 
