@@ -463,6 +463,7 @@ class legoizerLegoize(bpy.types.Operator):
         # set up variables
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
+        origFrame = None
         source = None
         sourceOrig = self.getObjectToLegoize()
         n = cm.source_name
@@ -476,6 +477,13 @@ class legoizerLegoize(bpy.types.Operator):
         pGroup = bpy.data.groups.get(LEGOizer_parent_on)
         if pGroup is None:
             pGroup = bpy.data.groups.new(LEGOizer_parent_on)
+
+        if self.action == "CREATE":
+            # set modelCreatedOnFrame
+            cm.modelCreatedOnFrame = scn.frame_current
+        else:
+            origFrame = scn.frame_current
+            scn.frame_set(cm.modelCreatedOnFrame)
 
         if self.action == "CREATE":
             # get origin location for source
@@ -662,6 +670,9 @@ class legoizerLegoize(bpy.types.Operator):
         cm.modelCreated = True
 
         cm.lastSourceMid = str(tuple(parentLoc))[1:-1]
+
+        if origFrame is not None:
+            scn.frame_set(origFrame)
 
     def execute(self, context):
         try:
