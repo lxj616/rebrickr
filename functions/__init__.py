@@ -215,7 +215,7 @@ def getTransformData():
     s = tuple(convertToFloats(cm.modelScale.split(",")))
     return l,r,s
 
-def setSourceTransform(source, obj=None, objParent=None, last_origin_obj=None):
+def setSourceTransform(source, obj=None, objParent=None, last_origin_obj=None, skipLocation=False):
     if obj is not None:
         objLoc = obj.location
         objRot = obj.rotation_euler
@@ -232,10 +232,11 @@ def setSourceTransform(source, obj=None, objParent=None, last_origin_obj=None):
         objParentLoc = Vector((0,0,0))
         objParentRot = Vector((0,0,0))
         objParentScale = Vector((1,1,1))
-    if last_origin_obj is not None:
-        source.location = objParentLoc + objLoc - (Vector(last_origin_obj.location) - Vector(source["previous_location"]))
-    else:
-        source.location = objParentLoc + objLoc
+    if not skipLocation:
+        if last_origin_obj is not None:
+            source.location = objParentLoc + objLoc - (Vector(last_origin_obj.location) - Vector(source["previous_location"]))
+        else:
+            source.location = objParentLoc + objLoc
     source.rotation_euler = (source.rotation_euler[0] + objRot[0] + objParentRot[0], source.rotation_euler[1] + objRot[1] + objParentRot[1], source.rotation_euler[2] + objRot[2] + objParentRot[2])
     source.scale = (source.scale[0] * objScale[0] * objParentScale[0], source.scale[1] * objScale[1] * objParentScale[1], source.scale[2] * objScale[2] * objParentScale[2])
 

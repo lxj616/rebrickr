@@ -200,8 +200,8 @@ class legoizerDelete(bpy.types.Operator):
                 else:
                     source.location = Vector(l)
                 if brickRot is not None and brickScale is not None and self.modelType == "MODEL":
-                    source.rotation_euler = brickRot
-                    source.scale = brickScale
+                    source.rotation_euler = Vector(brickRot) + Vector(source["previous_rotation"])
+                    source.scale = (brickScale[0] * source["previous_scale"][0], brickScale[1] * source["previous_scale"][1], brickScale[2] * source["previous_scale"][2])
                     if parentOb is not None:
                         setParentKeepTransform(source, parentOb, scn)
                 else:

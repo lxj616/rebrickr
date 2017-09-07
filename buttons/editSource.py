@@ -157,8 +157,8 @@ class legoizerEditSource(bpy.types.Operator):
                         parentOb = source.parent
                         source.parent = None
                     source.location = brickLoc
-                    source.rotation_euler = brickRot
-                    source.scale = brickScale
+                    source.rotation_euler = Vector(brickRot) + Vector(source["previous_rotation"])
+                    source.scale = (brickScale[0] * source["previous_scale"][0], brickScale[1] * source["previous_scale"][1], brickScale[2] * source["previous_scale"][2])
                     if parentOb is not None:
                         setParentKeepTransform(source, parentOb, sto_scn)
                 else:
