@@ -142,7 +142,7 @@ class legoizerDelete(bpy.types.Operator):
             # clean up LEGOizer_bricks group
             cm.animated = False
             for i in range(cm.lastStartFrame, cm.lastStopFrame + 1):
-                percent = (i-cm.lastStartFrame)/(cm.lastStopFrame - cm.lastStartFrame)
+                percent = (i - cm.lastStartFrame + 1)/(cm.lastStopFrame - cm.lastStartFrame + 1)
                 if percent < 1:
                     update_progress("Deleting", percent)
                     wm.progress_update(percent*100)
@@ -203,19 +203,7 @@ class legoizerDelete(bpy.types.Operator):
                     source.rotation_euler = brickRot
                     source.scale = brickScale
                     if parentOb is not None:
-                        unlinkParent, unlinkSource = False, False
-                        if parentOb.name not in scn.objects.keys():
-                            scn.objects.link(parentOb)
-                            unlinkParent = True
-                        if source.name not in scn.objects.keys():
-                            scn.objects.link(source)
-                            unlinkSource = True
-                        select([source, parentOb], active=parentOb)
-                        bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
-                        if unlinkParent:
-                            scn.objects.unlink(parentOb)
-                        if unlinkSource:
-                            scn.objects.unlink(source)
+                        setParentKeepTransform(source, parentOb, scn)
                 else:
                     source.rotation_euler = Vector(source.rotation_euler) + Vector(r)
                     source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])

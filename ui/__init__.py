@@ -161,7 +161,10 @@ class LegoModelsPanel(Panel):
                 col.operator("cmlist.set_to_active", icon="EDIT", text="")
                 col = layout.column(align=True)
 
-            obj = bpy.data.objects.get(cm.source_name)
+            if cm.modelCreated or cm.animated:
+                obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+            else:
+                obj = bpy.data.objects.get(cm.source_name)
 
             # if use animation is selected, draw animation options
             if cm.useAnimation:
@@ -466,7 +469,10 @@ class ModelSettingsPanel(Panel):
             row.prop(cm, "calculationAxes", text="")
         row = col.row(align=True)
         row.prop(cm, "shellThickness", text="Thickness")
-        obj = bpy.data.objects.get(cm.source_name)
+        if cm.modelCreated or cm.animated:
+            obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+        else:
+            obj = bpy.data.objects.get(cm.source_name)
         if obj is not None and not cm.isWaterTight:
             row = col.row(align=True)
             # row.scale_y = 0.7
@@ -657,7 +663,10 @@ class MaterialsPanel(Panel):
                         row = col.row(align=True)
                         row.operator("scene.legoizer_apply_material", icon="FILE_TICK")
 
-        obj = bpy.data.objects.get(cm.source_name)
+        if cm.modelCreated or cm.animated:
+            obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+        else:
+            obj = bpy.data.objects.get(cm.source_name)
         if obj is not None:
             col = layout.column(align=True)
             col.scale_y = 0.7
@@ -756,7 +765,10 @@ class SupportsPanel(Panel):
             row.prop(cm, "colStep")
             row = col.row(align=True)
             row.prop(cm, "colThickness")
-        obj = bpy.data.objects.get(cm.source_name)
+        if cm.modelCreated or cm.animated:
+            obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+        else:
+            obj = bpy.data.objects.get(cm.source_name)
         if obj is not None and not cm.isWaterTight:
             row = col.row(align=True)
             # row.scale_y = 0.7

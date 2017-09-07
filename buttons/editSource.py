@@ -160,20 +160,7 @@ class legoizerEditSource(bpy.types.Operator):
                     source.rotation_euler = brickRot
                     source.scale = brickScale
                     if parentOb is not None:
-                        unlinkParent, unlinkSource = False, False
-                        if parentOb.name not in sto_scn.objects.keys():
-                            sto_scn.objects.link(parentOb)
-                            unlinkParent = True
-                        if source.name not in sto_scn.objects.keys():
-                            sto_scn.objects.link(source)
-                            unlinkSource = True
-                        sto_scn.update()
-                        select([source, parentOb], active=parentOb)
-                        bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
-                        if unlinkParent:
-                            sto_scn.objects.unlink(parentOb)
-                        if unlinkSource:
-                            sto_scn.objects.unlink(source)
+                        setParentKeepTransform(source, parentOb, sto_scn)
                 else:
                     setSourceTransform(source, obj=obj, objParent=objParent)
 

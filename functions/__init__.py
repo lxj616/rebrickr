@@ -104,6 +104,30 @@ def importLogo():
     logoObj = bpy.context.selected_objects[0]
     return logoObj
 
+def setParentKeepTransform(source, parentOb, scn):
+    unlinkParent, unlinkSource, unhideParent = False, False, False
+    if parentOb.name not in scn.objects.keys():
+        scn.objects.link(parentOb)
+        unlinkParent = True
+        select(parentOb, active=parentOb)
+        if bpy.context.active_object.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
+    if source.name not in scn.objects.keys():
+        scn.objects.link(source)
+        unlinkSource = True
+    scn.update()
+    if parentOb.hide:
+        parentOb.hide = False
+        unhideParent = True
+    select([source, parentOb], active=parentOb)
+    bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+    if unlinkParent:
+        scn.objects.unlink(parentOb)
+    if unlinkSource:
+        scn.objects.unlink(source)
+    if unhideParent:
+        parentOb.hide = True
+
 def getClosestPolyIndex(point,maxLen,ob):
     """ returns nearest polygon to point within edgeLen """
     # initialize variables
