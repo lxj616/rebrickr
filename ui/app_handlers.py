@@ -23,6 +23,7 @@ Created by Christopher Gearhart
 import bpy
 from bpy.app.handlers import persistent
 from ..functions import *
+from mathutils import Vector, Euler
 
 @persistent
 def handle_animation(scene):
@@ -173,7 +174,8 @@ def handle_saving_in_edit_mode(scene):
         # reset source origin to adjusted location
         if source["before_edit_location"] != -1:
             source.location = source["before_edit_location"]
-        source.rotation_euler = source["previous_rotation"]
+        source.rotation_mode = "XYZ"
+        source.rotation_euler = Euler(tuple(source["previous_rotation"], "XYZ"))
         source.scale = source["previous_scale"]
         setOriginToObjOrigin(toObj=source, fromLoc=source["before_origin_set_location"])
         if bpy.context.scene.name == "LEGOizer_storage (DO NOT RENAME)":

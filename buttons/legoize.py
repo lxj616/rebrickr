@@ -408,6 +408,7 @@ class legoizerLegoize(bpy.types.Operator):
                 source.animation_data_clear()
                 scn.update()
                 sourceOrig["previous_location"] = source.location.to_tuple()
+                source.rotation_mode = "XYZ"
                 sourceOrig["previous_rotation"] = tuple(source.rotation_euler)
                 sourceOrig["previous_scale"] = source.scale.to_tuple()
                 select(source, active=source)
@@ -566,6 +567,7 @@ class legoizerLegoize(bpy.types.Operator):
             # apply transformation data
             if self.action == "CREATE":
                 sourceOrig["previous_location"] = source.location.to_tuple()
+            source.rotation_mode = "XYZ"
             sourceOrig["previous_rotation"] = tuple(source.rotation_euler)
             sourceOrig["previous_scale"] = source.scale.to_tuple()
             select(source, active=source)
@@ -646,9 +648,11 @@ class legoizerLegoize(bpy.types.Operator):
                 center_v = Vector((0, 0, 0))
                 v_new = v - center_v
                 if not cm.splitModel:
+                    parent.rotation_mode = "XYZ"
                     eu1 = parent.rotation_euler
                     v_new.rotate(eu1)
                 if not cm.lastSplitModel:
+                    bGroup.objects[0].rotation_mode = "XYZ"
                     eu2 = bGroup.objects[0].rotation_euler
                     v_new.rotate(eu2)
                 v_new += center_v

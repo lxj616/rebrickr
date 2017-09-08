@@ -22,7 +22,7 @@
 # system imports
 import bpy
 import time
-from mathutils import Vector
+from mathutils import Vector, Euler
 from ..functions import *
 props = bpy.props
 
@@ -200,12 +200,13 @@ class legoizerDelete(bpy.types.Operator):
                 else:
                     source.location = Vector(l)
                 if brickRot is not None and brickScale is not None and self.modelType == "MODEL":
-                    source.rotation_euler = Vector(brickRot) + Vector(source["previous_rotation"])
+                    source.rotation_euler.rotate(brickRot)
                     source.scale = (brickScale[0] * source["previous_scale"][0], brickScale[1] * source["previous_scale"][1], brickScale[2] * source["previous_scale"][2])
                     if parentOb is not None:
                         setParentKeepTransform(source, parentOb, scn)
                 else:
-                    source.rotation_euler = Vector(source.rotation_euler) + Vector(r)
+                    source.rotation_mode = "XYZ"
+                    source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
                     source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
 
             # set origin to previous origin location

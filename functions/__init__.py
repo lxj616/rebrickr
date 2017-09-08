@@ -30,7 +30,7 @@ from .generate_lattice import generateLattice
 from .checkWaterTight import isOneMesh
 from .makeBricks import *
 from ..classes.Brick import Bricks
-from mathutils import Matrix, Vector, geometry
+from mathutils import Matrix, Vector, geometry, Euler
 from mathutils.bvhtree import BVHTree
 props = bpy.props
 
@@ -170,6 +170,7 @@ def storeTransformData(obj):
     cm = scn.cmlist[scn.cmlist_index]
     if obj is not None:
         cm.modelLoc = str(obj.location.to_tuple())[1:-1]
+        obj.rotation_mode = "XYZ"
         cm.modelRot = str(tuple(obj.rotation_euler))[1:-1]
         cm.modelScale = str(obj.scale.to_tuple())[1:-1]
     elif obj is None:
@@ -199,9 +200,11 @@ def setTransformData(objList, source=None, skipLocation=False):
                     obj.location -= Vector(last_origin_obj.location) - Vector(source["previous_location"])
                 else:
                     obj.location -= Vector(source.location) - Vector(source["previous_location"])
-        obj.rotation_euler = Vector(obj.rotation_euler) + Vector(r)
+        obj.rotation_mode = "XYZ"
+        obj.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
         if source is not None:
-            obj.rotation_euler = Vector(obj.rotation_euler) - (Vector(source.rotation_euler) - Vector(source["previous_rotation"]))
+            obj.rotation_euler.rotate(source.rotation_euler)
+            obj.rotation_euler.rotate(Euler(tuple(source["previous_rotation"]), "XYZ"))
         obj.scale = (obj.scale[0] * s[0], obj.scale[1] * s[1], obj.scale[2] * s[2])
         if source is not None:
             obj.scale -= Vector(source.scale) - Vector(source["previous_scale"])
@@ -218,11 +221,12 @@ def getTransformData():
 def setSourceTransform(source, obj=None, objParent=None, last_origin_obj=None, skipLocation=False):
     if obj is not None:
         objLoc = obj.location
+        obj.rotation_mode = "XYZ"
         objRot = obj.rotation_euler
         objScale = obj.scale
     else:
         objLoc = Vector((0,0,0))
-        objRot = Vector((0,0,0))
+        objRot = Euler((0,0,0), "XYZ")
         objScale = Vector((1,1,1))
     if objParent is not None:
         objParentLoc = objParent.location
@@ -230,14 +234,16 @@ def setSourceTransform(source, obj=None, objParent=None, last_origin_obj=None, s
         objParentScale = objParent.scale
     else:
         objParentLoc = Vector((0,0,0))
-        objParentRot = Vector((0,0,0))
+        objParentRot = Euler((0,0,0), "XYZ")
         objParentScale = Vector((1,1,1))
     if not skipLocation:
         if last_origin_obj is not None:
             source.location = objParentLoc + objLoc - (Vector(last_origin_obj.location) - Vector(source["previous_location"]))
         else:
             source.location = objParentLoc + objLoc
-    source.rotation_euler = (source.rotation_euler[0] + objRot[0] + objParentRot[0], source.rotation_euler[1] + objRot[1] + objParentRot[1], source.rotation_euler[2] + objRot[2] + objParentRot[2])
+    source.rotation_mode = "XYZ"
+    source.rotation_euler.rotate(objRot)
+    source.rotation_euler.rotate(objParentRot)
     source.scale = (source.scale[0] * objScale[0] * objParentScale[0], source.scale[1] * objScale[1] * objParentScale[1], source.scale[2] * objScale[2] * objParentScale[2])
 
 def rayObjIntersections(point,direction,edgeLen,ob):
