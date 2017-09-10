@@ -144,9 +144,9 @@ def handle_selections(scene):
                     scn.last_cmlist_index = scn.cmlist_index
                     return
             scn.cmlist_index = -1
-        # keep isWaterTight updated
         if scn.cmlist_index != -1:
             cm = scn.cmlist[scn.cmlist_index]
+            # keep isWaterTight updated
             obj = bpy.data.objects.get(cm.source_name)
             if obj is not None and (len(obj.data.vertices) != cm.objVerts or len(obj.data.polygons) != cm.objPolys or len(obj.data.edges) != cm.objEdges):
                 cm.objVerts = len(obj.data.vertices)

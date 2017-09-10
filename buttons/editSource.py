@@ -148,18 +148,10 @@ class legoizerEditSource(bpy.types.Operator):
                     l[i] = float(l[i])
                 source["before_origin_set_location"] = source.location.to_tuple()
                 setOriginToObjOrigin(toObj=source, fromLoc=tuple(l))
-                source["before_edit_location"] = source.matrix_world.to_translation().to_tuple()
+                source["before_edit_location"] = source.location.to_tuple()
                 if brickLoc is not None:
-                    if source.parent is not None:
-                        parentOb = source.parent
-                        source.parent = None
-                    source.location = brickLoc
-                    source.rotation_euler.rotate(brickRot)
-                    source.scale = (brickScale[0] * source["previous_scale"][0], brickScale[1] * source["previous_scale"][1], brickScale[2] * source["previous_scale"][2])
-                    if parentOb is not None:
-                        setParentKeepTransform(source, parentOb, sto_scn)
-                    # source.location = source.location + brickLoc - source.matrix_world.to_translation()
-                    # setSourceTransform(source, obj=obj, objParent=objParent, skipLocation=True)
+                    source.location = source.location + brickLoc - source.matrix_world.to_translation()
+                    setSourceTransform(source, obj=obj, objParent=objParent, skipLocation=True)
                 else:
                     setSourceTransform(source, obj=obj, objParent=objParent)
 
@@ -168,7 +160,7 @@ class legoizerEditSource(bpy.types.Operator):
 
             # set sourceOrig origin to previous origin location
             scn.update()
-            self.lastSourceOrigLoc = source.location.to_tuple()
+            self.lastSourceOrigLoc = source.matrix_world.to_translation().to_tuple()
             setOriginToObjOrigin(toObj=source, fromObj=self.last_origin_obj)
             scn.update()
 
