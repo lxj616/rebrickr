@@ -18,3 +18,5 @@ Blender add-on for automated generation of LEGO Bricks from mesh objects (Blende
       * New feature: SNOT (studs not on top) functionality
       * Add support for texture maps transferring to materials
       * Add support for smoke animations
+  * Known bugs:
+      * When source is dirty (mesh edited to change location of center of mass) for split LEGO model with rotation applied after it's LEGOized, the model shifts slightly to the side.
