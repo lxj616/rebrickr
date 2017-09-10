@@ -146,7 +146,7 @@ class legoizerEditSource(bpy.types.Operator):
                 l = cm.lastSourceMid.split(",")
                 for i in range(len(l)):
                     l[i] = float(l[i])
-                source["before_origin_set_location"] = source.location.to_tuple()
+                source["before_origin_set_location"] = source.matrix_world.to_translation().to_tuple()
                 setOriginToObjOrigin(toObj=source, fromLoc=tuple(l))
                 source["before_edit_location"] = source.location.to_tuple()
                 if brickLoc is not None:

@@ -525,7 +525,7 @@ class legoizerLegoize(bpy.types.Operator):
             LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
             dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
             # set sourceOrig origin to previous origin location
-            lastSourceOrigLoc = sourceOrig.location.to_tuple()
+            lastSourceOrigLoc = sourceOrig.matrix_world.to_translation().to_tuple()
             last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
             setOriginToObjOrigin(toObj=sourceOrig, fromObj=last_origin_obj)
             # duplicate source and add duplicate to group
