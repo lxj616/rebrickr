@@ -109,9 +109,6 @@ def setParentKeepTransform(source, parentOb, scn):
     if parentOb.name not in scn.objects.keys():
         scn.objects.link(parentOb)
         unlinkParent = True
-        select(parentOb, active=parentOb)
-        if bpy.context.active_object.mode != "OBJECT":
-            bpy.ops.object.mode_set(mode="OBJECT")
     if source.name not in scn.objects.keys():
         scn.objects.link(source)
         unlinkSource = True
@@ -119,6 +116,10 @@ def setParentKeepTransform(source, parentOb, scn):
     if parentOb.hide:
         parentOb.hide = False
         unhideParent = True
+    if unlinkParent:
+        select(parentOb, active=parentOb)
+        if bpy.context.active_object.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
     select([source, parentOb], active=parentOb)
     bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
     if unlinkParent:

@@ -167,6 +167,8 @@ class legoizerDelete(bpy.types.Operator):
             source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
             LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
             parentOb = None
+            origFrame = scn.frame_current
+            scn.frame_set(cm.modelCreatedOnFrame)
 
             # store last active layers
             lastLayers = list(scn.layers)
@@ -191,23 +193,14 @@ class legoizerDelete(bpy.types.Operator):
                         loc[i] = float(loc[i])
                     setOriginToObjOrigin(toObj=source, fromLoc=tuple(loc))
                     if brickLoc is not None:
-                        if source.parent is not None:
-                            parentOb = source.parent
-                            source.parent = None
-                        source.location = brickLoc
+                        source.location = source.location + brickLoc - source.matrix_world.to_translation()
                     else:
                         source.location = Vector(l)
                 else:
                     source.location = Vector(l)
-                if brickRot is not None and brickScale is not None and self.modelType == "MODEL":
-                    source.rotation_euler.rotate(brickRot)
-                    source.scale = (brickScale[0] * source["previous_scale"][0], brickScale[1] * source["previous_scale"][1], brickScale[2] * source["previous_scale"][2])
-                    if parentOb is not None:
-                        setParentKeepTransform(source, parentOb, scn)
-                else:
-                    source.rotation_mode = "XYZ"
-                    source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
-                    source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
+                source.rotation_mode = "XYZ"
+                source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
+                source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
 
             # set origin to previous origin location
             last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
@@ -246,7 +239,7 @@ class legoizerDelete(bpy.types.Operator):
             cm.bricksAreDirty = True
 
             # reset frame (for proper update), update scene and redraw 3D view
-            scn.frame_set(scn.frame_current)
+            scn.frame_set(origFrame)
             scn.update()
             redraw_areas("VIEW_3D")
         except:

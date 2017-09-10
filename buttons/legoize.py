@@ -566,10 +566,10 @@ class legoizerLegoize(bpy.types.Operator):
 
             # apply transformation data
             if self.action == "CREATE":
-                sourceOrig["previous_location"] = source.location.to_tuple()
-            source.rotation_mode = "XYZ"
-            sourceOrig["previous_rotation"] = tuple(source.rotation_euler)
-            sourceOrig["previous_scale"] = source.scale.to_tuple()
+                sourceOrig["previous_location"] = sourceOrig.location.to_tuple()
+            sourceOrig.rotation_mode = "XYZ"
+            sourceOrig["previous_rotation"] = tuple(sourceOrig.rotation_euler)
+            sourceOrig["previous_scale"] = sourceOrig.scale.to_tuple()
             select(source, active=source)
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             scn.update()

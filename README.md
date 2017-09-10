@@ -20,4 +20,4 @@ Blender add-on for automated generation of LEGO Bricks from mesh objects (Blende
       * Add support for smoke animations
   * Known Bugs:
       * Parent location is inaccurate on source mesh adjustment when model is split and parent has some rotation applied.
-      * When parented with a bone, source object rotation/scale data is messed up on LEGOize operation for editing/deleting.
+      * When source is originally parented with a bone (see expanding sphere), the parenting data isn't kept around

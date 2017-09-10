@@ -2,19 +2,15 @@
     Copyright (C) 2017 Bricks Brought to Life
     http://bblanimation.com/
     chris@bblanimation.com
-
     Created by Christopher Gearhart
-
         This program is free software: you can redistribute it and/or modify
         it under the terms of the GNU General Public License as published by
         the Free Software Foundation, either version 3 of the License, or
         (at your option) any later version.
-
         This program is distributed in the hope that it will be useful,
         but WITHOUT ANY WARRANTY; without even the implied warranty of
         MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
         GNU General Public License for more details.
-
         You should have received a copy of the GNU General Public License
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
     """
@@ -152,7 +148,7 @@ class legoizerEditSource(bpy.types.Operator):
                     l[i] = float(l[i])
                 source["before_origin_set_location"] = source.location.to_tuple()
                 setOriginToObjOrigin(toObj=source, fromLoc=tuple(l))
-                source["before_edit_location"] = source.matrix_world.to_translation()
+                source["before_edit_location"] = source.matrix_world.to_translation().to_tuple()
                 if brickLoc is not None:
                     if source.parent is not None:
                         parentOb = source.parent
@@ -162,6 +158,8 @@ class legoizerEditSource(bpy.types.Operator):
                     source.scale = (brickScale[0] * source["previous_scale"][0], brickScale[1] * source["previous_scale"][1], brickScale[2] * source["previous_scale"][2])
                     if parentOb is not None:
                         setParentKeepTransform(source, parentOb, sto_scn)
+                    # source.location = source.location + brickLoc - source.matrix_world.to_translation()
+                    # setSourceTransform(source, obj=obj, objParent=objParent, skipLocation=True)
                 else:
                     setSourceTransform(source, obj=obj, objParent=objParent)
 
