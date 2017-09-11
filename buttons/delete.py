@@ -161,7 +161,7 @@ class legoizerDelete(bpy.types.Operator):
     def execute(self, context):
         try:
             scn = context.scene
-            scn.runningOperation = True
+            scn.legoizer_runningOperation = True
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
@@ -211,7 +211,7 @@ class legoizerDelete(bpy.types.Operator):
 
             # select source and return open layers to original
             select(source, active=source)
-            scn.runningOperation = False
+            scn.legoizer_runningOperation = False
             scn.layers = lastLayers
 
             # delete custom properties from source

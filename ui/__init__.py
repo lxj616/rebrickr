@@ -89,7 +89,7 @@ class LEGOizerStoragePanel(Panel):
             row.template_ID(context.screen, "scene")
 
 class BasicMenu(bpy.types.Menu):
-    bl_idname = "LEGO_model_specials"
+    bl_idname = "LEGOizer_specials_menu"
     bl_label = "Select"
 
     def draw(self, context):
@@ -137,7 +137,7 @@ class LegoModelsPanel(Panel):
         col = row.column(align=True)
         col.operator("cmlist.list_action", icon='ZOOMIN', text="").action = 'ADD'
         col.operator("cmlist.list_action", icon='ZOOMOUT', text="").action = 'REMOVE'
-        col.menu("LEGO_model_specials", icon='DOWNARROW_HLT', text="")
+        col.menu("LEGOizer_specials_menu", icon='DOWNARROW_HLT', text="")
         if len(scn.cmlist) > 1:
             col.separator()
             col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'

@@ -82,11 +82,11 @@ def register():
     bpy.props.origScene = StringProperty(default="")
     bpy.props.commitEdits = False
 
-    bpy.types.Scene.runningOperation = BoolProperty(default=False)
-    bpy.types.Scene.last_layers = StringProperty(default="")
-    bpy.types.Scene.last_cmlist_index = IntProperty(default=-2)
-    bpy.types.Scene.active_object_name = StringProperty(default="")
-    bpy.types.Scene.last_active_object_name = StringProperty(default="")
+    bpy.types.Scene.legoizer_runningOperation = BoolProperty(default=False)
+    bpy.types.Scene.legoizer_last_layers = StringProperty(default="")
+    bpy.types.Scene.legoizer_last_cmlist_index = IntProperty(default=-2)
+    bpy.types.Scene.legoizer_active_object_name = StringProperty(default="")
+    bpy.types.Scene.legoizer_last_active_object_name = StringProperty(default="")
 
     bpy.types.Scene.legoizer_copy_from_id = IntProperty(default=-1)
 

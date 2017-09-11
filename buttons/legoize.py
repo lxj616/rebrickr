@@ -685,7 +685,7 @@ class legoizerLegoize(bpy.types.Operator):
 
             # set up variables
             scn = context.scene
-            scn.runningOperation = True
+            scn.legoizer_runningOperation = True
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
@@ -718,7 +718,7 @@ class legoizerLegoize(bpy.types.Operator):
             cm.buildIsDirty = False
             cm.sourceIsDirty = False
             cm.bricksAreDirty = False
-            scn.runningOperation = False
+            scn.legoizer_runningOperation = False
 
             # unlink source from scene and link to safe scene
             if source.name in scn.objects.keys():

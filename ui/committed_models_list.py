@@ -98,27 +98,7 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
     #             return False
     #     return True
 
-    def isObjVisible(self, cm):
-        scn = bpy.context.scene
-        n = cm.source_name
-        objVisible = False
-        if cm.modelCreated or cm.animated:
-            gn = "LEGOizer_%(n)s_bricks" % locals()
-            if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
-                obj = bpy.data.groups[gn].objects[0]
-            else:
-                obj = None
-        else:
-            obj = bpy.data.objects.get(cm.source_name)
-        if obj is not None:
-            objVisible = False
-            for i in range(20):
-                if obj.layers[i] and scn.layers[i]:
-                    objVisible = True
-        return objVisible, obj
-
     def execute(self, context):
-
         scn = context.scene
         idx = scn.cmlist_index
 
@@ -248,7 +228,7 @@ class LEGOizer_Uilist_copySettingsToOthers(bpy.types.Operator):
 class LEGOizer_Uilist_copySettings(bpy.types.Operator):
     bl_idname = "cmlist.copy_settings"
     bl_label = "Copy Settings from Current LEGO Model"
-    bl_description = "stores the ID of the current model for pasting"
+    bl_description = "Stores the ID of the current model for pasting"
 
     @classmethod
     def poll(cls, context):
