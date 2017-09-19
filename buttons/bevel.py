@@ -60,7 +60,7 @@ def setBevelMods(bricks):
         segments = cm.bevelSegments
         profile = cm.bevelProfile
         if not cm.lastSplitModel:
-            vGroupName = "LEGOizer_%(n)s_bricks_combined_bevel" % locals()
+            vGroupName = "Brickinator_%(n)s_bricks_combined_bevel" % locals()
         else:
             vGroupName = brick.name + "_bevel"
         createBevelMod(obj=brick, width=cm.bevelWidth, segments=segments, profile=profile, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
@@ -70,9 +70,9 @@ def removeBevelMods(objs):
     for obj in objs:
         obj.modifiers.remove(obj.modifiers[obj.name + "_bevel"])
 
-class legoizerBevel(bpy.types.Operator):
+class BrickinatorBevel(bpy.types.Operator):
     """Execute bevel modifier to all bricks with above settings"""              # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.legoizer_bevel"                                          # unique identifier for buttons and menu items to reference.
+    bl_idname = "scene.brickinator_bevel"                                          # unique identifier for buttons and menu items to reference.
     bl_label = "Bevel Bricks"                                                   # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
@@ -118,24 +118,24 @@ class legoizerBevel(bpy.types.Operator):
 
             # create or remove bevel
             if cm.modelCreated:
-                bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks" % locals())
-                legoizerBevel.runBevelAction(bGroup, cm, action)
+                bGroup = bpy.data.groups.get("Brickinator_%(n)s_bricks" % locals())
+                BrickinatorBevel.runBevelAction(bGroup, cm, action)
             elif cm.animated:
                 for cf in range(cm.lastStartFrame, cm.lastStopFrame+1):
-                    bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals())
-                    legoizerBevel.runBevelAction(bGroup, cm, action)
+                    bGroup = bpy.data.groups.get("Brickinator_%(n)s_bricks_frame_%(cf)s" % locals())
+                    BrickinatorBevel.runBevelAction(bGroup, cm, action)
         except:
             self.handle_exception()
 
         return{"FINISHED"}
 
     def handle_exception(self):
-        errormsg = print_exception('LEGOizer_log')
+        errormsg = print_exception('Brickinator_log')
         # if max number of exceptions occur within threshold of time, abort!
         curtime = time.time()
         print('\n'*5)
         print('-'*100)
-        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)")
+        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)")
         print('-'*100)
         print('\n'*5)
-        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)", wrap=240)
+        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)", wrap=240)

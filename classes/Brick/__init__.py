@@ -24,7 +24,7 @@ import bpy
 import bmesh
 import random
 from mathutils import Vector, Matrix
-from .lego_mesh_generate import *
+from .brick_mesh_generate import *
 from ...functions import *
 
 class Bricks:
@@ -46,7 +46,7 @@ class Bricks:
 
     @staticmethod
     def new_mesh(dimensions, name='new_brick', gap_percentage=0.01, type=[1,1,3], transform=False, logo=False, undersideDetail="Flat", stud=True, returnType="mesh", brickMesh=None):
-        """ create unlinked LEGO Brick at origin """
+        """ create unlinked Brick at origin """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         bm = bmesh.new()
@@ -90,13 +90,13 @@ class Bricks:
                         v.co = ((v.co.x + x*(dimensions["width"]+dimensions["gap"])), (v.co.y + y*(dimensions["width"]+dimensions["gap"])), (v.co.z + dimensions["logo_offset"]*0.998))
                     lastLogoBM = logoBM
                     # add logoBM mesh to bm mesh
-                    logoMesh = bpy.data.meshes.new('LEGOizer_tempMesh')
+                    logoMesh = bpy.data.meshes.new('Brickinator_tempMesh')
                     logoBM.to_mesh(logoMesh)
                     bm.from_mesh(logoMesh)
                     bpy.data.meshes.remove(logoMesh, do_unlink=True)
 
         # add brick mesh to bm mesh
-        cube = bpy.data.meshes.new('legoizer_cube')
+        cube = bpy.data.meshes.new('Brickinator_cube')
         brickBM.to_mesh(cube)
         bm.from_mesh(cube)
         bpy.data.meshes.remove(cube)
@@ -106,7 +106,7 @@ class Bricks:
                 v.co = (v.co[0] + transform[0], v.co[1] + transform[1], v.co[2] + transform[2])
 
         if returnType == "mesh":
-            # create apply mesh data to 'legoizer_brick1x1' data
+            # create apply mesh data to 'Brickinator_brick1x1' data
             if not brickMesh:
                 brickMesh = bpy.data.meshes.new(name + 'Mesh')
             bm.to_mesh(brickMesh)

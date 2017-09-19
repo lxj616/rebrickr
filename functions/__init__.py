@@ -35,9 +35,9 @@ from mathutils.bvhtree import BVHTree
 props = bpy.props
 
 def getSafeScn():
-    safeScn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
+    safeScn = bpy.data.scenes.get("Brickinator_storage (DO NOT RENAME)")
     if safeScn == None:
-        safeScn = bpy.data.scenes.new("LEGOizer_storage (DO NOT RENAME)")
+        safeScn = bpy.data.scenes.new("Brickinator_storage (DO NOT RENAME)")
     return safeScn
 def safeUnlink(obj, hide=True, protected=True):
     scn = bpy.context.scene
@@ -96,10 +96,10 @@ def bounds(obj, local=False):
     return o_details(**originals)
 
 def importLogo():
-    """ import logo object from legoizer addon folder """
+    """ import logo object from Brickinator addon folder """
     addonsPath = bpy.utils.user_resource('SCRIPTS', "addons")
-    legoizer = props.addon_name
-    logoObjPath = "%(addonsPath)s/%(legoizer)s/lego_logo.obj" % locals()
+    Brickinator = props.addon_name
+    logoObjPath = "%(addonsPath)s/%(Brickinator)s/lego_logo.obj" % locals()
     bpy.ops.import_scene.obj(filepath=logoObjPath)
     logoObj = bpy.context.selected_objects[0]
     return logoObj
@@ -170,8 +170,8 @@ def setTransformData(objList, source=None, skipLocation=False):
             obj.location = obj.location + Vector(l)
             if source is not None:
                 n = cm.source_name
-                LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
-                last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
+                Brickinator_last_origin_on = "Brickinator_%(n)s_last_origin" % locals()
+                last_origin_obj = bpy.data.objects.get(Brickinator_last_origin_on)
                 if last_origin_obj is not None:
                     obj.location -= Vector(last_origin_obj.location) - Vector(source["previous_location"])
                 else:
@@ -602,7 +602,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                             mat = slot.material
                             matName = mat.name
                     brickDict[str(x) + "," + str(y) + "," + str(z)] = {
-                        "name":'LEGOizer_%(n)s_brick_%(j)s' % locals(),
+                        "name":'Brickinator_%(n)s_brick_%(j)s' % locals(),
                         "val":brickFreqMatrix[x][y][z],
                         "co":(co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
                         "nearestFaceIdx":nf,

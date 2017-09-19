@@ -1,15 +1,15 @@
 # README
 
-Blender add-on for automated generation of LEGO Bricks from mesh objects (Blender version: 2.78c)
+Blender add-on for automated generation of Brick sculptures and simulations from mesh objects (Blender version: 2.78-2.79)
 
-## LEGOizer
+## Brickinator
   * Features:
-      * Create LEGO models out of any 3D model in Blender
-      * Adjust LEGO brick settings after it's created
+      * Create Brick Models out of any 3D model in Blender
+      * Adjust Brick settings after it's created
   * Instructions:
       * Create a new model with the 'New Model' button, and name it whatever you'd like
       * Select a source object with the 'Source Object' dropdown (defaults to active object when model was created)
-      * Click 'LEGOize Object'
+      * Click 'Brickify Object'
       * Adjust settings for your desired result
       * Click 'Update Model' to view setting adjustments
   * Future improvements:
@@ -19,4 +19,4 @@ Blender add-on for automated generation of LEGO Bricks from mesh objects (Blende
       * Add support for texture maps transferring to materials
       * Add support for smoke animations
   * Known bugs:
-      * When source is dirty (mesh edited to change location of center of mass) for split LEGO model with rotation applied after it's LEGOized, the model shifts slightly to the side.
+      * When source is dirty (mesh edited to change location of center of mass) for split Brick Model with rotation applied after it's Brickified, the model shifts slightly to the side.

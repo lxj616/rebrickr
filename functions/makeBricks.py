@@ -106,26 +106,26 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     random.seed(a=cm.mergeSeed)
     random.shuffle(keys)
 
-    # create group for lego bricks
+    # create group for bricks
     if group_name:
-        LEGOizer_bricks = group_name
+        Brickinator_bricks = group_name
     else:
-        LEGOizer_bricks = 'LEGOizer_%(n)s_bricks' % locals()
-    if groupExists(LEGOizer_bricks):
-        bpy.data.groups.remove(group=bpy.data.groups[LEGOizer_bricks], do_unlink=True)
-    bGroup = bpy.data.groups.new(LEGOizer_bricks)
+        Brickinator_bricks = 'Brickinator_%(n)s_bricks' % locals()
+    if groupExists(Brickinator_bricks):
+        bpy.data.groups.remove(group=bpy.data.groups[Brickinator_bricks], do_unlink=True)
+    bGroup = bpy.data.groups.new(Brickinator_bricks)
 
     tempMesh = bpy.data.meshes.new("tempMesh")
 
     if not split:
         allBrickMeshes = []
 
-    lego_mats = []
-    if cm.materialType == "Random" and "lego_materials" in bpy.context.user_preferences.addons.keys():
+    brick_mats = []
+    if cm.materialType == "Random" and "brick_materials" in bpy.context.user_preferences.addons.keys():
         mats = bpy.data.materials.keys()
-        for color in bpy.props.lego_materials:
-            if color in mats and color in bpy.props.lego_materials_for_random:
-                lego_mats.append(color)
+        for color in bpy.props.brick_materials:
+            if color in mats and color in bpy.props.brick_materials_for_random:
+                brick_mats.append(color)
 
     # initialize progress bar around cursor
     denom = len(keys)/1000
@@ -136,9 +136,9 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     # set up internal material for this object
     internalMat = bpy.data.materials.get(cm.internalMatName)
     if internalMat is None:
-        internalMat = bpy.data.materials.get("LEGOizer_%(n)s_internal" % locals())
+        internalMat = bpy.data.materials.get("Brickinator_%(n)s_internal" % locals())
         if internalMat is None:
-            internalMat = bpy.data.materials.new("LEGOizer_%(n)s_internal" % locals())
+            internalMat = bpy.data.materials.new("Brickinator_%(n)s_internal" % locals())
     # initialize supportBrickDs, and mats with first material being the internal material
     mats = [internalMat]
     supportBrickDs = []
@@ -355,9 +355,9 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 if len(matsL) > 1:
                     matName = most_common(matsL)
                 mat = bpy.data.materials.get(matName)
-            elif cm.materialType == "Random" and len(lego_mats) > 0:
-                randIdx = random.randint(0, len(lego_mats)-1)
-                matName = lego_mats[randIdx]
+            elif cm.materialType == "Random" and len(brick_mats) > 0:
+                randIdx = random.randint(0, len(brick_mats)-1)
+                matName = brick_mats[randIdx]
                 mat = bpy.data.materials.get(matName)
 
             # add brick with new mesh data at original location
@@ -478,7 +478,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             fn = "_frame_%(frameNum)s" % locals()
         else:
             fn = ""
-        name = 'LEGOizer_%(n)s_bricks_combined%(fn)s' % locals()
+        name = 'Brickinator_%(n)s_bricks_combined%(fn)s' % locals()
         allBricksObj = bpy.data.objects.new(name, m)
         # create vert group for bevel mod (assuming only logo verts are selected):
         vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())
@@ -496,7 +496,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             mat = bpy.data.materials.get(cm.materialName)
             if mat is not None:
                 allBricksObj.data.materials.append(mat)
-        elif cm.materialType == "Use Source Materials" or (cm.materialType == "Random" and len(lego_mats) > 0):
+        elif cm.materialType == "Use Source Materials" or (cm.materialType == "Random" and len(brick_mats) > 0):
             for mat in mats:
                 allBricksObj.data.materials.append(mat)
         scn.objects.link(allBricksObj)

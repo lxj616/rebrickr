@@ -27,14 +27,14 @@ import bmesh
 import os
 import math
 from ..functions import *
-from .delete import legoizerDelete
-from .bevel import legoizerBevel
+from .delete import BrickinatorDelete
+from .bevel import BrickinatorBevel
 from mathutils import Matrix, Vector, Euler
 props = bpy.props
 
 def updateCanRun(type):
     scn = bpy.context.scene
-    if scn.name == "LEGOizer_storage (DO NOT RENAME)":
+    if scn.name == "Brickinator_storage (DO NOT RENAME)":
         return True
     elif scn.cmlist_index == -1:
         return False
@@ -45,8 +45,8 @@ def updateCanRun(type):
         elif type == "MODEL":
             # set up variables
             n = cm.source_name
-            LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
-            return cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and cm.materialIsDirty) or (groupExists(LEGOizer_bricks_gn) and len(bpy.data.groups[LEGOizer_bricks_gn].objects) == 0)
+            Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
+            return cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and cm.materialIsDirty) or (groupExists(Brickinator_bricks_gn) and len(bpy.data.groups[Brickinator_bricks_gn].objects) == 0)
 
 def getDimensionsAndBounds(source, skipDimensions=False):
     scn = bpy.context.scene
@@ -63,16 +63,16 @@ def getDimensionsAndBounds(source, skipDimensions=False):
     else:
         return source_details
 
-class legoizerLegoize(bpy.types.Operator):
-    """ Create LEGO sculpture from source object mesh """                       # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.legoizer_legoize"                                        # unique identifier for buttons and menu items to reference.
-    bl_label = "Create/Update LEGO model from Source Object"                 # display name in the interface.
+class BrickinatorBrickify(bpy.types.Operator):
+    """ Create brick sculpture from source object mesh """                       # blender will use this as a tooltip for menu items and buttons.
+    bl_idname = "scene.brickinator_brickify"                                        # unique identifier for buttons and menu items to reference.
+    bl_label = "Create/Update Brick Model from Source Object"                 # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
-        if context.scene.name == "LEGOizer_storage (DO NOT RENAME)":
+        if context.scene.name == "Brickinator_storage (DO NOT RENAME)":
             scn = bpy.data.scenes.get(bpy.props.origScene)
             if scn is None:
                 return False
@@ -86,22 +86,22 @@ class legoizerLegoize(bpy.types.Operator):
             return False
         return True
 
-    def getObjectToLegoize(self):
+    def getObjectToBrickify(self):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL", "UPDATE_ANIM"]:
-            objToLegoize = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+            objToBrickify = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         elif self.action in ["CREATE", "ANIMATE"]:
-            objToLegoize = bpy.data.objects.get(cm.source_name)
-            if objToLegoize is None:
-                objToLegoize = bpy.context.active_object
+            objToBrickify = bpy.data.objects.get(cm.source_name)
+            if objToBrickify is None:
+                objToBrickify = bpy.context.active_object
         else:
-            objToLegoize = bpy.data.objects.get(cm.source_name)
-        return objToLegoize
+            objToBrickify = bpy.data.objects.get(cm.source_name)
+        return objToBrickify
 
-    def getParent(self, LEGOizer_parent_on, loc):
-        m = bpy.data.meshes.new(LEGOizer_parent_on + "_mesh")
-        parent = bpy.data.objects.new(LEGOizer_parent_on, m)
+    def getParent(self, Brickinator_parent_on, loc):
+        m = bpy.data.meshes.new(Brickinator_parent_on + "_mesh")
+        parent = bpy.data.objects.new(Brickinator_parent_on, m)
         parent.location = loc
         safeScn = getSafeScn()
         safeScn.objects.link(parent)
@@ -117,18 +117,18 @@ class legoizerLegoize(bpy.types.Operator):
         else:
             decimate = False
             r = cm.logoResolution
-            refLogoImport = bpy.data.objects.get("LEGOizer_refLogo")
+            refLogoImport = bpy.data.objects.get("Brickinator_refLogo")
             if refLogoImport is not None:
-                refLogo = bpy.data.objects.get("LEGOizer_refLogo_%(r)s" % locals())
+                refLogo = bpy.data.objects.get("Brickinator_refLogo_%(r)s" % locals())
                 if refLogo is None:
-                    refLogo = bpy.data.objects.new("LEGOizer_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
+                    refLogo = bpy.data.objects.new("Brickinator_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
                     decimate = True
             else:
                 # import refLogo and add to group
                 refLogoImport = importLogo()
-                refLogoImport.name = "LEGOizer_refLogo"
+                refLogoImport.name = "Brickinator_refLogo"
                 safeUnlink(refLogoImport)
-                refLogo = bpy.data.objects.new("LEGOizer_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
+                refLogo = bpy.data.objects.new("Brickinator_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
                 decimate = True
             # decimate refLogo
             # TODO: Speed this up, if possible
@@ -168,7 +168,7 @@ class legoizerLegoize(bpy.types.Operator):
         updateCursor = self.action in ["CREATE", "UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] # evaluates to boolean value
         bricksDict = makeBricksDict(source, source_details, dimensions, R, cursorStatus=updateCursor)
         if curFrame is not None:
-            group_name = 'LEGOizer_%(n)s_bricks_frame_%(curFrame)s' % locals()
+            group_name = 'Brickinator_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
             group_name = None
         makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor)
@@ -191,7 +191,7 @@ class legoizerLegoize(bpy.types.Operator):
         else:
             self.action = "ANIMATE"
 
-    def isValid(self, source, LEGOizer_bricks_gn,):
+    def isValid(self, source, Brickinator_bricks_gn,):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         if cm.brickType == "Custom":
@@ -210,41 +210,41 @@ class legoizerLegoize(bpy.types.Operator):
         source["ignored_mods"] = ""
         if self.action in ["CREATE", "ANIMATE"]:
             # verify function can run
-            if groupExists(LEGOizer_bricks_gn):
-                self.report({"WARNING"}, "LEGOized Model already created.")
+            if groupExists(Brickinator_bricks_gn):
+                self.report({"WARNING"}, "Brickified Model already created.")
                 return False
             # verify source exists and is of type mesh
             if cm.source_name == "":
-                self.report({"WARNING"}, "Please select a mesh to LEGOize")
+                self.report({"WARNING"}, "Please select a mesh to Brickify")
                 return False
-            if cm.source_name[:9] == "LEGOizer_" and (cm.source_name[-7:] == "_bricks" or cm.source_name[-9:] == "_combined"):
-                self.report({"WARNING"}, "Cannot LEGOize models created with the LEGOizer")
+            if cm.source_name[:9] == "Brickinator_" and (cm.source_name[-7:] == "_bricks" or cm.source_name[-9:] == "_combined"):
+                self.report({"WARNING"}, "Cannot Brickify models created with the Brickinator")
                 return False
             if source == None:
                 n = cm.source_name
                 self.report({"WARNING"}, "'%(n)s' could not be found" % locals())
                 return False
             if source.type != "MESH":
-                self.report({"WARNING"}, "Only 'MESH' objects can be LEGOized. Please select another object (or press 'ALT-C to convert object to mesh).")
+                self.report({"WARNING"}, "Only 'MESH' objects can be Brickified. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
             # verify source is not a rigid body
             if source.rigid_body is not None:
-                self.report({"WARNING"}, "LEGOizer: Rigid body physics not supported")
+                self.report({"WARNING"}, "Brickinator: Rigid body physics not supported")
                 return False
             # verify all appropriate modifiers have been applied
             ignoredMods = []
             for mod in source.modifiers:
                 # abort render if these modifiers are enabled but not applied
                 # if mod.type in ["ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN"] and mod.show_viewport:
-                #     self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier(s) or disable from view before LEGOizing the object.")
+                #     self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier(s) or disable from view before Brickifying the object.")
                 #     return False
-                # ignore these modifiers (disable from view until LEGOized model deleted)
+                # ignore these modifiers (disable from view until Brickified model deleted)
                 if mod.type in ["BUILD"] and mod.show_viewport:
                     mod.show_viewport = False
                     ignoredMods.append(mod.name)
                 # these modifiers are unsupported - abort render if enabled
                 if mod.type in ["SMOKE"] and mod.show_viewport:
-                    self.report({"WARNING"}, "'" + str(mod.type) + "' modifier not supported by the LEGOizer.")
+                    self.report({"WARNING"}, "'" + str(mod.type) + "' modifier not supported by the Brickinator.")
                     return False
                 # handle cloth modifier
                 if mod.type == "CLOTH" and mod.show_viewport:
@@ -262,7 +262,7 @@ class legoizerLegoize(bpy.types.Operator):
             # if source is soft body or cloth and is enabled, prompt user to apply the modifiers
             for mod in source.modifiers:
                 if mod.type in ["SOFT_BODY", "CLOTH"] and mod.show_viewport:
-                    self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier or disable from view before LEGOizing the object.")
+                    self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier or disable from view before Brickifying the object.")
                     return False
 
         if self.action in ["ANIMATE", "UPDATE_ANIM"]:
@@ -270,19 +270,19 @@ class legoizerLegoize(bpy.types.Operator):
             if cm.startFrame > cm.stopFrame:
                 self.report({"ERROR"}, "Start frame must be less than or equal to stop frame (see animation tab below).")
                 return False
-            # TODO: Alert user to bake fluid/cloth simulation before attempting to LEGOize
+            # TODO: Alert user to bake fluid/cloth simulation before attempting to Brickify
 
         if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
-            # make sure 'LEGOizer_[source name]_bricks' group exists
-            if not groupExists(LEGOizer_bricks_gn):
-                self.report({"WARNING"}, "LEGOized Model doesn't exist. Create one with the 'LEGOize Object' button.")
+            # make sure 'Brickinator_[source name]_bricks' group exists
+            if not groupExists(Brickinator_bricks_gn):
+                self.report({"WARNING"}, "Brickified Model doesn't exist. Create one with the 'Brickify Object' button.")
                 return False
 
         success = False
         if cm.modelCreated:
-            g = bpy.data.groups.get(LEGOizer_bricks_gn)
+            g = bpy.data.groups.get(Brickinator_bricks_gn)
         elif cm.animated:
-            g = bpy.data.groups.get(LEGOizer_bricks_gn + "_frame_" + str(cm.lastStartFrame))
+            g = bpy.data.groups.get(Brickinator_bricks_gn + "_frame_" + str(cm.lastStartFrame))
         if cm.modelCreated or cm.animated:
             if g is not None and len(g.objects) > 0:
                 obj = g.objects[0]
@@ -299,17 +299,17 @@ class legoizerLegoize(bpy.types.Operator):
 
         return True
 
-    def legoizeAnimation(self):
+    def brickifyAnimation(self):
         # set up variables
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
-        LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
-        LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
+        Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
+        Brickinator_parent_on = "Brickinator_%(n)s_parent" % locals()
+        Brickinator_source_dupes_gn = "Brickinator_%(n)s_dupes" % locals()
         sceneCurFrame = scn.frame_current
 
-        sourceOrig = self.getObjectToLegoize()
+        sourceOrig = self.getObjectToBrickify()
         if self.action == "UPDATE_ANIM":
             safeLink(sourceOrig)
 
@@ -326,21 +326,21 @@ class legoizerLegoize(bpy.types.Operator):
 
         # delete old bricks if present
         if self.action == "UPDATE_ANIM" and not self.updatedFramesOnly:
-            legoizerDelete.cleanUp("ANIMATION", skipDupes=True, skipParents=True)
+            BrickinatorDelete.cleanUp("ANIMATION", skipDupes=True, skipParents=True)
             sourceOrig.name = sourceOrig.name + " (DO NOT RENAME)"
 
         # get or create duplicate and parent groups
-        dGroup = bpy.data.groups.get(LEGOizer_source_dupes_gn)
+        dGroup = bpy.data.groups.get(Brickinator_source_dupes_gn)
         if dGroup is None:
-            dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
-        pGroup = bpy.data.groups.get(LEGOizer_parent_on)
+            dGroup = bpy.data.groups.new(Brickinator_source_dupes_gn)
+        pGroup = bpy.data.groups.get(Brickinator_parent_on)
         if pGroup is None:
-            pGroup = bpy.data.groups.new(LEGOizer_parent_on)
+            pGroup = bpy.data.groups.new(Brickinator_parent_on)
 
         # get parent object
-        parent0 = bpy.data.objects.get(LEGOizer_parent_on)
+        parent0 = bpy.data.objects.get(Brickinator_parent_on)
         if parent0 is None:
-            parent0 = self.getParent(LEGOizer_parent_on, sourceOrig.location.to_tuple())
+            parent0 = self.getParent(Brickinator_parent_on, sourceOrig.location.to_tuple())
             pGroup.objects.link(parent0)
 
         if cm.brickType != "Custom":
@@ -352,7 +352,7 @@ class legoizerLegoize(bpy.types.Operator):
         wm = bpy.context.window_manager
         wm.progress_begin(0, cm.stopFrame + 1 - cm.startFrame)
 
-        # iterate through frames of animation and generate lego model
+        # iterate through frames of animation and generate Brick Model
         for curFrame in range(cm.startFrame, cm.stopFrame + 1):
 
             if self.updatedFramesOnly and cm.lastStartFrame <= curFrame and curFrame <= cm.lastStopFrame:
@@ -362,7 +362,7 @@ class legoizerLegoize(bpy.types.Operator):
             # get duplicated source
             if self.action == "UPDATE_ANIM":
                 # retrieve previously duplicated source
-                source = bpy.data.objects.get("LEGOizer_" + sourceOrig.name + "_frame_" + str(curFrame))
+                source = bpy.data.objects.get("Brickinator_" + sourceOrig.name + "_frame_" + str(curFrame))
             else:
                 source = None
             if source is None:
@@ -371,7 +371,7 @@ class legoizerLegoize(bpy.types.Operator):
                 bpy.ops.object.duplicate()
                 source = scn.objects.active
                 dGroup.objects.link(source)
-                source.name = "LEGOizer_" + sourceOrig.name + "_frame_" + str(curFrame)
+                source.name = "Brickinator_" + sourceOrig.name + "_frame_" + str(curFrame)
                 if source.parent is not None:
                     # apply parent transformation
                     select(source, active=source)
@@ -425,10 +425,10 @@ class legoizerLegoize(bpy.types.Operator):
 
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
-            pGroup = bpy.data.groups[LEGOizer_parent_on] # redefine pGroup since it was removed
-            parent = bpy.data.objects.get(LEGOizer_parent_on + "_frame_" + str(curFrame))
+            pGroup = bpy.data.groups[Brickinator_parent_on] # redefine pGroup since it was removed
+            parent = bpy.data.objects.get(Brickinator_parent_on + "_frame_" + str(curFrame))
             if parent is None:
-                parent = bpy.data.objects.new(LEGOizer_parent_on + "_frame_" + str(curFrame), source.data)
+                parent = bpy.data.objects.new(Brickinator_parent_on + "_frame_" + str(curFrame), source.data)
                 parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
                 parent.parent = parent0
                 pGroup.objects.link(parent)
@@ -460,24 +460,24 @@ class legoizerLegoize(bpy.types.Operator):
         scn.frame_set(sceneCurFrame)
         cm.animated = True
 
-    def legoizeModel(self):
+    def brickifyModel(self):
         # set up variables
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         origFrame = None
         source = None
-        sourceOrig = self.getObjectToLegoize()
+        sourceOrig = self.getObjectToBrickify()
         n = cm.source_name
-        LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
-        bGroup = bpy.data.groups.get(LEGOizer_bricks_gn)
-        LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
-        LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
+        Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
+        bGroup = bpy.data.groups.get(Brickinator_bricks_gn)
+        Brickinator_last_origin_on = "Brickinator_%(n)s_last_origin" % locals()
+        Brickinator_parent_on = "Brickinator_%(n)s_parent" % locals()
         updateParentLoc = False
 
         # get or create parent group
-        pGroup = bpy.data.groups.get(LEGOizer_parent_on)
+        pGroup = bpy.data.groups.get(Brickinator_parent_on)
         if pGroup is None:
-            pGroup = bpy.data.groups.new(LEGOizer_parent_on)
+            pGroup = bpy.data.groups.new(Brickinator_parent_on)
 
         if self.action == "CREATE":
             # set modelCreatedOnFrame
@@ -491,8 +491,8 @@ class legoizerLegoize(bpy.types.Operator):
             previous_origin = sourceOrig.matrix_world.to_translation().to_tuple()
 
             # create empty object at source's old origin location and set as child of source
-            m = bpy.data.meshes.new("LEGOizer_%(n)s_last_origin_mesh" % locals())
-            obj = bpy.data.objects.new("LEGOizer_%(n)s_last_origin" % locals(), m)
+            m = bpy.data.meshes.new("Brickinator_%(n)s_last_origin_mesh" % locals())
+            obj = bpy.data.objects.new("Brickinator_%(n)s_last_origin" % locals(), m)
             obj.location = previous_origin
             scn.objects.link(obj)
             select([obj, sourceOrig], active=sourceOrig)
@@ -503,7 +503,7 @@ class legoizerLegoize(bpy.types.Operator):
         if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] and not updateCanRun("MODEL"):
             return{"FINISHED"}
 
-        sto_scn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
+        sto_scn = bpy.data.scenes.get("Brickinator_storage (DO NOT RENAME)")
         if sto_scn is not None:
             sto_scn.update()
 
@@ -513,20 +513,20 @@ class legoizerLegoize(bpy.types.Operator):
                 # alert that parent loc needs updating at the end
                 updateParentLoc = True
                 # delete source/dupes as well if source is dirty, but only delete parent if not cm.splitModel
-                legoizerDelete.cleanUp("MODEL", skipParents=True)#cm.splitModel)
+                BrickinatorDelete.cleanUp("MODEL", skipParents=True)#cm.splitModel)
             else:
                 # else, skip source
-                legoizerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
+                BrickinatorDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
         else:
             storeTransformData(None)
 
         if self.action == "CREATE" or cm.sourceIsDirty:
             # create dupes group
-            LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
-            dGroup = bpy.data.groups.new(LEGOizer_source_dupes_gn)
+            Brickinator_source_dupes_gn = "Brickinator_%(n)s_dupes" % locals()
+            dGroup = bpy.data.groups.new(Brickinator_source_dupes_gn)
             # set sourceOrig origin to previous origin location
             lastSourceOrigLoc = sourceOrig.matrix_world.to_translation().to_tuple()
-            last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
+            last_origin_obj = bpy.data.objects.get(Brickinator_last_origin_on)
             setOriginToObjOrigin(toObj=sourceOrig, fromObj=last_origin_obj)
             # duplicate source and add duplicate to group
             select(sourceOrig, active=sourceOrig)
@@ -593,11 +593,11 @@ class legoizerLegoize(bpy.types.Operator):
             cm.modelHeight = source_details.z.distance
 
         # get parent object
-        parent = bpy.data.objects.get(LEGOizer_parent_on)
+        parent = bpy.data.objects.get(Brickinator_parent_on)
         # if parent doesn't exist, get parent with new location
         parentLoc = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
         if parent is None:
-            parent = self.getParent(LEGOizer_parent_on, parentLoc)
+            parent = self.getParent(Brickinator_parent_on, parentLoc)
             pGroup.objects.link(parent)
 
         # update refLogo
@@ -609,7 +609,7 @@ class legoizerLegoize(bpy.types.Operator):
         # create new bricks
         self.createNewBricks(source, parent, source_details, dimensions, refLogo)
 
-        bGroup = bpy.data.groups.get(LEGOizer_bricks_gn) # redefine bGroup since it was removed
+        bGroup = bpy.data.groups.get(Brickinator_bricks_gn) # redefine bGroup since it was removed
         if bGroup is not None:
             # set transformation of objects in brick group
             if (self.action == "CREATE" and cm.sourceIsDirty):
@@ -668,8 +668,8 @@ class legoizerLegoize(bpy.types.Operator):
 
         # add bevel if it was previously added
         if self.action == "UPDATE_MODEL" and cm.bevelAdded:
-            bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks" % locals())
-            legoizerBevel.runBevelAction(bGroup, cm)
+            bGroup = bpy.data.groups.get("Brickinator_%(n)s_bricks" % locals())
+            BrickinatorBevel.runBevelAction(bGroup, cm)
 
         cm.modelCreated = True
 
@@ -685,25 +685,25 @@ class legoizerLegoize(bpy.types.Operator):
 
             # set up variables
             scn = context.scene
-            scn.legoizer_runningOperation = True
+            scn.Brickinator_runningOperation = True
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
-            LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
+            Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
 
             # set self.action
             self.setAction(scn, cm)
 
             # get source and initialize values
-            source = self.getObjectToLegoize()
+            source = self.getObjectToBrickify()
             source["old_parent"] = ""
 
-            if not self.isValid(source, LEGOizer_bricks_gn):
+            if not self.isValid(source, Brickinator_bricks_gn):
                 return {"CANCELLED"}
 
             if self.action not in ["ANIMATE", "UPDATE_ANIM"]:
-                self.legoizeModel()
+                self.brickifyModel()
             else:
-                self.legoizeAnimation()
+                self.brickifyAnimation()
                 cm.animIsDirty = False
 
             if self.action in ["CREATE", "ANIMATE"] or cm.sourceIsDirty:
@@ -713,12 +713,13 @@ class legoizerLegoize(bpy.types.Operator):
             cm.lastLogoResolution = cm.logoResolution
             cm.lastLogoDetail = cm.logoDetail
             cm.lastSplitModel = cm.splitModel
+            cm.lastBrickType = cm.brickType
             cm.materialIsDirty = False
             cm.modelIsDirty = False
             cm.buildIsDirty = False
             cm.sourceIsDirty = False
             cm.bricksAreDirty = False
-            scn.legoizer_runningOperation = False
+            scn.Brickinator_runningOperation = False
 
             # unlink source from scene and link to safe scene
             if source.name in scn.objects.keys():
@@ -734,12 +735,12 @@ class legoizerLegoize(bpy.types.Operator):
         return{"FINISHED"}
 
     def handle_exception(self):
-        errormsg = print_exception('LEGOizer_log')
+        errormsg = print_exception('Brickinator_log')
         # if max number of exceptions occur within threshold of time, abort!
         curtime = time.time()
         print('\n'*5)
         print('-'*100)
-        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)")
+        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)")
         print('-'*100)
         print('\n'*5)
-        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)", wrap=240)
+        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)", wrap=240)

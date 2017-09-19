@@ -26,7 +26,7 @@ import bpy
 # import os
 # import math
 from ..functions import *
-# from .delete import legoizerDelete
+# from .delete import BrickinatorDelete
 # from mathutils import Matrix, Vector, Euler
 from addon_utils import check, paths, enable
 props = bpy.props
@@ -63,11 +63,11 @@ class MakeClosedMesh(bpy.types.Operator):
 
         obj = separatedObjs[0]
         for i in range(1, len(separatedObjs)):
-            bMod = obj.modifiers.new('LEGOizer_Boolean', type='BOOLEAN')
+            bMod = obj.modifiers.new('Brickinator_Boolean', type='BOOLEAN')
             bMod.object = separatedObjs[i]
             bMod.operation = 'UNION'
             select(obj, active=obj)
-            bpy.ops.object.modifier_apply(apply_as='DATA', modifier='LEGOizer_Boolean')
+            bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Brickinator_Boolean')
             obj = scn.objects.active
             delete(separatedObjs[i])
 

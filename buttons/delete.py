@@ -26,10 +26,10 @@ from mathutils import Vector, Euler
 from ..functions import *
 props = bpy.props
 
-class legoizerDelete(bpy.types.Operator):
-    """ Delete LEGOized model """                                               # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.legoizer_delete"                                         # unique identifier for buttons and menu items to reference.
-    bl_label = "Delete LEGOized model from Blender"                             # display name in the interface.
+class BrickinatorDelete(bpy.types.Operator):
+    """ Delete Brickified model """                                               # blender will use this as a tooltip for menu items and buttons.
+    bl_idname = "scene.brickinator_delete"                                         # unique identifier for buttons and menu items to reference.
+    bl_label = "Delete Brickified model from Blender"                             # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
@@ -56,15 +56,15 @@ class legoizerDelete(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
-        LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
-        LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
-        LEGOizer_refBricks_gn = "LEGOizer_%(n)s_refBricks" % locals()
-        LEGOizer_source_dupes_gn = "LEGOizer_%(n)s_dupes" % locals()
+        Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
+        Brickinator_parent_on = "Brickinator_%(n)s_parent" % locals()
+        Brickinator_refBricks_gn = "Brickinator_%(n)s_refBricks" % locals()
+        Brickinator_source_dupes_gn = "Brickinator_%(n)s_dupes" % locals()
         brickLoc = None
         brickRot = None
         brickScale = None
 
-        # clean up 'LEGOizer_[source name]' group
+        # clean up 'Brickinator_[source name]' group
         if not skipSource:
             # link source to scene
             if not source in list(scn.objects):
@@ -86,29 +86,29 @@ class legoizerDelete(bpy.types.Operator):
                     source.modifiers[mn].show_viewport = True
             source.name = n
 
-        # clean up 'LEGOizer_[source name]_dupes' group
-        if groupExists(LEGOizer_source_dupes_gn) and not skipDupes:
-            dGroup = bpy.data.groups[LEGOizer_source_dupes_gn]
+        # clean up 'Brickinator_[source name]_dupes' group
+        if groupExists(Brickinator_source_dupes_gn) and not skipDupes:
+            dGroup = bpy.data.groups[Brickinator_source_dupes_gn]
             dObjects = list(dGroup.objects)
             if len(dObjects) > 0:
                 delete(dObjects)
             bpy.data.groups.remove(dGroup, do_unlink=True)
 
         if not skipParents:
-            p = bpy.data.objects.get(LEGOizer_parent_on)
+            p = bpy.data.objects.get(Brickinator_parent_on)
             if modelType == "ANIMATION" or cm.lastSplitModel:
                 # store transform data of transformation parent object
                 storeTransformData(p)
-            if not cm.lastSplitModel and groupExists(LEGOizer_bricks_gn):
-                brickGroup = bpy.data.groups[LEGOizer_bricks_gn]
+            if not cm.lastSplitModel and groupExists(Brickinator_bricks_gn):
+                brickGroup = bpy.data.groups[Brickinator_bricks_gn]
                 bgObjects = list(brickGroup.objects)
                 b = bgObjects[0]
                 scn.update()
                 brickLoc = b.matrix_world.to_translation().copy()
                 brickRot = b.matrix_world.to_euler().copy()
                 brickScale = b.matrix_world.to_scale().copy()
-            # clean up LEGOizer_parent objects
-            pGroup = bpy.data.groups.get(LEGOizer_parent_on)
+            # clean up Brickinator_parent objects
+            pGroup = bpy.data.groups.get(Brickinator_parent_on)
             if pGroup:
                 for parent in pGroup.objects:
                     m = parent.data
@@ -121,10 +121,10 @@ class legoizerDelete(bpy.types.Operator):
         print()
 
         if modelType == "MODEL":
-            # clean up LEGOizer_bricks group
+            # clean up Brickinator_bricks group
             cm.modelCreated = False
-            if groupExists(LEGOizer_bricks_gn):
-                brickGroup = bpy.data.groups[LEGOizer_bricks_gn]
+            if groupExists(Brickinator_bricks_gn):
+                brickGroup = bpy.data.groups[Brickinator_bricks_gn]
                 bgObjects = list(brickGroup.objects)
                 if not cm.lastSplitModel:
                     storeTransformData(bgObjects[0])
@@ -139,15 +139,15 @@ class legoizerDelete(bpy.types.Operator):
                     bpy.data.meshes.remove(m, True)
                 bpy.data.groups.remove(brickGroup, do_unlink=True)
         elif modelType == "ANIMATION":
-            # clean up LEGOizer_bricks group
+            # clean up Brickinator_bricks group
             cm.animated = False
             for i in range(cm.lastStartFrame, cm.lastStopFrame + 1):
                 percent = (i - cm.lastStartFrame + 1)/(cm.lastStopFrame - cm.lastStartFrame + 1)
                 if percent < 1:
                     update_progress("Deleting", percent)
                     wm.progress_update(percent*100)
-                LEGOizer_bricks_cur_frame_gn = LEGOizer_bricks_gn + "_frame_" + str(i)
-                brickGroup = bpy.data.groups.get(LEGOizer_bricks_cur_frame_gn)
+                Brickinator_bricks_cur_frame_gn = Brickinator_bricks_gn + "_frame_" + str(i)
+                brickGroup = bpy.data.groups.get(Brickinator_bricks_cur_frame_gn)
                 if brickGroup is not None:
                     bgObjects = list(brickGroup.objects)
                     if len(bgObjects) > 0:
@@ -161,11 +161,11 @@ class legoizerDelete(bpy.types.Operator):
     def execute(self, context):
         try:
             scn = context.scene
-            scn.legoizer_runningOperation = True
+            scn.Brickinator_runningOperation = True
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
-            LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
+            Brickinator_last_origin_on = "Brickinator_%(n)s_last_origin" % locals()
             parentOb = None
             origFrame = scn.frame_current
             scn.frame_set(cm.modelCreatedOnFrame)
@@ -174,7 +174,7 @@ class legoizerDelete(bpy.types.Operator):
             lastLayers = list(scn.layers)
             # match source layers to brick layers
             brick = None
-            gn = "LEGOizer_%(n)s_bricks" % locals()
+            gn = "Brickinator_%(n)s_bricks" % locals()
             if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
                 brick = bpy.data.groups[gn].objects[0]
                 source.layers = brick.layers
@@ -203,7 +203,7 @@ class legoizerDelete(bpy.types.Operator):
                 source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
 
             # set origin to previous origin location
-            last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
+            last_origin_obj = bpy.data.objects.get(Brickinator_last_origin_on)
             if last_origin_obj is not None:
                 safeLink(last_origin_obj)
                 scn.update()
@@ -211,7 +211,7 @@ class legoizerDelete(bpy.types.Operator):
 
             # select source and return open layers to original
             select(source, active=source)
-            scn.legoizer_runningOperation = False
+            scn.Brickinator_runningOperation = False
             scn.layers = lastLayers
 
             # delete custom properties from source
@@ -248,12 +248,12 @@ class legoizerDelete(bpy.types.Operator):
         return{"FINISHED"}
 
     def handle_exception(self):
-        errormsg = print_exception('LEGOizer_log')
+        errormsg = print_exception('Brickinator_log')
         # if max number of exceptions occur within threshold of time, abort!
         curtime = time.time()
         print('\n'*5)
         print('-'*100)
-        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)")
+        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)")
         print('-'*100)
         print('\n'*5)
-        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)", wrap=240)
+        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)", wrap=240)

@@ -22,9 +22,9 @@ from mathutils import Vector, Euler
 from ..functions import *
 props = bpy.props
 
-class legoizerEditSource(bpy.types.Operator):
+class BrickinatorEditSource(bpy.types.Operator):
     """ Edit Source Object Mesh """                                             # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.legoizer_edit_source"                                             # unique identifier for buttons and menu items to reference.
+    bl_idname = "scene.brickinator_edit_source"                                             # unique identifier for buttons and menu items to reference.
     bl_label = "Edit Source Object Mesh"                                        # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
@@ -37,7 +37,7 @@ class legoizerEditSource(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         if not cm.modelCreated:
             return False
-        if scn.name == "LEGOizer_storage (DO NOT RENAME)":
+        if scn.name == "Brickinator_storage (DO NOT RENAME)":
             return False
         return True
 
@@ -51,10 +51,10 @@ class legoizerEditSource(bpy.types.Operator):
                 redraw_areas("VIEW_3D")
                 scn.update()
                 return {"FINISHED"}
-            if bpy.props.commitEdits or source is None or bpy.context.scene.name != "LEGOizer_storage (DO NOT RENAME)" or source.mode != "EDIT" or event.type in {"ESC"} or (event.type in {"TAB"} and event.value == "PRESS"):
+            if bpy.props.commitEdits or source is None or bpy.context.scene.name != "Brickinator_storage (DO NOT RENAME)" or source.mode != "EDIT" or event.type in {"ESC"} or (event.type in {"TAB"} and event.value == "PRESS"):
                 self.report({"INFO"}, "Edits Committed")
-                # if LEGOizer_storage scene is not active, set to active
-                sto_scn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
+                # if Brickinator_storage scene is not active, set to active
+                sto_scn = bpy.data.scenes.get("Brickinator_storage (DO NOT RENAME)")
                 if bpy.context.scene != sto_scn:
                     for screen in bpy.data.screens:
                         screen.scene = sto_scn
@@ -69,7 +69,7 @@ class legoizerEditSource(bpy.types.Operator):
                 source.rotation_euler = Euler(tuple(source["previous_rotation"]), "XYZ")
                 source.scale = source["previous_scale"]
                 setOriginToObjOrigin(toObj=source, fromLoc=source["before_origin_set_location"])
-                if bpy.context.scene.name == "LEGOizer_storage (DO NOT RENAME)":
+                if bpy.context.scene.name == "Brickinator_storage (DO NOT RENAME)":
                     for screen in bpy.data.screens:
                         screen.scene = bpy.data.scenes.get(bpy.props.origScene)
                 bpy.props.commitEdits = False
@@ -78,7 +78,7 @@ class legoizerEditSource(bpy.types.Operator):
                 scn.update()
                 return {"FINISHED"}
         except:
-            if bpy.context.scene.name == "LEGOizer_storage (DO NOT RENAME)":
+            if bpy.context.scene.name == "Brickinator_storage (DO NOT RENAME)":
                 for screen in bpy.data.screens:
                     screen.scene = bpy.data.scenes.get(bpy.props.origScene)
             self.handle_exception()
@@ -94,15 +94,15 @@ class legoizerEditSource(bpy.types.Operator):
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             self.source_name = cm.source_name + " (DO NOT RENAME)"
-            LEGOizer_bricks_gn = "LEGOizer_" + cm.source_name + "_bricks"
-            LEGOizer_parent_on = "LEGOizer_%(n)s_parent" % locals()
-            LEGOizer_last_origin_on = "LEGOizer_%(n)s_last_origin" % locals()
+            Brickinator_bricks_gn = "Brickinator_" + cm.source_name + "_bricks"
+            Brickinator_parent_on = "Brickinator_%(n)s_parent" % locals()
+            Brickinator_last_origin_on = "Brickinator_%(n)s_last_origin" % locals()
             brickLoc = None
             parentOb = None
 
             # if model isn't split, get brick loc/rot/scale
-            if not cm.lastSplitModel and groupExists(LEGOizer_bricks_gn):
-                brickGroup = bpy.data.groups[LEGOizer_bricks_gn]
+            if not cm.lastSplitModel and groupExists(Brickinator_bricks_gn):
+                brickGroup = bpy.data.groups[Brickinator_bricks_gn]
                 bgObjects = list(brickGroup.objects)
                 b = bgObjects[0]
                 scn.update()
@@ -111,10 +111,10 @@ class legoizerEditSource(bpy.types.Operator):
                 brickScale = b.matrix_world.to_scale().copy()
 
 
-            # get LEGOizer_storage (DO NOT RENAME) scene
-            sto_scn = bpy.data.scenes.get("LEGOizer_storage (DO NOT RENAME)")
+            # get Brickinator_storage (DO NOT RENAME) scene
+            sto_scn = bpy.data.scenes.get("Brickinator_storage (DO NOT RENAME)")
             if sto_scn is None:
-                self.report({"WARNING"}, "'LEGOizer_storage (DO NOT RENAME)' scene could not be found")
+                self.report({"WARNING"}, "'Brickinator_storage (DO NOT RENAME)' scene could not be found")
                 return {"CANCELLED"}
             # get source object
             source = bpy.data.objects.get(self.source_name)
@@ -122,10 +122,10 @@ class legoizerEditSource(bpy.types.Operator):
                 self.report({"WARNING"}, "Source object '" + self.source_name + "' could not be found")
                 return {"CANCELLED"}
 
-            # set cursor location of LEGOizer_storage scene to cursor loc of original scene
+            # set cursor location of Brickinator_storage scene to cursor loc of original scene
             sto_scn.cursor_location = tuple(scn.cursor_location)
 
-            # set active scene as LEGOizer_storage (DO NOT RENAME)
+            # set active scene as Brickinator_storage (DO NOT RENAME)
             for screen in bpy.data.screens:
                 screen.scene = sto_scn
 
@@ -134,15 +134,15 @@ class legoizerEditSource(bpy.types.Operator):
             for obj in sto_scn.objects:
                 obj.hide = True
             source.hide = False
-            bGroup = bpy.data.groups.get(LEGOizer_bricks_gn)
+            bGroup = bpy.data.groups.get(Brickinator_bricks_gn)
             source["before_edit_location"] = -1
-            self.last_origin_obj = bpy.data.objects.get(LEGOizer_last_origin_on)
+            self.last_origin_obj = bpy.data.objects.get(Brickinator_last_origin_on)
             if bGroup is not None and len(bGroup.objects) > 0:
                 if not cm.lastSplitModel:
                     obj = bGroup.objects[0]
                 else:
                     obj = None
-                objParent = bpy.data.objects.get("LEGOizer_%(n)s_parent" % locals())
+                objParent = bpy.data.objects.get("Brickinator_%(n)s_parent" % locals())
                 l = cm.lastSourceMid.split(",")
                 for i in range(len(l)):
                     l[i] = float(l[i])
@@ -177,7 +177,7 @@ class legoizerEditSource(bpy.types.Operator):
             # run modal
             context.window_manager.modal_handler_add(self)
         except:
-            if bpy.context.scene.name == "LEGOizer_storage (DO NOT RENAME)":
+            if bpy.context.scene.name == "Brickinator_storage (DO NOT RENAME)":
                 for screen in bpy.data.screens:
                     screen.scene = bpy.data.scenes.get(bpy.props.origScene)
             self.handle_exception()
@@ -186,19 +186,19 @@ class legoizerEditSource(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
     def handle_exception(self):
-        errormsg = print_exception('LEGOizer_log')
+        errormsg = print_exception('Brickinator_log')
         # if max number of exceptions occur within threshold of time, abort!
         curtime = time.time()
         print('\n'*5)
         print('-'*100)
-        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)")
+        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)")
         print('-'*100)
         print('\n'*5)
-        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)", wrap=240)
+        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)", wrap=240)
 
-class legoizerCommitEdits(bpy.types.Operator):
+class BrickinatorCommitEdits(bpy.types.Operator):
     """ Commit Edits to Source Object Mesh """                                  # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.legoizer_commit_edits"                                   # unique identifier for buttons and menu items to reference.
+    bl_idname = "scene.brickinator_commit_edits"                                   # unique identifier for buttons and menu items to reference.
     bl_label = "Commit Edits to Source Object Mesh"                             # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
@@ -206,7 +206,7 @@ class legoizerCommitEdits(bpy.types.Operator):
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
-        if scn.name != "LEGOizer_storage (DO NOT RENAME)":
+        if scn.name != "Brickinator_storage (DO NOT RENAME)":
             return False
         return True
 

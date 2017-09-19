@@ -26,13 +26,13 @@ import bmesh
 import os
 import math
 from ..functions import *
-from .delete import legoizerDelete
+from .delete import BrickinatorDelete
 from mathutils import Matrix, Vector, Euler
 props = bpy.props
 
-class legoizerApplyMaterial(bpy.types.Operator):
+class BrickinatorApplyMaterial(bpy.types.Operator):
     """Apply specified material to all bricks """                        # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.legoizer_apply_material"                                 # unique identifier for buttons and menu items to reference.
+    bl_idname = "scene.brickinator_apply_material"                                 # unique identifier for buttons and menu items to reference.
     bl_label = "Apply Material"                                         # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
@@ -68,8 +68,8 @@ class legoizerApplyMaterial(bpy.types.Operator):
             scn = bpy.context.scene
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
-            LEGOizer_bricks_gn = "LEGOizer_%(n)s_bricks" % locals()
-            bricks = list(bpy.data.groups[LEGOizer_bricks_gn].objects)
+            Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
+            bricks = list(bpy.data.groups[Brickinator_bricks_gn].objects)
             if self.action == "CUSTOM":
                 matName = cm.materialName
             elif self.action == "INTERNAL":
@@ -102,12 +102,12 @@ class legoizerApplyMaterial(bpy.types.Operator):
         return{"FINISHED"}
 
     def handle_exception(self):
-        errormsg = print_exception('LEGOizer_log')
+        errormsg = print_exception('Brickinator_log')
         # if max number of exceptions occur within threshold of time, abort!
         curtime = time.time()
         print('\n'*5)
         print('-'*100)
-        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)")
+        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)")
         print('-'*100)
         print('\n'*5)
-        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'LEGO Models' dropdown menu of the LEGOizer)", wrap=240)
+        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)", wrap=240)

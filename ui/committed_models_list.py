@@ -76,9 +76,9 @@ def matchProperties(cmNew, cmOld):
     cmNew.brickShell = cmOld.brickShell
 
 # ui list item actions
-class LEGOizer_Uilist_actions(bpy.types.Operator):
+class Brickinator_Uilist_actions(bpy.types.Operator):
     bl_idname = "cmlist.list_action"
-    bl_label = "LEGO Model List Action"
+    bl_label = "Brick Model List Action"
 
     action = bpy.props.EnumProperty(
         items=(
@@ -118,7 +118,7 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
                 if scn.cmlist_index == -1 and len(scn.cmlist) > 0:
                     scn.cmlist_index = 0
             else:
-                self.report({"WARNING"}, 'Please delete the LEGOized model before attempting to remove this item.' % locals())
+                self.report({"WARNING"}, 'Please delete the Brickified model before attempting to remove this item.' % locals())
 
         if self.action == 'ADD':
             active_object = scn.objects.active
@@ -140,7 +140,7 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
             item = scn.cmlist.add()
             last_index = scn.cmlist_index
             scn.cmlist_index = len(scn.cmlist)-1
-            if active_object and active_object.type == "MESH" and not active_object.name.startswith("LEGOizer_"):
+            if active_object and active_object.type == "MESH" and not active_object.name.startswith("Brickinator_"):
                 item.source_name = active_object.name
                 item.name = active_object.name
                 # set up default brickHeight values
@@ -188,7 +188,7 @@ class LEGOizer_Uilist_actions(bpy.types.Operator):
 # -------------------------------------------------------------------
 
 # custom list
-class LEGOizer_UL_items(UIList):
+class Brickinator_UL_items(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         # Make sure your code supports all 3 layout types
@@ -201,10 +201,10 @@ class LEGOizer_UL_items(UIList):
         pass
 
 # copy settings from current index to all other indices
-class LEGOizer_Uilist_copySettingsToOthers(bpy.types.Operator):
+class Brickinator_Uilist_copySettingsToOthers(bpy.types.Operator):
     bl_idname = "cmlist.copy_to_others"
-    bl_label = "Copy Settings to Other LEGO Models"
-    bl_description = "Copies the settings from the current model to all other LEGO models"
+    bl_label = "Copy Settings to Other Brick Models"
+    bl_description = "Copies the settings from the current model to all other Brick Models"
 
     @classmethod
     def poll(cls, context):
@@ -225,9 +225,9 @@ class LEGOizer_Uilist_copySettingsToOthers(bpy.types.Operator):
         return{'FINISHED'}
 
 # copy settings from current index to memory
-class LEGOizer_Uilist_copySettings(bpy.types.Operator):
+class Brickinator_Uilist_copySettings(bpy.types.Operator):
     bl_idname = "cmlist.copy_settings"
-    bl_label = "Copy Settings from Current LEGO Model"
+    bl_label = "Copy Settings from Current Brick Model"
     bl_description = "Stores the ID of the current model for pasting"
 
     @classmethod
@@ -241,13 +241,13 @@ class LEGOizer_Uilist_copySettings(bpy.types.Operator):
     def execute(self, context):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        scn.legoizer_copy_from_id = cm.id
+        scn.Brickinator_copy_from_id = cm.id
         return{'FINISHED'}
 
 # paste settings from index in memory to current index
-class LEGOizer_Uilist_pasteSettings(bpy.types.Operator):
+class Brickinator_Uilist_pasteSettings(bpy.types.Operator):
     bl_idname = "cmlist.paste_settings"
-    bl_label = "Paste Settings to Current LEGO Model"
+    bl_label = "Paste Settings to Current Brick Model"
     bl_description = "Pastes the settings from stored model ID to the current index"
 
     @classmethod
@@ -262,15 +262,15 @@ class LEGOizer_Uilist_pasteSettings(bpy.types.Operator):
         scn = bpy.context.scene
         cm0 = scn.cmlist[scn.cmlist_index]
         for cm1 in scn.cmlist:
-            if cm0 != cm1 and cm1.id == scn.legoizer_copy_from_id:
+            if cm0 != cm1 and cm1.id == scn.Brickinator_copy_from_id:
                 matchProperties(cm0, cm1)
                 break
         return{'FINISHED'}
 
 # set source to active button
-class LEGOizer_Uilist_setSourceToActive(bpy.types.Operator):
+class Brickinator_Uilist_setSourceToActive(bpy.types.Operator):
     bl_idname = "cmlist.set_to_active"
-    bl_label = "Set LEGOizer Source to Active Object"
+    bl_label = "Set Brickinator Source to Active Object"
     bl_description = "Set source to active object in scene"
 
     @classmethod
@@ -287,8 +287,8 @@ class LEGOizer_Uilist_setSourceToActive(bpy.types.Operator):
                 return True
         # cm = scn.cmlist[scn.cmlist_index]
         # n = cm.source_name
-        # LEGOizer_source = "LEGOizer_%(n)s" % locals()
-        # if groupExists(LEGOizer_source) and len(bpy.data.groups[LEGOizer_source].objects) == 1:
+        # Brickinator_source = "Brickinator_%(n)s" % locals()
+        # if groupExists(Brickinator_source) and len(bpy.data.groups[Brickinator_source].objects) == 1:
         #     return True
         # try:
         #     if bpy.data.objects[cm.source_name].type == 'MESH':
@@ -307,7 +307,7 @@ class LEGOizer_Uilist_setSourceToActive(bpy.types.Operator):
         return{'FINISHED'}
 
 # select button
-class LEGOizer_Uilist_selectSource(bpy.types.Operator):
+class Brickinator_Uilist_selectSource(bpy.types.Operator):
     bl_idname = "cmlist.select_source"
     bl_label = "Select Source Object"
     bl_description = "Select only source object for model"
@@ -320,8 +320,8 @@ class LEGOizer_Uilist_selectSource(bpy.types.Operator):
             return False
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        LEGOizer_source = "LEGOizer_%(n)s" % locals()
-        if groupExists(LEGOizer_source) and len(bpy.data.groups[LEGOizer_source].objects) == 1:
+        Brickinator_source = "Brickinator_%(n)s" % locals()
+        if groupExists(Brickinator_source) and len(bpy.data.groups[Brickinator_source].objects) == 1:
             return True
         try:
             cm = scn.cmlist[scn.cmlist_index]
@@ -341,9 +341,9 @@ class LEGOizer_Uilist_selectSource(bpy.types.Operator):
         return{'FINISHED'}
 
 # select button
-class LEGOizer_Uilist_selectAllBricks(bpy.types.Operator):
+class Brickinator_Uilist_selectAllBricks(bpy.types.Operator):
     bl_idname = "cmlist.select_bricks"
-    bl_label = "Select All LEGO Bricks"
+    bl_label = "Select All Bricks"
     bl_description = "Select only bricks in model"
 
     @classmethod
@@ -354,8 +354,8 @@ class LEGOizer_Uilist_selectAllBricks(bpy.types.Operator):
             return False
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
-        if groupExists(LEGOizer_bricks) and len(bpy.data.groups[LEGOizer_bricks].objects) != 0:
+        Brickinator_bricks = "Brickinator_%(n)s_bricks" % locals()
+        if groupExists(Brickinator_bricks) and len(bpy.data.groups[Brickinator_bricks].objects) != 0:
             return True
         return False
 
@@ -363,9 +363,9 @@ class LEGOizer_Uilist_selectAllBricks(bpy.types.Operator):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        LEGOizer_bricks = "LEGOizer_%(n)s_bricks" % locals()
-        if groupExists(LEGOizer_bricks):
-            objs = list(bpy.data.groups[LEGOizer_bricks].objects)
+        Brickinator_bricks = "Brickinator_%(n)s_bricks" % locals()
+        if groupExists(Brickinator_bricks):
+            objs = list(bpy.data.groups[Brickinator_bricks].objects)
             select(active=objs[0])
             if len(objs) > 0:
                 select(objs)
@@ -373,7 +373,7 @@ class LEGOizer_Uilist_selectAllBricks(bpy.types.Operator):
         return{'FINISHED'}
 
 def uniquifyName(self, context):
-    """ if LEGO model exists with name, add '.###' to the end """
+    """ if Brick Model exists with name, add '.###' to the end """
     scn = context.scene
     cm = scn.cmlist[scn.cmlist_index]
     name = cm.name
@@ -407,11 +407,11 @@ def updateBevel(self, context):
         n = cm.source_name
         if cm.lastBevelWidth != cm.bevelWidth or cm.lastBevelSegments != cm.bevelSegments or cm.lastBevelProfile != cm.bevelProfile:
             if cm.modelCreated:
-                bricks = list(bpy.data.groups["LEGOizer_%(n)s_bricks" % locals()].objects)
+                bricks = list(bpy.data.groups["Brickinator_%(n)s_bricks" % locals()].objects)
             elif cm.animated:
                 bricks = []
                 for cf in range(cm.lastStartFrame, cm.lastStopFrame + 1):
-                    bGroup = bpy.data.groups.get("LEGOizer_%(n)s_bricks_frame_%(cf)s" % locals())
+                    bGroup = bpy.data.groups.get("Brickinator_%(n)s_bricks_frame_%(cf)s" % locals())
                     if bGroup is not None:
                         bricks.append(bGroup.objects[0])
             setBevelMods(bricks)
@@ -460,20 +460,20 @@ def dirtyBricks(self, context):
     cm.bricksAreDirty = True
 
 # Create custom property group
-class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
+class Brickinator_CreatedModels(bpy.types.PropertyGroup):
     name = StringProperty(update=uniquifyName)
     id = IntProperty()
     idx = IntProperty()
 
     source_name = StringProperty(
         name="Source Object Name",
-        description="Name of the source object to LEGOize",
+        description="Name of the source object to Brickify",
         default="",
         update=setNameIfEmpty)
 
     shellThickness = IntProperty(
         name="Shell Thickness",
-        description="Thickness of the LEGO shell",
+        description="Thickness of the Brick shell",
         update=dirtyBuild,
         min=1, max=100,
         default=1)
@@ -481,24 +481,24 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     studDetail = EnumProperty(
         name="Stud Detailing",
         description="Choose where to draw the studs",
-        items=[("On All Bricks", "On All Bricks", "Include LEGO Logo only on bricks with studs exposed"),
-              ("On Exposed Bricks", "On Exposed Bricks", "Include LEGO Logo only on bricks with studs exposed"),
-              ("None", "None", "Don't include LEGO Logo on bricks")],
+        items=[("On All Bricks", "On All Bricks", "Include Brick Logo only on bricks with studs exposed"),
+              ("On Exposed Bricks", "On Exposed Bricks", "Include Brick Logo only on bricks with studs exposed"),
+              ("None", "None", "Don't include Brick Logo on bricks")],
         update=dirtyBricks,
         default="On Exposed Bricks")
 
     logoDetail = EnumProperty(
         name="Logo Detailing",
         description="Choose where to draw the logo",
-        items=[("On All Studs", "On All Studs", "Include LEGO Logo on all studs"),
-              ("On Exposed Studs", "On Exposed Studs", "Include LEGO Logo only on exposed studs"),
-              ("None", "None", "Don't include LEGO Logo on bricks")],
+        items=[("On All Studs", "On All Studs", "Include Brick Logo on all studs"),
+              ("On Exposed Studs", "On Exposed Studs", "Include Brick Logo only on exposed studs"),
+              ("None", "None", "Don't include Brick Logo on bricks")],
         update=dirtyBricks,
         default="None")
 
     logoResolution = FloatProperty(
         name="Logo Resolution",
-        description="Resolution of the LEGO Logo",
+        description="Resolution of the Brick Logo",
         update=dirtyBricks,
         min=0.1, max=1,
         step=1,
@@ -528,26 +528,26 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
 
     studVerts = IntProperty(
         name="Stud Verts",
-        description="Number of vertices on each LEGO stud",
+        description="Number of vertices on each Brick stud",
         update=dirtyBricks,
         min=4, max=64,
         default=16)
 
     modelScaleX = FloatProperty(
         name="Model Scale X",
-        description="Scale of the source object to LEGOize on X axis",
+        description="Scale of the source object to Brickify on X axis",
         default=-1)
     modelScaleY = FloatProperty(
         name="Model Scale Y",
-        description="Scale of the source object to LEGOize on Y axis",
+        description="Scale of the source object to Brickify on Y axis",
         default=-1)
     modelScaleZ = FloatProperty(
         name="Model Scale Z",
-        description="Scale of the source object to LEGOize on Z axis",
+        description="Scale of the source object to Brickify on Z axis",
         default=-1)
     brickHeight = FloatProperty(
         name="Brick Height",
-        description="Height of the bricks in the final LEGO model",
+        description="Height of the bricks in the final Brick Model",
         update=dirtyModel,
         step=1,
         precision=3,
@@ -586,6 +586,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
         min=0, max=1,
         default=0.025)
 
+    lastBrickType = StringProperty(default="Bricks")
     brickType = EnumProperty(
         name="Brick Type",
         description="Type of brick used to build the model",
@@ -635,14 +636,14 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
 
     maxBrickScale1 = IntProperty(
         name="Max 1 by x",
-        description="Maximum scale of the 1 by X LEGO brick",
+        description="Maximum scale of the 1 by X brick",
         update=dirtyBuild,
         step=1,
         min=1, max=10,
         default=10)
     maxBrickScale2 = IntProperty(
         name="Max 2 by x",
-        description="Maximum scale of the 2 by X LEGO brick",
+        description="Maximum scale of the 2 by X brick",
         update=dirtyBuild,
         step=1,
         min=1, max=10,
@@ -691,8 +692,8 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     materialType = EnumProperty(
         name="Material Type",
         description="Choose what materials will be applied to model",
-        items=[("None", "None", "No material applied to LEGO bricks"),
-              ("Random", "Random", "Apply a random material from LEGO materials to each generated brick"),
+        items=[("None", "None", "No material applied to bricks"),
+              ("Random", "Random", "Apply a random material from Brick materials to each generated brick"),
               ("Custom", "Custom", "Choose a custom material to apply to all generated bricks"),
               ("Use Source Materials", "Use Source Materials", "Apply material based on closest intersecting face")],
         update=dirtyMaterial,
@@ -749,7 +750,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     modelScale = StringProperty(default="-1,-1,-1")
     applyToSourceObject = BoolProperty(
         name="Apply to source",
-        description="Apply transformations to source object when LEGO Model is deleted",
+        description="Apply transformations to source object when Brick Model is deleted",
         default=True)
 
     # Bevel Settings
@@ -781,19 +782,19 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
     # ANIMATION SETTINGS
     startFrame = IntProperty(
         name="Start Frame",
-        description="Start frame of LEGO animation",
+        description="Start frame of Brick animation",
         update=dirtyAnim,
         min=0, max=500000,
         default=1)
     stopFrame = IntProperty(
         name="Stop Frame",
-        description="Stop frame of LEGO animation",
+        description="Stop frame of Brick animation",
         update=dirtyAnim,
         min=0, max=500000,
         default=10)
     useAnimation = BoolProperty(
         name="Use Animation",
-        description="Create LEGO model for each frame, from start to stop frame (WARNING: Calculation takes time, and may result in large blend file size)",
+        description="Create Brick Model for each frame, from start to stop frame (WARNING: Calculation takes time, and may result in large blend file size)",
         update=updateStartAndStopFrames,
         default=False)
 
@@ -840,7 +841,7 @@ class LEGOizer_CreatedModels(bpy.types.PropertyGroup):
 
 def register():
     bpy.utils.register_module(__name__)
-    bpy.types.Scene.createdModelsCollection = CollectionProperty(type=LEGOizer_CreatedModels)
+    bpy.types.Scene.createdModelsCollection = CollectionProperty(type=Brickinator_CreatedModels)
     bpy.types.Scene.cmlist_index = IntProperty()
 
 def unregister():
