@@ -634,6 +634,20 @@ class Brickinator_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyModel,
         default="")
 
+    logoObjectName = StringProperty(
+        name="Logo Object Name",
+        description="Name of the logo object",
+        update=dirtyModel,
+        default="")
+    logoScale = FloatProperty(
+        name="Logo Scale",
+        description="Scale of the logo (relative to stud scale)",
+        step=1,
+        update=dirtyModel,
+        precision=2,
+        min=0.000001, max=2,
+        default=0.78)
+
     maxBrickScale1 = IntProperty(
         name="Max 1 by x",
         description="Maximum scale of the 1 by X brick",

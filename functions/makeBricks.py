@@ -28,7 +28,7 @@ import sys
 import random
 from mathutils import Vector, Matrix
 from ..classes.Brick import Bricks
-from ..functions.common_functions import stopWatch, groupExists, select, update_progress, most_common
+from ..functions import *
 from .__init__ import bounds
 
 def brickAvail(sourceBrick, brick):
@@ -374,7 +374,13 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     m = bpy.data.meshes.new(brickD["name"])
                     bm.to_mesh(m)
                 else:
-                    bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail, returnType="bmesh")
+                    print(scn.use_lego_logo, logoDetail)
+                    if not scn.use_lego_logo and logoDetail is not None:
+                        logo_details = bounds(logoDetail)
+                    else:
+                        logo_details = None
+                    print(logo_details)
+                    bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, logo_details=logo_details, stud=studDetail, returnType="bmesh")
                     m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
                     if cm.randomLoc > 0:
                         randomizeLoc(dimensions["width"], dimensions["height"], bm)
@@ -414,7 +420,17 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     for v in bm.verts:
                         v.co = (v.co[0] + brickD["co"][0], v.co[1] + brickD["co"][1], v.co[2] + brickD["co"][2])
                 else:
-                    bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, transform=brickD["co"], undersideDetail=undersideDetail, logo=logoDetail, stud=studDetail, returnType="bmesh")
+                    if not scn.use_lego_logo and logoDetail is not None:
+                        oldLayers = list(scn.layers)
+                        scn.layers = logoDetail.layers
+                        logoDetail.hide = False
+                        select(logoDetail, active=logoDetail)
+                        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+                        scn.layers = oldLayers
+                        logo_details = bounds(logoDetail)
+                    else:
+                        logo_details = None
+                    bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, transform=brickD["co"], undersideDetail=undersideDetail, logo=logoDetail, logo_details=logo_details, stud=studDetail, returnType="bmesh")
                 if cm.randomLoc > 0:
                     randomizeLoc(dimensions["width"], dimensions["height"], bm)
                 if cm.randomRot > 0:

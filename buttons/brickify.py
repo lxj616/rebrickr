@@ -107,8 +107,7 @@ class BrickinatorBrickify(bpy.types.Operator):
         safeScn.objects.link(parent)
         return parent
 
-
-    def getRefLogo(self):
+    def getLegoLogo(self):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         # update refLogo
@@ -343,8 +342,12 @@ class BrickinatorBrickify(bpy.types.Operator):
             parent0 = self.getParent(Brickinator_parent_on, sourceOrig.location.to_tuple())
             pGroup.objects.link(parent0)
 
+        # update refLogo
         if cm.brickType != "Custom":
-            refLogo = self.getRefLogo()
+            if scn.use_lego_logo:
+                refLogo = self.getLegoLogo()
+            else:
+                refLogo = bpy.data.objects.get(cm.logoObjectName)
         else:
             refLogo = None
 
@@ -602,7 +605,10 @@ class BrickinatorBrickify(bpy.types.Operator):
 
         # update refLogo
         if cm.brickType != "Custom":
-            refLogo = self.getRefLogo()
+            if scn.use_lego_logo:
+                refLogo = self.getLegoLogo()
+            else:
+                refLogo = bpy.data.objects.get(cm.logoObjectName)
         else:
             refLogo = None
 

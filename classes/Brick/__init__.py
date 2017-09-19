@@ -45,7 +45,7 @@ class Bricks:
         return brickObjs
 
     @staticmethod
-    def new_mesh(dimensions, name='new_brick', gap_percentage=0.01, type=[1,1,3], transform=False, logo=False, undersideDetail="Flat", stud=True, returnType="mesh", brickMesh=None):
+    def new_mesh(dimensions, name='new_brick', gap_percentage=0.01, type=[1,1,3], transform=False, logo=False, logo_details=None, undersideDetail="Flat", stud=True, returnType="mesh", brickMesh=None):
         """ create unlinked Brick at origin """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
@@ -73,21 +73,29 @@ class Bricks:
             else:
                 print("shouldn't get here")
                 print(type)
+            lw = dimensions["logo_width"] * cm.logoScale
             for x in range(type[0]):
                 for y in range(type[1]):
                     logoBM = bmesh.new()
                     logoBM.from_mesh(logo.data)
                     for f in logoBM.faces:
                         f.smooth = True
-                    lw = dimensions["logo_width"]
                     # transform logo into place
-                    bmesh.ops.scale(logoBM, vec=Vector((lw, lw, lw)), verts=logoBM.verts)
-                    bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(1.0, 0.0, 0.0), matrix=Matrix.Rotation(math.radians(90.0), 3, 'X'))
+                    if scn.use_lego_logo:
+                        bmesh.ops.scale(logoBM, vec=Vector((lw, lw, lw)), verts=logoBM.verts)
+                        bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(1.0, 0.0, 0.0), matrix=Matrix.Rotation(math.radians(90.0), 3, 'X'))
+                    else:
+                        distMax = max(logo_details.x.distance, logo_details.y.distance)
+                        bmesh.ops.scale(logoBM, vec=Vector((lw/distMax, lw/distMax, lw/distMax)), verts=logoBM.verts)
                     # rotate logo around stud
                     if zRot != 0:
                         bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(0.0, 0.0, 1.0), matrix=Matrix.Rotation(math.radians(zRot), 3, 'Z'))
                     for v in logoBM.verts:
-                        v.co = ((v.co.x + x*(dimensions["width"]+dimensions["gap"])), (v.co.y + y*(dimensions["width"]+dimensions["gap"])), (v.co.z + dimensions["logo_offset"]*0.998))
+                        zOffset = dimensions["logo_offset"]
+                        if not scn.use_lego_logo and logo_details is not None:
+                            zOffset += logo_details.z.distance / 2
+                        xyOffset = dimensions["width"]+dimensions["gap"]
+                        v.co = ((v.co.x + x*(xyOffset)), (v.co.y + y*(xyOffset)), (v.co.z + zOffset*0.998))
                     lastLogoBM = logoBM
                     # add logoBM mesh to bm mesh
                     logoMesh = bpy.data.meshes.new('Brickinator_tempMesh')
@@ -130,7 +138,7 @@ class Bricks:
         brick_dimensions["thickness"] = round(scale*1.6, 8)
         brick_dimensions["tube_thickness"] = round(scale*0.855, 8)
         brick_dimensions["bar_radius"] = round(scale*1.6, 8)
-        brick_dimensions["logo_width"] = round(scale*3.74, 8)
+        brick_dimensions["logo_width"] = round(scale*4.8, 8) # originally round(scale*3.74, 8)
         brick_dimensions["support_width"] = round(scale*0.8, 8)
         brick_dimensions["tick_width"] = round(scale*0.6, 8)
         brick_dimensions["tick_depth"] = round(scale*0.3, 8)
