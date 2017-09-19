@@ -80,8 +80,6 @@ def register():
         description="Scene to return to",
         default="")
 
-    bpy.types.Scene.use_lego_logo = BoolProperty(default=False)
-
     bpy.types.Scene.printTimes = BoolProperty(default=False)
     bpy.props.origScene = StringProperty(default="")
     bpy.props.commitEdits = False

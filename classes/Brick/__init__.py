@@ -78,26 +78,37 @@ class Bricks:
                 for y in range(type[1]):
                     logoBM = bmesh.new()
                     logoBM.from_mesh(logo.data)
-                    for f in logoBM.faces:
-                        f.smooth = True
-                    # transform logo into place
-                    if scn.use_lego_logo:
+                    if cm.logoDetail == "LEGO Logo":
+                        # smooth faces
+                        for f in logoBM.faces:
+                            f.smooth = True
+                        # transform logo into place
                         bmesh.ops.scale(logoBM, vec=Vector((lw, lw, lw)), verts=logoBM.verts)
                         bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(1.0, 0.0, 0.0), matrix=Matrix.Rotation(math.radians(90.0), 3, 'X'))
                     else:
+                        # transform logo to origin (transform was (or should be at least) applied, origin is at center)
+                        xOffset = logo_details.x.mid
+                        yOffset = logo_details.y.mid
+                        zOffset = logo_details.z.mid
+                        for v in logoBM.verts:
+                            v.co.x -= xOffset
+                            v.co.y -= yOffset
+                            v.co.z -= zOffset
+                        # scale logo
                         distMax = max(logo_details.x.distance, logo_details.y.distance)
                         bmesh.ops.scale(logoBM, vec=Vector((lw/distMax, lw/distMax, lw/distMax)), verts=logoBM.verts)
                     # rotate logo around stud
                     if zRot != 0:
                         bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(0.0, 0.0, 1.0), matrix=Matrix.Rotation(math.radians(zRot), 3, 'Z'))
+                    # transform logo to appropriate position
+                    zOffset = dimensions["logo_offset"]
+                    if cm.logoDetail != "LEGO Logo" and logo_details is not None:
+                        zOffset += ((logo_details.z.distance * (lw/distMax)) / 2) * (1-(cm.logoInset * 2))
+                    xyOffset = dimensions["width"]+dimensions["gap"]
                     for v in logoBM.verts:
-                        zOffset = dimensions["logo_offset"]
-                        if not scn.use_lego_logo and logo_details is not None:
-                            zOffset += logo_details.z.distance / 2
-                        xyOffset = dimensions["width"]+dimensions["gap"]
-                        v.co = ((v.co.x + x*(xyOffset)), (v.co.y + y*(xyOffset)), (v.co.z + zOffset*0.998))
-                    lastLogoBM = logoBM
+                        v.co = ((v.co.x + x*(xyOffset)), (v.co.y + y*(xyOffset)), (v.co.z + zOffset))
                     # add logoBM mesh to bm mesh
+                    lastLogoBM = logoBM
                     logoMesh = bpy.data.meshes.new('Brickinator_tempMesh')
                     logoBM.to_mesh(logoMesh)
                     bm.from_mesh(logoMesh)

@@ -716,7 +716,7 @@ class DetailingPanel(Panel):
         row = col.row(align=True)
         row.prop(cm, "logoDetail", text="")
         if cm.logoDetail != "None":
-            if scn.use_lego_logo:
+            if cm.logoDetail == "LEGO Logo":
                 row = col.row(align=True)
                 row.prop(cm, "logoResolution", text="Logo Resolution")
             else:
@@ -724,6 +724,8 @@ class DetailingPanel(Panel):
                 row.prop_search(cm, "logoObjectName", scn, "objects", text="")
                 row = col.row(align=True)
                 row.prop(cm, "logoScale", text="Logo Scale")
+                row = col.row(align=True)
+                row.prop(cm, "logoInset", text="Logo Inset")
             col = layout.column(align=True)
         row = col.row(align=True)
         row.label("Underside Hidden:")

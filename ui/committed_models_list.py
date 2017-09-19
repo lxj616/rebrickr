@@ -490,8 +490,8 @@ class Brickinator_CreatedModels(bpy.types.PropertyGroup):
     logoDetail = EnumProperty(
         name="Logo Detailing",
         description="Choose where to draw the logo",
-        items=[("On All Studs", "On All Studs", "Include Brick Logo on all studs"),
-              ("On Exposed Studs", "On Exposed Studs", "Include Brick Logo only on exposed studs"),
+        items=[("Custom Logo", "Custom Logo", "Choose a mesh object to use as the brick stud logo"),
+              ("LEGO Logo", "LEGO Logo", "Include a LEGO logo on each stud"),
               ("None", "None", "Don't include Brick Logo on bricks")],
         update=dirtyBricks,
         default="None")
@@ -504,6 +504,29 @@ class Brickinator_CreatedModels(bpy.types.PropertyGroup):
         step=1,
         precision=1,
         default=0.2)
+
+    logoObjectName = StringProperty(
+        name="Logo Object Name",
+        description="Name of the logo object",
+        update=dirtyModel,
+        default="")
+    logoScale = FloatProperty(
+        name="Logo Scale",
+        description="Scale of the logo (relative to stud scale)",
+        step=1,
+        update=dirtyModel,
+        precision=2,
+        min=0.000001, max=2,
+        default=0.78)
+    logoInset = FloatProperty(
+        name="Logo Scale",
+        description="How deep to inset the logo into the stud",
+        step=1,
+        update=dirtyModel,
+        precision=2,
+        min=0.0, max=1.0,
+        default=0.02)
+
 
     hiddenUndersideDetail = EnumProperty(
         name="Hidden Underside Detailing",
@@ -633,20 +656,6 @@ class Brickinator_CreatedModels(bpy.types.PropertyGroup):
         description="Name of the object to use as bricks",
         update=dirtyModel,
         default="")
-
-    logoObjectName = StringProperty(
-        name="Logo Object Name",
-        description="Name of the logo object",
-        update=dirtyModel,
-        default="")
-    logoScale = FloatProperty(
-        name="Logo Scale",
-        description="Scale of the logo (relative to stud scale)",
-        step=1,
-        update=dirtyModel,
-        precision=2,
-        min=0.000001, max=2,
-        default=0.78)
 
     maxBrickScale1 = IntProperty(
         name="Max 1 by x",

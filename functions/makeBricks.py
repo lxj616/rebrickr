@@ -84,6 +84,26 @@ def randomizeRot(center, brickType, bm):
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(y, 3, 'Y'))
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(z, 3, 'Z'))
 
+def prepareLogoAndGetDetails(logo):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    if cm.logoDetail != "LEGO Logo" and logo is not None:
+        oldLayers = list(scn.layers)
+        scn.layers = logo.layers
+        logo.hide = False
+        select(logo, active=logo)
+        bpy.ops.object.duplicate()
+        logo = scn.objects.active
+        for mod in logo.modifiers:
+            mod.show_viewport = False
+        logo.parent = None
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        scn.layers = oldLayers
+        logo_details = bounds(logo)
+    else:
+        logo_details = None
+    return logo_details, logo
+
 def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customData=None, customObj_details=None, group_name=None, frameNum=None, cursorStatus=False):
     # set up variables
     scn = bpy.context.scene
@@ -100,6 +120,9 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     else:
         testZ = True
         bt2 = 1
+
+    # apply transformation to logo duplicate and get bounds(logo)
+    logo_details, logo = prepareLogoAndGetDetails(logo)
 
     # get brick dicts in seeded order
     keys = list(bricksD.keys())
@@ -324,7 +347,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     # set name of deleted brick to 'DNE'
                     curBrick["name"] = "DNE"
 
-            if topExposed or cm.logoDetail == "On All Studs":
+            if topExposed:
                 logoDetail = logo
             else:
                 logoDetail = None
@@ -374,14 +397,11 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     m = bpy.data.meshes.new(brickD["name"])
                     bm.to_mesh(m)
                 else:
-                    print(scn.use_lego_logo, logoDetail)
-                    if not scn.use_lego_logo and logoDetail is not None:
-                        logo_details = bounds(logoDetail)
-                    else:
-                        logo_details = None
-                    print(logo_details)
+                    # create new brick mesh
                     bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, logo_details=logo_details, stud=studDetail, returnType="bmesh")
+                    # create new mesh
                     m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
+                    # apply random location/rotation according to parameters
                     if cm.randomLoc > 0:
                         randomizeLoc(dimensions["width"], dimensions["height"], bm)
                     if cm.randomRot > 0:
@@ -390,6 +410,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                         sY = (brickType[1] * 2) - 1
                         center = ( ((d*sX)-d) / 2, ((d*sY)-d) / 2, 0.0 )
                         randomizeRot(center, brickType, bm)
+                    # send mesh to bm
                     bm.to_mesh(m)
                     # return updated brick object
                 brick = bpy.data.objects.new(brickD["name"], m)
@@ -420,17 +441,9 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     for v in bm.verts:
                         v.co = (v.co[0] + brickD["co"][0], v.co[1] + brickD["co"][1], v.co[2] + brickD["co"][2])
                 else:
-                    if not scn.use_lego_logo and logoDetail is not None:
-                        oldLayers = list(scn.layers)
-                        scn.layers = logoDetail.layers
-                        logoDetail.hide = False
-                        select(logoDetail, active=logoDetail)
-                        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-                        scn.layers = oldLayers
-                        logo_details = bounds(logoDetail)
-                    else:
-                        logo_details = None
+                    # create new brick mesh
                     bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, transform=brickD["co"], undersideDetail=undersideDetail, logo=logoDetail, logo_details=logo_details, stud=studDetail, returnType="bmesh")
+                # apply random location/rotation according to parameters
                 if cm.randomLoc > 0:
                     randomizeLoc(dimensions["width"], dimensions["height"], bm)
                 if cm.randomRot > 0:
@@ -439,8 +452,10 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     sY = (brickType[1] * 2) - 1
                     center = ( (((d*sX)-d) / 2) + brickD["co"][0], (((d*sY)-d) / 2) + brickD["co"][1], brickD["co"][2] )
                     randomizeRot(center, brickType, bm)
+                # create new mesh and send to bm
                 tempMesh = bpy.data.meshes.new(brickD["name"])
                 bm.to_mesh(tempMesh)
+                # set up materials for tempMesh
                 if mat in mats:
                     matIdx = mats.index(mat)
                 elif mat is not None:
@@ -462,10 +477,16 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 if cursorStatus:
                     wm.progress_update(percent*100)
 
+    # remove duplicate of original logoDetail
+    if cm.logoDetail != "LEGO Logo" and logo is not None:
+        bpy.data.objects.remove(logo)
+
     # end progress bar around cursor
     update_progress("Building", 1)
     if cursorStatus:
         wm.progress_end()
+
+    # combine meshes, link to scene, and add relevant data to the new Blender MESH object
     if split:
         for i,key in enumerate(bricksD):
             # print status to terminal

@@ -41,12 +41,12 @@ def updateCanRun(type):
     else:
         cm = scn.cmlist[scn.cmlist_index]
         if type == "ANIMATION":
-            return cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType == "Custom" and cm.materialIsDirty)
+            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType == "Custom" and cm.materialIsDirty)
         elif type == "MODEL":
             # set up variables
             n = cm.source_name
             Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
-            return cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and cm.materialIsDirty) or (groupExists(Brickinator_bricks_gn) and len(bpy.data.groups[Brickinator_bricks_gn].objects) == 0)
+            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and cm.materialIsDirty) or (groupExists(Brickinator_bricks_gn) and len(bpy.data.groups[Brickinator_bricks_gn].objects) == 0)
 
 def getDimensionsAndBounds(source, skipDimensions=False):
     scn = bpy.context.scene
@@ -197,6 +197,9 @@ class BrickinatorBrickify(bpy.types.Operator):
             if cm.customObjectName == "":
                 self.report({"WARNING"}, "Custom brick type object not specified.")
                 return False
+            if cm.customObjectName == cm.source_name:
+                self.report({"WARNING"}, "Source object cannot be its own brick type.")
+                return False
             if bpy.data.objects.find(cm.customObjectName) == -1:
                 n = cm.customObjectName
                 self.report({"WARNING"}, "Custom brick type object '%(n)s' could not be found" % locals())
@@ -277,6 +280,23 @@ class BrickinatorBrickify(bpy.types.Operator):
                 self.report({"WARNING"}, "Brickified Model doesn't exist. Create one with the 'Brickify Object' button.")
                 return False
 
+        # check that custom logo object exists in current scene and is of type "MESH"
+        if cm.logoDetail == "Custom Logo":
+            if cm.logoObjectName == "":
+                self.report({"WARNING"}, "Custom logo object not specified.")
+                return False
+            if cm.logoObjectName == cm.source_name:
+                self.report({"WARNING"}, "Source object cannot be its own logo.")
+                return False
+            if bpy.data.objects.find(cm.logoObjectName) == -1:
+                n = cm.logoObjectName
+                self.report({"WARNING"}, "Custom logo object '%(n)s' could not be found" % locals())
+                return False
+            if bpy.data.objects[cm.logoObjectName].type != "MESH":
+                self.report({"WARNING"}, "Custom logo object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
+                return False
+
+
         success = False
         if cm.modelCreated:
             g = bpy.data.groups.get(Brickinator_bricks_gn)
@@ -344,7 +364,7 @@ class BrickinatorBrickify(bpy.types.Operator):
 
         # update refLogo
         if cm.brickType != "Custom":
-            if scn.use_lego_logo:
+            if cm.logoDetail == "LEGO Logo":
                 refLogo = self.getLegoLogo()
             else:
                 refLogo = bpy.data.objects.get(cm.logoObjectName)
@@ -605,7 +625,7 @@ class BrickinatorBrickify(bpy.types.Operator):
 
         # update refLogo
         if cm.brickType != "Custom":
-            if scn.use_lego_logo:
+            if cm.logoDetail == "LEGO Logo":
                 refLogo = self.getLegoLogo()
             else:
                 refLogo = bpy.data.objects.get(cm.logoObjectName)
