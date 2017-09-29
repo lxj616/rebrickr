@@ -26,6 +26,16 @@ from mathutils import Vector, Euler
 from ..functions import *
 props = bpy.props
 
+def getModelType(self, cm=None):
+    scn = bpy.context.scene
+    if cm is None:
+        cm = scn.cmlist[scn.cmlist_index]
+    if cm.animated:
+        modelType = "ANIMATION"
+    elif cm.modelCreated:
+        modelType = "MODEL"
+    return modelType
+
 class BrickinatorDelete(bpy.types.Operator):
     """ Delete Brickified model """                                               # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "scene.brickinator_delete"                                         # unique identifier for buttons and menu items to reference.
@@ -35,25 +45,17 @@ class BrickinatorDelete(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
-        scn = context.scene
+        scn = bpy.context.scene
         if scn.cmlist_index == -1:
             return False
         return True
 
-    def setModelType(self):
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        if cm.animated:
-            self.modelType = "ANIMATION"
-        elif cm.modelCreated:
-            self.modelType = "MODEL"
-
-
     @classmethod
-    def cleanUp(cls, modelType, skipSource=False, skipDupes=False, skipParents=False):
+    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False):
         # set up variables
         scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        if cm is None:
+            cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
         Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
@@ -102,11 +104,12 @@ class BrickinatorDelete(bpy.types.Operator):
             if not cm.lastSplitModel and groupExists(Brickinator_bricks_gn):
                 brickGroup = bpy.data.groups[Brickinator_bricks_gn]
                 bgObjects = list(brickGroup.objects)
-                b = bgObjects[0]
-                scn.update()
-                brickLoc = b.matrix_world.to_translation().copy()
-                brickRot = b.matrix_world.to_euler().copy()
-                brickScale = b.matrix_world.to_scale().copy()
+                if len(bgObjects) > 0:
+                    b = bgObjects[0]
+                    scn.update()
+                    brickLoc = b.matrix_world.to_translation().copy()
+                    brickRot = b.matrix_world.to_euler().copy()
+                    brickScale = b.matrix_world.to_scale().copy()
             # clean up Brickinator_parent objects
             pGroup = bpy.data.groups.get(Brickinator_parent_on)
             if pGroup:
@@ -127,7 +130,8 @@ class BrickinatorDelete(bpy.types.Operator):
                 brickGroup = bpy.data.groups[Brickinator_bricks_gn]
                 bgObjects = list(brickGroup.objects)
                 if not cm.lastSplitModel:
-                    storeTransformData(bgObjects[0])
+                    if len(bgObjects) > 0:
+                        storeTransformData(bgObjects[0])
                 # remove objects
                 for i,obj in enumerate(bgObjects):
                     percent = i/len(bgObjects)
@@ -158,90 +162,95 @@ class BrickinatorDelete(bpy.types.Operator):
 
         return source, brickLoc, brickRot, brickScale
 
-    def execute(self, context):
-        try:
-            scn = context.scene
-            scn.Brickinator_runningOperation = True
+    @classmethod
+    def runFullDelete(cls, cm=None):
+        scn = bpy.context.scene
+        scn.Brickinator_runningOperation = True
+        if cm is None:
             cm = scn.cmlist[scn.cmlist_index]
-            n = cm.source_name
-            source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
-            Brickinator_last_origin_on = "Brickinator_%(n)s_last_origin" % locals()
-            parentOb = None
-            origFrame = scn.frame_current
-            scn.frame_set(cm.modelCreatedOnFrame)
+        n = cm.source_name
+        source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
+        Brickinator_last_origin_on = "Brickinator_%(n)s_last_origin" % locals()
+        parentOb = None
+        origFrame = scn.frame_current
+        scn.frame_set(cm.modelCreatedOnFrame)
 
-            # store last active layers
-            lastLayers = list(scn.layers)
-            # match source layers to brick layers
-            brick = None
-            gn = "Brickinator_%(n)s_bricks" % locals()
-            if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
-                brick = bpy.data.groups[gn].objects[0]
-                source.layers = brick.layers
-            # set active layers to source layers
-            scn.layers = source.layers
+        # store last active layers
+        lastLayers = list(scn.layers)
+        # match source layers to brick layers
+        brick = None
+        gn = "Brickinator_%(n)s_bricks" % locals()
+        if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
+            brick = bpy.data.groups[gn].objects[0]
+            source.layers = brick.layers
+        # set active layers to source layers
+        scn.layers = source.layers
 
-            self.setModelType()
+        modelType = getModelType(cm)
 
-            source, brickLoc, brickRot, brickScale = self.cleanUp(self.modelType)
+        source, brickLoc, brickRot, brickScale = BrickinatorDelete.cleanUp(modelType, cm=cm)
 
-            if (self.modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (self.modelType == "ANIMATION" and cm.applyToSourceObject):
-                l,r,s = getTransformData()
-                if self.modelType == "MODEL":
-                    loc = cm.lastSourceMid.split(",")
-                    for i in range(len(loc)):
-                        loc[i] = float(loc[i])
-                    setOriginToObjOrigin(toObj=source, fromLoc=tuple(loc))
-                    if brickLoc is not None:
-                        source.location = source.location + brickLoc - source.matrix_world.to_translation()
-                    else:
-                        source.location = Vector(l)
+        if (modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (modelType == "ANIMATION" and cm.applyToSourceObject):
+            l,r,s = getTransformData()
+            if modelType == "MODEL":
+                loc = cm.lastSourceMid.split(",")
+                for i in range(len(loc)):
+                    loc[i] = float(loc[i])
+                setOriginToObjOrigin(toObj=source, fromLoc=tuple(loc))
+                if brickLoc is not None:
+                    source.location = source.location + brickLoc - source.matrix_world.to_translation()
                 else:
                     source.location = Vector(l)
-                source.rotation_mode = "XYZ"
-                source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
-                source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
+            else:
+                source.location = Vector(l)
+            source.rotation_mode = "XYZ"
+            source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
+            source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
 
-            # set origin to previous origin location
-            last_origin_obj = bpy.data.objects.get(Brickinator_last_origin_on)
-            if last_origin_obj is not None:
-                safeLink(last_origin_obj)
-                scn.update()
-                setOriginToObjOrigin(toObj=source, fromObj=last_origin_obj, deleteFromObj=True)
-
-            # select source and return open layers to original
-            select(source, active=source)
-            scn.Brickinator_runningOperation = False
-            scn.layers = lastLayers
-
-            # delete custom properties from source
-            customPropNames = ["ignored_mods", "frame_parent_cleared", "old_parent", "previous_location", "previous_rotation", "previous_scale", "before_edit_location", "before_origin_set_location"]
-            for cPN in customPropNames:
-                try:
-                    del source[cPN]
-                except:
-                    pass
-
-            # reset default values for select items in cmlist
-            cm.modelLoc = "-1,-1,-1"
-            cm.modelRot = "-1,-1,-1"
-            cm.modelScale = "-1,-1,-1"
-            cm.modelCreatedOnFrame = -1
-            cm.lastSourceMid = "-1,-1,-1"
-            cm.lastLogoResolution = 0
-            cm.lastLogoDetail = 'None'
-            cm.lastSplitModel = False
-            cm.animIsDirty = True
-            cm.materialIsDirty = True
-            cm.modelIsDirty = True
-            cm.buildIsDirty = True
-            cm.sourceIsDirty = True
-            cm.bricksAreDirty = True
-
-            # reset frame (for proper update), update scene and redraw 3D view
-            scn.frame_set(origFrame)
+        # set origin to previous origin location
+        last_origin_obj = bpy.data.objects.get(Brickinator_last_origin_on)
+        if last_origin_obj is not None:
+            safeLink(last_origin_obj)
             scn.update()
-            redraw_areas("VIEW_3D")
+            setOriginToObjOrigin(toObj=source, fromObj=last_origin_obj, deleteFromObj=True)
+
+        # select source and return open layers to original
+        select(source, active=source)
+        scn.Brickinator_runningOperation = False
+        scn.layers = lastLayers
+
+        # delete custom properties from source
+        customPropNames = ["ignored_mods", "frame_parent_cleared", "old_parent", "previous_location", "previous_rotation", "previous_scale", "before_edit_location", "before_origin_set_location"]
+        for cPN in customPropNames:
+            try:
+                del source[cPN]
+            except:
+                pass
+
+        # reset default values for select items in cmlist
+        cm.modelLoc = "-1,-1,-1"
+        cm.modelRot = "-1,-1,-1"
+        cm.modelScale = "-1,-1,-1"
+        cm.modelCreatedOnFrame = -1
+        cm.lastSourceMid = "-1,-1,-1"
+        cm.lastLogoResolution = 0
+        cm.lastLogoDetail = 'None'
+        cm.lastSplitModel = False
+        cm.animIsDirty = True
+        cm.materialIsDirty = True
+        cm.modelIsDirty = True
+        cm.buildIsDirty = True
+        cm.sourceIsDirty = True
+        cm.bricksAreDirty = True
+
+        # reset frame (for proper update), update scene and redraw 3D view
+        scn.frame_set(origFrame)
+        scn.update()
+        redraw_areas("VIEW_3D")
+
+    def execute(self, context):
+        try:
+            self.runFullDelete()
         except:
             self.handle_exception()
 

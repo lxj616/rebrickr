@@ -42,13 +42,26 @@ props = bpy.props
 addon_keymaps = []
 
 bpy.types.Object.protected = props.BoolProperty(name = 'protected', default = False)
+bpy.types.Object.isBrickifiedObject = props.BoolProperty(name = 'Is Brickified Object', default = False)
 def deleteUnprotected(context):
     protected = []
     for obj in context.selected_objects:
-        if not obj.protected :
+        if obj.isBrickifiedObject:
+            scn = context.scene
+            cm = None
+            for cmCur in scn.cmlist:
+                if "Brickinator_" + cmCur.source_name + "_bricks_combined" in obj.name:
+                    cm = cmCur
+            if cm is not None:
+                BrickinatorDelete.runFullDelete(cm=cm)
+                bpy.context.scene.objects.active.select = False
+            else:
+                bpy.context.scene.objects.unlink(obj)
+                bpy.data.objects.remove(obj)
+        elif not obj.protected:
             bpy.context.scene.objects.unlink(obj)
             bpy.data.objects.remove(obj)
-        else :
+        else:
             print(obj.name +' is protected')
             protected.append(obj.name)
 
@@ -64,9 +77,12 @@ class delete_override(bpy.types.Operator):
         return context.active_object is not None
 
     def execute(self, context):
+        # TODO: Currently doesn't provide confirmation popup for delete action
         protected = deleteUnprotected(context)
         if len(protected) > 0:
-            self.report({"WARNING"})
+            self.report({"WARNING"}, "Brickinator is using the following object(s): " + str(protected)[1:-1])
+        # push delete action to undo stack
+        bpy.ops.ed.undo_push(message="Delete")
         return {'FINISHED'}
 
 

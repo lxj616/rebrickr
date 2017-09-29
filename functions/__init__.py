@@ -39,13 +39,12 @@ def getSafeScn():
     if safeScn == None:
         safeScn = bpy.data.scenes.new("Brickinator_storage (DO NOT RENAME)")
     return safeScn
-def safeUnlink(obj, hide=True, protected=True):
+def safeUnlink(obj, hide=True):
     scn = bpy.context.scene
     safeScn = getSafeScn()
     scn.objects.unlink(obj)
     safeScn.objects.link(obj)
-    if protected:
-        obj.protected = True
+    obj.protected = True
     if hide:
         obj.hide = True
 def safeLink(obj, unhide=False):

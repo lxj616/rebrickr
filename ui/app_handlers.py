@@ -176,7 +176,10 @@ def handle_saving_in_edit_mode(scene):
         brickinatorIsActive = False
     if brickinatorIsActive:
         sto_scn = bpy.data.scenes.get("Brickinator_storage (DO NOT RENAME)")
-        editingSourceInfo = bpy.context.window_manager["editingSourceInStorage"]
+        try:
+            editingSourceInStorage = bpy.context.window_manager["editingSourceInStorage"]
+        except:
+            editingSourceInStorage = False
         if editingSourceInfo and bpy.context.scene == sto_scn:
             scn = bpy.context.scene
             source = bpy.data.objects.get(editingSourceInfo["source_name"])

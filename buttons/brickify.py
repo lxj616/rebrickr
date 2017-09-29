@@ -328,9 +328,9 @@ class BrickinatorBrickify(bpy.types.Operator):
         Brickinator_source_dupes_gn = "Brickinator_%(n)s_dupes" % locals()
         sceneCurFrame = scn.frame_current
 
-        sourceOrig = self.getObjectToBrickify()
+        self.sourceOrig = self.getObjectToBrickify()
         if self.action == "UPDATE_ANIM":
-            safeLink(sourceOrig)
+            safeLink(self.sourceOrig)
 
         # if there are no changes to apply, simply return "FINISHED"
         self.updatedFramesOnly = False
@@ -346,7 +346,7 @@ class BrickinatorBrickify(bpy.types.Operator):
         # delete old bricks if present
         if self.action == "UPDATE_ANIM" and not self.updatedFramesOnly:
             BrickinatorDelete.cleanUp("ANIMATION", skipDupes=True, skipParents=True)
-            sourceOrig.name = sourceOrig.name + " (DO NOT RENAME)"
+            self.sourceOrig.name = self.sourceOrig.name + " (DO NOT RENAME)"
 
         # get or create duplicate and parent groups
         dGroup = bpy.data.groups.get(Brickinator_source_dupes_gn)
@@ -359,8 +359,9 @@ class BrickinatorBrickify(bpy.types.Operator):
         # get parent object
         parent0 = bpy.data.objects.get(Brickinator_parent_on)
         if parent0 is None:
-            parent0 = self.getParent(Brickinator_parent_on, sourceOrig.location.to_tuple())
+            parent0 = self.getParent(Brickinator_parent_on, self.sourceOrig.location.to_tuple())
             pGroup.objects.link(parent0)
+        self.createdObjects.append(parent0.name)
 
         # update refLogo
         if cm.brickType != "Custom":
@@ -385,16 +386,17 @@ class BrickinatorBrickify(bpy.types.Operator):
             # get duplicated source
             if self.action == "UPDATE_ANIM":
                 # retrieve previously duplicated source
-                source = bpy.data.objects.get("Brickinator_" + sourceOrig.name + "_frame_" + str(curFrame))
+                source = bpy.data.objects.get("Brickinator_" + self.sourceOrig.name + "_frame_" + str(curFrame))
             else:
                 source = None
             if source is None:
                 # duplicate source for current frame
-                select(sourceOrig, active=sourceOrig)
+                select(self.sourceOrig, active=self.sourceOrig)
                 bpy.ops.object.duplicate()
                 source = scn.objects.active
                 dGroup.objects.link(source)
-                source.name = "Brickinator_" + sourceOrig.name + "_frame_" + str(curFrame)
+                source.name = "Brickinator_" + self.sourceOrig.name + "_frame_" + str(curFrame)
+                self.createdObjects.append(source.name)
                 if source.parent is not None:
                     # apply parent transformation
                     select(source, active=source)
@@ -427,13 +429,13 @@ class BrickinatorBrickify(bpy.types.Operator):
                         except:
                             mod.show_viewport = False
                 # apply animated transform data
-                source.matrix_world = sourceOrig.matrix_world
+                source.matrix_world = self.sourceOrig.matrix_world
                 source.animation_data_clear()
                 scn.update()
-                sourceOrig["previous_location"] = source.location.to_tuple()
+                self.sourceOrig["previous_location"] = source.location.to_tuple()
                 source.rotation_mode = "XYZ"
-                sourceOrig["previous_rotation"] = tuple(source.rotation_euler)
-                sourceOrig["previous_scale"] = source.scale.to_tuple()
+                self.sourceOrig["previous_rotation"] = tuple(source.rotation_euler)
+                self.sourceOrig["previous_scale"] = source.scale.to_tuple()
                 select(source, active=source)
                 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
                 scn.update()
@@ -458,9 +460,14 @@ class BrickinatorBrickify(bpy.types.Operator):
                 scn.objects.link(parent)
                 scn.update()
                 safeUnlink(parent)
+            self.createdObjects.append(parent)
 
             # create new bricks
-            group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, curFrame=curFrame)
+            try:
+                group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, curFrame=curFrame)
+            except KeyboardInterrupt:
+                self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
+                break
             for obj in bpy.data.groups[group_name].objects:
                 if (curFrame == cm.startFrame and sceneCurFrame < cm.startFrame) or curFrame == sceneCurFrame or (curFrame == cm.stopFrame and sceneCurFrame > cm.stopFrame):
                     selectFromGroup = bpy.data.groups[group_name]
@@ -489,7 +496,7 @@ class BrickinatorBrickify(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         origFrame = None
         source = None
-        sourceOrig = self.getObjectToBrickify()
+        self.sourceOrig = self.getObjectToBrickify()
         n = cm.source_name
         Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
         bGroup = bpy.data.groups.get(Brickinator_bricks_gn)
@@ -511,14 +518,14 @@ class BrickinatorBrickify(bpy.types.Operator):
 
         if self.action == "CREATE":
             # get origin location for source
-            previous_origin = sourceOrig.matrix_world.to_translation().to_tuple()
+            previous_origin = self.sourceOrig.matrix_world.to_translation().to_tuple()
 
             # create empty object at source's old origin location and set as child of source
             m = bpy.data.meshes.new("Brickinator_%(n)s_last_origin_mesh" % locals())
             obj = bpy.data.objects.new("Brickinator_%(n)s_last_origin" % locals(), m)
             obj.location = previous_origin
             scn.objects.link(obj)
-            select([obj, sourceOrig], active=sourceOrig)
+            select([obj, self.sourceOrig], active=self.sourceOrig)
             bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
             safeUnlink(obj)
 
@@ -548,18 +555,19 @@ class BrickinatorBrickify(bpy.types.Operator):
             Brickinator_source_dupes_gn = "Brickinator_%(n)s_dupes" % locals()
             dGroup = bpy.data.groups.new(Brickinator_source_dupes_gn)
             # set sourceOrig origin to previous origin location
-            lastSourceOrigLoc = sourceOrig.matrix_world.to_translation().to_tuple()
+            lastSourceOrigLoc = self.sourceOrig.matrix_world.to_translation().to_tuple()
             last_origin_obj = bpy.data.objects.get(Brickinator_last_origin_on)
-            setOriginToObjOrigin(toObj=sourceOrig, fromObj=last_origin_obj)
+            setOriginToObjOrigin(toObj=self.sourceOrig, fromObj=last_origin_obj)
             # duplicate source and add duplicate to group
-            select(sourceOrig, active=sourceOrig)
+            select(self.sourceOrig, active=self.sourceOrig)
             bpy.ops.object.duplicate()
             source = scn.objects.active
             dGroup.objects.link(source)
             select(source, active=source)
-            source.name = sourceOrig.name + "_duplicate"
+            source.name = self.sourceOrig.name + "_duplicate"
+            self.createdObjects.append(source.name)
             # reset sourceOrig origin to adjusted location
-            setOriginToObjOrigin(toObj=sourceOrig, fromLoc=lastSourceOrigLoc)
+            setOriginToObjOrigin(toObj=self.sourceOrig, fromLoc=lastSourceOrigLoc)
             # set up source["old_parent"] and remove source parent
             source["frame_parent_cleared"] = -1
             select(source, active=source)
@@ -589,10 +597,10 @@ class BrickinatorBrickify(bpy.types.Operator):
 
             # apply transformation data
             if self.action == "CREATE":
-                sourceOrig["previous_location"] = sourceOrig.location.to_tuple()
-            sourceOrig.rotation_mode = "XYZ"
-            sourceOrig["previous_rotation"] = tuple(sourceOrig.rotation_euler)
-            sourceOrig["previous_scale"] = sourceOrig.scale.to_tuple()
+                self.sourceOrig["previous_location"] = self.sourceOrig.location.to_tuple()
+            self.sourceOrig.rotation_mode = "XYZ"
+            self.sourceOrig["previous_rotation"] = tuple(self.sourceOrig.rotation_euler)
+            self.sourceOrig["previous_scale"] = self.sourceOrig.scale.to_tuple()
             select(source, active=source)
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             scn.update()
@@ -601,7 +609,7 @@ class BrickinatorBrickify(bpy.types.Operator):
             source = bpy.data.objects.get(n + "_duplicate")
         # if duplicate not created, source is just original source
         if source is None:
-            source = sourceOrig
+            source = self.sourceOrig
 
         # link source if it isn't in scene
         if source.name not in scn.objects.keys():
@@ -622,6 +630,7 @@ class BrickinatorBrickify(bpy.types.Operator):
         if parent is None:
             parent = self.getParent(Brickinator_parent_on, parentLoc)
             pGroup.objects.link(parent)
+        self.createdObjects.append(parent.name)
 
         # update refLogo
         if cm.brickType != "Custom":
@@ -643,10 +652,10 @@ class BrickinatorBrickify(bpy.types.Operator):
             elif cm.lastSplitModel and not cm.splitModel:
                 pass
             elif not cm.splitModel:
-                setTransformData(list(bGroup.objects), sourceOrig)
+                setTransformData(list(bGroup.objects), self.sourceOrig)
             # set transformation of brick group parent
             elif not cm.lastSplitModel:
-                setTransformData(parent, sourceOrig)
+                setTransformData(parent, self.sourceOrig)
             # in this case, the parent was not removed so the transformations should stay the same
             elif cm.sourceIsDirty:
                 pass
@@ -689,7 +698,7 @@ class BrickinatorBrickify(bpy.types.Operator):
                         brick.location += Vector((v_new.x * parent.scale[0], v_new.y * parent.scale[1], v_new.z * parent.scale[2]))
 
         # unlink source duplicate if created
-        if source != sourceOrig and source.name in scn.objects.keys():
+        if source != self.sourceOrig and source.name in scn.objects.keys():
             safeUnlink(source)
 
         # add bevel if it was previously added
@@ -714,6 +723,8 @@ class BrickinatorBrickify(bpy.types.Operator):
             scn.Brickinator_runningOperation = True
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
+            self.createdObjects = []
+            self.sourceOrig = None
             Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
 
             # set self.action
@@ -755,6 +766,16 @@ class BrickinatorBrickify(bpy.types.Operator):
 
             # STOPWATCH CHECK
             stopWatch("Total Time Elapsed", time.time()-startTime)
+        except KeyboardInterrupt:
+            if self.action in ["CREATE", "ANIMATE"]:
+                for n in self.createdObjects:
+                    obj = bpy.data.objects.get(n)
+                    if obj is not None:
+                        bpy.data.objects.remove(obj)
+                if self.sourceOrig is not None:
+                    self.sourceOrig.protected = False
+                    select(self.sourceOrig, active=self.sourceOrig)
+            self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
         except:
             self.handle_exception()
 

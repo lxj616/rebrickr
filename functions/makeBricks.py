@@ -537,6 +537,8 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             for mat in mats:
                 allBricksObj.data.materials.append(mat)
         scn.objects.link(allBricksObj)
+        # protect allBricksObj from being deleted
+        allBricksObj.isBrickifiedObject = True
     update_progress("Linking to Scene", 1)
 
     stopWatch("Time Elapsed", time.time()-ct)
