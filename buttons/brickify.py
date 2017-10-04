@@ -352,9 +352,11 @@ class RebrickrBrickify(bpy.types.Operator):
         dGroup = bpy.data.groups.get(Rebrickr_source_dupes_gn)
         if dGroup is None:
             dGroup = bpy.data.groups.new(Rebrickr_source_dupes_gn)
+            self.createdGroups.append(dGroup.name)
         pGroup = bpy.data.groups.get(Rebrickr_parent_on)
         if pGroup is None:
             pGroup = bpy.data.groups.new(Rebrickr_parent_on)
+            self.createdGroups.append(pGroup.name)
 
         # get parent object
         parent0 = bpy.data.objects.get(Rebrickr_parent_on)
@@ -465,6 +467,7 @@ class RebrickrBrickify(bpy.types.Operator):
             # create new bricks
             try:
                 group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, curFrame=curFrame)
+                self.createdGroups.append(group_name)
             except KeyboardInterrupt:
                 self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
                 break
@@ -500,6 +503,7 @@ class RebrickrBrickify(bpy.types.Operator):
         n = cm.source_name
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
         bGroup = bpy.data.groups.get(Rebrickr_bricks_gn)
+        self.createdGroups.append(Rebrickr_bricks_gn)
         Rebrickr_last_origin_on = "Rebrickr_%(n)s_last_origin" % locals()
         Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
         updateParentLoc = False
@@ -508,6 +512,7 @@ class RebrickrBrickify(bpy.types.Operator):
         pGroup = bpy.data.groups.get(Rebrickr_parent_on)
         if pGroup is None:
             pGroup = bpy.data.groups.new(Rebrickr_parent_on)
+            self.createdGroups.append(pGroup.name)
 
         if self.action == "CREATE":
             # set modelCreatedOnFrame
@@ -523,6 +528,7 @@ class RebrickrBrickify(bpy.types.Operator):
             # create empty object at source's old origin location and set as child of source
             m = bpy.data.meshes.new("Rebrickr_%(n)s_last_origin_mesh" % locals())
             obj = bpy.data.objects.new("Rebrickr_%(n)s_last_origin" % locals(), m)
+            self.createdObjects.append(Rebrickr_last_origin_on)
             obj.location = previous_origin
             scn.objects.link(obj)
             select([obj, self.sourceOrig], active=self.sourceOrig)
@@ -554,6 +560,7 @@ class RebrickrBrickify(bpy.types.Operator):
             # create dupes group
             Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
             dGroup = bpy.data.groups.new(Rebrickr_source_dupes_gn)
+            self.createdGroups.append(dGroup.name)
             # set sourceOrig origin to previous origin location
             lastSourceOrigLoc = self.sourceOrig.matrix_world.to_translation().to_tuple()
             last_origin_obj = bpy.data.objects.get(Rebrickr_last_origin_on)
@@ -723,7 +730,10 @@ class RebrickrBrickify(bpy.types.Operator):
             scn.Rebrickr_runningOperation = True
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
+            previously_animated = cm.animated
+            previously_model_created = cm.modelCreated
             self.createdObjects = []
+            self.createdGroups = []
             self.sourceOrig = None
             Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
 
@@ -772,9 +782,16 @@ class RebrickrBrickify(bpy.types.Operator):
                     obj = bpy.data.objects.get(n)
                     if obj is not None:
                         bpy.data.objects.remove(obj)
+                for n in self.createdGroups:
+                    group = bpy.data.groups.get(n)
+                    if group is not None:
+                        bpy.data.groups.remove(group)
                 if self.sourceOrig is not None:
                     self.sourceOrig.protected = False
                     select(self.sourceOrig, active=self.sourceOrig)
+                cm.animated = previously_animated
+                cm.modelCreated = previously_model_created
+            print()
             self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
         except:
             self.handle_exception()

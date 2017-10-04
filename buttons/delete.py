@@ -117,6 +117,7 @@ class RebrickrDelete(bpy.types.Operator):
                     m = parent.data
                     bpy.data.objects.remove(parent, True)
                     bpy.data.meshes.remove(m, True)
+                bpy.data.groups.remove(pGroup, do_unlink=True)
 
         # initialize variables for cursor status updates
         wm = bpy.context.window_manager
