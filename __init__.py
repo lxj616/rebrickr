@@ -1,10 +1,10 @@
 bl_info = {
-    "name"        : "Brickinator",
+    "name"        : "Rebrickr",
     "author"      : "Christopher Gearhart <chris@bblanimation.com>",
     "version"     : (0, 1, 0),
     "blender"     : (2, 78, 0),
     "description" : "Turn any mesh into a 3D brick sculpture or simulation with the click of a button",
-    "location"    : "View3D > Tools > Brickinator",
+    "location"    : "View3D > Tools > Rebrickr",
     "warning"     : "Work in progress",
     "wiki_url"    : "",
     "tracker_url" : "",
@@ -50,10 +50,10 @@ def deleteUnprotected(context):
             scn = context.scene
             cm = None
             for cmCur in scn.cmlist:
-                if "Brickinator_" + cmCur.source_name + "_bricks_combined" in obj.name:
+                if "Rebrickr_" + cmCur.source_name + "_bricks_combined" in obj.name:
                     cm = cmCur
             if cm is not None:
-                BrickinatorDelete.runFullDelete(cm=cm)
+                RebrickrDelete.runFullDelete(cm=cm)
                 bpy.context.scene.objects.active.select = False
             else:
                 bpy.context.scene.objects.unlink(obj)
@@ -68,28 +68,40 @@ def deleteUnprotected(context):
     return protected
 
 class delete_override(bpy.types.Operator):
-    """delete unprotected objects"""
+    """OK?"""
     bl_idname = "object.delete"
-    bl_label = "Object Delete Operator"
+    bl_label = "Delete"
+    bl_options = {'REGISTER', 'INTERNAL'}
 
     @classmethod
     def poll(cls, context):
         return context.active_object is not None
 
-    def execute(self, context):
-        # TODO: Currently doesn't provide confirmation popup for delete action
+    def runDelete(self, context):
         protected = deleteUnprotected(context)
         if len(protected) > 0:
-            self.report({"WARNING"}, "Brickinator is using the following object(s): " + str(protected)[1:-1])
+            self.report({"WARNING"}, "Rebrickr is using the following object(s): " + str(protected)[1:-1])
         # push delete action to undo stack
         bpy.ops.ed.undo_push(message="Delete")
+
+    def execute(self, context):
+        self.runDelete(context)
         return {'FINISHED'}
+
+    def invoke(self, context, event):
+        # Run confirmation popup for delete action
+        confirmation_returned = context.window_manager.invoke_confirm(self, event)
+        if confirmation_returned != {'FINISHED'}:
+            return confirmation_returned
+        else:
+            self.runDelete(context)
+            return {'FINISHED'}
 
 
 def register():
     bpy.utils.register_module(__name__)
 
-    bpy.props.brickinator_module_name = __name__
+    bpy.props.rebrickr_module_name = __name__
 
     bpy.types.Scene.scene_to_return_to = StringProperty(
         name="Scene to return to",
@@ -100,13 +112,13 @@ def register():
     bpy.props.origScene = StringProperty(default="")
     bpy.props.commitEdits = False
 
-    bpy.types.Scene.Brickinator_runningOperation = BoolProperty(default=False)
-    bpy.types.Scene.Brickinator_last_layers = StringProperty(default="")
-    bpy.types.Scene.Brickinator_last_cmlist_index = IntProperty(default=-2)
-    bpy.types.Scene.Brickinator_active_object_name = StringProperty(default="")
-    bpy.types.Scene.Brickinator_last_active_object_name = StringProperty(default="")
+    bpy.types.Scene.Rebrickr_runningOperation = BoolProperty(default=False)
+    bpy.types.Scene.Rebrickr_last_layers = StringProperty(default="")
+    bpy.types.Scene.Rebrickr_last_cmlist_index = IntProperty(default=-2)
+    bpy.types.Scene.Rebrickr_active_object_name = StringProperty(default="")
+    bpy.types.Scene.Rebrickr_last_active_object_name = StringProperty(default="")
 
-    bpy.types.Scene.Brickinator_copy_from_id = IntProperty(default=-1)
+    bpy.types.Scene.Rebrickr_copy_from_id = IntProperty(default=-1)
 
     bpy.props.brick_materials = [
         'ABS Plastic Black',
@@ -159,25 +171,14 @@ def register():
     # handle the keymap
     wm = bpy.context.window_manager
     km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
-    kmi = km.keymap_items.new("scene.brickinator_brickify", 'L', 'PRESS', alt=True, shift=True)
-    kmi = km.keymap_items.new("scene.brickinator_delete", 'D', 'PRESS', alt=True, shift=True)#, ctrl=True)
-    kmi = km.keymap_items.new("scene.brickinator_edit_source", 'TAB', 'PRESS', alt=True)#, ctrl=True)
+    kmi = km.keymap_items.new("scene.rebrickr_brickify", 'L', 'PRESS', alt=True, shift=True)
+    kmi = km.keymap_items.new("scene.rebrickr_delete", 'D', 'PRESS', alt=True, shift=True)#, ctrl=True)
+    kmi = km.keymap_items.new("scene.rebrickr_edit_source", 'TAB', 'PRESS', alt=True)#, ctrl=True)
     addon_keymaps.append(km)
 
     # other things (UI List)
-    bpy.types.Scene.cmlist = CollectionProperty(type=Brickinator_CreatedModels)
+    bpy.types.Scene.cmlist = CollectionProperty(type=Rebrickr_CreatedModels)
     bpy.types.Scene.cmlist_index = IntProperty(default=-1)
-
-    # session properties
-    props.addon_name = "Brickinator"
-    # FILEPATHS
-    addonsPath = bpy.utils.user_resource('SCRIPTS', "addons")
-    props.obj_exports_folder = "%(addonsPath)s/Brickinator/binvox/obj_exports/" % locals()
-    props.final_output_folder = "%(addonsPath)s/voxelized_files/" % locals()
-    props.binvox_path = "%(addonsPath)s/Brickinator/binvox/binvox" % locals()
-    props.scaleMesh_path = "%(addonsPath)s/Brickinator/binvox/scaleMesh.py" % locals()
-    props.backups_path = "%(addonsPath)s/Brickinator/binvox/binvox_backups/" % locals()
-
 
 def unregister():
     Scn = bpy.types.Scene

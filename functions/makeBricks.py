@@ -131,12 +131,12 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
 
     # create group for bricks
     if group_name:
-        Brickinator_bricks = group_name
+        Rebrickr_bricks = group_name
     else:
-        Brickinator_bricks = 'Brickinator_%(n)s_bricks' % locals()
-    if groupExists(Brickinator_bricks):
-        bpy.data.groups.remove(group=bpy.data.groups[Brickinator_bricks], do_unlink=True)
-    bGroup = bpy.data.groups.new(Brickinator_bricks)
+        Rebrickr_bricks = 'Rebrickr_%(n)s_bricks' % locals()
+    if groupExists(Rebrickr_bricks):
+        bpy.data.groups.remove(group=bpy.data.groups[Rebrickr_bricks], do_unlink=True)
+    bGroup = bpy.data.groups.new(Rebrickr_bricks)
 
     tempMesh = bpy.data.meshes.new("tempMesh")
 
@@ -159,9 +159,9 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     # set up internal material for this object
     internalMat = bpy.data.materials.get(cm.internalMatName)
     if internalMat is None:
-        internalMat = bpy.data.materials.get("Brickinator_%(n)s_internal" % locals())
+        internalMat = bpy.data.materials.get("Rebrickr_%(n)s_internal" % locals())
         if internalMat is None:
-            internalMat = bpy.data.materials.new("Brickinator_%(n)s_internal" % locals())
+            internalMat = bpy.data.materials.new("Rebrickr_%(n)s_internal" % locals())
     # initialize supportBrickDs, and mats with first material being the internal material
     mats = [internalMat]
     supportBrickDs = []
@@ -515,7 +515,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             fn = "_frame_%(frameNum)s" % locals()
         else:
             fn = ""
-        name = 'Brickinator_%(n)s_bricks_combined%(fn)s' % locals()
+        name = 'Rebrickr_%(n)s_bricks_combined%(fn)s' % locals()
         allBricksObj = bpy.data.objects.new(name, m)
         # create vert group for bevel mod (assuming only logo verts are selected):
         vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())

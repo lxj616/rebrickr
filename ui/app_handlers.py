@@ -29,15 +29,15 @@ from mathutils import Vector, Euler
 def handle_animation(scene):
     scn = scene
     try:
-        brickinatorIsActive = bpy.props.brickinator_module_name in bpy.context.user_preferences.addons.keys()
+        rebrickrIsActive = bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
     except:
-        brickinatorIsActive = False
-    if brickinatorIsActive:
+        rebrickrIsActive = False
+    if rebrickrIsActive:
         for i,cm in enumerate(scn.cmlist):
             if cm.animated:
                 n = cm.source_name
                 for cf in range(cm.lastStartFrame, cm.lastStopFrame + 1):
-                    curBricks = bpy.data.groups.get("Brickinator_%(n)s_bricks_frame_%(cf)s" % locals())
+                    curBricks = bpy.data.groups.get("Rebrickr_%(n)s_bricks_frame_%(cf)s" % locals())
                     onCurF = scn.frame_current == cf or (cf == cm.lastStartFrame and scn.frame_current < cm.lastStartFrame) or (cf == cm.lastStopFrame and scn.frame_current > cm.lastStopFrame)
                     if curBricks is not None:
                         for brick in curBricks.objects:
@@ -45,7 +45,7 @@ def handle_animation(scene):
                             if brick.hide == onCurF:
                                 brick.hide = not onCurF
                                 brick.hide_render = not onCurF
-                            if scn.objects.active is not None and "Brickinator_%(n)s_bricks_combined_frame_" % locals() in scn.objects.active.name and onCurF:
+                            if scn.objects.active is not None and "Rebrickr_%(n)s_bricks_combined_frame_" % locals() in scn.objects.active.name and onCurF:
                                 select(brick, active=brick)
                             # prevent bricks from being selected on frame change
                             elif brick.select:
@@ -58,7 +58,7 @@ def isObjVisible(scn, cm):
     n = cm.source_name
     objVisible = False
     if cm.modelCreated or cm.animated:
-        gn = "Brickinator_%(n)s_bricks" % locals()
+        gn = "Rebrickr_%(n)s_bricks" % locals()
         if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
             obj = bpy.data.groups[gn].objects[0]
         else:
@@ -76,13 +76,13 @@ def isObjVisible(scn, cm):
 def handle_selections(scene):
     scn = bpy.context.scene
     try:
-        brickinatorIsActive = bpy.props.brickinator_module_name in bpy.context.user_preferences.addons.keys()
+        rebrickrIsActive = bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
     except:
-        brickinatorIsActive = False
-    if not scn.Brickinator_runningOperation and brickinatorIsActive:
+        rebrickrIsActive = False
+    if not scn.Rebrickr_runningOperation and rebrickrIsActive:
         # if scn.layers changes and active object is no longer visible, set scn.cmlist_index to -1
-        if scn.Brickinator_last_layers != str(list(scn.layers)):
-            scn.Brickinator_last_layers = str(list(scn.layers))
+        if scn.Rebrickr_last_layers != str(list(scn.layers)):
+            scn.Rebrickr_last_layers = str(list(scn.layers))
             curObjVisible = False
             if scn.cmlist_index != -1:
                 cm0 = scn.cmlist[scn.cmlist_index]
@@ -99,8 +99,8 @@ def handle_selections(scene):
                 if not setIndex:
                     scn.cmlist_index = -1
         # select and make source or Brick Model active if scn.cmlist_index changes
-        elif scn.Brickinator_last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
-            scn.Brickinator_last_cmlist_index = scn.cmlist_index
+        elif scn.Rebrickr_last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
+            scn.Rebrickr_last_cmlist_index = scn.cmlist_index
             cm = scn.cmlist[scn.cmlist_index]
             obj = bpy.data.objects.get(cm.source_name)
             if obj is None:
@@ -108,10 +108,10 @@ def handle_selections(scene):
             if obj is not None:
                 if cm.modelCreated:
                     n = cm.source_name
-                    gn = "Brickinator_%(n)s_bricks" % locals()
+                    gn = "Rebrickr_%(n)s_bricks" % locals()
                     if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
                         select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
-                        scn.Brickinator_last_active_object_name = scn.objects.active.name
+                        scn.Rebrickr_last_active_object_name = scn.objects.active.name
                 elif cm.animated:
                     n = cm.source_name
                     cf = scn.frame_current
@@ -119,23 +119,23 @@ def handle_selections(scene):
                         cf = cm.stopFrame
                     elif cf < cm.startFrame:
                         cf = cm.startFrame
-                    gn = "Brickinator_%(n)s_bricks_frame_%(cf)s" % locals()
+                    gn = "Rebrickr_%(n)s_bricks_frame_%(cf)s" % locals()
                     if len(bpy.data.groups[gn].objects) > 0:
                         select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
-                        scn.Brickinator_last_active_object_name = scn.objects.active.name
+                        scn.Rebrickr_last_active_object_name = scn.objects.active.name
                 else:
                     select(obj, active=obj)
-                scn.Brickinator_last_active_object_name = obj.name
+                scn.Rebrickr_last_active_object_name = obj.name
             else:
                 for i in range(len(scn.cmlist)):
                     cm = scn.cmlist[i]
-                    if cm.source_name == scn.Brickinator_active_object_name:
+                    if cm.source_name == scn.Rebrickr_active_object_name:
                         select(None)
                         break
         # open Brick Model settings for active object if active object changes
-        elif scn.objects.active and scn.Brickinator_last_active_object_name != scn.objects.active.name and len(scn.cmlist) > 0 and ( scn.cmlist_index == -1 or scn.cmlist[scn.cmlist_index].source_name != "") and scn.objects.active.type == "MESH":
-            scn.Brickinator_last_active_object_name = scn.objects.active.name
-            beginningString = "Brickinator_"
+        elif scn.objects.active and scn.Rebrickr_last_active_object_name != scn.objects.active.name and len(scn.cmlist) > 0 and ( scn.cmlist_index == -1 or scn.cmlist[scn.cmlist_index].source_name != "") and scn.objects.active.type == "MESH":
+            scn.Rebrickr_last_active_object_name = scn.objects.active.name
+            beginningString = "Rebrickr_"
             if scn.objects.active.name.startswith(beginningString):
                 usingSource = False
                 if "_bricks" in scn.objects.active.name:
@@ -145,15 +145,15 @@ def handle_selections(scene):
                 else:
                     frameLoc = None
                 if frameLoc is not None:
-                    scn.Brickinator_active_object_name = scn.objects.active.name[len(beginningString):frameLoc]
+                    scn.Rebrickr_active_object_name = scn.objects.active.name[len(beginningString):frameLoc]
             else:
                 usingSource = True
-                scn.Brickinator_active_object_name = scn.objects.active.name
+                scn.Rebrickr_active_object_name = scn.objects.active.name
             for i in range(len(scn.cmlist)):
                 cm = scn.cmlist[i]
-                if cm.source_name == scn.Brickinator_active_object_name and (not usingSource or not cm.modelCreated):
+                if cm.source_name == scn.Rebrickr_active_object_name and (not usingSource or not cm.modelCreated):
                     scn.cmlist_index = i
-                    scn.Brickinator_last_cmlist_index = scn.cmlist_index
+                    scn.Rebrickr_last_cmlist_index = scn.cmlist_index
                     return
             scn.cmlist_index = -1
         if scn.cmlist_index != -1:
@@ -171,11 +171,11 @@ bpy.app.handlers.scene_update_pre.append(handle_selections)
 @persistent
 def handle_saving_in_edit_mode(scene):
     try:
-        brickinatorIsActive = bpy.props.brickinator_module_name in bpy.context.user_preferences.addons.keys()
+        rebrickrIsActive = bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
     except:
-        brickinatorIsActive = False
-    if brickinatorIsActive:
-        sto_scn = bpy.data.scenes.get("Brickinator_storage (DO NOT RENAME)")
+        rebrickrIsActive = False
+    if rebrickrIsActive:
+        sto_scn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
         try:
             editingSourceInStorage = bpy.context.window_manager["editingSourceInStorage"]
         except:
@@ -183,7 +183,7 @@ def handle_saving_in_edit_mode(scene):
         if editingSourceInfo and bpy.context.scene == sto_scn:
             scn = bpy.context.scene
             source = bpy.data.objects.get(editingSourceInfo["source_name"])
-            # if Brickinator_storage scene is not active, set to active
+            # if Rebrickr_storage scene is not active, set to active
             if bpy.context.scene != sto_scn:
                 for screen in bpy.data.screens:
                     screen.scene = sto_scn
@@ -198,7 +198,7 @@ def handle_saving_in_edit_mode(scene):
             source.rotation_euler = Euler(tuple(source["previous_rotation"], "XYZ"))
             source.scale = source["previous_scale"]
             setOriginToObjOrigin(toObj=source, fromLoc=source["before_origin_set_location"])
-            if bpy.context.scene.name == "Brickinator_storage (DO NOT RENAME)":
+            if bpy.context.scene.name == "Rebrickr_storage (DO NOT RENAME)":
                 for screen in bpy.data.screens:
                     screen.scene = bpy.data.scenes.get(bpy.props.origScene)
             bpy.props.commitEdits = False

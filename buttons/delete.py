@@ -36,9 +36,9 @@ def getModelType(self, cm=None):
         modelType = "MODEL"
     return modelType
 
-class BrickinatorDelete(bpy.types.Operator):
+class RebrickrDelete(bpy.types.Operator):
     """ Delete Brickified model """                                               # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.brickinator_delete"                                         # unique identifier for buttons and menu items to reference.
+    bl_idname = "scene.rebrickr_delete"                                         # unique identifier for buttons and menu items to reference.
     bl_label = "Delete Brickified model from Blender"                             # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
@@ -58,15 +58,15 @@ class BrickinatorDelete(bpy.types.Operator):
             cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
-        Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
-        Brickinator_parent_on = "Brickinator_%(n)s_parent" % locals()
-        Brickinator_refBricks_gn = "Brickinator_%(n)s_refBricks" % locals()
-        Brickinator_source_dupes_gn = "Brickinator_%(n)s_dupes" % locals()
+        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+        Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
+        Rebrickr_refBricks_gn = "Rebrickr_%(n)s_refBricks" % locals()
+        Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
         brickLoc = None
         brickRot = None
         brickScale = None
 
-        # clean up 'Brickinator_[source name]' group
+        # clean up 'Rebrickr_[source name]' group
         if not skipSource:
             # link source to scene
             if not source in list(scn.objects):
@@ -88,21 +88,21 @@ class BrickinatorDelete(bpy.types.Operator):
                     source.modifiers[mn].show_viewport = True
             source.name = n
 
-        # clean up 'Brickinator_[source name]_dupes' group
-        if groupExists(Brickinator_source_dupes_gn) and not skipDupes:
-            dGroup = bpy.data.groups[Brickinator_source_dupes_gn]
+        # clean up 'Rebrickr_[source name]_dupes' group
+        if groupExists(Rebrickr_source_dupes_gn) and not skipDupes:
+            dGroup = bpy.data.groups[Rebrickr_source_dupes_gn]
             dObjects = list(dGroup.objects)
             if len(dObjects) > 0:
                 delete(dObjects)
             bpy.data.groups.remove(dGroup, do_unlink=True)
 
         if not skipParents:
-            p = bpy.data.objects.get(Brickinator_parent_on)
+            p = bpy.data.objects.get(Rebrickr_parent_on)
             if modelType == "ANIMATION" or cm.lastSplitModel:
                 # store transform data of transformation parent object
                 storeTransformData(p)
-            if not cm.lastSplitModel and groupExists(Brickinator_bricks_gn):
-                brickGroup = bpy.data.groups[Brickinator_bricks_gn]
+            if not cm.lastSplitModel and groupExists(Rebrickr_bricks_gn):
+                brickGroup = bpy.data.groups[Rebrickr_bricks_gn]
                 bgObjects = list(brickGroup.objects)
                 if len(bgObjects) > 0:
                     b = bgObjects[0]
@@ -110,8 +110,8 @@ class BrickinatorDelete(bpy.types.Operator):
                     brickLoc = b.matrix_world.to_translation().copy()
                     brickRot = b.matrix_world.to_euler().copy()
                     brickScale = b.matrix_world.to_scale().copy()
-            # clean up Brickinator_parent objects
-            pGroup = bpy.data.groups.get(Brickinator_parent_on)
+            # clean up Rebrickr_parent objects
+            pGroup = bpy.data.groups.get(Rebrickr_parent_on)
             if pGroup:
                 for parent in pGroup.objects:
                     m = parent.data
@@ -124,10 +124,10 @@ class BrickinatorDelete(bpy.types.Operator):
         print()
 
         if modelType == "MODEL":
-            # clean up Brickinator_bricks group
+            # clean up Rebrickr_bricks group
             cm.modelCreated = False
-            if groupExists(Brickinator_bricks_gn):
-                brickGroup = bpy.data.groups[Brickinator_bricks_gn]
+            if groupExists(Rebrickr_bricks_gn):
+                brickGroup = bpy.data.groups[Rebrickr_bricks_gn]
                 bgObjects = list(brickGroup.objects)
                 if not cm.lastSplitModel:
                     if len(bgObjects) > 0:
@@ -143,15 +143,15 @@ class BrickinatorDelete(bpy.types.Operator):
                     bpy.data.meshes.remove(m, True)
                 bpy.data.groups.remove(brickGroup, do_unlink=True)
         elif modelType == "ANIMATION":
-            # clean up Brickinator_bricks group
+            # clean up Rebrickr_bricks group
             cm.animated = False
             for i in range(cm.lastStartFrame, cm.lastStopFrame + 1):
                 percent = (i - cm.lastStartFrame + 1)/(cm.lastStopFrame - cm.lastStartFrame + 1)
                 if percent < 1:
                     update_progress("Deleting", percent)
                     wm.progress_update(percent*100)
-                Brickinator_bricks_cur_frame_gn = Brickinator_bricks_gn + "_frame_" + str(i)
-                brickGroup = bpy.data.groups.get(Brickinator_bricks_cur_frame_gn)
+                Rebrickr_bricks_cur_frame_gn = Rebrickr_bricks_gn + "_frame_" + str(i)
+                brickGroup = bpy.data.groups.get(Rebrickr_bricks_cur_frame_gn)
                 if brickGroup is not None:
                     bgObjects = list(brickGroup.objects)
                     if len(bgObjects) > 0:
@@ -165,12 +165,12 @@ class BrickinatorDelete(bpy.types.Operator):
     @classmethod
     def runFullDelete(cls, cm=None):
         scn = bpy.context.scene
-        scn.Brickinator_runningOperation = True
+        scn.Rebrickr_runningOperation = True
         if cm is None:
             cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
-        Brickinator_last_origin_on = "Brickinator_%(n)s_last_origin" % locals()
+        Rebrickr_last_origin_on = "Rebrickr_%(n)s_last_origin" % locals()
         parentOb = None
         origFrame = scn.frame_current
         scn.frame_set(cm.modelCreatedOnFrame)
@@ -179,7 +179,7 @@ class BrickinatorDelete(bpy.types.Operator):
         lastLayers = list(scn.layers)
         # match source layers to brick layers
         brick = None
-        gn = "Brickinator_%(n)s_bricks" % locals()
+        gn = "Rebrickr_%(n)s_bricks" % locals()
         if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
             brick = bpy.data.groups[gn].objects[0]
             source.layers = brick.layers
@@ -188,7 +188,7 @@ class BrickinatorDelete(bpy.types.Operator):
 
         modelType = getModelType(cm)
 
-        source, brickLoc, brickRot, brickScale = BrickinatorDelete.cleanUp(modelType, cm=cm)
+        source, brickLoc, brickRot, brickScale = RebrickrDelete.cleanUp(modelType, cm=cm)
 
         if (modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (modelType == "ANIMATION" and cm.applyToSourceObject):
             l,r,s = getTransformData()
@@ -208,7 +208,7 @@ class BrickinatorDelete(bpy.types.Operator):
             source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
 
         # set origin to previous origin location
-        last_origin_obj = bpy.data.objects.get(Brickinator_last_origin_on)
+        last_origin_obj = bpy.data.objects.get(Rebrickr_last_origin_on)
         if last_origin_obj is not None:
             safeLink(last_origin_obj)
             scn.update()
@@ -216,7 +216,7 @@ class BrickinatorDelete(bpy.types.Operator):
 
         # select source and return open layers to original
         select(source, active=source)
-        scn.Brickinator_runningOperation = False
+        scn.Rebrickr_runningOperation = False
         scn.layers = lastLayers
 
         # delete custom properties from source
@@ -257,12 +257,12 @@ class BrickinatorDelete(bpy.types.Operator):
         return{"FINISHED"}
 
     def handle_exception(self):
-        errormsg = print_exception('Brickinator_log')
+        errormsg = print_exception('Rebrickr_log')
         # if max number of exceptions occur within threshold of time, abort!
         curtime = time.time()
         print('\n'*5)
         print('-'*100)
-        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)")
+        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)")
         print('-'*100)
         print('\n'*5)
-        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)", wrap=240)
+        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)", wrap=240)

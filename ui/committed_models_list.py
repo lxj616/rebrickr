@@ -76,7 +76,7 @@ def matchProperties(cmNew, cmOld):
     cmNew.brickShell = cmOld.brickShell
 
 # ui list item actions
-class Brickinator_Uilist_actions(bpy.types.Operator):
+class Rebrickr_Uilist_actions(bpy.types.Operator):
     bl_idname = "cmlist.list_action"
     bl_label = "Brick Model List Action"
 
@@ -140,7 +140,7 @@ class Brickinator_Uilist_actions(bpy.types.Operator):
             item = scn.cmlist.add()
             last_index = scn.cmlist_index
             scn.cmlist_index = len(scn.cmlist)-1
-            if active_object and active_object.type == "MESH" and not active_object.name.startswith("Brickinator_"):
+            if active_object and active_object.type == "MESH" and not active_object.name.startswith("Rebrickr_"):
                 item.source_name = active_object.name
                 item.name = active_object.name
                 # set up default brickHeight values
@@ -188,7 +188,7 @@ class Brickinator_Uilist_actions(bpy.types.Operator):
 # -------------------------------------------------------------------
 
 # custom list
-class Brickinator_UL_items(UIList):
+class Rebrickr_UL_items(UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         # Make sure your code supports all 3 layout types
@@ -201,7 +201,7 @@ class Brickinator_UL_items(UIList):
         pass
 
 # copy settings from current index to all other indices
-class Brickinator_Uilist_copySettingsToOthers(bpy.types.Operator):
+class Rebrickr_Uilist_copySettingsToOthers(bpy.types.Operator):
     bl_idname = "cmlist.copy_to_others"
     bl_label = "Copy Settings to Other Brick Models"
     bl_description = "Copies the settings from the current model to all other Brick Models"
@@ -225,7 +225,7 @@ class Brickinator_Uilist_copySettingsToOthers(bpy.types.Operator):
         return{'FINISHED'}
 
 # copy settings from current index to memory
-class Brickinator_Uilist_copySettings(bpy.types.Operator):
+class Rebrickr_Uilist_copySettings(bpy.types.Operator):
     bl_idname = "cmlist.copy_settings"
     bl_label = "Copy Settings from Current Brick Model"
     bl_description = "Stores the ID of the current model for pasting"
@@ -241,11 +241,11 @@ class Brickinator_Uilist_copySettings(bpy.types.Operator):
     def execute(self, context):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        scn.Brickinator_copy_from_id = cm.id
+        scn.Rebrickr_copy_from_id = cm.id
         return{'FINISHED'}
 
 # paste settings from index in memory to current index
-class Brickinator_Uilist_pasteSettings(bpy.types.Operator):
+class Rebrickr_Uilist_pasteSettings(bpy.types.Operator):
     bl_idname = "cmlist.paste_settings"
     bl_label = "Paste Settings to Current Brick Model"
     bl_description = "Pastes the settings from stored model ID to the current index"
@@ -262,15 +262,15 @@ class Brickinator_Uilist_pasteSettings(bpy.types.Operator):
         scn = bpy.context.scene
         cm0 = scn.cmlist[scn.cmlist_index]
         for cm1 in scn.cmlist:
-            if cm0 != cm1 and cm1.id == scn.Brickinator_copy_from_id:
+            if cm0 != cm1 and cm1.id == scn.Rebrickr_copy_from_id:
                 matchProperties(cm0, cm1)
                 break
         return{'FINISHED'}
 
 # set source to active button
-class Brickinator_Uilist_setSourceToActive(bpy.types.Operator):
+class Rebrickr_Uilist_setSourceToActive(bpy.types.Operator):
     bl_idname = "cmlist.set_to_active"
-    bl_label = "Set Brickinator Source to Active Object"
+    bl_label = "Set Rebrickr Source to Active Object"
     bl_description = "Set source to active object in scene"
 
     @classmethod
@@ -287,8 +287,8 @@ class Brickinator_Uilist_setSourceToActive(bpy.types.Operator):
                 return True
         # cm = scn.cmlist[scn.cmlist_index]
         # n = cm.source_name
-        # Brickinator_source = "Brickinator_%(n)s" % locals()
-        # if groupExists(Brickinator_source) and len(bpy.data.groups[Brickinator_source].objects) == 1:
+        # Rebrickr_source = "Rebrickr_%(n)s" % locals()
+        # if groupExists(Rebrickr_source) and len(bpy.data.groups[Rebrickr_source].objects) == 1:
         #     return True
         # try:
         #     if bpy.data.objects[cm.source_name].type == 'MESH':
@@ -307,7 +307,7 @@ class Brickinator_Uilist_setSourceToActive(bpy.types.Operator):
         return{'FINISHED'}
 
 # select button
-class Brickinator_Uilist_selectSource(bpy.types.Operator):
+class Rebrickr_Uilist_selectSource(bpy.types.Operator):
     bl_idname = "cmlist.select_source"
     bl_label = "Select Source Object"
     bl_description = "Select only source object for model"
@@ -320,8 +320,8 @@ class Brickinator_Uilist_selectSource(bpy.types.Operator):
             return False
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        Brickinator_source = "Brickinator_%(n)s" % locals()
-        if groupExists(Brickinator_source) and len(bpy.data.groups[Brickinator_source].objects) == 1:
+        Rebrickr_source = "Rebrickr_%(n)s" % locals()
+        if groupExists(Rebrickr_source) and len(bpy.data.groups[Rebrickr_source].objects) == 1:
             return True
         try:
             cm = scn.cmlist[scn.cmlist_index]
@@ -341,7 +341,7 @@ class Brickinator_Uilist_selectSource(bpy.types.Operator):
         return{'FINISHED'}
 
 # select button
-class Brickinator_Uilist_selectAllBricks(bpy.types.Operator):
+class Rebrickr_Uilist_selectAllBricks(bpy.types.Operator):
     bl_idname = "cmlist.select_bricks"
     bl_label = "Select All Bricks"
     bl_description = "Select only bricks in model"
@@ -354,8 +354,8 @@ class Brickinator_Uilist_selectAllBricks(bpy.types.Operator):
             return False
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        Brickinator_bricks = "Brickinator_%(n)s_bricks" % locals()
-        if groupExists(Brickinator_bricks) and len(bpy.data.groups[Brickinator_bricks].objects) != 0:
+        Rebrickr_bricks = "Rebrickr_%(n)s_bricks" % locals()
+        if groupExists(Rebrickr_bricks) and len(bpy.data.groups[Rebrickr_bricks].objects) != 0:
             return True
         return False
 
@@ -363,9 +363,9 @@ class Brickinator_Uilist_selectAllBricks(bpy.types.Operator):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        Brickinator_bricks = "Brickinator_%(n)s_bricks" % locals()
-        if groupExists(Brickinator_bricks):
-            objs = list(bpy.data.groups[Brickinator_bricks].objects)
+        Rebrickr_bricks = "Rebrickr_%(n)s_bricks" % locals()
+        if groupExists(Rebrickr_bricks):
+            objs = list(bpy.data.groups[Rebrickr_bricks].objects)
             select(active=objs[0])
             if len(objs) > 0:
                 select(objs)
@@ -407,11 +407,11 @@ def updateBevel(self, context):
         n = cm.source_name
         if cm.lastBevelWidth != cm.bevelWidth or cm.lastBevelSegments != cm.bevelSegments or cm.lastBevelProfile != cm.bevelProfile:
             if cm.modelCreated:
-                bricks = list(bpy.data.groups["Brickinator_%(n)s_bricks" % locals()].objects)
+                bricks = list(bpy.data.groups["Rebrickr_%(n)s_bricks" % locals()].objects)
             elif cm.animated:
                 bricks = []
                 for cf in range(cm.lastStartFrame, cm.lastStopFrame + 1):
-                    bGroup = bpy.data.groups.get("Brickinator_%(n)s_bricks_frame_%(cf)s" % locals())
+                    bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks_frame_%(cf)s" % locals())
                     if bGroup is not None:
                         bricks.append(bGroup.objects[0])
             setBevelMods(bricks)
@@ -460,7 +460,7 @@ def dirtyBricks(self, context):
     cm.bricksAreDirty = True
 
 # Create custom property group
-class Brickinator_CreatedModels(bpy.types.PropertyGroup):
+class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     name = StringProperty(update=uniquifyName)
     id = IntProperty()
     idx = IntProperty()
@@ -864,7 +864,7 @@ class Brickinator_CreatedModels(bpy.types.PropertyGroup):
 
 def register():
     bpy.utils.register_module(__name__)
-    bpy.types.Scene.createdModelsCollection = CollectionProperty(type=Brickinator_CreatedModels)
+    bpy.types.Scene.createdModelsCollection = CollectionProperty(type=Rebrickr_CreatedModels)
     bpy.types.Scene.cmlist_index = IntProperty()
 
 def unregister():

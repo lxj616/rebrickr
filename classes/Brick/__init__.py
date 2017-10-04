@@ -109,13 +109,13 @@ class Bricks:
                         v.co = ((v.co.x + x*(xyOffset)), (v.co.y + y*(xyOffset)), (v.co.z + zOffset))
                     # add logoBM mesh to bm mesh
                     lastLogoBM = logoBM
-                    logoMesh = bpy.data.meshes.new('Brickinator_tempMesh')
+                    logoMesh = bpy.data.meshes.new('Rebrickr_tempMesh')
                     logoBM.to_mesh(logoMesh)
                     bm.from_mesh(logoMesh)
                     bpy.data.meshes.remove(logoMesh, do_unlink=True)
 
         # add brick mesh to bm mesh
-        cube = bpy.data.meshes.new('Brickinator_cube')
+        cube = bpy.data.meshes.new('Rebrickr_cube')
         brickBM.to_mesh(cube)
         bm.from_mesh(cube)
         bpy.data.meshes.remove(cube)
@@ -125,7 +125,7 @@ class Bricks:
                 v.co = (v.co[0] + transform[0], v.co[1] + transform[1], v.co[2] + transform[2])
 
         if returnType == "mesh":
-            # create apply mesh data to 'Brickinator_brick1x1' data
+            # create apply mesh data to 'Rebrickr_brick1x1' data
             if not brickMesh:
                 brickMesh = bpy.data.meshes.new(name + 'Mesh')
             bm.to_mesh(brickMesh)

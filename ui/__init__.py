@@ -25,24 +25,24 @@ from bpy.types import Panel
 from bpy.props import *
 from .committed_models_list import *
 from .app_handlers import *
-from ..buttons.delete import BrickinatorDelete
+from ..buttons.delete import RebrickrDelete
 from ..functions import *
 from addon_utils import check, paths, enable
 props = bpy.props
 
-class BrickinatorStoragePanel(Panel):
+class RebrickrStoragePanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
-    bl_label       = "Brickinator Actions"
-    bl_idname      = "VIEW3D_PT_tools_Brickinator_storage_actions"
+    bl_label       = "Rebrickr Actions"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_storage_actions"
     # bl_context     = "objectmode"
-    bl_category    = "Brickinator"
+    bl_category    = "Rebrickr"
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
     def poll(self, context):
         scn = context.scene
-        if scn.name == "Brickinator_storage (DO NOT RENAME)":
+        if scn.name == "Rebrickr_storage (DO NOT RENAME)":
             return True
         return False
 
@@ -57,7 +57,7 @@ class BrickinatorStoragePanel(Panel):
         if editingSourceInStorage:
             col = layout.column(align=True)
             row = col.row(align=True)
-            col.operator("scene.brickinator_commit_edits", text="Commit Changes", icon="FILE_TICK")
+            col.operator("scene.rebrickr_commit_edits", text="Commit Changes", icon="FILE_TICK")
             col = layout.column(align=True)
             col.scale_y = 0.7
             row = col.row(align=True)
@@ -78,7 +78,7 @@ class BrickinatorStoragePanel(Panel):
             row = col.row(align=True)
             row.label("You may break the")
             row = col.row(align=True)
-            row.label("Brickinator or cause")
+            row.label("Rebrickr or cause")
             row = col.row(align=True)
             row.label("Blender to crash.")
             layout.separator()
@@ -89,7 +89,7 @@ class BrickinatorStoragePanel(Panel):
             row.template_ID(context.screen, "scene")
 
 class BasicMenu(bpy.types.Menu):
-    bl_idname = "Brickinator_specials_menu"
+    bl_idname = "Rebrickr_specials_menu"
     bl_label = "Select"
 
     def draw(self, context):
@@ -103,15 +103,15 @@ class BrickModelsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Brick Models"
-    bl_idname      = "VIEW3D_PT_tools_Brickinator_brick_models"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_brick_models"
     bl_context     = "objectmode"
-    bl_category    = "Brickinator"
+    bl_category    = "Rebrickr"
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
     def poll(self, context):
         scn = context.scene
-        if scn.name == "Brickinator_storage (DO NOT RENAME)":
+        if scn.name == "Rebrickr_storage (DO NOT RENAME)":
             return False
         return True
 
@@ -123,7 +123,7 @@ class BrickModelsPanel(Panel):
         if bversion() < '002.078.00':
             col = layout.column(align=True)
             col.label('ERROR: upgrade needed', icon='ERROR')
-            col.label('Brickinator requires Blender 2.78+')
+            col.label('Rebrickr requires Blender 2.78+')
             return
 
         # draw UI list and list actions
@@ -132,12 +132,12 @@ class BrickModelsPanel(Panel):
         else:
             rows = 4
         row = layout.row()
-        row.template_list("Brickinator_UL_items", "", scn, "cmlist", scn, "cmlist_index", rows=rows)
+        row.template_list("Rebrickr_UL_items", "", scn, "cmlist", scn, "cmlist_index", rows=rows)
 
         col = row.column(align=True)
         col.operator("cmlist.list_action", icon='ZOOMIN', text="").action = 'ADD'
         col.operator("cmlist.list_action", icon='ZOOMOUT', text="").action = 'REMOVE'
-        col.menu("Brickinator_specials_menu", icon='DOWNARROW_HLT', text="")
+        col.menu("Rebrickr_specials_menu", icon='DOWNARROW_HLT', text="")
         if len(scn.cmlist) > 1:
             col.separator()
             col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
@@ -170,17 +170,17 @@ class BrickModelsPanel(Panel):
             if cm.useAnimation:
                 if cm.animated:
                     row = col.row(align=True)
-                    row.operator("scene.brickinator_delete", text="Delete Brick Animation", icon="CANCEL")
+                    row.operator("scene.rebrickr_delete", text="Delete Brick Animation", icon="CANCEL")
                     col = layout.column(align=True)
                     row = col.row(align=True)
-                    row.operator("scene.brickinator_brickify", text="Update Animation", icon="FILE_REFRESH")
+                    row.operator("scene.rebrickr_brickify", text="Update Animation", icon="FILE_REFRESH")
                 else:
                     row = col.row(align=True)
                     if obj:
                         row.active = obj.type == 'MESH'
                     else:
                         row.active = False
-                    row.operator("scene.brickinator_brickify", text="Brickify Animation", icon="MOD_REMESH")
+                    row.operator("scene.rebrickr_brickify", text="Brickify Animation", icon="MOD_REMESH")
             # if use animation is not selected, draw modeling options
             else:
                 if not cm.animated and not cm.modelCreated:
@@ -189,16 +189,16 @@ class BrickModelsPanel(Panel):
                         row.active = obj.type == 'MESH'
                     else:
                         row.active = False
-                    row.operator("scene.brickinator_brickify", text="Brickify Object", icon="MOD_REMESH")
+                    row.operator("scene.rebrickr_brickify", text="Brickify Object", icon="MOD_REMESH")
                 else:
                     row = col.row(align=True)
-                    row.operator("scene.brickinator_delete", text="Delete Brickified Model", icon="CANCEL")
+                    row.operator("scene.rebrickr_delete", text="Delete Brickified Model", icon="CANCEL")
                     col1 = layout.column(align=True)
                     split = col1.split(align=True, percentage=0.7)
                     col = split.column(align=True)
-                    col.operator("scene.brickinator_brickify", text="Update Model", icon="FILE_REFRESH")
+                    col.operator("scene.rebrickr_brickify", text="Update Model", icon="FILE_REFRESH")
                     col = split.column(align=True)
-                    col.operator("scene.brickinator_edit_source", icon="EDIT", text="Edit")
+                    col.operator("scene.rebrickr_edit_source", icon="EDIT", text="Edit")
                     if cm.sourceIsDirty:
                         row = col1.row(align=True)
                         row.label("Source mesh changed; update to reflect changes")
@@ -210,21 +210,21 @@ class BrickModelsPanel(Panel):
 
             col = layout.column(align=True)
             row = col.row(align=True)
-            # remove 'Brickinator_[source name]_bricks' group if empty
-            # if groupExists(Brickinator_bricks) and len(bpy.data.groups[Brickinator_bricks].objects) == 0:
-            #     BrickinatorDelete.cleanUp()
-            #     bpy.data.groups.remove(bpy.data.groups[Brickinator_bricks], do_unlink=True)
+            # remove 'Rebrickr_[source name]_bricks' group if empty
+            # if groupExists(Rebrickr_bricks) and len(bpy.data.groups[Rebrickr_bricks].objects) == 0:
+            #     RebrickrDelete.cleanUp()
+            #     bpy.data.groups.remove(bpy.data.groups[Rebrickr_bricks], do_unlink=True)
         else:
             layout.operator("cmlist.list_action", icon='ZOOMIN', text="New Brick Model").action = 'ADD'
 
-        if bpy.data.texts.find('Brickinator_log') >= 0:
+        if bpy.data.texts.find('Rebrickr_log') >= 0:
             split = layout.split(align=True, percentage = 0.9)
             col = split.column(align=True)
             row = col.row(align=True)
-            row.operator("scene.brickinator_report_error", text="Report Error", icon="URL")
+            row.operator("scene.rebrickr_report_error", text="Report Error", icon="URL")
             col = split.column(align=True)
             row = col.row(align=True)
-            row.operator("scene.brickinator_close_report_error", text="", icon="PANEL_CLOSE")
+            row.operator("scene.rebrickr_close_report_error", text="", icon="PANEL_CLOSE")
 
 def is_baked(mod):
     return mod.point_cache.is_baked is not False
@@ -233,9 +233,9 @@ class AnimationPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Animation"
-    bl_idname      = "VIEW3D_PT_tools_Brickinator_animation"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_animation"
     bl_context     = "objectmode"
-    bl_category    = "Brickinator"
+    bl_category    = "Rebrickr"
     bl_options     = {"DEFAULT_CLOSED"}
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
@@ -249,12 +249,12 @@ class AnimationPanel(Panel):
         cm = scn.cmlist[scn.cmlist_index]
         if cm.modelCreated:
             return False
-        # groupExistsBool = groupExists(Brickinator_bricks) or groupExists("Brickinator_%(n)s" % locals()) or groupExists("Brickinator_%(n)s_refBricks" % locals())
+        # groupExistsBool = groupExists(Rebrickr_bricks) or groupExists("Rebrickr_%(n)s" % locals()) or groupExists("Rebrickr_%(n)s_refBricks" % locals())
         # if groupExistsBool:
         #     return False
         # cm = scn.cmlist[scn.cmlist_index]
         # n = cm.source_name
-        # if not groupExists('Brickinator_%(n)s' % locals()):
+        # if not groupExists('Rebrickr_%(n)s' % locals()):
         #     return False
         return True
 
@@ -321,9 +321,9 @@ class ModelTransformPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Model Transform"
-    bl_idname      = "VIEW3D_PT_tools_Brickinator_model_transform"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_model_transform"
     bl_context     = "objectmode"
-    bl_category    = "Brickinator"
+    bl_category    = "Rebrickr"
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
@@ -353,7 +353,7 @@ class ModelTransformPanel(Panel):
 
         row.prop(cm, "applyToSourceObject")
         row = col.row(align=True)
-        parent = bpy.data.objects['Brickinator_%(n)s_parent' % locals()]
+        parent = bpy.data.objects['Rebrickr_%(n)s_parent' % locals()]
         row = layout.row()
         row.column().prop(parent, "location")
         if parent.rotation_mode == 'QUATERNION':
@@ -369,9 +369,9 @@ class ModelSettingsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Model Settings"
-    bl_idname      = "VIEW3D_PT_tools_Brickinator_model_settings"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_model_settings"
     bl_context     = "objectmode"
-    bl_category    = "Brickinator"
+    bl_category    = "Rebrickr"
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
@@ -488,9 +488,9 @@ class BrickTypesPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Brick Types"
-    bl_idname      = "VIEW3D_PT_tools_Brickinator_brick_types"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_brick_types"
     bl_context     = "objectmode"
-    bl_category    = "Brickinator"
+    bl_category    = "Rebrickr"
     bl_options     = {"DEFAULT_CLOSED"}
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
@@ -563,9 +563,9 @@ class MaterialsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Materials"
-    bl_idname      = "VIEW3D_PT_tools_Brickinator_materials"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_materials"
     bl_context     = "objectmode"
-    bl_category    = "Brickinator"
+    bl_category    = "Rebrickr"
     bl_options     = {"DEFAULT_CLOSED"}
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
@@ -607,7 +607,7 @@ class MaterialsPanel(Panel):
             if cm.modelCreated:
                 col = layout.column(align=True)
                 row = col.row(align=True)
-                row.operator("scene.brickinator_apply_material", icon="FILE_TICK")
+                row.operator("scene.rebrickr_apply_material", icon="FILE_TICK")
         elif cm.materialType == "Random":
             col = layout.column(align=True)
             if bpy.context.scene.render.engine != 'CYCLES':
@@ -661,7 +661,7 @@ class MaterialsPanel(Panel):
                     else:
                         col = layout.column(align=True)
                         row = col.row(align=True)
-                        row.operator("scene.brickinator_apply_material", icon="FILE_TICK")
+                        row.operator("scene.rebrickr_apply_material", icon="FILE_TICK")
 
         if cm.modelCreated or cm.animated:
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
@@ -679,9 +679,9 @@ class DetailingPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Detailing"
-    bl_idname      = "VIEW3D_PT_tools_Brickinator_detailing"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_detailing"
     bl_context     = "objectmode"
-    bl_category    = "Brickinator"
+    bl_category    = "Rebrickr"
     bl_options     = {"DEFAULT_CLOSED"}
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
@@ -740,9 +740,9 @@ class SupportsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Supports"
-    bl_idname      = "VIEW3D_PT_tools_Brickinator_supports"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_supports"
     bl_context     = "objectmode"
-    bl_category    = "Brickinator"
+    bl_category    = "Rebrickr"
     bl_options     = {"DEFAULT_CLOSED"}
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
@@ -786,9 +786,9 @@ class BevelPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Bevel"
-    bl_idname      = "VIEW3D_PT_tools_Brickinator_bevel"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_bevel"
     bl_context     = "objectmode"
-    bl_category    = "Brickinator"
+    bl_category    = "Rebrickr"
     COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
@@ -816,9 +816,9 @@ class BevelPanel(Panel):
         try:
             ff = cm.lastStartFrame
             if cm.modelCreated:
-                testBrick = bpy.data.groups['Brickinator_%(n)s_bricks' % locals()].objects[0]
+                testBrick = bpy.data.groups['Rebrickr_%(n)s_bricks' % locals()].objects[0]
             elif cm.animated:
-                testBrick = bpy.data.groups['Brickinator_%(n)s_bricks_frame_%(ff)s' % locals()].objects[0]
+                testBrick = bpy.data.groups['Rebrickr_%(n)s_bricks_frame_%(ff)s' % locals()].objects[0]
             testBrick.modifiers[testBrick.name + '_bevel']
             row.prop(cm, "bevelWidth", text="Width")
             row = col.row(align=True)
@@ -826,6 +826,6 @@ class BevelPanel(Panel):
             row = col.row(align=True)
             row.prop(cm, "bevelProfile", text="Profile")
             row = col.row(align=True)
-            row.operator("scene.brickinator_bevel", text="Remove Bevel", icon="CANCEL")
+            row.operator("scene.rebrickr_bevel", text="Remove Bevel", icon="CANCEL")
         except:
-            row.operator("scene.brickinator_bevel", text="Bevel bricks", icon="MOD_BEVEL")
+            row.operator("scene.rebrickr_bevel", text="Bevel bricks", icon="MOD_BEVEL")

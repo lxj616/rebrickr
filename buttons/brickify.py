@@ -27,14 +27,14 @@ import bmesh
 import os
 import math
 from ..functions import *
-from .delete import BrickinatorDelete
-from .bevel import BrickinatorBevel
+from .delete import RebrickrDelete
+from .bevel import RebrickrBevel
 from mathutils import Matrix, Vector, Euler
 props = bpy.props
 
 def updateCanRun(type):
     scn = bpy.context.scene
-    if scn.name == "Brickinator_storage (DO NOT RENAME)":
+    if scn.name == "Rebrickr_storage (DO NOT RENAME)":
         return True
     elif scn.cmlist_index == -1:
         return False
@@ -45,8 +45,8 @@ def updateCanRun(type):
         elif type == "MODEL":
             # set up variables
             n = cm.source_name
-            Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
-            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and cm.materialIsDirty) or (groupExists(Brickinator_bricks_gn) and len(bpy.data.groups[Brickinator_bricks_gn].objects) == 0)
+            Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and cm.materialIsDirty) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
 
 def getDimensionsAndBounds(source, skipDimensions=False):
     scn = bpy.context.scene
@@ -63,16 +63,16 @@ def getDimensionsAndBounds(source, skipDimensions=False):
     else:
         return source_details
 
-class BrickinatorBrickify(bpy.types.Operator):
+class RebrickrBrickify(bpy.types.Operator):
     """ Create brick sculpture from source object mesh """                       # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.brickinator_brickify"                                        # unique identifier for buttons and menu items to reference.
+    bl_idname = "scene.rebrickr_brickify"                                        # unique identifier for buttons and menu items to reference.
     bl_label = "Create/Update Brick Model from Source Object"                 # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
     def poll(cls, context):
         """ ensures operator can execute (if not, returns false) """
-        if context.scene.name == "Brickinator_storage (DO NOT RENAME)":
+        if context.scene.name == "Rebrickr_storage (DO NOT RENAME)":
             scn = bpy.data.scenes.get(bpy.props.origScene)
             if scn is None:
                 return False
@@ -99,9 +99,9 @@ class BrickinatorBrickify(bpy.types.Operator):
             objToBrickify = bpy.data.objects.get(cm.source_name)
         return objToBrickify
 
-    def getParent(self, Brickinator_parent_on, loc):
-        m = bpy.data.meshes.new(Brickinator_parent_on + "_mesh")
-        parent = bpy.data.objects.new(Brickinator_parent_on, m)
+    def getParent(self, Rebrickr_parent_on, loc):
+        m = bpy.data.meshes.new(Rebrickr_parent_on + "_mesh")
+        parent = bpy.data.objects.new(Rebrickr_parent_on, m)
         parent.location = loc
         safeScn = getSafeScn()
         safeScn.objects.link(parent)
@@ -116,18 +116,18 @@ class BrickinatorBrickify(bpy.types.Operator):
         else:
             decimate = False
             r = cm.logoResolution
-            refLogoImport = bpy.data.objects.get("Brickinator_refLogo")
+            refLogoImport = bpy.data.objects.get("Rebrickr_refLogo")
             if refLogoImport is not None:
-                refLogo = bpy.data.objects.get("Brickinator_refLogo_%(r)s" % locals())
+                refLogo = bpy.data.objects.get("Rebrickr_refLogo_%(r)s" % locals())
                 if refLogo is None:
-                    refLogo = bpy.data.objects.new("Brickinator_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
+                    refLogo = bpy.data.objects.new("Rebrickr_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
                     decimate = True
             else:
                 # import refLogo and add to group
                 refLogoImport = importLogo()
-                refLogoImport.name = "Brickinator_refLogo"
+                refLogoImport.name = "Rebrickr_refLogo"
                 safeUnlink(refLogoImport)
-                refLogo = bpy.data.objects.new("Brickinator_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
+                refLogo = bpy.data.objects.new("Rebrickr_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
                 decimate = True
             # decimate refLogo
             # TODO: Speed this up, if possible
@@ -167,7 +167,7 @@ class BrickinatorBrickify(bpy.types.Operator):
         updateCursor = self.action in ["CREATE", "UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] # evaluates to boolean value
         bricksDict = makeBricksDict(source, source_details, dimensions, R, cursorStatus=updateCursor)
         if curFrame is not None:
-            group_name = 'Brickinator_%(n)s_bricks_frame_%(curFrame)s' % locals()
+            group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
             group_name = None
         makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor)
@@ -190,7 +190,7 @@ class BrickinatorBrickify(bpy.types.Operator):
         else:
             self.action = "ANIMATE"
 
-    def isValid(self, source, Brickinator_bricks_gn,):
+    def isValid(self, source, Rebrickr_bricks_gn,):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         if cm.brickType == "Custom":
@@ -212,15 +212,15 @@ class BrickinatorBrickify(bpy.types.Operator):
         source["ignored_mods"] = ""
         if self.action in ["CREATE", "ANIMATE"]:
             # verify function can run
-            if groupExists(Brickinator_bricks_gn):
+            if groupExists(Rebrickr_bricks_gn):
                 self.report({"WARNING"}, "Brickified Model already created.")
                 return False
             # verify source exists and is of type mesh
             if cm.source_name == "":
                 self.report({"WARNING"}, "Please select a mesh to Brickify")
                 return False
-            if cm.source_name[:9] == "Brickinator_" and (cm.source_name[-7:] == "_bricks" or cm.source_name[-9:] == "_combined"):
-                self.report({"WARNING"}, "Cannot Brickify models created with the Brickinator")
+            if cm.source_name[:9] == "Rebrickr_" and (cm.source_name[-7:] == "_bricks" or cm.source_name[-9:] == "_combined"):
+                self.report({"WARNING"}, "Cannot Brickify models created with the Rebrickr")
                 return False
             if source == None:
                 n = cm.source_name
@@ -231,7 +231,7 @@ class BrickinatorBrickify(bpy.types.Operator):
                 return False
             # verify source is not a rigid body
             if source.rigid_body is not None:
-                self.report({"WARNING"}, "Brickinator: Rigid body physics not supported")
+                self.report({"WARNING"}, "Rebrickr: Rigid body physics not supported")
                 return False
             # verify all appropriate modifiers have been applied
             ignoredMods = []
@@ -246,7 +246,7 @@ class BrickinatorBrickify(bpy.types.Operator):
                     ignoredMods.append(mod.name)
                 # these modifiers are unsupported - abort render if enabled
                 if mod.type in ["SMOKE"] and mod.show_viewport:
-                    self.report({"WARNING"}, "'" + str(mod.type) + "' modifier not supported by the Brickinator.")
+                    self.report({"WARNING"}, "'" + str(mod.type) + "' modifier not supported by the Rebrickr.")
                     return False
                 # handle cloth modifier
                 if mod.type == "CLOTH" and mod.show_viewport:
@@ -275,8 +275,8 @@ class BrickinatorBrickify(bpy.types.Operator):
             # TODO: Alert user to bake fluid/cloth simulation before attempting to Brickify
 
         if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
-            # make sure 'Brickinator_[source name]_bricks' group exists
-            if not groupExists(Brickinator_bricks_gn):
+            # make sure 'Rebrickr_[source name]_bricks' group exists
+            if not groupExists(Rebrickr_bricks_gn):
                 self.report({"WARNING"}, "Brickified Model doesn't exist. Create one with the 'Brickify Object' button.")
                 return False
 
@@ -299,9 +299,9 @@ class BrickinatorBrickify(bpy.types.Operator):
 
         success = False
         if cm.modelCreated:
-            g = bpy.data.groups.get(Brickinator_bricks_gn)
+            g = bpy.data.groups.get(Rebrickr_bricks_gn)
         elif cm.animated:
-            g = bpy.data.groups.get(Brickinator_bricks_gn + "_frame_" + str(cm.lastStartFrame))
+            g = bpy.data.groups.get(Rebrickr_bricks_gn + "_frame_" + str(cm.lastStartFrame))
         if cm.modelCreated or cm.animated:
             if g is not None and len(g.objects) > 0:
                 obj = g.objects[0]
@@ -323,9 +323,9 @@ class BrickinatorBrickify(bpy.types.Operator):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
-        Brickinator_parent_on = "Brickinator_%(n)s_parent" % locals()
-        Brickinator_source_dupes_gn = "Brickinator_%(n)s_dupes" % locals()
+        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+        Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
+        Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
         sceneCurFrame = scn.frame_current
 
         self.sourceOrig = self.getObjectToBrickify()
@@ -345,21 +345,21 @@ class BrickinatorBrickify(bpy.types.Operator):
 
         # delete old bricks if present
         if self.action == "UPDATE_ANIM" and not self.updatedFramesOnly:
-            BrickinatorDelete.cleanUp("ANIMATION", skipDupes=True, skipParents=True)
+            RebrickrDelete.cleanUp("ANIMATION", skipDupes=True, skipParents=True)
             self.sourceOrig.name = self.sourceOrig.name + " (DO NOT RENAME)"
 
         # get or create duplicate and parent groups
-        dGroup = bpy.data.groups.get(Brickinator_source_dupes_gn)
+        dGroup = bpy.data.groups.get(Rebrickr_source_dupes_gn)
         if dGroup is None:
-            dGroup = bpy.data.groups.new(Brickinator_source_dupes_gn)
-        pGroup = bpy.data.groups.get(Brickinator_parent_on)
+            dGroup = bpy.data.groups.new(Rebrickr_source_dupes_gn)
+        pGroup = bpy.data.groups.get(Rebrickr_parent_on)
         if pGroup is None:
-            pGroup = bpy.data.groups.new(Brickinator_parent_on)
+            pGroup = bpy.data.groups.new(Rebrickr_parent_on)
 
         # get parent object
-        parent0 = bpy.data.objects.get(Brickinator_parent_on)
+        parent0 = bpy.data.objects.get(Rebrickr_parent_on)
         if parent0 is None:
-            parent0 = self.getParent(Brickinator_parent_on, self.sourceOrig.location.to_tuple())
+            parent0 = self.getParent(Rebrickr_parent_on, self.sourceOrig.location.to_tuple())
             pGroup.objects.link(parent0)
         self.createdObjects.append(parent0.name)
 
@@ -386,7 +386,7 @@ class BrickinatorBrickify(bpy.types.Operator):
             # get duplicated source
             if self.action == "UPDATE_ANIM":
                 # retrieve previously duplicated source
-                source = bpy.data.objects.get("Brickinator_" + self.sourceOrig.name + "_frame_" + str(curFrame))
+                source = bpy.data.objects.get("Rebrickr_" + self.sourceOrig.name + "_frame_" + str(curFrame))
             else:
                 source = None
             if source is None:
@@ -395,7 +395,7 @@ class BrickinatorBrickify(bpy.types.Operator):
                 bpy.ops.object.duplicate()
                 source = scn.objects.active
                 dGroup.objects.link(source)
-                source.name = "Brickinator_" + self.sourceOrig.name + "_frame_" + str(curFrame)
+                source.name = "Rebrickr_" + self.sourceOrig.name + "_frame_" + str(curFrame)
                 self.createdObjects.append(source.name)
                 if source.parent is not None:
                     # apply parent transformation
@@ -450,10 +450,10 @@ class BrickinatorBrickify(bpy.types.Operator):
 
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
-            pGroup = bpy.data.groups[Brickinator_parent_on] # redefine pGroup since it was removed
-            parent = bpy.data.objects.get(Brickinator_parent_on + "_frame_" + str(curFrame))
+            pGroup = bpy.data.groups[Rebrickr_parent_on] # redefine pGroup since it was removed
+            parent = bpy.data.objects.get(Rebrickr_parent_on + "_frame_" + str(curFrame))
             if parent is None:
-                parent = bpy.data.objects.new(Brickinator_parent_on + "_frame_" + str(curFrame), source.data)
+                parent = bpy.data.objects.new(Rebrickr_parent_on + "_frame_" + str(curFrame), source.data)
                 parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
                 parent.parent = parent0
                 pGroup.objects.link(parent)
@@ -498,16 +498,16 @@ class BrickinatorBrickify(bpy.types.Operator):
         source = None
         self.sourceOrig = self.getObjectToBrickify()
         n = cm.source_name
-        Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
-        bGroup = bpy.data.groups.get(Brickinator_bricks_gn)
-        Brickinator_last_origin_on = "Brickinator_%(n)s_last_origin" % locals()
-        Brickinator_parent_on = "Brickinator_%(n)s_parent" % locals()
+        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+        bGroup = bpy.data.groups.get(Rebrickr_bricks_gn)
+        Rebrickr_last_origin_on = "Rebrickr_%(n)s_last_origin" % locals()
+        Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
         updateParentLoc = False
 
         # get or create parent group
-        pGroup = bpy.data.groups.get(Brickinator_parent_on)
+        pGroup = bpy.data.groups.get(Rebrickr_parent_on)
         if pGroup is None:
-            pGroup = bpy.data.groups.new(Brickinator_parent_on)
+            pGroup = bpy.data.groups.new(Rebrickr_parent_on)
 
         if self.action == "CREATE":
             # set modelCreatedOnFrame
@@ -521,8 +521,8 @@ class BrickinatorBrickify(bpy.types.Operator):
             previous_origin = self.sourceOrig.matrix_world.to_translation().to_tuple()
 
             # create empty object at source's old origin location and set as child of source
-            m = bpy.data.meshes.new("Brickinator_%(n)s_last_origin_mesh" % locals())
-            obj = bpy.data.objects.new("Brickinator_%(n)s_last_origin" % locals(), m)
+            m = bpy.data.meshes.new("Rebrickr_%(n)s_last_origin_mesh" % locals())
+            obj = bpy.data.objects.new("Rebrickr_%(n)s_last_origin" % locals(), m)
             obj.location = previous_origin
             scn.objects.link(obj)
             select([obj, self.sourceOrig], active=self.sourceOrig)
@@ -533,7 +533,7 @@ class BrickinatorBrickify(bpy.types.Operator):
         if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] and not updateCanRun("MODEL"):
             return{"FINISHED"}
 
-        sto_scn = bpy.data.scenes.get("Brickinator_storage (DO NOT RENAME)")
+        sto_scn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
         if sto_scn is not None:
             sto_scn.update()
 
@@ -543,20 +543,20 @@ class BrickinatorBrickify(bpy.types.Operator):
                 # alert that parent loc needs updating at the end
                 updateParentLoc = True
                 # delete source/dupes as well if source is dirty, but only delete parent if not cm.splitModel
-                BrickinatorDelete.cleanUp("MODEL", skipParents=True)#cm.splitModel)
+                RebrickrDelete.cleanUp("MODEL", skipParents=True)#cm.splitModel)
             else:
                 # else, skip source
-                BrickinatorDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
+                RebrickrDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
         else:
             storeTransformData(None)
 
         if self.action == "CREATE" or cm.sourceIsDirty:
             # create dupes group
-            Brickinator_source_dupes_gn = "Brickinator_%(n)s_dupes" % locals()
-            dGroup = bpy.data.groups.new(Brickinator_source_dupes_gn)
+            Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
+            dGroup = bpy.data.groups.new(Rebrickr_source_dupes_gn)
             # set sourceOrig origin to previous origin location
             lastSourceOrigLoc = self.sourceOrig.matrix_world.to_translation().to_tuple()
-            last_origin_obj = bpy.data.objects.get(Brickinator_last_origin_on)
+            last_origin_obj = bpy.data.objects.get(Rebrickr_last_origin_on)
             setOriginToObjOrigin(toObj=self.sourceOrig, fromObj=last_origin_obj)
             # duplicate source and add duplicate to group
             select(self.sourceOrig, active=self.sourceOrig)
@@ -624,11 +624,11 @@ class BrickinatorBrickify(bpy.types.Operator):
             cm.modelHeight = source_details.z.distance
 
         # get parent object
-        parent = bpy.data.objects.get(Brickinator_parent_on)
+        parent = bpy.data.objects.get(Rebrickr_parent_on)
         # if parent doesn't exist, get parent with new location
         parentLoc = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
         if parent is None:
-            parent = self.getParent(Brickinator_parent_on, parentLoc)
+            parent = self.getParent(Rebrickr_parent_on, parentLoc)
             pGroup.objects.link(parent)
         self.createdObjects.append(parent.name)
 
@@ -644,7 +644,7 @@ class BrickinatorBrickify(bpy.types.Operator):
         # create new bricks
         self.createNewBricks(source, parent, source_details, dimensions, refLogo)
 
-        bGroup = bpy.data.groups.get(Brickinator_bricks_gn) # redefine bGroup since it was removed
+        bGroup = bpy.data.groups.get(Rebrickr_bricks_gn) # redefine bGroup since it was removed
         if bGroup is not None:
             # set transformation of objects in brick group
             if (self.action == "CREATE" and cm.sourceIsDirty):
@@ -703,8 +703,8 @@ class BrickinatorBrickify(bpy.types.Operator):
 
         # add bevel if it was previously added
         if self.action == "UPDATE_MODEL" and cm.bevelAdded:
-            bGroup = bpy.data.groups.get("Brickinator_%(n)s_bricks" % locals())
-            BrickinatorBevel.runBevelAction(bGroup, cm)
+            bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks" % locals())
+            RebrickrBevel.runBevelAction(bGroup, cm)
 
         cm.modelCreated = True
 
@@ -720,12 +720,12 @@ class BrickinatorBrickify(bpy.types.Operator):
 
             # set up variables
             scn = context.scene
-            scn.Brickinator_runningOperation = True
+            scn.Rebrickr_runningOperation = True
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             self.createdObjects = []
             self.sourceOrig = None
-            Brickinator_bricks_gn = "Brickinator_%(n)s_bricks" % locals()
+            Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
 
             # set self.action
             self.setAction(scn, cm)
@@ -734,7 +734,7 @@ class BrickinatorBrickify(bpy.types.Operator):
             source = self.getObjectToBrickify()
             source["old_parent"] = ""
 
-            if not self.isValid(source, Brickinator_bricks_gn):
+            if not self.isValid(source, Rebrickr_bricks_gn):
                 return {"CANCELLED"}
 
             if self.action not in ["ANIMATE", "UPDATE_ANIM"]:
@@ -756,7 +756,7 @@ class BrickinatorBrickify(bpy.types.Operator):
             cm.buildIsDirty = False
             cm.sourceIsDirty = False
             cm.bricksAreDirty = False
-            scn.Brickinator_runningOperation = False
+            scn.Rebrickr_runningOperation = False
 
             # unlink source from scene and link to safe scene
             if source.name in scn.objects.keys():
@@ -782,12 +782,12 @@ class BrickinatorBrickify(bpy.types.Operator):
         return{"FINISHED"}
 
     def handle_exception(self):
-        errormsg = print_exception('Brickinator_log')
+        errormsg = print_exception('Rebrickr_log')
         # if max number of exceptions occur within threshold of time, abort!
         curtime = time.time()
         print('\n'*5)
         print('-'*100)
-        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)")
+        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)")
         print('-'*100)
         print('\n'*5)
-        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Brickinator)", wrap=240)
+        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)", wrap=240)
