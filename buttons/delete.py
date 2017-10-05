@@ -66,11 +66,23 @@ class RebrickrDelete(bpy.types.Operator):
         brickRot = None
         brickScale = None
 
+        # set layers to source layers temporarily
+        curLayers = scn.layers
+        scn.layers = source.layers
+
         # clean up 'Rebrickr_[source name]' group
         if not skipSource:
             # link source to scene
             if not source in list(scn.objects):
                 safeLink(source)
+            # set source layers to brick layers
+            if modelType == "MODEL":
+                bGroup = bpy.data.groups.get(Rebrickr_bricks_gn)
+            elif modelType == "ANIMATION":
+                bGroup = bpy.data.groups.get(Rebrickr_bricks_gn + "_frame_" + str(cm.lastStartFrame))
+            if bGroup is not None and len(bGroup.objects) > 0:
+                source.layers = list(bGroup.objects[0].layers)
+            # select source and reset cm.modelHeight
             select(source, active=source)
             cm.modelHeight = -1
             # reset source parent to original parent object
@@ -160,6 +172,9 @@ class RebrickrDelete(bpy.types.Operator):
                     bpy.data.groups.remove(brickGroup, do_unlink=True)
         update_progress("Deleting", 1)
         wm.progress_end()
+
+        # set scene layers back to original layers
+        scn.layers = curLayers
 
         return source, brickLoc, brickRot, brickScale
 

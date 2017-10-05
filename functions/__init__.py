@@ -221,6 +221,12 @@ def setSourceTransform(source, obj=None, objParent=None, last_origin_obj=None, s
     source.rotation_euler.rotate(objParentRot)
     source.scale = (source.scale[0] * objScale[0] * objParentScale[0], source.scale[1] * objScale[1] * objParentScale[1], source.scale[2] * objScale[2] * objParentScale[2])
 
+def VectorRound(tup, dec):
+    lst = []
+    for i in range(len(tup)):
+        lst.append(round(tup[i], dec))
+    return Vector(lst)
+
 def rayObjIntersections(point,direction,edgeLen,ob):
     """ returns True if ray intersects obj """
     scn = bpy.context.scene
@@ -236,6 +242,9 @@ def rayObjIntersections(point,direction,edgeLen,ob):
     doubleCheckDirection = -direction
     firstDirection0 = False
     firstDirection1 = False
+    edgeLen2 = edgeLen*1.00001
+    miniDirection = VectorRound(direction*0.00001, 5)
+    miniDoubleCheckDirection = VectorRound(doubleCheckDirection*0.00001, 5)
     # run initial intersection check
     while True:
         _,location,normal,index = ob.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
@@ -243,7 +252,7 @@ def rayObjIntersections(point,direction,edgeLen,ob):
         if intersections == 0:
             firstDirection0 = direction.dot(normal)
         # get first and last intersection (used when getting materials of nearest (first or last intersected) face)
-        if (location-point).length <= edgeLen*1.00001:
+        if (location-point).length <= edgeLen2:
             if intersections == 0:
                 edgeIntersects = True
                 firstIntersection = {"idx":index, "dist":(location-point).length}
@@ -252,7 +261,7 @@ def rayObjIntersections(point,direction,edgeLen,ob):
         if intersections == 1:
             nextIntersection = location.copy()
         intersections += 1
-        orig = location + direction*0.00001
+        orig = location + miniDirection
     if intersections%2 == 0 and (not cm.useNormals or firstDirection0 <= 0):
         outside = True
     else:
@@ -265,7 +274,7 @@ def rayObjIntersections(point,direction,edgeLen,ob):
             if count == 0:
                 firstDirection1 = doubleCheckDirection.dot(normal)
             count += 1
-            orig = location + doubleCheckDirection*0.00001
+            orig = location + miniDoubleCheckDirection
         if count%2 == 0 and (not cm.useNormals or firstDirection1 <= 0):
             outside = True
 
