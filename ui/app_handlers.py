@@ -177,9 +177,9 @@ def handle_saving_in_edit_mode(scene):
     if rebrickrIsActive:
         sto_scn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
         try:
-            editingSourceInStorage = bpy.context.window_manager["editingSourceInStorage"]
+            editingSourceInfo = bpy.context.window_manager["editingSourceInStorage"]
         except:
-            editingSourceInStorage = False
+            editingSourceInfo = False
         if editingSourceInfo and bpy.context.scene == sto_scn:
             scn = bpy.context.scene
             source = bpy.data.objects.get(editingSourceInfo["source_name"])
@@ -195,7 +195,7 @@ def handle_saving_in_edit_mode(scene):
             if source["before_edit_location"] != -1:
                 source.location = source["before_edit_location"]
             source.rotation_mode = "XYZ"
-            source.rotation_euler = Euler(tuple(source["previous_rotation"], "XYZ"))
+            source.rotation_euler = Euler(tuple(source["previous_rotation"]), "XYZ")
             source.scale = source["previous_scale"]
             setOriginToObjOrigin(toObj=source, fromLoc=source["before_origin_set_location"])
             if bpy.context.scene.name == "Rebrickr_storage (DO NOT RENAME)":
