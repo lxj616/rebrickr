@@ -43,15 +43,27 @@ addon_keymaps = []
 
 bpy.types.Object.protected = props.BoolProperty(name = 'protected', default = False)
 bpy.types.Object.isBrickifiedObject = props.BoolProperty(name = 'Is Brickified Object', default = False)
+bpy.types.Object.isBrick = props.BoolProperty(name = 'Is Brick', default = False)
 def deleteUnprotected(context):
     protected = []
     for obj in context.selected_objects:
-        if obj.isBrickifiedObject:
+        if obj.isBrickifiedObject or obj.isBrick:
             scn = context.scene
             cm = None
             for cmCur in scn.cmlist:
-                if "Rebrickr_" + cmCur.source_name + "_bricks_combined" in obj.name:
+                n = cmCur.source_name
+                if "Rebrickr_%(n)s_bricks_combined" % locals() in obj.name:
                     cm = cmCur
+                    break
+                # print(obj.name)
+                # print("Rebrickr_%(n)s_brick_" % locals())
+                elif "Rebrickr_%(n)s_brick_" % locals() in obj.name:
+                    bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks" % locals())
+                    # print(bGroup)
+                    # print(len(bGroup.objects))
+                    if bGroup is not None and len(bGroup.objects) < 2:
+                        cm = cmCur
+                        break
             if cm is not None:
                 RebrickrDelete.runFullDelete(cm=cm)
                 bpy.context.scene.objects.active.select = False
@@ -75,7 +87,8 @@ class delete_override(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object is not None
+        # return context.active_object is not None
+        return True
 
     def runDelete(self, context):
         protected = deleteUnprotected(context)

@@ -508,6 +508,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     if mat is not None:
                         brick.data.materials.append(mat)
                 scn.objects.link(brick)
+                brick.isBrick = True
     else:
         m = combineMeshes(allBrickMeshes)
         if frameNum:
