@@ -221,13 +221,22 @@ def setSourceTransform(source, obj=None, objParent=None, last_origin_obj=None, s
     source.rotation_euler.rotate(objParentRot)
     source.scale = (source.scale[0] * objScale[0] * objParentScale[0], source.scale[1] * objScale[1] * objParentScale[1], source.scale[2] * objScale[2] * objParentScale[2])
 
-def VectorRound(tup, dec):
+def VectorRound(vec, dec, roundType="ROUND"):
     lst = []
-    for i in range(len(tup)):
-        lst.append(round(tup[i], dec))
+    for i in range(len(vec)):
+        if roundType == "ROUND":
+            val = round(vec[i], dec)
+        else:
+            val = vec[i] * 10**dec
+            if roundType == "FLOOR":
+                val = math.floor(val)
+            elif roundType in ["CEILING", "CEIL"]:
+                val = math.ceil(val)
+            val = val / 10**dec
+        lst.append(val)
     return Vector(lst)
 
-def rayObjIntersections(point,direction,edgeLen,ob):
+def rayObjIntersections(point,direction,miniDist,edgeLen,ob):
     """ returns True if ray intersects obj """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -243,8 +252,6 @@ def rayObjIntersections(point,direction,edgeLen,ob):
     firstDirection0 = False
     firstDirection1 = False
     edgeLen2 = edgeLen*1.00001
-    miniDirection = VectorRound(direction*0.00001, 5)
-    miniDoubleCheckDirection = VectorRound(doubleCheckDirection*0.00001, 5)
     # run initial intersection check
     while True:
         _,location,normal,index = ob.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
@@ -261,7 +268,8 @@ def rayObjIntersections(point,direction,edgeLen,ob):
         if intersections == 1:
             nextIntersection = location.copy()
         intersections += 1
-        orig = location + miniDirection
+        location = VectorRound(location, 5, roundType="CEILING")
+        orig = location + miniDist
     if intersections%2 == 0 and (not cm.useNormals or firstDirection0 <= 0):
         outside = True
     else:
@@ -274,14 +282,15 @@ def rayObjIntersections(point,direction,edgeLen,ob):
             if count == 0:
                 firstDirection1 = doubleCheckDirection.dot(normal)
             count += 1
-            orig = location + miniDoubleCheckDirection
+            location = VectorRound(location, 5, roundType="FLOOR")
+            orig = location - miniDist
         if count%2 == 0 and (not cm.useNormals or firstDirection1 <= 0):
             outside = True
 
     # return helpful information
     return not outside, edgeIntersects, intersections, nextIntersection, index, firstIntersection, lastIntersection
 
-def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x1, y1, z1, inside=None):
+def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x1, y1, z1, miniDist, inside=None):
     orig = coordMatrix[x0][y0][z0]
     try:
         rayEnd = coordMatrix[x1][y1][z1]
@@ -291,7 +300,7 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, bric
     ray = rayEnd - orig
     edgeLen = ray.length
 
-    origInside, edgeIntersects, intersections, nextIntersection, index, firstIntersection, lastIntersection = rayObjIntersections(orig,ray,edgeLen,source)
+    origInside, edgeIntersects, intersections, nextIntersection, index, firstIntersection, lastIntersection = rayObjIntersections(orig,ray,miniDist,edgeLen,source)
 
     if origInside:
         if brickFreqMatrix[x0][y0][z0] == 0:
@@ -339,6 +348,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     ct = time.time()
     breakNextTime = True
     if "x" in axes:
+        miniDist = (coordMatrix[1][0][0] - coordMatrix[0][0][0])*0.00001
         for z in range(len(coordMatrix[0][0])):
             # print status to terminal
             if not scn.printTimes:
@@ -352,15 +362,18 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                     if x != 0:
                         if not breakNextTime and nextIntersection and nextIntersection[0] < coordMatrix[x][y][z][0]:
                             continue
-                    intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z)
+                    intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z, miniDist)
                     if intersections == 0:
                         break
+    else:
+        percent0 = 0
     # print status to terminal
     if scn.printTimes:
         stopWatch("X Axis", time.time()-ct)
         ct = time.time()
 
     if "y" in axes:
+        miniDist = (coordMatrix[0][1][0] - coordMatrix[0][0][0])*0.00001
         for z in range(len(coordMatrix[0][0])):
             # print status to terminal
             if not scn.printTimes:
@@ -374,15 +387,18 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                     if y != 0:
                         if not breakNextTime and nextIntersection and nextIntersection[1] < coordMatrix[x][y][z][1]:
                             continue
-                    intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z)
+                    intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z, miniDist)
                     if intersections == 0:
                         break
+    else:
+        percent1 = percent0
     # print status to terminal
     if scn.printTimes:
         stopWatch("Y Axis", time.time()-ct)
         ct = time.time()
 
     if "z" in axes:
+        miniDist = (coordMatrix[0][0][1] - coordMatrix[0][0][0])*0.00001
         for x in range(len(coordMatrix)):
             # print status to terminal
             if not scn.printTimes:
@@ -396,7 +412,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                     if z != 0:
                         if not breakNextTime and nextIntersection and nextIntersection[2] < coordMatrix[x][y][z][2]:
                             continue
-                    intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1)
+                    intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
                     if intersections == 0:
                         break
     # print status to terminal

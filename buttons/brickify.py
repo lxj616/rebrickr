@@ -470,7 +470,13 @@ class RebrickrBrickify(bpy.types.Operator):
                 self.createdGroups.append(group_name)
             except KeyboardInterrupt:
                 self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
-                break
+                if curFrame != cm.startFrame:
+                    wm.progress_end()
+                    cm.lastStartFrame = cm.startFrame
+                    cm.lastStopFrame = cm.stopFrame
+                    scn.frame_set(sceneCurFrame)
+                    cm.animated = True
+                return
             for obj in bpy.data.groups[group_name].objects:
                 if (curFrame == cm.startFrame and sceneCurFrame < cm.startFrame) or curFrame == sceneCurFrame or (curFrame == cm.stopFrame and sceneCurFrame > cm.stopFrame):
                     selectFromGroup = bpy.data.groups[group_name]
