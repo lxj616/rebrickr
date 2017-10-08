@@ -57,45 +57,51 @@ class RebrickrApplyMaterial(bpy.types.Operator):
         elif cm.materialType == "Random":
             self.action = "RANDOM"
 
+    @timed_call('Total Time Elapsed')
+    def runApplyMaterial(self, context):
+        self.setAction()
+
+        # set up variables
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+        if cm.modelCreated:
+            bricks = list(bpy.data.groups[Rebrickr_bricks_gn].objects)
+        elif cm.animated:
+            bricks = []
+            for cf in range(cm.lastStartFrame, cm.lastStopFrame+1):
+                gn = "Rebrickr_%(n)s_bricks_frame_%(cf)s" % locals()
+                bGroup = bpy.data.groups.get(gn)
+                for obj in bGroup.objects:
+                    bricks.append(obj)
+        if self.action == "CUSTOM":
+            matName = cm.materialName
+        elif self.action == "INTERNAL":
+            matName = cm.internalMatName
+        mat = bpy.data.materials.get(matName)
+        if mat is None:
+            self.report({"WARNING"}, "Specified material doesn't exist")
+
+        for brick in bricks:
+            # if materials exist, remove them
+            if brick.data.materials:
+                if self.action == "CUSTOM":
+                    brick.data.materials.clear(1)
+                    # Assign it to object
+                    brick.data.materials.append(mat)
+                elif self.action == "INTERNAL":
+                    brick.data.materials.pop(0)
+                    # Assign it to object
+                    brick.data.materials.append(mat)
+                    for i in range(len(brick.data.materials)-1):
+                        brick.data.materials.append(brick.data.materials.pop(0))
+
+        cm.materialIsDirty = False
+
     def execute(self, context):
         try:
-            # get start time
-            startTime = time.time()
-
-            self.setAction()
-
-            # set up variables
-            scn = bpy.context.scene
-            cm = scn.cmlist[scn.cmlist_index]
-            n = cm.source_name
-            Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-            bricks = list(bpy.data.groups[Rebrickr_bricks_gn].objects)
-            if self.action == "CUSTOM":
-                matName = cm.materialName
-            elif self.action == "INTERNAL":
-                matName = cm.internalMatName
-            mat = bpy.data.materials.get(matName)
-            if mat is None:
-                self.report({"WARNING"}, "Specified material doesn't exist")
-
-            for brick in bricks:
-                # if materials exist, remove them
-                if brick.data.materials:
-                    if self.action == "CUSTOM":
-                        brick.data.materials.clear(1)
-                        # Assign it to object
-                        brick.data.materials.append(mat)
-                    elif self.action == "INTERNAL":
-                        brick.data.materials.pop(0)
-                        # Assign it to object
-                        brick.data.materials.append(mat)
-                        for i in range(len(brick.data.materials)-1):
-                            brick.data.materials.append(brick.data.materials.pop(0))
-
-            cm.materialIsDirty = False
-
-            # STOPWATCH CHECK
-            stopWatch("Total Time Elapsed", time.time()-startTime)
+            self.runApplyMaterial(context)
         except:
             self.handle_exception()
 
@@ -104,7 +110,6 @@ class RebrickrApplyMaterial(bpy.types.Operator):
     def handle_exception(self):
         errormsg = print_exception('Rebrickr_log')
         # if max number of exceptions occur within threshold of time, abort!
-        curtime = time.time()
         print('\n'*5)
         print('-'*100)
         print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)")

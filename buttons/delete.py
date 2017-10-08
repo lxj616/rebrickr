@@ -275,7 +275,6 @@ class RebrickrDelete(bpy.types.Operator):
     def handle_exception(self):
         errormsg = print_exception('Rebrickr_log')
         # if max number of exceptions occur within threshold of time, abort!
-        curtime = time.time()
         print('\n'*5)
         print('-'*100)
         print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)")

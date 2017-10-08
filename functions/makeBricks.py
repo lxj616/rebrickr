@@ -29,13 +29,17 @@ import random
 from mathutils import Vector, Matrix
 from ..classes.Brick import Bricks
 from ..functions import *
+from ..functions.wrappers import *
 from .__init__ import bounds
 
 def brickAvail(sourceBrick, brick):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
+    n = cm.source_name
+    Rebrickr_internal_mn = "Rebrickr_%(n)s_internal" % locals()
     if brick != None:
-        if brick["name"] != "DNE" and not brick["connected"] and (sourceBrick["matName"] == brick["matName"] or cm.mergeInconsistentMats):
+        # This if statement ensures brick is present, brick isn't connected already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal)
+        if brick["name"] != "DNE" and not brick["connected"] and (sourceBrick["matName"] == brick["matName"] or sourceBrick["matName"] == "" or brick["matName"] == "" or cm.mergeInconsistentMats):
             return True
     return False
 
@@ -104,12 +108,12 @@ def prepareLogoAndGetDetails(logo):
         logo_details = None
     return logo_details, logo
 
+@timed_call('Time Elapsed')
 def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customData=None, customObj_details=None, group_name=None, frameNum=None, cursorStatus=False):
     # set up variables
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     n = cm.source_name
-    ct = time.time()
     z1,z2,z3,z4,z5,z6,z7,z8,z9,z10,z11,z12,z13,z14,z15,z16,z17,z18,z19,z20,z21,z22,z23 = (False,)*23
     if cm.brickType in ["Bricks", 'Custom']:
         testZ = False
@@ -156,14 +160,16 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         wm = bpy.context.window_manager
         wm.progress_begin(0, 100)
 
+    mats = []
     # set up internal material for this object
-    internalMat = bpy.data.materials.get(cm.internalMatName)
-    if internalMat is None:
-        internalMat = bpy.data.materials.get("Rebrickr_%(n)s_internal" % locals())
+    if cm.materialType == "Use Source Materials" and cm.matShellDepth < cm.shellThickness:
+        internalMat = bpy.data.materials.get(cm.internalMatName)
         if internalMat is None:
-            internalMat = bpy.data.materials.new("Rebrickr_%(n)s_internal" % locals())
-    # initialize supportBrickDs, and mats with first material being the internal material
-    mats = [internalMat]
+            internalMat = bpy.data.materials.get("Rebrickr_%(n)s_internal" % locals())
+            if internalMat is None:
+                internalMat = bpy.data.materials.new("Rebrickr_%(n)s_internal" % locals())
+        mats.append(internalMat)
+    # initialize supportBrickDs
     supportBrickDs = []
     update_progress("Building", 0.0)
     for i,key in enumerate(keys):
@@ -541,5 +547,3 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         # protect allBricksObj from being deleted
         allBricksObj.isBrickifiedObject = True
     update_progress("Linking to Scene", 1)
-
-    stopWatch("Time Elapsed", time.time()-ct)

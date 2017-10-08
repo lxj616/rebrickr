@@ -31,7 +31,9 @@ import bpy
 from bpy.props import IntProperty, CollectionProperty #, StringProperty
 from bpy.types import Panel, UIList
 
-def matchProperties(cmNew, cmOld):
+def matchProperties(cmNew, cmOld, bh=False):
+    if bh:
+        cmNew.brickHeight = cmOld.brickHeight
     cmNew.shellThickness = cmOld.shellThickness
     cmNew.studDetail = cmOld.studDetail
     cmNew.logoDetail = cmOld.logoDetail
@@ -200,6 +202,30 @@ class Rebrickr_UL_items(UIList):
     def invoke(self, context, event):
         pass
 
+# copy settings from current index to all other indices (exclude height)
+class Rebrickr_Uilist_copySettingsToOthersExcludeHeight(bpy.types.Operator):
+    bl_idname = "cmlist.copy_to_others_exclude_height"
+    bl_label = "Copy Settings to Other Brick Models (excluding Brick Height)"
+    bl_description = "Copies the settings (excluding 'Brick Height' setting) from the current model to all other Brick Models"
+
+    @classmethod
+    def poll(cls, context):
+        """ ensures operator can execute (if not, returns false) """
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        if len(scn.cmlist) == 1:
+            return False
+        return True
+
+    def execute(self, context):
+        scn = bpy.context.scene
+        cm0 = scn.cmlist[scn.cmlist_index]
+        for cm1 in scn.cmlist:
+            if cm0 != cm1:
+                matchProperties(cm1, cm0)
+        return{'FINISHED'}
+
 # copy settings from current index to all other indices
 class Rebrickr_Uilist_copySettingsToOthers(bpy.types.Operator):
     bl_idname = "cmlist.copy_to_others"
@@ -221,7 +247,7 @@ class Rebrickr_Uilist_copySettingsToOthers(bpy.types.Operator):
         cm0 = scn.cmlist[scn.cmlist_index]
         for cm1 in scn.cmlist:
             if cm0 != cm1:
-                matchProperties(cm1, cm0)
+                matchProperties(cm1, cm0, bh=True)
         return{'FINISHED'}
 
 # copy settings from current index to memory
@@ -429,6 +455,20 @@ def updateStartAndStopFrames(self, context):
         cm.startFrame = scn.frame_start
         cm.stopFrame = scn.frame_end
 
+def updateParentExposure(self, context):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    if cm.modelCreated or cm.animated:
+        if cm.exposeParent:
+            parentOb = bpy.data.objects.get(cm.parent_name)
+            if parentOb is not None:
+                safeLink(parentOb, unhide=True, protect=True)
+                select(parentOb, active=parentOb)
+        else:
+            parentOb = bpy.data.objects.get(cm.parent_name)
+            if parentOb is not None:
+                safeUnlink(parentOb)
+
 def dirtyAnim(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -470,6 +510,11 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         description="Name of the source object to Brickify",
         default="",
         update=setNameIfEmpty)
+
+    parent_name = StringProperty(
+        name="Parent Object Name",
+        description="Name of the parent object for the brickified model",
+        default="")
 
     shellThickness = IntProperty(
         name="Shell Thickness",
@@ -753,6 +798,21 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         description="Run additional calculations to verify exposure of studs and underside detailing (WARNING: May compromise 'Shell Thickness' functionality if source is not single closed mesh)",
         default=False,
         update=dirtyBuild)
+    insidenessRayCastDir = EnumProperty(
+        name="Insideness Ray Cast Direction",
+        description="Choose which axis/axes to cast rays for calculation of insideness",
+        items=[("High Efficiency", "High Efficiency", "Uses single ray already casted for brickFreqMatrix calculations"),
+              ("X", "X", "Cast rays only along X axis for insideness calculations"),
+              ("Y", "Y", "Cast rays only along Y axis for insideness calculations"),
+              ("Z", "Z", "Cast rays only along Z axis for insideness calculations"),
+              ("XYZ", "XYZ", "Cast rays in all axis directions for insideness calculation (uses result consistent for at least 2 of the 3 rays)")],
+        update=dirtyBuild,
+        default="High Efficiency")
+    castDoubleCheckRays = BoolProperty(
+        name="Cast Both Directions",
+        description="Cast rays in both positive and negative directions on the axes specified for insideness calculation (Favors outside; uncheck to cast only in positive direction)",
+        default=True,
+        update=dirtyBuild)
 
     objVerts = IntProperty(default=0)
     objPolys = IntProperty(default=0)
@@ -775,6 +835,11 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Apply to source",
         description="Apply transformations to source object when Brick Model is deleted",
         default=True)
+    exposeParent = BoolProperty(
+        name="Expose parent object",
+        description="Expose the parent object for this model and make it active for simple transformations",
+        update=updateParentExposure,
+        default=False)
 
     # Bevel Settings
     lastBevelWidth = FloatProperty()

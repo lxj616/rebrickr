@@ -37,7 +37,6 @@ class RebrickrStoragePanel(Panel):
     bl_idname      = "VIEW3D_PT_tools_Rebrickr_storage_actions"
     # bl_context     = "objectmode"
     bl_category    = "Rebrickr"
-    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
     def poll(self, context):
@@ -106,7 +105,6 @@ class BrickModelsPanel(Panel):
     bl_idname      = "VIEW3D_PT_tools_Rebrickr_brick_models"
     bl_context     = "objectmode"
     bl_category    = "Rebrickr"
-    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
     def poll(self, context):
@@ -237,7 +235,6 @@ class AnimationPanel(Panel):
     bl_context     = "objectmode"
     bl_category    = "Rebrickr"
     bl_options     = {"DEFAULT_CLOSED"}
-    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
     def poll(self, context):
@@ -324,7 +321,6 @@ class ModelTransformPanel(Panel):
     bl_idname      = "VIEW3D_PT_tools_Rebrickr_model_transform"
     bl_context     = "objectmode"
     bl_category    = "Rebrickr"
-    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
     def poll(self, context):
@@ -352,6 +348,9 @@ class ModelTransformPanel(Panel):
             return
 
         row.prop(cm, "applyToSourceObject")
+        if cm.animated or (cm.splitModel and cm.modelCreated):
+            row = col.row(align=True)
+            row.prop(cm, "exposeParent")
         row = col.row(align=True)
         parent = bpy.data.objects['Rebrickr_%(n)s_parent' % locals()]
         row = layout.row()
@@ -372,7 +371,6 @@ class ModelSettingsPanel(Panel):
     bl_idname      = "VIEW3D_PT_tools_Rebrickr_model_settings"
     bl_context     = "objectmode"
     bl_category    = "Rebrickr"
-    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
     def poll(self, context):
@@ -479,10 +477,6 @@ class ModelSettingsPanel(Panel):
             row.label("(Source is NOT single closed mesh)")
             # row = col.row(align=True)
             # row.operator("scene.make_closed_mesh", text="Make Single Closed Mesh", icon="EDIT")
-        row = col.row(align=True)
-        row.prop(cm, "useNormals")
-        row = col.row(align=True)
-        row.prop(cm, "verifyExposure")
 
 class BrickTypesPanel(Panel):
     bl_space_type  = "VIEW_3D"
@@ -492,7 +486,6 @@ class BrickTypesPanel(Panel):
     bl_context     = "objectmode"
     bl_category    = "Rebrickr"
     bl_options     = {"DEFAULT_CLOSED"}
-    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
     def poll(self, context):
@@ -567,7 +560,7 @@ class MaterialsPanel(Panel):
     bl_context     = "objectmode"
     bl_category    = "Rebrickr"
     bl_options     = {"DEFAULT_CLOSED"}
-    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
+    # COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
     def poll(self, context):
@@ -604,7 +597,7 @@ class MaterialsPanel(Panel):
                             row = col.row(align=True)
                             row.operator("scene.append_brick_materials", text="Import Brick Materials", icon="IMPORT")
                             break
-            if cm.modelCreated:
+            if cm.modelCreated or cm.animated:
                 col = layout.column(align=True)
                 row = col.row(align=True)
                 row.operator("scene.rebrickr_apply_material", icon="FILE_TICK")
@@ -683,7 +676,6 @@ class DetailingPanel(Panel):
     bl_context     = "objectmode"
     bl_category    = "Rebrickr"
     bl_options     = {"DEFAULT_CLOSED"}
-    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
     def poll(self, context):
@@ -744,7 +736,6 @@ class SupportsPanel(Panel):
     bl_context     = "objectmode"
     bl_category    = "Rebrickr"
     bl_options     = {"DEFAULT_CLOSED"}
-    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
     def poll(self, context):
@@ -789,7 +780,6 @@ class BevelPanel(Panel):
     bl_idname      = "VIEW3D_PT_tools_Rebrickr_bevel"
     bl_context     = "objectmode"
     bl_category    = "Rebrickr"
-    COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
     @classmethod
     def poll(self, context):
@@ -829,3 +819,41 @@ class BevelPanel(Panel):
             row.operator("scene.rebrickr_bevel", text="Remove Bevel", icon="CANCEL")
         except:
             row.operator("scene.rebrickr_bevel", text="Bevel bricks", icon="MOD_BEVEL")
+
+class AdvancedPanel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "Advanced"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_advanced"
+    bl_context     = "objectmode"
+    bl_category    = "Rebrickr"
+    bl_options     = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        if bversion() < '002.078.00':
+            return False
+        cm = scn.cmlist[scn.cmlist_index]
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop(cm, "useNormals")
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.label("Insideness:")
+        row = col.row(align=True)
+        row.prop(cm, "insidenessRayCastDir", text="")
+        row = col.row(align=True)
+        row.prop(cm, "castDoubleCheckRays")
+        row = col.row(align=True)
+        row.prop(cm, "verifyExposure")

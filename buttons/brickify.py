@@ -363,6 +363,7 @@ class RebrickrBrickify(bpy.types.Operator):
         if parent0 is None:
             parent0 = self.getParent(Rebrickr_parent_on, self.sourceOrig.location.to_tuple())
             pGroup.objects.link(parent0)
+            cm.parent_name = parent0.name
         self.createdObjects.append(parent0.name)
 
         # update refLogo
@@ -455,7 +456,8 @@ class RebrickrBrickify(bpy.types.Operator):
             pGroup = bpy.data.groups[Rebrickr_parent_on] # redefine pGroup since it was removed
             parent = bpy.data.objects.get(Rebrickr_parent_on + "_frame_" + str(curFrame))
             if parent is None:
-                parent = bpy.data.objects.new(Rebrickr_parent_on + "_frame_" + str(curFrame), source.data)
+                m = bpy.data.meshes.new(Rebrickr_parent_on + "_frame_" + str(curFrame) + "_mesh")
+                parent = bpy.data.objects.new(Rebrickr_parent_on + "_frame_" + str(curFrame), m)
                 parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
                 parent.parent = parent0
                 pGroup.objects.link(parent)
@@ -473,7 +475,7 @@ class RebrickrBrickify(bpy.types.Operator):
                 if curFrame != cm.startFrame:
                     wm.progress_end()
                     cm.lastStartFrame = cm.startFrame
-                    cm.lastStopFrame = cm.stopFrame
+                    cm.lastStopFrame = curFrame
                     scn.frame_set(sceneCurFrame)
                     cm.animated = True
                 return
@@ -486,6 +488,8 @@ class RebrickrBrickify(bpy.types.Operator):
                 obj.lock_location = [True, True, True]
                 obj.lock_rotation = [True, True, True]
                 obj.lock_scale    = [True, True, True]
+                # match brick layers to source layers
+                obj.layers = self.sourceOrig.layers
 
             wm.progress_update(curFrame-cm.startFrame)
             print("completed frame " + str(curFrame))
@@ -642,6 +646,7 @@ class RebrickrBrickify(bpy.types.Operator):
         parentLoc = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
         if parent is None:
             parent = self.getParent(Rebrickr_parent_on, parentLoc)
+            cm.parent_name = parent.name
             pGroup.objects.link(parent)
         self.createdObjects.append(parent.name)
 
@@ -673,8 +678,8 @@ class RebrickrBrickify(bpy.types.Operator):
             elif cm.sourceIsDirty:
                 pass
             # if not split model, select the bricks object
+            obj = bGroup.objects[0]
             if not cm.splitModel:
-                obj = bGroup.objects[0]
                 select(obj, active=obj)
                 # if the model contains armature, lock the location, rotation, and scale
                 if cm.armature:
@@ -683,9 +688,10 @@ class RebrickrBrickify(bpy.types.Operator):
                     obj.lock_rotation = [True, True, True]
                     obj.lock_scale    = [True, True, True]
             else:
-                obj = bGroup.objects[0]
                 select(obj, active=obj, only=False)
                 obj.select = False
+            # match brick layers to source layers
+            obj.layers = self.sourceOrig.layers
             # update location of bricks in case source mesh has been edited
             if updateParentLoc:
                 l = cm.lastSourceMid.split(",")
@@ -726,62 +732,60 @@ class RebrickrBrickify(bpy.types.Operator):
         if origFrame is not None:
             scn.frame_set(origFrame)
 
+    @timed_call('Total Time Elapsed')
+    def runBrickify(self, context):
+        # set up variables
+        scn = context.scene
+        scn.Rebrickr_runningOperation = True
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        previously_animated = cm.animated
+        previously_model_created = cm.modelCreated
+        self.createdObjects = []
+        self.createdGroups = []
+        self.sourceOrig = None
+        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+
+        # set self.action
+        self.setAction(scn, cm)
+
+        # get source and initialize values
+        source = self.getObjectToBrickify()
+        source["old_parent"] = ""
+
+        if not self.isValid(source, Rebrickr_bricks_gn):
+            return {"CANCELLED"}
+
+        if self.action not in ["ANIMATE", "UPDATE_ANIM"]:
+            self.brickifyModel()
+        else:
+            self.brickifyAnimation()
+            cm.animIsDirty = False
+
+        if self.action in ["CREATE", "ANIMATE"] or cm.sourceIsDirty:
+            source.name = cm.source_name + " (DO NOT RENAME)"
+
+        # # set final variables
+        cm.lastLogoResolution = cm.logoResolution
+        cm.lastLogoDetail = cm.logoDetail
+        cm.lastSplitModel = cm.splitModel
+        cm.lastBrickType = cm.brickType
+        cm.materialIsDirty = False
+        cm.modelIsDirty = False
+        cm.buildIsDirty = False
+        cm.sourceIsDirty = False
+        cm.bricksAreDirty = False
+        scn.Rebrickr_runningOperation = False
+
+        # unlink source from scene and link to safe scene
+        if source.name in scn.objects.keys():
+            safeUnlink(source, hide=False)
+
+        disableRelationshipLines()
+
     def execute(self, context):
         try:
-            # get start time
-            startTime = time.time()
-
-            # set up variables
-            scn = context.scene
-            scn.Rebrickr_runningOperation = True
-            cm = scn.cmlist[scn.cmlist_index]
-            n = cm.source_name
-            previously_animated = cm.animated
-            previously_model_created = cm.modelCreated
-            self.createdObjects = []
-            self.createdGroups = []
-            self.sourceOrig = None
-            Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-
-            # set self.action
-            self.setAction(scn, cm)
-
-            # get source and initialize values
-            source = self.getObjectToBrickify()
-            source["old_parent"] = ""
-
-            if not self.isValid(source, Rebrickr_bricks_gn):
-                return {"CANCELLED"}
-
-            if self.action not in ["ANIMATE", "UPDATE_ANIM"]:
-                self.brickifyModel()
-            else:
-                self.brickifyAnimation()
-                cm.animIsDirty = False
-
-            if self.action in ["CREATE", "ANIMATE"] or cm.sourceIsDirty:
-                source.name = cm.source_name + " (DO NOT RENAME)"
-
-            # # set final variables
-            cm.lastLogoResolution = cm.logoResolution
-            cm.lastLogoDetail = cm.logoDetail
-            cm.lastSplitModel = cm.splitModel
-            cm.lastBrickType = cm.brickType
-            cm.materialIsDirty = False
-            cm.modelIsDirty = False
-            cm.buildIsDirty = False
-            cm.sourceIsDirty = False
-            cm.bricksAreDirty = False
-            scn.Rebrickr_runningOperation = False
-
-            # unlink source from scene and link to safe scene
-            if source.name in scn.objects.keys():
-                safeUnlink(source, hide=False)
-
-            disableRelationshipLines()
-
-            # STOPWATCH CHECK
-            stopWatch("Total Time Elapsed", time.time()-startTime)
+            self.runBrickify(context)
         except KeyboardInterrupt:
             if self.action in ["CREATE", "ANIMATE"]:
                 for n in self.createdObjects:
@@ -807,7 +811,6 @@ class RebrickrBrickify(bpy.types.Operator):
     def handle_exception(self):
         errormsg = print_exception('Rebrickr_log')
         # if max number of exceptions occur within threshold of time, abort!
-        curtime = time.time()
         print('\n'*5)
         print('-'*100)
         print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)")

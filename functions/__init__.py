@@ -29,6 +29,7 @@ from .common_functions import *
 from .generate_lattice import generateLattice
 from .checkWaterTight import isOneMesh
 from .makeBricks import *
+from .wrappers import *
 from ..classes.Brick import Bricks
 from mathutils import Matrix, Vector, geometry, Euler
 from mathutils.bvhtree import BVHTree
@@ -39,19 +40,19 @@ def getSafeScn():
     if safeScn == None:
         safeScn = bpy.data.scenes.new("Rebrickr_storage (DO NOT RENAME)")
     return safeScn
-def safeUnlink(obj, hide=True):
+def safeUnlink(obj, hide=True, protect=True):
     scn = bpy.context.scene
     safeScn = getSafeScn()
     scn.objects.unlink(obj)
     safeScn.objects.link(obj)
-    obj.protected = True
+    obj.protected = protect
     if hide:
         obj.hide = True
-def safeLink(obj, unhide=False):
+def safeLink(obj, unhide=False, protect=False):
     scn = bpy.context.scene
     safeScn = getSafeScn()
     scn.objects.link(obj)
-    obj.protected = False
+    obj.protected = protect
     if unhide:
         obj.hide = False
     try:
@@ -246,12 +247,18 @@ def rayObjIntersections(point,direction,miniDist,edgeLen,ob):
     firstIntersection = None
     lastIntersection = None
     edgeIntersects = False
-    outside = False
+    outsideL = []
     orig = point
-    doubleCheckDirection = -direction
     firstDirection0 = False
     firstDirection1 = False
     edgeLen2 = edgeLen*1.00001
+    # set axis of direction
+    if direction[0] > 0:
+        axes = "XYZ"
+    elif direction[1] > 0:
+        axes = "YZX"
+    else:
+        axes = "ZXY"
     # run initial intersection check
     while True:
         _,location,normal,index = ob.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
@@ -270,22 +277,67 @@ def rayObjIntersections(point,direction,miniDist,edgeLen,ob):
         intersections += 1
         location = VectorRound(location, 5, roundType="CEILING")
         orig = location + miniDist
-    if intersections%2 == 0 and (not cm.useNormals or firstDirection0 <= 0):
-        outside = True
-    else:
-        # double check vert is inside mesh
-        count = 0
-        orig = point
-        while True:
-            _,location,normal,index = ob.ray_cast(orig,doubleCheckDirection)#distance=edgeLen*1.00000000001)
-            if index == -1: break
-            if count == 0:
-                firstDirection1 = doubleCheckDirection.dot(normal)
-            count += 1
-            location = VectorRound(location, 5, roundType="FLOOR")
-            orig = location - miniDist
-        if count%2 == 0 and (not cm.useNormals or firstDirection1 <= 0):
-            outside = True
+    if cm.insidenessRayCastDir == "High Efficiency" or axes[0] in cm.insidenessRayCastDir:
+        outsideL.append(0)
+        if intersections%2 == 0 and (not cm.useNormals or firstDirection0 <= 0):
+            outsideL[0] = 1
+        elif cm.castDoubleCheckRays:
+            # double check vert is inside mesh
+            count = 0
+            orig = point
+            while True:
+                _,location,normal,index = ob.ray_cast(orig,-direction)#distance=edgeLen*1.00000000001)
+                if index == -1: break
+                if count == 0:
+                    firstDirection1 = (-direction).dot(normal)
+                count += 1
+                location = VectorRound(location, 5, roundType="FLOOR")
+                orig = location - miniDist
+            if count%2 == 0 and (not cm.useNormals or firstDirection1 <= 0):
+                outsideL[0] = 1
+
+    # run more checks if verifyExposure is True
+    if cm.insidenessRayCastDir != "High Efficiency":
+        dir0 = Vector((direction[2], direction[0], direction[1]))
+        dir1 = Vector((direction[1], direction[2], direction[0]))
+        miniDist0 = Vector((miniDist[2], miniDist[0], miniDist[1]))
+        miniDist1 = Vector((miniDist[1], miniDist[2], miniDist[0]))
+        dirs = [[dir0, miniDist0], [dir1, miniDist1]]
+        for i in range(2):
+            if axes[i+1] in cm.insidenessRayCastDir:
+                outsideL.append(0)
+                direction = dirs[i][0]
+                miniDist = dirs[i][1]
+                while True:
+                    _,location,normal,i = ob.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
+                    if i == -1: break
+                    if intersections == 0:
+                        firstDirection0 = direction.dot(normal)
+                    intersections += 1
+                    location = VectorRound(location, 5, roundType="CEILING")
+                    orig = location + miniDist
+                if intersections%2 == 0 and (not cm.useNormals or firstDirection0 <= 0):
+                    outsideL[i] = 1
+                elif cm.castDoubleCheckRays:
+                    # double check vert is inside mesh
+                    count = 0
+                    orig = point
+                    while True:
+                        _,location,normal,i = ob.ray_cast(orig,-direction)#distance=edgeLen*1.00000000001)
+                        if i == -1: break
+                        if count == 0:
+                            firstDirection1 = (-direction).dot(normal)
+                        count += 1
+                        location = VectorRound(location, 5, roundType="FLOOR")
+                        orig = location - miniDist
+                    if count%2 == 0 and (not cm.useNormals or firstDirection1 <= 0):
+                        outsideL[i] = 1
+
+    # find average of outsideL and set outside accordingly (<0.5 is False, >=0.5 is True)
+    total = 0
+    for v in outsideL:
+        total += v
+    outside = total/len(outsideL) >= 0.5
 
     # return helpful information
     return not outside, edgeIntersects, intersections, nextIntersection, index, firstIntersection, lastIntersection
@@ -425,9 +477,9 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
                 # if current location is inside (-1) and adjacent location is out of bounds, current location is shell (2)
-                if ((((z == len(coordMatrix[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0) or (z == 0 or brickFreqMatrix[x][y][z-1] == 0)) and ("z" not in axes or cm.verifyExposure)) or
-                    (((y == len(coordMatrix[0])-1 or brickFreqMatrix[x][y+1][z] == 0) or (y == 0 or brickFreqMatrix[x][y-1][z] == 0)) and ("y" not in axes or cm.verifyExposure)) or
-                    (((x == len(coordMatrix)-1 or brickFreqMatrix[x+1][y][z] == 0) or (x == 0 or brickFreqMatrix[x-1][y][z] == 0))) and ("x" not in axes or cm.verifyExposure)):
+                if ((((z == len(coordMatrix[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0) or (z == 0 or brickFreqMatrix[x][y][z-1] == 0)) and ("z" not in axes)) or# or cm.verifyExposure)) or
+                    (((y == len(coordMatrix[0])-1 or brickFreqMatrix[x][y+1][z] == 0) or (y == 0 or brickFreqMatrix[x][y-1][z] == 0)) and ("y" not in axes)) or# or cm.verifyExposure)) or
+                    (((x == len(coordMatrix)-1 or brickFreqMatrix[x+1][y][z] == 0) or (x == 0 or brickFreqMatrix[x-1][y][z] == 0))) and ("x" not in axes)):# or cm.verifyExposure)):
                     if brickFreqMatrix[x][y][z] == -1:
                         brickFreqMatrix[x][y][z] = 2
                         # TODO: set faceIdxMatrix value to nearest shell value using some sort of built in nearest poly to point function
@@ -570,9 +622,9 @@ def uniquify3DMatrix(matrix):
             matrix[i][j] = uniquify(matrix[i][j], lambda x: (round(x[0], 2), round(x[1], 2), round(x[2], 2)))
     return matrix
 
+@timed_call('Time Elapsed')
 def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     """ Make bricks """
-    ct = time.time()
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     # get lattice bmesh
@@ -640,9 +692,6 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                         "nearestFaceIdx":None,
                         "matName":None,
                         "connected":False}
-
-
-    stopWatch("Time Elapsed", time.time()-ct)
 
     # return list of created Brick objects
     return brickDict
