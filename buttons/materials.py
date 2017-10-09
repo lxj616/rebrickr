@@ -90,7 +90,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
         for i,brick in enumerate(bricks):
             lastMatSlots = list(brick.material_slots.keys())
 
-            if (cm.splitModel or len(lastMatSlots) == 0) and len(brick_mats) > 0:
+            if (cm.lastSplitModel or len(lastMatSlots) == 0) and len(brick_mats) > 0:
                 # clear existing materials
                 brick.data.materials.clear(1)
                 # iterate seed and set random index
@@ -106,8 +106,6 @@ class RebrickrApplyMaterial(bpy.types.Operator):
 
             if len(lastMatSlots) == len(brick_mats):
                 brick_mats_dup = brick_mats.copy()
-                # clear existing materials
-                brick.data.materials.clear(1)
                 for i in range(len(lastMatSlots)):
                     # iterate seed and set random index
                     randS0.seed(cm.randomMatSeed + i)
@@ -118,7 +116,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
                     # Assign random material to object
                     matName = brick_mats_dup.pop(randIdx)
                     mat = bpy.data.materials.get(matName)
-                    brick.data.materials.append(mat)
+                    brick.data.materials[i] = mat
 
     @timed_call('Total Time Elapsed')
     def runApplyMaterial(self, context):
@@ -156,6 +154,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
                         for i in range(len(brick.data.materials)-1):
                             brick.data.materials.append(brick.data.materials.pop(0))
 
+        redraw_areas(["VIEW_3D", "PROPERTIES", "NODE_EDITOR"])
         cm.materialIsDirty = False
 
     def execute(self, context):

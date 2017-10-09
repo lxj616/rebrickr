@@ -633,7 +633,7 @@ class MaterialsPanel(Panel):
                     row = col.row(align=True)
                     row.prop(cm, "randomMatSeed")
                     if cm.modelCreated or cm.animated:
-                        if not cm.brickMaterialsAreDirty and ((not cm.useAnimation and cm.splitModel) or (cm.lastMaterialType == cm.materialType)):
+                        if not cm.brickMaterialsAreDirty and ((not cm.useAnimation and cm.lastSplitModel) or (cm.lastMaterialType == cm.materialType)):
                             col = layout.column(align=True)
                             row = col.row(align=True)
                             row.operator("scene.rebrickr_apply_material", icon="FILE_TICK")

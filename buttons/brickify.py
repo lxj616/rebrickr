@@ -766,11 +766,6 @@ class RebrickrBrickify(bpy.types.Operator):
         if self.action in ["CREATE", "ANIMATE"] or cm.sourceIsDirty:
             source.name = cm.source_name + " (DO NOT RENAME)"
 
-        # apply random materials
-        if cm.materialType == "Random":
-            bricks = RebrickrApplyMaterial.getBricks(cm)
-            RebrickrApplyMaterial.applyRandomMaterial(context, bricks)
-
         # # set final variables
         cm.lastLogoResolution = cm.logoResolution
         cm.lastLogoDetail = cm.logoDetail
@@ -784,6 +779,11 @@ class RebrickrBrickify(bpy.types.Operator):
         cm.sourceIsDirty = False
         cm.bricksAreDirty = False
         scn.Rebrickr_runningOperation = False
+
+        # apply random materials
+        if cm.materialType == "Random":
+            bricks = RebrickrApplyMaterial.getBricks(cm)
+            RebrickrApplyMaterial.applyRandomMaterial(context, bricks)
 
         # unlink source from scene and link to safe scene
         if source.name in scn.objects.keys():
