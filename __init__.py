@@ -55,12 +55,8 @@ def deleteUnprotected(context):
                 if "Rebrickr_%(n)s_bricks_combined" % locals() in obj.name:
                     cm = cmCur
                     break
-                # print(obj.name)
-                # print("Rebrickr_%(n)s_brick_" % locals())
                 elif "Rebrickr_%(n)s_brick_" % locals() in obj.name:
                     bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks" % locals())
-                    # print(bGroup)
-                    # print(len(bGroup.objects))
                     if bGroup is not None and len(bGroup.objects) < 2:
                         cm = cmCur
                         break

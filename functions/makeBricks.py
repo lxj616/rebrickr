@@ -26,6 +26,7 @@ import math
 import time
 import sys
 import random
+import numpy as np
 from mathutils import Vector, Matrix
 from ..classes.Brick import Bricks
 from ..functions import *
@@ -130,7 +131,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
 
     # get brick dicts in seeded order
     keys = list(bricksD.keys())
-    random.seed(a=cm.mergeSeed)
+    random.seed(cm.mergeSeed)
     random.shuffle(keys)
 
     # create group for bricks
@@ -148,7 +149,11 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         allBrickMeshes = []
 
     brick_mats = []
-    if cm.materialType == "Random" and "brick_materials" in bpy.context.user_preferences.addons.keys():
+    try:
+        brick_materials_installed = scn.isBrickMaterialsInstalled
+    except:
+        brick_materials_installed = False
+    if cm.materialType == "Random" and brick_materials_installed:
         mats = bpy.data.materials.keys()
         for color in bpy.props.brick_materials:
             if color in mats and color in bpy.props.brick_materials_for_random:
@@ -160,14 +165,19 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         wm = bpy.context.window_manager
         wm.progress_begin(0, 100)
 
+    # initialize random states
+    randS1 = np.random.RandomState(cm.mergeSeed) # for brickType calc
+    randS2 = np.random.RandomState(0) # for random colors, seed will be changed later
+    k = 0
+
     mats = []
     # set up internal material for this object
-    if cm.materialType == "Use Source Materials" and cm.matShellDepth < cm.shellThickness:
-        internalMat = bpy.data.materials.get(cm.internalMatName)
+    internalMat = bpy.data.materials.get(cm.internalMatName)
+    if internalMat is None:
+        internalMat = bpy.data.materials.get("Rebrickr_%(n)s_internal" % locals())
         if internalMat is None:
-            internalMat = bpy.data.materials.get("Rebrickr_%(n)s_internal" % locals())
-            if internalMat is None:
-                internalMat = bpy.data.materials.new("Rebrickr_%(n)s_internal" % locals())
+            internalMat = bpy.data.materials.new("Rebrickr_%(n)s_internal" % locals())
+    if cm.materialType == "Use Source Materials" and cm.matShellDepth < cm.shellThickness:
         mats.append(internalMat)
     # initialize supportBrickDs
     supportBrickDs = []
@@ -176,8 +186,8 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         brickD = bricksD[key]
         if brickD["name"] != "DNE" and not brickD["connected"]:
             loc = key.split(",")
-            for i in range(len(loc)):
-                loc[i] = int(loc[i])
+            for j in range(len(loc)):
+                loc[j] = int(loc[j])
 
             # Set up brick types
             brickTypes = [[1,1,bt2]]
@@ -274,7 +284,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                                     brickTypes.append([10,2,bt2])
 
             # sort brick types from smallest to largest
-            order = random.randint(1,2)
+            order = randS1.randint(1,2)
             if order == 2:
                 for idx in range(len(brickTypes)):
                     brickTypes[idx] = brickTypes[idx][::-1]
@@ -385,7 +395,12 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     matName = most_common(matsL)
                 mat = bpy.data.materials.get(matName)
             elif cm.materialType == "Random" and len(brick_mats) > 0:
-                randIdx = random.randint(0, len(brick_mats)-1)
+                randS2.seed(cm.randomMatSeed + k)
+                k += 1
+                if len(brick_mats) == 1:
+                    randIdx = 0
+                else:
+                    randIdx = randS2.randint(0, len(brick_mats))
                 matName = brick_mats[randIdx]
                 mat = bpy.data.materials.get(matName)
 
@@ -421,7 +436,11 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     # return updated brick object
                 brick = bpy.data.objects.new(brickD["name"], m)
                 brick.location = Vector(brickD["co"])
-                if mat is not None:
+                if cm.materialType == "Custom":
+                    mat = bpy.data.materials.get(cm.materialName)
+                    if mat is not None:
+                        brick.data.materials.append(mat)
+                elif mat is not None:
                     brick.data.materials.append(mat)
                 else:
                     brick.data.materials.append(internalMat)
@@ -509,10 +528,6 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                         vg.add([v.index], 1, "ADD")
                 bGroup.objects.link(brick)
                 brick.parent = parent
-                if cm.materialType == "Custom":
-                    mat = bpy.data.materials.get(cm.materialName)
-                    if mat is not None:
-                        brick.data.materials.append(mat)
                 scn.objects.link(brick)
                 brick.isBrick = True
     else:
@@ -546,4 +561,5 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         scn.objects.link(allBricksObj)
         # protect allBricksObj from being deleted
         allBricksObj.isBrickifiedObject = True
+
     update_progress("Linking to Scene", 1)

@@ -543,15 +543,15 @@ class BrickTypesPanel(Panel):
                 row = col.row(align=True)
                 row.prop(cm, "originSet")
 
-def promptAppendBrickMatsIfNecessary(layoutElement, mats_needed):
-    mats = bpy.data.materials.keys()
-    for color in mats_needed:
-        if color not in mats:
-            print("Color not found: " + color)
-            row = layoutElement.row(align=True)
-            row.operator("scene.append_brick_materials", text="Import Brick Materials", icon="IMPORT")
-            break
-
+# def promptAppendBrickMatsIfNecessary(layoutElement, mats_needed):
+#     mats = bpy.data.materials.keys()
+#     for color in mats_needed:
+#         if color not in mats:
+#             print("Color not found: " + color)
+#             row = layoutElement.row(align=True)
+#             row.operator("scene.append_brick_materials", text="Import Brick Materials", icon="IMPORT")
+#             break
+#
 class MaterialsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -581,11 +581,20 @@ class MaterialsPanel(Panel):
         row = col.row(align=True)
         row.prop(cm, "materialType", text="")
 
+        try:
+            brick_materials_installed = scn.isBrickMaterialsInstalled
+        except:
+            brick_materials_installed = False
+
         if cm.materialType == "Custom":
             col = layout.column(align=True)
             row = col.row(align=True)
             row.prop_search(cm, "materialName", bpy.data, "materials", text="")
-            if "brick_materials" in bpy.context.user_preferences.addons.keys():
+            try:
+                brick_materials_installed = scn.isBrickMaterialsInstalled
+            except:
+                brick_materials_installed = False
+            if brick_materials_installed:
                 if bpy.context.scene.render.engine != 'CYCLES':
                     row = col.row(align=True)
                     row.label("Switch to 'Cycles' for Brick materials")
@@ -593,7 +602,7 @@ class MaterialsPanel(Panel):
                     mats = bpy.data.materials.keys()
                     for color in bpy.props.brick_materials:
                         if color not in mats:
-                            print("Color not found: " + color)
+                            # print("Color not found: " + color)
                             row = col.row(align=True)
                             row.operator("scene.append_brick_materials", text="Import Brick Materials", icon="IMPORT")
                             break
@@ -606,18 +615,32 @@ class MaterialsPanel(Panel):
             if bpy.context.scene.render.engine != 'CYCLES':
                 row = col.row(align=True)
                 row.label("Switch to 'Cycles Render' engine")
-            elif "brick_materials" in bpy.context.user_preferences.addons.keys():
+            elif brick_materials_installed:
                 mats = bpy.data.materials.keys()
+                allGood = True
                 for color in bpy.props.brick_materials_for_random:
                     if color not in mats:
-                        print("Color not found: " + color)
+                        # print("Color not found: " + color)
                         row = col.row(align=True)
                         row.operator("scene.append_brick_materials", text="Import Brick Materials", icon="IMPORT")
                         col = layout.column(align=True)
                         col.scale_y = 0.7
                         col.label("'Brick Materials' must be")
                         col.label("imported")
+                        allGood = False
                         break
+                if allGood:
+                    row = col.row(align=True)
+                    row.prop(cm, "randomMatSeed")
+                    if cm.modelCreated or cm.animated:
+                        if not cm.brickMaterialsAreDirty and ((not cm.useAnimation and cm.splitModel) or (cm.lastMaterialType == cm.materialType)):
+                            col = layout.column(align=True)
+                            row = col.row(align=True)
+                            row.operator("scene.rebrickr_apply_material", icon="FILE_TICK")
+                        elif cm.materialIsDirty or cm.brickMaterialsAreDirty:
+                            row = col.row(align=True)
+                            row.label("Run 'Update Model' to apply changes")
+
             else:
                 col.scale_y = 0.7
                 col.label("Requires the 'Brick Materials'")
@@ -635,7 +658,7 @@ class MaterialsPanel(Panel):
                 row.label("Internal:")
                 row = col.row(align=True)
                 row.prop_search(cm, "internalMatName", bpy.data, "materials", text="")
-                if "brick_materials" in bpy.context.user_preferences.addons.keys():
+                if brick_materials_installed:
                     if bpy.context.scene.render.engine != 'CYCLES':
                         row = col.row(align=True)
                         row.label("Switch to 'Cycles' for Brick materials")
@@ -643,7 +666,7 @@ class MaterialsPanel(Panel):
                         mats = bpy.data.materials.keys()
                         for color in bpy.props.brick_materials:
                             if color not in mats:
-                                print("Color not found: " + color)
+                                # print("Color not found: " + color)
                                 row = col.row(align=True)
                                 row.operator("scene.append_brick_materials", text="Import Brick Materials", icon="IMPORT")
                                 break

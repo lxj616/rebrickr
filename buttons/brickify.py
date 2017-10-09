@@ -27,6 +27,7 @@ import bmesh
 import os
 import math
 from ..functions import *
+from .materials import RebrickrApplyMaterial
 from .delete import RebrickrDelete
 from .bevel import RebrickrBevel
 from mathutils import Matrix, Vector, Euler
@@ -41,12 +42,12 @@ def updateCanRun(type):
     else:
         cm = scn.cmlist[scn.cmlist_index]
         if type == "ANIMATION":
-            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType == "Custom" and cm.materialIsDirty)
+            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or ((cm.materialType == "Custom" or cm.materialType == "Random") and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
         elif type == "MODEL":
             # set up variables
             n = cm.source_name
             Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and cm.materialIsDirty) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
+            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and not (cm.materialType == "Random" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
 
 def getDimensionsAndBounds(source, skipDimensions=False):
     scn = bpy.context.scene
@@ -765,12 +766,19 @@ class RebrickrBrickify(bpy.types.Operator):
         if self.action in ["CREATE", "ANIMATE"] or cm.sourceIsDirty:
             source.name = cm.source_name + " (DO NOT RENAME)"
 
+        # apply random materials
+        if cm.materialType == "Random":
+            bricks = RebrickrApplyMaterial.getBricks(cm)
+            RebrickrApplyMaterial.applyRandomMaterial(context, bricks)
+
         # # set final variables
         cm.lastLogoResolution = cm.logoResolution
         cm.lastLogoDetail = cm.logoDetail
         cm.lastSplitModel = cm.splitModel
         cm.lastBrickType = cm.brickType
+        cm.lastMaterialType = cm.materialType
         cm.materialIsDirty = False
+        cm.brickMaterialsAreDirty = False
         cm.modelIsDirty = False
         cm.buildIsDirty = False
         cm.sourceIsDirty = False

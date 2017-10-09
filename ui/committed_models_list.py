@@ -64,6 +64,7 @@ def matchProperties(cmNew, cmOld, bh=False):
     cmNew.internalMatName = cmOld.internalMatName
     cmNew.matShellDepth = cmOld.matShellDepth
     cmNew.mergeInconsistentMats = cmOld.mergeInconsistentMats
+    cmNew.randomMatSeed = cmOld.randomMatSeed
     cmNew.useNormals = cmOld.useNormals
     cmNew.verifyExposure = cmOld.verifyExposure
     cmNew.applyToSourceObject = cmOld.applyToSourceObject
@@ -445,7 +446,6 @@ def updateBevel(self, context):
             cm.lastBevelSegments = cm.bevelSegments
             cm.lastBevelProfile = cm.bevelProfile
     except Exception as e:
-        # print(e)
         pass
 
 def updateStartAndStopFrames(self, context):
@@ -787,6 +787,12 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         description="Merge 1x1 bricks to form larger bricks whether or not they share a material",
         default=False,
         update=dirtyBuild)
+    randomMatSeed = IntProperty(
+        name="Random Seed",
+        description="Random seed for material assignment",
+        # update=dirtyMaterialIfNotSplit,
+        min=-1, max=5000,
+        default=1000)
 
     useNormals = BoolProperty(
         name="Use Normals",
@@ -827,6 +833,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     lastStartFrame = IntProperty(default=-1)
     lastStopFrame = IntProperty(default=-1)
     lastSourceMid = StringProperty(default="-1,-1,-1")
+    lastMaterialType = StringProperty(default="Use Source Materials")
 
     modelLoc = StringProperty(default="-1,-1,-1")
     modelRot = StringProperty(default="-1,-1,-1")
@@ -918,6 +925,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
 
     animIsDirty = BoolProperty(default=True)
     materialIsDirty = BoolProperty(default=True)
+    brickMaterialsAreDirty = BoolProperty(default=True)
     modelIsDirty = BoolProperty(default=True)
     buildIsDirty = BoolProperty(default=True)
     sourceIsDirty = BoolProperty(default=True)

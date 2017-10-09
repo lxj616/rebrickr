@@ -25,7 +25,9 @@ import time
 import bmesh
 import os
 import math
+import numpy as np
 from ..functions import *
+from ..functions.wrappers import *
 from .delete import RebrickrDelete
 from mathutils import Matrix, Vector, Euler
 props = bpy.props
@@ -57,13 +59,8 @@ class RebrickrApplyMaterial(bpy.types.Operator):
         elif cm.materialType == "Random":
             self.action = "RANDOM"
 
-    @timed_call('Total Time Elapsed')
-    def runApplyMaterial(self, context):
-        self.setAction()
-
-        # set up variables
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+    @classmethod
+    def getBricks(cls, cm):
         n = cm.source_name
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
         if cm.modelCreated:
@@ -75,27 +72,89 @@ class RebrickrApplyMaterial(bpy.types.Operator):
                 bGroup = bpy.data.groups.get(gn)
                 for obj in bGroup.objects:
                     bricks.append(obj)
+
+        return bricks
+
+    @classmethod
+    def applyRandomMaterial(cls, context, bricks):
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        # initialize list of brick materials
+        brick_mats = []
+        mats = bpy.data.materials.keys()
+        for color in bpy.props.brick_materials:
+            if color in mats and color in bpy.props.brick_materials_for_random:
+                brick_mats.append(color)
+        randS0 = np.random.RandomState(0)
+        # if model is split, apply a random material to each brick
+        for i,brick in enumerate(bricks):
+            lastMatSlots = list(brick.material_slots.keys())
+
+            if (cm.splitModel or len(lastMatSlots) == 0) and len(brick_mats) > 0:
+                # clear existing materials
+                brick.data.materials.clear(1)
+                # iterate seed and set random index
+                randS0.seed(cm.randomMatSeed + i)
+                if len(brick_mats) == 1:
+                    randIdx = 0
+                else:
+                    randIdx = randS0.randint(0, len(brick_mats))
+                # Assign random material to object
+                mat = bpy.data.materials.get(brick_mats[randIdx])
+                brick.data.materials.append(mat)
+                continue
+
+            if len(lastMatSlots) == len(brick_mats):
+                brick_mats_dup = brick_mats.copy()
+                # clear existing materials
+                brick.data.materials.clear(1)
+                for i in range(len(lastMatSlots)):
+                    # iterate seed and set random index
+                    randS0.seed(cm.randomMatSeed + i)
+                    if len(brick_mats_dup) == 1:
+                        randIdx = 0
+                    else:
+                        randIdx = randS0.randint(0, len(brick_mats_dup))
+                    # Assign random material to object
+                    matName = brick_mats_dup.pop(randIdx)
+                    mat = bpy.data.materials.get(matName)
+                    brick.data.materials.append(mat)
+
+    @timed_call('Total Time Elapsed')
+    def runApplyMaterial(self, context):
+        self.setAction()
+
+        # set up variables
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        bricks = RebrickrApplyMaterial.getBricks(cm)
+        cm.lastMaterialType = cm.materialType
         if self.action == "CUSTOM":
             matName = cm.materialName
         elif self.action == "INTERNAL":
             matName = cm.internalMatName
-        mat = bpy.data.materials.get(matName)
-        if mat is None:
-            self.report({"WARNING"}, "Specified material doesn't exist")
+        elif self.action == "RANDOM":
+            RebrickrApplyMaterial.applyRandomMaterial(context, bricks)
 
-        for brick in bricks:
-            # if materials exist, remove them
-            if brick.data.materials:
-                if self.action == "CUSTOM":
-                    brick.data.materials.clear(1)
-                    # Assign it to object
-                    brick.data.materials.append(mat)
-                elif self.action == "INTERNAL":
-                    brick.data.materials.pop(0)
-                    # Assign it to object
-                    brick.data.materials.append(mat)
-                    for i in range(len(brick.data.materials)-1):
-                        brick.data.materials.append(brick.data.materials.pop(0))
+        if self.action != "RANDOM":
+            mat = bpy.data.materials.get(matName)
+            if mat is None:
+                self.report({"WARNING"}, "Specified material doesn't exist")
+
+            for brick in bricks:
+                # if materials exist, remove them
+                if brick.data.materials:
+                    if self.action == "CUSTOM":
+                        # clear existing materials
+                        brick.data.materials.clear(1)
+                        # Assign it to object
+                        brick.data.materials.append(mat)
+                    elif self.action == "INTERNAL":
+                        brick.data.materials.pop(0)
+                        # Assign it to object
+                        brick.data.materials.append(mat)
+                        for i in range(len(brick.data.materials)-1):
+                            brick.data.materials.append(brick.data.materials.pop(0))
 
         cm.materialIsDirty = False
 
