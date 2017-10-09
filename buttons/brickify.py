@@ -42,7 +42,7 @@ def updateCanRun(type):
     else:
         cm = scn.cmlist[scn.cmlist_index]
         if type == "ANIMATION":
-            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or ((cm.materialType == "Custom" or cm.materialType == "Random") and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
+            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
         elif type == "MODEL":
             # set up variables
             n = cm.source_name
