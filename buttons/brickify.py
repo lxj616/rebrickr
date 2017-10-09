@@ -489,6 +489,7 @@ class RebrickrBrickify(bpy.types.Operator):
                     selectFromGroup = bpy.data.groups[group_name]
                 else:
                     obj.hide = True
+                    obj.hide_render = True
                 # lock location, rotation, and scale of created bricks
                 obj.lock_location = [True, True, True]
                 obj.lock_rotation = [True, True, True]
