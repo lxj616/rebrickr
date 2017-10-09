@@ -140,19 +140,18 @@ class RebrickrApplyMaterial(bpy.types.Operator):
                 self.report({"WARNING"}, "Specified material doesn't exist")
 
             for brick in bricks:
-                # if materials exist, remove them
-                if brick.data.materials:
-                    if self.action == "CUSTOM":
+                if self.action == "CUSTOM":
+                    if brick.data.materials:
                         # clear existing materials
                         brick.data.materials.clear(1)
-                        # Assign it to object
-                        brick.data.materials.append(mat)
-                    elif self.action == "INTERNAL":
-                        brick.data.materials.pop(0)
-                        # Assign it to object
-                        brick.data.materials.append(mat)
-                        for i in range(len(brick.data.materials)-1):
-                            brick.data.materials.append(brick.data.materials.pop(0))
+                    # Assign it to object
+                    brick.data.materials.append(mat)
+                elif self.action == "INTERNAL":
+                    brick.data.materials.pop(0)
+                    # Assign it to object
+                    brick.data.materials.append(mat)
+                    for i in range(len(brick.data.materials)-1):
+                        brick.data.materials.append(brick.data.materials.pop(0))
 
         redraw_areas(["VIEW_3D", "PROPERTIES", "NODE_EDITOR"])
         cm.materialIsDirty = False

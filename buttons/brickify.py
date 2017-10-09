@@ -208,6 +208,10 @@ class RebrickrBrickify(bpy.types.Operator):
             if bpy.data.objects[cm.customObjectName].type != "MESH":
                 self.report({"WARNING"}, "Custom brick type object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
+        if cm.materialType == "Custom" and cm.materialName != "" and bpy.data.materials.find(cm.materialName) == -1:
+            n = cm.materialName
+            self.report({"WARNING"}, "Custom material '%(n)s' could not be found" % locals())
+            return False
 
         self.clothMod = False
         source["ignored_mods"] = ""
