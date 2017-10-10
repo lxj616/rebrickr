@@ -416,15 +416,34 @@ def uniquifyName(self, context):
     if cm.name != name:
         cm.name = name
 
+# def updateMeshObjectName(self, context, n):
+#     print("here 0")
+#     obj = bpy.data.objects.get(n)
+#     if obj is None:
+#         self.report({"WARNING"}, "Object could not be found in the scene")
+#     elif obj.type != "MESH":
+#         self.report({"WARNING"}, "Object is not of type 'MESH'")
+#     else:
+#         cm.dirtyModel = True
+#         return None
+#
+# def updateCustomObjName(self, context):
+#     scn = bpy.context.scene
+#     cm = scn.cmlist[scn.cmlist_index]
+#     updateMeshObjectName(self, context, cm.customObjectName)
+#
 def setNameIfEmpty(self, context):
     scn = context.scene
-    cm0 = scn.cmlist[scn.cmlist_index]
+    last_cmlist_index = scn.cmlist_index
+    cm0 = scn.cmlist[last_cmlist_index]
     # verify model doesn't exist with that name
     if cm0.source_name != "":
         for i,cm1 in enumerate(scn.cmlist):
             if cm1 != cm0 and cm1.source_name == cm0.source_name:
                 cm0.source_name = ""
                 scn.cmlist_index = i
+    # if scn.cmlist_index == last_cmlist_index:
+    #     updateMeshObjectName(self, context, cm0.source_name)
 
 def updateBevel(self, context):
     # get bricks to bevel
@@ -807,10 +826,10 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     insidenessRayCastDir = EnumProperty(
         name="Insideness Ray Cast Direction",
         description="Choose which axis/axes to cast rays for calculation of insideness",
-        items=[("High Efficiency", "High Efficiency", "Uses single ray already casted for brickFreqMatrix calculations"),
-              ("X", "X", "Cast rays only along X axis for insideness calculations"),
-              ("Y", "Y", "Cast rays only along Y axis for insideness calculations"),
-              ("Z", "Z", "Cast rays only along Z axis for insideness calculations"),
+        items=[("High Efficiency", "High Efficiency", "Reuses single ray casted in brickFreqMatrix calculations"),
+              ("X", "X", "Cast rays along X axis for insideness calculations"),
+              ("Y", "Y", "Cast rays along Y axis for insideness calculations"),
+              ("Z", "Z", "Cast rays along Z axis for insideness calculations"),
               ("XYZ", "XYZ", "Cast rays in all axis directions for insideness calculation (uses result consistent for at least 2 of the 3 rays)")],
         update=dirtyBuild,
         default="High Efficiency")

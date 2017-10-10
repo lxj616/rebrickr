@@ -183,6 +183,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     supportBrickDs = []
     update_progress("Building", 0.0)
     for i,key in enumerate(keys):
+        ct = time.time()
         brickD = bricksD[key]
         if brickD["name"] != "DNE" and not brickD["connected"]:
             loc = key.split(",")
@@ -494,13 +495,14 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     for p in tempMesh.polygons:
                         p.material_index = 0
                 allBrickMeshes.append(tempMesh)
-        # print status to terminal
-        if i % denom < 1:
-            percent = i/len(keys)
-            if percent < 1:
-                update_progress("Building", percent)
-                if cursorStatus:
-                    wm.progress_update(percent*100)
+                
+            # print status to terminal
+            if i % denom < 1:
+                percent = i/len(keys)
+                if percent < 1:
+                    update_progress("Building", percent)
+                    if cursorStatus:
+                        wm.progress_update(percent*100)
 
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO Logo" and logo is not None:

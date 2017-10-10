@@ -36,7 +36,7 @@ def bversion():
     bversion = '%03d.%03d.%03d' % (bpy.app.version[0],bpy.app.version[1],bpy.app.version[2])
     return bversion
 
-def stopWatch(text, value):
+def stopWatch(text, value, precision=2):
     '''From seconds to Days;Hours:Minutes;Seconds'''
 
     valueD = (((value/365)/24)/60)
@@ -49,12 +49,10 @@ def stopWatch(text, value):
     Minutes = int(valueM)
 
     valueS = (valueM - Minutes)*60
-    Seconds = int(valueS)
+    Seconds = round(valueS, precision)
 
-    valueMs = (valueS - Seconds)*60
-    Miliseconds = int(valueMs)
-
-    print(str(text) + ": " + str(Days) + ";" + str(Hours) + ":" + str(Minutes) + ";" + str(Seconds) + ";;" + str(Miliseconds))
+    outputString = str(text) + ": " + str(Days) + ";" + str(Hours) + ":" + str(Minutes) + ";" + str(Seconds)
+    print(outputString)
 
 def groupExists(groupName):
     """ check if group exists in blender's memory """
