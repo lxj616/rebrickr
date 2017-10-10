@@ -421,12 +421,15 @@ class ModelSettingsPanel(Panel):
                 rZ = int(sZ/dimensions["height"])
             elif cm.brickType == "Custom":
                 customObj = bpy.data.objects.get(cm.customObjectName)
-                if customObj is not None:
+                if customObj is not None and customObj.type == "MESH":
                     custom_details = bounds(customObj)
-                    multiplier = (cm.brickHeight/custom_details.z.distance)
-                    rX = int(sX/(custom_details.x.distance * multiplier))
-                    rY = int(sY/(custom_details.y.distance * multiplier))
-                    rZ = int(sZ/cm.brickHeight)
+                    if custom_details.x.distance != 0 and custom_details.y.distance != 0 and custom_details.z.distance != 0:
+                        multiplier = (cm.brickHeight/custom_details.z.distance)
+                        rX = int(sX/(custom_details.x.distance * multiplier))
+                        rY = int(sY/(custom_details.y.distance * multiplier))
+                        rZ = int(sZ/cm.brickHeight)
+                    else:
+                        noCustomObj = True
                 else:
                     noCustomObj = True
             if not noCustomObj:

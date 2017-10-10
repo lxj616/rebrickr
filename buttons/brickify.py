@@ -201,12 +201,28 @@ class RebrickrBrickify(bpy.types.Operator):
             if cm.customObjectName == cm.source_name:
                 self.report({"WARNING"}, "Source object cannot be its own brick type.")
                 return False
-            if bpy.data.objects.find(cm.customObjectName) == -1:
+            customObj = bpy.data.objects.get(cm.customObjectName)
+            if customObj is None:
                 n = cm.customObjectName
                 self.report({"WARNING"}, "Custom brick type object '%(n)s' could not be found" % locals())
                 return False
-            if bpy.data.objects[cm.customObjectName].type != "MESH":
+            if customObj.type != "MESH":
                 self.report({"WARNING"}, "Custom brick type object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
+                return False
+            custom_details = bounds(customObj)
+            zeroDistAxes = ""
+            if custom_details.x.distance < 0.00001:
+                zeroDistAxes += "X"
+            if custom_details.y.distance < 0.00001:
+                zeroDistAxes += "Y"
+            if custom_details.z.distance < 0.00001:
+                zeroDistAxes += "Z"
+            if zeroDistAxes != "":
+                if len(zeroDistAxes) == 1:
+                    warningMsg = "Custom brick type object is to small along the '%(zeroDistAxes)s' axis (<0.00001). Please select another object or extrude it along the '%(zeroDistAxes)s' axis." % locals()
+                else:
+                    warningMsg = "Custom brick type object is to small on the following axes (<0.00001): '%(zeroDistAxes)s'. Please select another object or extrude it along the '%(zeroDistAxes)s' axes." % locals()
+                self.report({"WARNING"}, warningMsg)
                 return False
         if cm.materialType == "Custom" and cm.materialName != "" and bpy.data.materials.find(cm.materialName) == -1:
             n = cm.materialName
