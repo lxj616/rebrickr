@@ -19,11 +19,17 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# system imports
+# System imports
 import bpy
 import bmesh
 import random
+import time
+import numpy as np
+
+# Blender imports
 from mathutils import Vector, Matrix
+
+# Rebrickr imports
 from .brick_mesh_generate import *
 from ...functions import *
 
@@ -53,19 +59,21 @@ class Bricks:
         brickBM = makeBrick(dimensions=dimensions, brickSize=type, numStudVerts=numStudVerts, detail=undersideDetail, stud=stud)
         if logo and stud:
             if logo_zRot is None:
+                randomSeed = int(time.time()*10**6) % 10000
+                randS0 = np.random.RandomState(randomSeed)
                 # get logo rotation angle based on type of brick
                 if type[0] == 1 and type[1] == 1:
-                    zRot = random.randint(0,3) * 90
+                    zRot = randS0.randint(0,3) * 90
                 elif type[0] == 2 and type[1] > 2:
-                    zRot = random.randint(0,1) * 180 + 90
+                    zRot = randS0.randint(0,1) * 180 + 90
                 elif type[1] == 2 and type[0] > 2:
-                    zRot = random.randint(0,1) * 180
+                    zRot = randS0.randint(0,1) * 180
                 elif type[0] == 2 and type[1] == 2:
-                    zRot = random.randint(0,1) * 180
+                    zRot = randS0.randint(0,1) * 180
                 elif type[0] == 1:
-                    zRot = random.randint(0,1) * 180 + 90
+                    zRot = randS0.randint(0,1) * 180 + 90
                 elif type[1] == 1:
-                    zRot = random.randint(0,1) * 180
+                    zRot = randS0.randint(0,1) * 180
                 else:
                     print("shouldn't get here")
                     print(type)
