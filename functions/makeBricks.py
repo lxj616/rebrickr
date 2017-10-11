@@ -569,9 +569,11 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 brick = bpy.data.objects[name]
                 # create vert group for bevel mod (assuming only logo verts are selected):
                 vg = brick.vertex_groups.new("%(name)s_bevel" % locals())
+                vertList = []
                 for v in brick.data.vertices:
                     if not v.select:
-                        vg.add([v.index], 1, "ADD")
+                        vertList.append(v.index)
+                vg.add(vertList, 1, "ADD")
                 bGroup.objects.link(brick)
                 brick.parent = parent
                 scn.objects.link(brick)
@@ -587,14 +589,11 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         allBricksObj = bpy.data.objects.new(name, m)
         # create vert group for bevel mod (assuming only logo verts are selected):
         vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())
-        denom = len(allBricksObj.data.vertices)
-        for i,v in enumerate(allBricksObj.data.vertices):
+        vertList = []
+        for v in allBricksObj.data.vertices:
             if not v.select:
-                vg.add([v.index], 1, "ADD")
-            # print status to terminal
-            percent = i/denom
-            if percent % 0.001 < 0.00001 and percent < 1:
-                update_progress("Linking to Scene", percent)
+                vertList.append(v.index)
+        vg.add(vertList, 1, "ADD")
         addEdgeSplitMod(allBricksObj)
         bGroup.objects.link(allBricksObj)
         allBricksObj.parent = parent
@@ -608,5 +607,3 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         scn.objects.link(allBricksObj)
         # protect allBricksObj from being deleted
         allBricksObj.isBrickifiedObject = True
-
-    update_progress("Linking to Scene", 1)
