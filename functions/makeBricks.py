@@ -19,15 +19,19 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# system imports
-import bpy
+# System imports
 import bmesh
 import math
 import time
 import sys
 import random
 import numpy as np
+
+# Blender imports
+import bpy
 from mathutils import Vector, Matrix
+
+# Rebrickr imports
 from ..classes.Brick import Bricks
 from ..functions import *
 from ..functions.wrappers import *
@@ -495,7 +499,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     for p in tempMesh.polygons:
                         p.material_index = 0
                 allBrickMeshes.append(tempMesh)
-                
+
             # print status to terminal
             if i % denom < 1:
                 percent = i/len(keys)

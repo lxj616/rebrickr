@@ -2,9 +2,11 @@
 # also see: https://blender.stackexchange.com/questions/51782/get-material-and-color-of-material-on-a-face-of-an-object-in-python?rq=1
 # and also: https://blender.stackexchange.com/questions/909/how-can-i-set-and-get-the-vertex-color-property
 
-import bpy
+# System imports
 import bmesh
-from mathutils.bvhtree import BVHTree
+
+# Blender imports
+import bpy
 from mathutils import Vector
 from mathutils.geometry import barycentric_transform
 

@@ -19,21 +19,23 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# system imports
-import bpy
+# System imports
 import bmesh
 import math
 import time
 from copy import copy, deepcopy
+
+# Blender imports
+import bpy
+from mathutils import Matrix, Vector, geometry, Euler
+props = bpy.props
+
+# Rebrickr imports
 from .common_functions import *
 from .generate_lattice import generateLattice
-from .checkWaterTight import isOneMesh
 from .makeBricks import *
 from .wrappers import *
 from ..classes.Brick import Bricks
-from mathutils import Matrix, Vector, geometry, Euler
-from mathutils.bvhtree import BVHTree
-props = bpy.props
 
 def getSafeScn():
     safeScn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
@@ -672,6 +674,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                     matName = ""
                     if type(faceIdxMatrix[x][y][z]) == dict:
                         nf = faceIdxMatrix[x][y][z]["idx"]
+                        # TODO: Move material calculation to makeBricks
                         if len(source.material_slots) > 0:
                             f = source.data.polygons[nf]
                             slot = source.material_slots[f.material_index]
@@ -682,7 +685,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                         "val":brickFreqMatrix[x][y][z],
                         "co":(co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
                         "nearestFaceIdx":nf,
-                        "matName":matName,
+                        "matName":matName, # move to makeBricks!
                         "connected":False}
                 else:
                     brickDict[str(x) + "," + str(y) + "," + str(z)] = {
@@ -690,7 +693,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                         "val":brickFreqMatrix[x][y][z],
                         "co":None,
                         "nearestFaceIdx":None,
-                        "matName":None,
+                        "matName":None, # move to makeBricks!
                         "connected":False}
 
     # return list of created Brick objects

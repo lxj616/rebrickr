@@ -20,18 +20,23 @@
     """
 
 # system imports
-import bpy
 import random
 import time
 import bmesh
 import os
 import math
+
+# Blender imports
+import bpy
+from mathutils import Matrix, Vector, Euler
+props = bpy.props
+
+# Rebrickr imports
 from ..functions import *
 from .materials import RebrickrApplyMaterial
 from .delete import RebrickrDelete
 from .bevel import RebrickrBevel
-from mathutils import Matrix, Vector, Euler
-props = bpy.props
+
 
 def updateCanRun(type):
     scn = bpy.context.scene

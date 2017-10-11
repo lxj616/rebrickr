@@ -15,12 +15,17 @@
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
     """
 
-# system imports
-import bpy
+# System imports
 import time
+
+# Blender imports
+import bpy
 from mathutils import Vector, Euler
-from ..functions import *
 props = bpy.props
+
+# Rebrickr imports
+from ..functions import *
+
 
 class RebrickrEditSource(bpy.types.Operator):
     """ Edit Source Object Mesh """                                             # blender will use this as a tooltip for menu items and buttons.

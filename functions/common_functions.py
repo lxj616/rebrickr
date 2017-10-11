@@ -19,8 +19,7 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# system imports
-import bpy
+# System imports
 import random
 import sys
 import time
@@ -29,6 +28,9 @@ import itertools
 import operator
 import traceback
 from math import *
+
+# Blender imports
+import bpy
 props = bpy.props
 
 # https://github.com/CGCookie/retopoflow

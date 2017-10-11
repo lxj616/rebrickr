@@ -19,18 +19,23 @@
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
     """
 
-# system imports
-import bpy
+# System imports
 import time
 import bmesh
 import os
 import math
 import numpy as np
+
+# Blender imports
+import bpy
+from mathutils import Matrix, Vector, Euler
+props = bpy.props
+
+# Rebrickr imports
 from ..functions import *
 from ..functions.wrappers import *
 from .delete import RebrickrDelete
-from mathutils import Matrix, Vector, Euler
-props = bpy.props
+
 
 class RebrickrApplyMaterial(bpy.types.Operator):
     """Apply specified material to all bricks """                        # blender will use this as a tooltip for menu items and buttons.

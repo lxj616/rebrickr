@@ -31,15 +31,23 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# system imports
+# System imports
+# NONE!
+
+# Blender imports
 import bpy
 from bpy.props import *
+props = bpy.props
+
+# Rebrickr imports
 from .ui import *
 from .buttons import *
-props = bpy.props
 
 # store keymaps here to access after registration
 addon_keymaps = []
+
+# initialize the brick bmesh cache dictionary
+rebrickr_bm_cache = {}
 
 def deleteUnprotected(context, use_global=False):
     scn = context.scene

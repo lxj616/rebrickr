@@ -19,16 +19,22 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# system imports
+# System imports
+# NONE!
+
+# Blender imports
 import bpy
+from addon_utils import check, paths, enable
 from bpy.types import Panel
 from bpy.props import *
+props = bpy.props
+
+# Rebrickr imports
 from .committed_models_list import *
 from .app_handlers import *
 from ..buttons.delete import RebrickrDelete
 from ..functions import *
-from addon_utils import check, paths, enable
-props = bpy.props
+
 
 class RebrickrStoragePanel(Panel):
     bl_space_type  = "VIEW_3D"

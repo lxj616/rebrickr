@@ -19,11 +19,16 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# system imports
+# System imports
+# NONE!
+
+# Blender imports
 import bpy
 from bpy.app.handlers import persistent
-from ..functions import *
 from mathutils import Vector, Euler
+
+# Rebrickr imports
+from ..functions import *
 
 @persistent
 def handle_animation(scene):

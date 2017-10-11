@@ -19,10 +19,14 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# system imports
-import bpy
+# System imports
 import bmesh
+
+# Blender imports
+import bpy
 from mathutils import Vector
+
+# Rebrickr imports
 from .common_functions import drawBMesh
 
 def tupleAdd(p1, p2):

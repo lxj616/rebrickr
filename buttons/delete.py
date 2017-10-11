@@ -20,11 +20,16 @@
     """
 
 # system imports
-import bpy
 import time
+
+# Blender imports
+import bpy
 from mathutils import Vector, Euler
-from ..functions import *
 props = bpy.props
+
+# Rebrickr imports
+from ..functions import *
+
 
 def getModelType(self, cm=None):
     scn = bpy.context.scene

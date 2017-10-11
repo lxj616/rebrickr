@@ -19,9 +19,13 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# system imports
-import bpy
+# System imports
 import time
+
+# Blender imports
+import bpy
+
+# Rebrickr imports
 from ..functions import *
 
 def timed_call(label):

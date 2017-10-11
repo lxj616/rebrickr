@@ -1,3 +1,4 @@
+# System imports
 import bmesh
 
 def addConnectedVerts(v_index, bme, connected_verts, marked_edges, max_depth=900, level=0):

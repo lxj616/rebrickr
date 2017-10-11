@@ -19,21 +19,24 @@
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
     """
 
-# system imports
-import bpy
+# System imports
 # import time
 # import bmesh
 # import os
 # import math
-from ..functions import *
-# from .delete import RebrickrDelete
 # from mathutils import Matrix, Vector, Euler
-from addon_utils import check, paths, enable
-props = bpy.props
-
 import subprocess
 import webbrowser
 import sys
+
+# Blender imports
+import bpy
+from addon_utils import check, paths, enable
+props = bpy.props
+
+# Rebrickr imports
+from ..functions import *
+
 
 class MakeClosedMesh(bpy.types.Operator):
     """Make source into single closed mesh (may take a while)"""                # blender will use this as a tooltip for menu items and buttons.

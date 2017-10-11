@@ -20,14 +20,18 @@
     """
 
 # system imports
-import bpy
 import time
 import bmesh
 import os
 import math
-from ..functions import *
+
+# Blender imports
+import bpy
 from mathutils import Matrix, Vector
 props = bpy.props
+
+# Rebrickr imports
+from ..functions import *
 
 def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limitMethod='NONE', angleLimit=0.523599, vertexGroup=None, offsetType='OFFSET'):
     dMod = obj.modifiers.get(obj.name + '_bevel')

@@ -19,17 +19,18 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-# system imports
+# System imports
+# NONE!
+
+# Blender imports
 import bpy
-from bpy.types import Panel
 from bpy.props import *
-from ..functions import *
-from ..buttons.bevel import *
+from bpy.types import Panel, UIList
 props = bpy.props
 
-import bpy
-from bpy.props import IntProperty, CollectionProperty #, StringProperty
-from bpy.types import Panel, UIList
+# Rebrickr imports
+from ..functions import *
+from ..buttons.bevel import *
 
 def matchProperties(cmNew, cmOld, bh=False):
     if bh:
@@ -911,6 +912,9 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         description="Create Brick Model for each frame, from start to stop frame (WARNING: Calculation takes time, and may result in large blend file size)",
         update=updateStartAndStopFrames,
         default=False)
+
+    # CACHED BRICKFREQMATRIX
+    BFMCache = StringProperty(default="")
 
     # ADVANCED SETTINGS
     brickShell = EnumProperty(
