@@ -1,7 +1,7 @@
 bl_info = {
     "name"        : "Rebrickr",
     "author"      : "Christopher Gearhart <chris@bblanimation.com>",
-    "version"     : (0, 1, 0),
+    "version"     : (1, 0, 0),
     "blender"     : (2, 78, 0),
     "description" : "Turn any mesh into a 3D brick sculpture or simulation with the click of a button",
     "location"    : "View3D > Tools > Rebrickr",
@@ -41,11 +41,11 @@ props = bpy.props
 # store keymaps here to access after registration
 addon_keymaps = []
 
-def deleteUnprotected(context):
+def deleteUnprotected(context, use_global=False):
+    scn = context.scene
     protected = []
     for obj in context.selected_objects:
         if obj.isBrickifiedObject or obj.isBrick:
-            scn = context.scene
             cm = None
             for cmCur in scn.cmlist:
                 n = cmCur.source_name
@@ -59,13 +59,17 @@ def deleteUnprotected(context):
                         break
             if cm is not None:
                 RebrickrDelete.runFullDelete(cm=cm)
-                bpy.context.scene.objects.active.select = False
+                scn.objects.active.select = False
             else:
-                bpy.context.scene.objects.unlink(obj)
-                bpy.data.objects.remove(obj)
+                obj_users_scene = len(obj.users_scene)
+                scn.objects.unlink(obj)
+                if use_global or obj_users_scene == 1:
+                    bpy.data.objects.remove(obj, True)
         elif not obj.protected:
-            bpy.context.scene.objects.unlink(obj)
-            bpy.data.objects.remove(obj)
+            obj_users_scene = len(obj.users_scene)
+            scn.objects.unlink(obj)
+            if use_global or obj_users_scene == 1:
+                bpy.data.objects.remove(obj, True)
         else:
             print(obj.name +' is protected')
             protected.append(obj.name)
@@ -78,13 +82,15 @@ class delete_override(bpy.types.Operator):
     bl_label = "Delete"
     bl_options = {'REGISTER', 'INTERNAL'}
 
+    use_global = BoolProperty(default=False)
+
     @classmethod
     def poll(cls, context):
         # return context.active_object is not None
         return True
 
     def runDelete(self, context):
-        protected = deleteUnprotected(context)
+        protected = deleteUnprotected(context, self.use_global)
         if len(protected) > 0:
             self.report({"WARNING"}, "Rebrickr is using the following object(s): " + str(protected)[1:-1])
         # push delete action to undo stack
@@ -102,7 +108,6 @@ class delete_override(bpy.types.Operator):
         else:
             self.runDelete(context)
             return {'FINISHED'}
-
 
 def register():
     bpy.utils.register_module(__name__)
