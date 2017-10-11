@@ -665,7 +665,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     # create bricks dictionary with brickFreqMatrix values
     bricks = []
     i = 0
-    brickDict = {}
+    bricksDict = {}
     for x in range(len(coList)):
         for y in range(len(coList[0])):
             for z in range(len(coList[0][0])):
@@ -680,27 +680,32 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                     matName = ""
                     if type(faceIdxMatrix[x][y][z]) == dict:
                         nf = faceIdxMatrix[x][y][z]["idx"]
-                        # TODO: Move material calculation to makeBricks
-                        if len(source.material_slots) > 0:
-                            f = source.data.polygons[nf]
-                            slot = source.material_slots[f.material_index]
-                            mat = slot.material
-                            matName = mat.name
-                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {
+                    bricksDict[str(x) + "," + str(y) + "," + str(z)] = {
                         "name":'Rebrickr_%(n)s_brick_%(j)s' % locals(),
                         "val":brickFreqMatrix[x][y][z],
                         "co":(co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
                         "nearestFaceIdx":nf,
-                        "matName":matName, # move to makeBricks!
+                        "matName":None, # defined in 'addMaterialsToBricksDict' function
                         "connected":False}
                 else:
-                    brickDict[str(x) + "," + str(y) + "," + str(z)] = {
+                    bricksDict[str(x) + "," + str(y) + "," + str(z)] = {
                         "name":"DNE",
                         "val":brickFreqMatrix[x][y][z],
                         "co":None,
                         "nearestFaceIdx":None,
-                        "matName":None, # move to makeBricks!
+                        "matName":None,
                         "connected":False}
 
     # return list of created Brick objects
-    return brickDict
+    return bricksDict
+
+def addMaterialsToBricksDict(bricksDict, source):
+    for key in bricksDict.keys():
+        if bricksDict[key]["name"] != "DNE":
+            nf = bricksDict[key]["nearestFaceIdx"]
+            f = source.data.polygons[nf]
+            slot = source.material_slots[f.material_index]
+            mat = slot.material
+            matName = mat.name
+            bricksDict[key]["matName"] = matName
+    return bricksDict

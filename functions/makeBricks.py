@@ -525,8 +525,6 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     if cm.randomLoc > 0:
                         translateBack(bm, randLoc)
                     transformBMToCo(bm, brickD["co"], mult=-1)
-                    # print(bm.verts[0].co)
-                    # print()
                 # set up materials for tempMesh
                 if mat in mats:
                     matIdx = mats.index(mat)

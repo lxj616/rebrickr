@@ -170,6 +170,9 @@ class RebrickrBrickify(bpy.types.Operator):
                     BFMCache = {}
                 BFMCache[curFrame] = bricksDict
                 cm.BFMCache = json.dumps(BFMCache)
+        # after dict is stored to cache, update materials
+        if len(source.material_slots) > 0:
+            bricksDict = addMaterialsToBricksDict(bricksDict, source)
         return bricksDict
 
     def createNewBricks(self, source, parent, source_details, dimensions, refLogo, curFrame=None):
