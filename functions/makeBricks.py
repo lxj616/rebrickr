@@ -69,17 +69,27 @@ def combineMeshes(meshes):
     bm.to_mesh( finalMesh )
     return finalMesh
 
-def transformBMToCo(bm, co, mult=1):
-    for v in bm.verts:
+def transformMeshToCO(co, bm=None, mesh=None, mult=1):
+    assert bm is not None or mesh is not None # one or the other must not be None!
+    if bm is not None:
+        verts = bm.verts
+    else:
+        verts = mesh.vertices
+    for v in verts:
         v.co = (v.co[0] + (co[0] * mult), v.co[1] + (co[1] * mult), v.co[2] + (co[2] * mult))
 
-def randomizeLoc(width, height, bm):
+def randomizeLoc(width, height, bm=None, mesh=None):
+    assert bm is not None or mesh is not None # one or the other must not be None!
+    if bm is not None:
+        verts = bm.verts
+    else:
+        verts = mesh.vertices
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     x = random.uniform(-(width/2) * cm.randomLoc, (width/2) * cm.randomLoc)
     y = random.uniform(-(width/2) * cm.randomLoc, (width/2) * cm.randomLoc)
     z = random.uniform(-(height/2) * cm.randomLoc, (height/2) * cm.randomLoc)
-    for v in bm.verts:
+    for v in verts:
         v.co.x += x
         v.co.y += y
         v.co.z += z
@@ -445,16 +455,14 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 if cm.brickType == "Custom":
                     bm = bmesh.new()
                     bm.from_mesh(customData)
-                    transformBMToCo(bm, (-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid))
+                    transformMeshToCO((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
                     maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
                     bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
                 else:
                     # get brick mesh
                     # bm = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=studDetail, numStudVerts=cm.studVerts)
                     bm = getBrickMesh(cm, dimensions, brickType, undersideDetail, logoDetail, logo_details, cm.logoScale, cm.logoInset, studDetail, cm.studVerts)
-                # apply random location/rotation according to parameters
-                if cm.randomLoc > 0:
-                    randLoc = randomizeLoc(dimensions["width"], dimensions["height"], bm)
+                # apply random rotation to BMesh according to parameters
                 if cm.randomRot > 0:
                     d = dimensions["width"]/2
                     sX = (brickType[0] * 2) - 1
@@ -464,12 +472,13 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 # create new mesh and send bm to it
                 m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
                 bm.to_mesh(m)
-                # undo bm transformations if not custom, since 'bm' points to bmesh used by all other similar bricks
+                # apply random location to edit mesh according to parameters
+                if cm.randomLoc > 0:
+                    randomizeLoc(dimensions["width"], dimensions["height"], mesh=m)
                 if cm.brickType != "Custom":
+                    # undo bm rotation if not custom, since 'bm' points to bmesh used by all other similar bricks
                     if cm.randomRot > 0:
                         rotateBack(bm, center, randRot)
-                    if cm.randomLoc > 0:
-                        translateBack(bm, randLoc)
                 # create new object with mesh data
                 brick = bpy.data.objects.new(brickD["name"], m)
                 brick.location = Vector(brickD["co"])
@@ -495,36 +504,34 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 if cm.brickType == "Custom":
                     bm = bmesh.new()
                     bm.from_mesh(customData)
-                    transformBMToCo(bm, (-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid))
+                    transformMeshToCO((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
 
                     maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
                     bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
-                    transformBMToCo(bm, brickD["co"])
+                    transformMeshToCO(brickD["co"], bm=bm)
                 else:
                     # get brick mesh
                     # bm = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=studDetail, numStudVerts=cm.studVerts)
                     bm = getBrickMesh(cm, dimensions, brickType, undersideDetail, logoDetail, logo_details, cm.logoScale, cm.logoInset, studDetail, cm.studVerts)
-                    # trainsform brick mesh to coordinate on matrix
-                    transformBMToCo(bm, brickD["co"])
-                # apply random location/rotation according to parameters
-                if cm.randomLoc > 0:
-                    randLoc = randomizeLoc(dimensions["width"], dimensions["height"], bm)
+                # apply random rotation to BMesh according to parameters
                 if cm.randomRot > 0:
                     d = dimensions["width"]/2
                     sX = (brickType[0] * 2) - 1
                     sY = (brickType[1] * 2) - 1
-                    center = ( (((d*sX)-d) / 2) + brickD["co"][0], (((d*sY)-d) / 2) + brickD["co"][1], brickD["co"][2] )
+                    center = ( ((d*sX)-d) / 2, ((d*sY)-d) / 2, 0)
                     randRot = randomizeRot(center, brickType, bm)
                 # create new mesh and send bm to it
                 tempMesh = bpy.data.meshes.new(brickD["name"])
                 bm.to_mesh(tempMesh)
-                # undo bm transformations if not custom, since 'bm' points to bmesh used by all other similar bricks
+                # apply random location to edit mesh according to parameters
+                if cm.randomLoc > 0:
+                    randLoc = randomizeLoc(dimensions["width"], dimensions["height"], mesh=tempMesh)
                 if cm.brickType != "Custom":
+                    # undo bm rotation if not custom, since 'bm' points to bmesh used by all other similar bricks
                     if cm.randomRot > 0:
                         rotateBack(bm, center, randRot)
-                    if cm.randomLoc > 0:
-                        translateBack(bm, randLoc)
-                    transformBMToCo(bm, brickD["co"], mult=-1)
+                    # transform brick mesh to coordinate on matrix
+                    transformMeshToCO(brickD["co"], mesh=tempMesh)
                 # set up materials for tempMesh
                 if mat in mats:
                     matIdx = mats.index(mat)
