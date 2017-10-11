@@ -47,11 +47,11 @@ class RebrickrEditSource(bpy.types.Operator):
             source = bpy.data.objects.get(self.source_name)
             # if file was saved while editing source, break modal gracefully
             if not bpy.context.window_manager["editingSourceInStorage"]:
-                bpy.props.commitEdits = False
+                bpy.props.Rebrickr_commitEdits = False
                 redraw_areas("VIEW_3D")
                 scn.update()
                 return {"FINISHED"}
-            if bpy.props.commitEdits or source is None or bpy.context.scene.name != "Rebrickr_storage (DO NOT RENAME)" or source.mode != "EDIT" or event.type in {"ESC"} or (event.type in {"TAB"} and event.value == "PRESS"):
+            if bpy.props.Rebrickr_commitEdits or source is None or bpy.context.scene.name != "Rebrickr_storage (DO NOT RENAME)" or source.mode != "EDIT" or event.type in {"ESC"} or (event.type in {"TAB"} and event.value == "PRESS"):
                 self.report({"INFO"}, "Edits Committed")
                 # if Rebrickr_storage scene is not active, set to active
                 sto_scn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
@@ -71,8 +71,8 @@ class RebrickrEditSource(bpy.types.Operator):
                 setOriginToObjOrigin(toObj=source, fromLoc=source["before_origin_set_location"])
                 if bpy.context.scene.name == "Rebrickr_storage (DO NOT RENAME)":
                     for screen in bpy.data.screens:
-                        screen.scene = bpy.data.scenes.get(bpy.props.origScene)
-                bpy.props.commitEdits = False
+                        screen.scene = bpy.data.scenes.get(bpy.props.Rebrickr_origScene)
+                bpy.props.Rebrickr_commitEdits = False
                 bpy.context.window_manager["editingSourceInStorage"] = False
                 redraw_areas("VIEW_3D")
                 scn.update()
@@ -80,7 +80,7 @@ class RebrickrEditSource(bpy.types.Operator):
         except:
             if bpy.context.scene.name == "Rebrickr_storage (DO NOT RENAME)":
                 for screen in bpy.data.screens:
-                    screen.scene = bpy.data.scenes.get(bpy.props.origScene)
+                    screen.scene = bpy.data.scenes.get(bpy.props.Rebrickr_origScene)
             self.handle_exception()
             return {"CANCELLED"}
 
@@ -90,7 +90,7 @@ class RebrickrEditSource(bpy.types.Operator):
         try:
             # initialize variables
             scn = context.scene
-            bpy.props.origScene = scn.name
+            bpy.props.Rebrickr_origScene = scn.name
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             self.source_name = cm.source_name + " (DO NOT RENAME)"
@@ -179,7 +179,7 @@ class RebrickrEditSource(bpy.types.Operator):
         except:
             if bpy.context.scene.name == "Rebrickr_storage (DO NOT RENAME)":
                 for screen in bpy.data.screens:
-                    screen.scene = bpy.data.scenes.get(bpy.props.origScene)
+                    screen.scene = bpy.data.scenes.get(bpy.props.Rebrickr_origScene)
             self.handle_exception()
             return {"CANCELLED"}
 
@@ -211,5 +211,5 @@ class RebrickrCommitEdits(bpy.types.Operator):
 
     def execute(self, context):
         print("executing")
-        bpy.props.commitEdits = True
+        bpy.props.Rebrickr_commitEdits = True
         return{"FINISHED"}

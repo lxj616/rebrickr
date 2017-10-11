@@ -5,9 +5,9 @@ bl_info = {
     "blender"     : (2, 78, 0),
     "description" : "Turn any mesh into a 3D brick sculpture or simulation with the click of a button",
     "location"    : "View3D > Tools > Rebrickr",
-    "warning"     : "Work in progress",
-    "wiki_url"    : "",
-    "tracker_url" : "",
+    "warning"     : "",  # used for warning icon and text in addons panel
+    "wiki_url"    : "https://www.blendermarket.com/creator/products/rebrickr/",
+    "tracker_url" : "https://github.com/bblanimation/rebrickr/issues",
     "category"    : "Object"}
 
 """
@@ -112,14 +112,9 @@ def register():
 
     bpy.props.rebrickr_module_name = __name__
 
-    bpy.types.Scene.scene_to_return_to = StringProperty(
-        name="Scene to return to",
-        description="Scene to return to",
-        default="")
-
-    bpy.types.Scene.printTimes = BoolProperty(default=False)
-    bpy.props.origScene = StringProperty(default="")
-    bpy.props.commitEdits = False
+    bpy.types.Scene.Rebrickr_printTimes = BoolProperty(default=False)
+    bpy.props.Rebrickr_origScene = StringProperty(default="")
+    bpy.props.Rebrickr_commitEdits = False
 
     bpy.types.Scene.Rebrickr_runningOperation = BoolProperty(default=False)
     bpy.types.Scene.Rebrickr_last_layers = StringProperty(default="")
@@ -194,6 +189,13 @@ def unregister():
 
     del Scn.cmlist_index
     del Scn.cmlist
+    del Scn.Rebrickr_copy_from_id
+    del Scn.Rebrickr_last_active_object_name
+    del Scn.Rebrickr_active_object_name
+    del Scn.Rebrickr_last_cmlist_index
+    del Scn.Rebrickr_last_layers
+    del Scn.Rebrickr_runningOperation
+    del Scn.Rebrickr_printTimes
 
     wm = bpy.context.window_manager
     for km in addon_keymaps:

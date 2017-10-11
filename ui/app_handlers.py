@@ -79,7 +79,11 @@ def handle_selections(scene):
         rebrickrIsActive = bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
     except:
         rebrickrIsActive = False
-    if not scn.Rebrickr_runningOperation and rebrickrIsActive:
+    try:
+        rebrickrRunningOp = scn.Rebrickr_runningOperation
+    except:
+        rebrickrRunningOp = False
+    if rebrickrIsActive and not rebrickrRunningOp:
         # if scn.layers changes and active object is no longer visible, set scn.cmlist_index to -1
         if scn.Rebrickr_last_layers != str(list(scn.layers)):
             scn.Rebrickr_last_layers = str(list(scn.layers))
@@ -200,8 +204,8 @@ def handle_saving_in_edit_mode(scene):
             setOriginToObjOrigin(toObj=source, fromLoc=source["before_origin_set_location"])
             if bpy.context.scene.name == "Rebrickr_storage (DO NOT RENAME)":
                 for screen in bpy.data.screens:
-                    screen.scene = bpy.data.scenes.get(bpy.props.origScene)
-            bpy.props.commitEdits = False
+                    screen.scene = bpy.data.scenes.get(bpy.props.Rebrickr_origScene)
+            bpy.props.Rebrickr_commitEdits = False
             bpy.context.window_manager["editingSourceInStorage"] = False
             redraw_areas("VIEW_3D")
             scn.update()

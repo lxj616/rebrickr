@@ -403,7 +403,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         miniDist = (coordMatrix[1][0][0] - coordMatrix[0][0][0])*0.00001
         for z in range(len(coordMatrix[0][0])):
             # print status to terminal
-            if not scn.printTimes:
+            if not scn.Rebrickr_printTimes:
                 percent0 = len(coordMatrix)/denom * (z/(len(coordMatrix[0][0])-1))
                 if percent0 < 100:
                     update_progress("Shell", percent0/100.0)
@@ -420,7 +420,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     else:
         percent0 = 0
     # print status to terminal
-    if scn.printTimes:
+    if scn.Rebrickr_printTimes:
         stopWatch("X Axis", time.time()-ct)
         ct = time.time()
 
@@ -428,7 +428,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         miniDist = (coordMatrix[0][1][0] - coordMatrix[0][0][0])*0.00001
         for z in range(len(coordMatrix[0][0])):
             # print status to terminal
-            if not scn.printTimes:
+            if not scn.Rebrickr_printTimes:
                 percent1 = percent0 + (len(coordMatrix[0])/denom * (z/(len(coordMatrix[0][0])-1)))
                 if percent1 < 100:
                     update_progress("Shell", percent1/100.0)
@@ -445,7 +445,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     else:
         percent1 = percent0
     # print status to terminal
-    if scn.printTimes:
+    if scn.Rebrickr_printTimes:
         stopWatch("Y Axis", time.time()-ct)
         ct = time.time()
 
@@ -453,7 +453,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         miniDist = (coordMatrix[0][0][1] - coordMatrix[0][0][0])*0.00001
         for x in range(len(coordMatrix)):
             # print status to terminal
-            if not scn.printTimes:
+            if not scn.Rebrickr_printTimes:
                 percent2 = percent1 + (len(coordMatrix[0][0])/denom * (x/(len(coordMatrix)-1)))
                 if percent2 < 100:
                     update_progress("Shell", percent2/100.0)
@@ -468,7 +468,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                     if intersections == 0:
                         break
     # print status to terminal
-    if scn.printTimes:
+    if scn.Rebrickr_printTimes:
         stopWatch("Z Axis", time.time()-ct)
         ct = time.time()
 
@@ -495,7 +495,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                         brickFreqMatrix[x][y][z] = -1
 
     # print status to terminal
-    if not scn.printTimes:
+    if not scn.Rebrickr_printTimes:
         update_progress("Shell", 1)
         if cursorStatus:
             wm.progress_end()
@@ -505,7 +505,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     denom = min([(cm.shellThickness-1), max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)])/2
     for idx in range(cm.shellThickness-1): # TODO: set to 100 if brickFreqMatrix should be prepared for higher thickness values
         # print status to terminal
-        if not scn.printTimes:
+        if not scn.Rebrickr_printTimes:
             percent = idx/denom
             if percent < 1:
                 update_progress("Internal", percent**0.9)
@@ -559,7 +559,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
             break
 
     # print status to terminal
-    if scn.printTimes:
+    if scn.Rebrickr_printTimes:
         stopWatch("Internal", time.time()-ct)
         ct = time.time()
     elif cm.shellThickness-1:
@@ -601,7 +601,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     # drawBMesh(bm)
 
     # print status to terminal
-    if scn.printTimes:
+    if scn.Rebrickr_printTimes:
         stopWatch("Supports", time.time()-ct)
         ct = time.time()
 
