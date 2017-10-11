@@ -587,12 +587,13 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         allBricksObj = bpy.data.objects.new(name, m)
         # create vert group for bevel mod (assuming only logo verts are selected):
         vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())
+        denom = len(allBricksObj.data.vertices)
         for i,v in enumerate(allBricksObj.data.vertices):
             if not v.select:
                 vg.add([v.index], 1, "ADD")
             # print status to terminal
-            percent = i/len(bricksD)
-            if percent < 1:
+            percent = i/denom
+            if percent % 0.001 < 0.00001 and percent < 1:
                 update_progress("Linking to Scene", percent)
         addEdgeSplitMod(allBricksObj)
         bGroup.objects.link(allBricksObj)

@@ -677,7 +677,6 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
 
                     # get nearest face index and mat name
                     nf = None
-                    matName = ""
                     if type(faceIdxMatrix[x][y][z]) == dict:
                         nf = faceIdxMatrix[x][y][z]["idx"]
                     bricksDict[str(x) + "," + str(y) + "," + str(z)] = {
@@ -685,7 +684,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                         "val":brickFreqMatrix[x][y][z],
                         "co":(co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
                         "nearestFaceIdx":nf,
-                        "matName":None, # defined in 'addMaterialsToBricksDict' function
+                        "matName":"", # defined in 'addMaterialsToBricksDict' function
                         "connected":False}
                 else:
                     bricksDict[str(x) + "," + str(y) + "," + str(z)] = {
@@ -701,8 +700,8 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
 
 def addMaterialsToBricksDict(bricksDict, source):
     for key in bricksDict.keys():
-        if bricksDict[key]["name"] != "DNE":
-            nf = bricksDict[key]["nearestFaceIdx"]
+        nf = bricksDict[key]["nearestFaceIdx"]
+        if bricksDict[key]["name"] != "DNE" and nf is not None:
             f = source.data.polygons[nf]
             slot = source.material_slots[f.material_index]
             mat = slot.material
