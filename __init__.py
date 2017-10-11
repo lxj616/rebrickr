@@ -41,9 +41,6 @@ props = bpy.props
 # store keymaps here to access after registration
 addon_keymaps = []
 
-bpy.types.Object.protected = props.BoolProperty(name = 'protected', default = False)
-bpy.types.Object.isBrickifiedObject = props.BoolProperty(name = 'Is Brickified Object', default = False)
-bpy.types.Object.isBrick = props.BoolProperty(name = 'Is Brick', default = False)
 def deleteUnprotected(context):
     protected = []
     for obj in context.selected_objects:
@@ -112,6 +109,10 @@ def register():
 
     bpy.props.rebrickr_module_name = __name__
 
+    bpy.types.Object.protected = props.BoolProperty(name='protected', default=False)
+    bpy.types.Object.isBrickifiedObject = props.BoolProperty(name='Is Brickified Object', default=False)
+    bpy.types.Object.isBrick = props.BoolProperty(name='Is Brick', default=False)
+
     bpy.types.Scene.Rebrickr_printTimes = BoolProperty(default=False)
     bpy.props.Rebrickr_origScene = StringProperty(default="")
     bpy.props.Rebrickr_commitEdits = False
@@ -174,11 +175,15 @@ def register():
 
     # handle the keymap
     wm = bpy.context.window_manager
-    km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
-    kmi = km.keymap_items.new("scene.rebrickr_brickify", 'L', 'PRESS', alt=True, shift=True)
-    kmi = km.keymap_items.new("scene.rebrickr_delete", 'D', 'PRESS', alt=True, shift=True)#, ctrl=True)
-    kmi = km.keymap_items.new("scene.rebrickr_edit_source", 'TAB', 'PRESS', alt=True)#, ctrl=True)
-    addon_keymaps.append(km)
+    # Note that in background mode (no GUI available), keyconfigs are not available either, so we have
+    # to check this to avoid nasty errors in background case.
+    kc = wm.keyconfigs.addon
+    if kc:
+        km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
+        kmi = km.keymap_items.new("scene.rebrickr_brickify", 'L', 'PRESS', alt=True, shift=True)
+        kmi = km.keymap_items.new("scene.rebrickr_delete", 'D', 'PRESS', alt=True, shift=True)#, ctrl=True)
+        kmi = km.keymap_items.new("scene.rebrickr_edit_source", 'TAB', 'PRESS', alt=True)#, ctrl=True)
+        addon_keymaps.append(km)
 
     # other things (UI List)
     bpy.types.Scene.cmlist = CollectionProperty(type=Rebrickr_CreatedModels)
@@ -189,19 +194,27 @@ def unregister():
 
     del Scn.cmlist_index
     del Scn.cmlist
+    del bpy.props.abs_plastic_materials_for_random
+    del bpy.props.abs_plastic_materials
     del Scn.Rebrickr_copy_from_id
     del Scn.Rebrickr_last_active_object_name
     del Scn.Rebrickr_active_object_name
     del Scn.Rebrickr_last_cmlist_index
     del Scn.Rebrickr_last_layers
     del Scn.Rebrickr_runningOperation
+    del bpy.props.Rebrickr_commitEdits
+    del bpy.props.Rebrickr_origScene
     del Scn.Rebrickr_printTimes
+    del bpy.props.rebrickr_module_name
+    del bpy.types.Object.isBrick
+    del bpy.types.Object.isBrickifiedObject
+    del bpy.types.Object.protected
 
+
+    # handle the keymaps
     wm = bpy.context.window_manager
     for km in addon_keymaps:
         wm.keyconfigs.addon.keymaps.remove(km)
-
-    # clear the list
     addon_keymaps.clear()
 
     bpy.utils.unregister_module(__name__)
