@@ -555,7 +555,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Logo Detailing",
         description="Choose where to draw the logo",
         items=[("Custom Logo", "Custom Logo", "Choose a mesh object to use as the brick stud logo"),
-              ("LEGO Logo", "LEGO Logo", "Include a LEGO logo on each stud"),
+            #   ("LEGO Logo", "LEGO Logo", "Include a LEGO logo on each stud"),
               ("None", "None", "Don't include Brick Logo on bricks")],
         update=dirtyBricks,
         default="None")

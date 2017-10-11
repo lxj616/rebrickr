@@ -552,7 +552,7 @@ class BrickTypesPanel(Panel):
 #         if color not in mats:
 #             print("Color not found: " + color)
 #             row = layoutElement.row(align=True)
-#             row.operator("scene.append_brick_materials", text="Import Brick Materials", icon="IMPORT")
+#             row.operator("scene.append_abs_plastic_materials", text="Import ABS Plastic Materials", icon="IMPORT")
 #             break
 #
 class MaterialsPanel(Panel):
@@ -603,11 +603,11 @@ class MaterialsPanel(Panel):
                     row.label("Switch to 'Cycles' for Brick materials")
                 else:
                     mats = bpy.data.materials.keys()
-                    for color in bpy.props.brick_materials:
+                    for color in bpy.props.abs_plastic_materials:
                         if color not in mats:
                             # print("Color not found: " + color)
                             row = col.row(align=True)
-                            row.operator("scene.append_brick_materials", text="Import Brick Materials", icon="IMPORT")
+                            row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
                             break
             if cm.modelCreated or cm.animated:
                 col = layout.column(align=True)
@@ -621,11 +621,11 @@ class MaterialsPanel(Panel):
             elif brick_materials_installed:
                 mats = bpy.data.materials.keys()
                 allGood = True
-                for color in bpy.props.brick_materials_for_random:
+                for color in bpy.props.abs_plastic_materials_for_random:
                     if color not in mats:
                         # print("Color not found: " + color)
                         row = col.row(align=True)
-                        row.operator("scene.append_brick_materials", text="Import Brick Materials", icon="IMPORT")
+                        row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
                         col = layout.column(align=True)
                         col.scale_y = 0.7
                         col.label("'Brick Materials' must be")
@@ -667,11 +667,11 @@ class MaterialsPanel(Panel):
                         row.label("Switch to 'Cycles' for Brick materials")
                     else:
                         mats = bpy.data.materials.keys()
-                        for color in bpy.props.brick_materials:
+                        for color in bpy.props.abs_plastic_materials:
                             if color not in mats:
                                 # print("Color not found: " + color)
                                 row = col.row(align=True)
-                                row.operator("scene.append_brick_materials", text="Import Brick Materials", icon="IMPORT")
+                                row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
                                 break
                 if cm.modelCreated:
                     if cm.splitModel:

@@ -82,8 +82,8 @@ class RebrickrApplyMaterial(bpy.types.Operator):
         # initialize list of brick materials
         brick_mats = []
         mats = bpy.data.materials.keys()
-        for color in bpy.props.brick_materials:
-            if color in mats and color in bpy.props.brick_materials_for_random:
+        for color in bpy.props.abs_plastic_materials:
+            if color in mats and color in bpy.props.abs_plastic_materials_for_random:
                 brick_mats.append(color)
         randS0 = np.random.RandomState(0)
         # if model is split, apply a random material to each brick

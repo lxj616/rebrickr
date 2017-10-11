@@ -129,7 +129,7 @@ def register():
 
     bpy.types.Scene.Rebrickr_copy_from_id = IntProperty(default=-1)
 
-    bpy.props.brick_materials = [
+    bpy.props.abs_plastic_materials = [
         'ABS Plastic Black',
         'ABS Plastic Blue',
         'ABS Plastic Bright Green',
@@ -156,7 +156,7 @@ def register():
         'ABS Plastic White',
         'ABS Plastic Yellow']
 
-    bpy.props.brick_materials_for_random = [
+    bpy.props.abs_plastic_materials_for_random = [
         'ABS Plastic Black',
         'ABS Plastic Blue',
         'ABS Plastic Bright Green',

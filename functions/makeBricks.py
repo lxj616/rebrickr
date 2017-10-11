@@ -155,8 +155,8 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         brick_materials_installed = False
     if cm.materialType == "Random" and brick_materials_installed:
         mats = bpy.data.materials.keys()
-        for color in bpy.props.brick_materials:
-            if color in mats and color in bpy.props.brick_materials_for_random:
+        for color in bpy.props.abs_plastic_materials:
+            if color in mats and color in bpy.props.abs_plastic_materials_for_random:
                 brick_mats.append(color)
 
     # initialize progress bar around cursor

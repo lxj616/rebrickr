@@ -67,7 +67,7 @@ class RebrickrDelete(bpy.types.Operator):
         brickScale = None
 
         # set layers to source layers temporarily
-        curLayers = scn.layers
+        curLayers = list(scn.layers)
         scn.layers = source.layers
 
         # clean up 'Rebrickr_[source name]' group
