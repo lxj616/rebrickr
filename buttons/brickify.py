@@ -149,7 +149,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
         return refLogo
 
-    def getBricksDict(self, source, source_details, dimensions, R, updateCursor):
+    def getBricksDict(self, source, source_details, dimensions, R, updateCursor, curFrame=None):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         # current_source_hash = json.dumps(hash_object(source))
@@ -199,7 +199,7 @@ class RebrickrBrickify(bpy.types.Operator):
             customObj_details = None
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
         updateCursor = self.action in ["CREATE", "UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] # evaluates to boolean value
-        bricksDict = self.getBricksDict(source, source_details, dimensions, R, updateCursor)
+        bricksDict = self.getBricksDict(source, source_details, dimensions, R, updateCursor, curFrame)
         if curFrame is not None:
             group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:

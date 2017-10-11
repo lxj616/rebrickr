@@ -578,6 +578,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 brick.parent = parent
                 scn.objects.link(brick)
                 brick.isBrick = True
+        update_progress("Linking to Scene", 1)
     else:
         m = combineMeshes(allBrickMeshes)
         if frameNum:
