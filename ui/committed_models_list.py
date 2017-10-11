@@ -42,7 +42,6 @@ def matchProperties(cmNew, cmOld, bh=False):
     cmNew.hiddenUndersideDetail = cmOld.hiddenUndersideDetail
     cmNew.exposedUndersideDetail = cmOld.exposedUndersideDetail
     cmNew.studVerts = cmOld.studVerts
-    cmNew.brickHeight = cmOld.brickHeight
     cmNew.gap = cmOld.gap
     cmNew.mergeSeed = cmOld.mergeSeed
     cmNew.randomRot = cmOld.randomRot
@@ -504,6 +503,11 @@ def dirtyModel(self, context):
     cm = scn.cmlist[scn.cmlist_index]
     cm.modelIsDirty = True
 
+def dirtyMatrix(self, context):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    cm.matrixIsDirty = True
+
 def dirtyBuild(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -539,7 +543,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     shellThickness = IntProperty(
         name="Shell Thickness",
         description="Thickness of the Brick shell",
-        update=dirtyBuild,
+        update=dirtyMatrix,
         min=1, max=100,
         default=1)
 
@@ -636,7 +640,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     brickHeight = FloatProperty(
         name="Brick Height",
         description="Height of the bricks in the final Brick Model",
-        update=dirtyModel,
+        update=dirtyMatrix,
         step=1,
         precision=3,
         min=0.001, max=10,
@@ -644,7 +648,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     gap = FloatProperty(
         name="Gap Between Bricks",
         description="Distance between bricks",
-        update=dirtyModel,
+        update=dirtyMatrix,
         step=1,
         precision=3,
         min=0, max=0.1,
@@ -694,7 +698,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     distOffsetX = FloatProperty(
         name="X",
         description="Offset of custom bricks on X axis (1.0 = side-by-side)",
-        update=dirtyModel,
+        update=dirtyMatrix,
         step=1,
         precision=3,
         min=0.001, max=2,
@@ -703,7 +707,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Y",
         description="Offset of custom bricks on Y axis (1.0 = side-by-side)",
         step=1,
-        update=dirtyModel,
+        update=dirtyMatrix,
         precision=3,
         min=0.001, max=2,
         default=1)
@@ -711,7 +715,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Z",
         description="Offset of custom bricks on Z axis (1.0 = side-by-side)",
         step=1,
-        update=dirtyModel,
+        update=dirtyMatrix,
         precision=3,
         min=0.001, max=2,
         default=1)
@@ -719,7 +723,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     customObjectName = StringProperty(
         name="Custom Object Name",
         description="Name of the object to use as bricks",
-        update=dirtyModel,
+        update=dirtyMatrix,
         default="")
 
     maxBrickScale1 = IntProperty(
@@ -749,30 +753,30 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         items=[("None", "None", "No internal supports"),
               ("Lattice", "Lattice", "Use latice inside model"),
               ("Columns", "Columns", "Use columns inside model")],
-        update=dirtyBuild,
+        update=dirtyMatrix,
         default="None")
     latticeStep = IntProperty(
         name="Lattice Step",
         description="Distance between cross-beams",
-        update=dirtyBuild,
+        update=dirtyMatrix,
         step=1,
         min=2, max=25,
         default=2)
     alternateXY = BoolProperty(
         name="Alternate X and Y",
         description="Alternate back-and-forth and side-to-side beams",
-        update=dirtyBuild,
+        update=dirtyMatrix,
         default=False)
     colThickness = IntProperty(
         name="Column Thickness",
         description="Thickness of the columns",
-        update=dirtyBuild,
+        update=dirtyMatrix,
         min=1, max=25,
         default=2)
     colStep = IntProperty(
         name="Column Step",
         description="Distance between columns",
-        update=dirtyBuild,
+        update=dirtyMatrix,
         step=1,
         min=1, max=25,
         default=2)
@@ -915,6 +919,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
 
     # CACHED BRICKFREQMATRIX
     BFMCache = StringProperty(default="")
+    # source_hash = StringProperty(default="")
 
     # ADVANCED SETTINGS
     brickShell = EnumProperty(
@@ -923,7 +928,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         items=[("Inside Mesh", "Inside Mesh (recommended)", "Draw brick shell inside source mesh (Recommended)"),
               ("Outside Mesh", "Outside Mesh", "Draw brick shell outside source mesh"),
               ("Inside and Outside", "Inside and Outside", "Draw brick shell inside and outside source mesh (two layers)")],
-        update=dirtyModel,
+        update=dirtyMatrix,
         default="Inside Mesh")
     calculationAxes = EnumProperty(
         name="Expanded Axes",
@@ -935,7 +940,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
               ("X", "X", "PLACEHOLDER"),
               ("Y", "Y", "PLACEHOLDER"),
               ("Z", "Z", "PLACEHOLDER")],
-        update=dirtyModel,
+        update=dirtyMatrix,
         default="XY")
 
     modelCreatedOnFrame = IntProperty(default=-1)
@@ -953,6 +958,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     buildIsDirty = BoolProperty(default=True)
     sourceIsDirty = BoolProperty(default=True)
     bricksAreDirty = BoolProperty(default=True)
+    matrixIsDirty = BoolProperty(default=True)
 
 # -------------------------------------------------------------------
 # register

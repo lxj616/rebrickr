@@ -45,40 +45,36 @@ class Bricks:
         return brickObjs
 
     @staticmethod
-    def new_mesh(dimensions, name='new_brick', gap_percentage=0.01, type=[1,1,3], transform=False, logo=False, logo_details=None, undersideDetail="Flat", stud=True, returnType="mesh", brickMesh=None):
+    def new_mesh(dimensions, type=[1,1,3], logo=False, logo_zRot=None, logo_type=None, logo_details=None, logo_scale=None, logo_resolution=None, logo_inset=None, undersideDetail="Flat", stud=True, numStudVerts=None):
         """ create unlinked Brick at origin """
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        bm = bmesh.new()
-        if cm.brickType == "Plates" or cm.brickType == "Bricks and Plates":
-            zScale = 0.33
-        elif cm.brickType == "Bricks":
-            zScale = 1
 
-        brickBM = makeBrick(dimensions=dimensions, brickSize=type, numStudVerts=cm.studVerts, detail=undersideDetail, stud=stud)
+        bm = bmesh.new()
+
+        brickBM = makeBrick(dimensions=dimensions, brickSize=type, numStudVerts=numStudVerts, detail=undersideDetail, stud=stud)
         if logo and stud:
-            # get logo rotation angle based on type of brick
-            if type[0] == 1 and type[1] == 1:
-                zRot = random.randint(0,3) * 90
-            elif type[0] == 2 and type[1] > 2:
-                zRot = random.randint(0,1) * 180 + 90
-            elif type[1] == 2 and type[0] > 2:
-                zRot = random.randint(0,1) * 180
-            elif type[0] == 2 and type[1] == 2:
-                zRot = random.randint(0,1) * 180
-            elif type[0] == 1:
-                zRot = random.randint(0,1) * 180 + 90
-            elif type[1] == 1:
-                zRot = random.randint(0,1) * 180
-            else:
-                print("shouldn't get here")
-                print(type)
-            lw = dimensions["logo_width"] * cm.logoScale
+            if logo_zRot is None:
+                # get logo rotation angle based on type of brick
+                if type[0] == 1 and type[1] == 1:
+                    zRot = random.randint(0,3) * 90
+                elif type[0] == 2 and type[1] > 2:
+                    zRot = random.randint(0,1) * 180 + 90
+                elif type[1] == 2 and type[0] > 2:
+                    zRot = random.randint(0,1) * 180
+                elif type[0] == 2 and type[1] == 2:
+                    zRot = random.randint(0,1) * 180
+                elif type[0] == 1:
+                    zRot = random.randint(0,1) * 180 + 90
+                elif type[1] == 1:
+                    zRot = random.randint(0,1) * 180
+                else:
+                    print("shouldn't get here")
+                    print(type)
+            lw = dimensions["logo_width"] * logo_scale
             for x in range(type[0]):
                 for y in range(type[1]):
                     logoBM = bmesh.new()
                     logoBM.from_mesh(logo.data)
-                    if cm.logoDetail == "LEGO Logo":
+                    if logo_type == "LEGO Logo":
                         # smooth faces
                         for f in logoBM.faces:
                             f.smooth = True
@@ -102,8 +98,8 @@ class Bricks:
                         bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(0.0, 0.0, 1.0), matrix=Matrix.Rotation(math.radians(zRot), 3, 'Z'))
                     # transform logo to appropriate position
                     zOffset = dimensions["logo_offset"]
-                    if cm.logoDetail != "LEGO Logo" and logo_details is not None:
-                        zOffset += ((logo_details.z.distance * (lw/distMax)) / 2) * (1-(cm.logoInset * 2))
+                    if logo_type != "LEGO Logo" and logo_details is not None:
+                        zOffset += ((logo_details.z.distance * (lw/distMax)) / 2) * (1-(logo_inset * 2))
                     xyOffset = dimensions["width"]+dimensions["gap"]
                     for v in logoBM.verts:
                         v.co = ((v.co.x + x*(xyOffset)), (v.co.y + y*(xyOffset)), (v.co.z + zOffset))
@@ -120,20 +116,8 @@ class Bricks:
         bm.from_mesh(cube)
         bpy.data.meshes.remove(cube)
 
-        if transform:
-            for v in bm.verts:
-                v.co = (v.co[0] + transform[0], v.co[1] + transform[1], v.co[2] + transform[2])
-
-        if returnType == "mesh":
-            # create apply mesh data to 'Rebrickr_brick1x1' data
-            if not brickMesh:
-                brickMesh = bpy.data.meshes.new(name + 'Mesh')
-            bm.to_mesh(brickMesh)
-            # return updated brick object
-            return brickMesh
-        else:
-            # return bmesh object
-            return bm
+        # return bmesh object
+        return bm
 
     @staticmethod
     def get_dimensions(height=1, zScale=1, gap_percentage=0.01):

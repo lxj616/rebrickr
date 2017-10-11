@@ -25,6 +25,7 @@ import time
 import bmesh
 import os
 import math
+import json
 
 # Blender imports
 import bpy
@@ -33,6 +34,7 @@ props = bpy.props
 
 # Rebrickr imports
 from ..functions import *
+# from ..functions.wrappers import timed_call
 from .materials import RebrickrApplyMaterial
 from .delete import RebrickrDelete
 from .bevel import RebrickrBevel
@@ -47,12 +49,12 @@ def updateCanRun(type):
     else:
         cm = scn.cmlist[scn.cmlist_index]
         if type == "ANIMATION":
-            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
+            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.matrixIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
         elif type == "MODEL":
             # set up variables
             n = cm.source_name
             Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and not (cm.materialType == "Random" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
+            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.matrixIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and not (cm.materialType == "Random" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
 
 def getDimensionsAndBounds(source, skipDimensions=False):
     scn = bpy.context.scene
@@ -147,6 +149,29 @@ class RebrickrBrickify(bpy.types.Operator):
 
         return refLogo
 
+    def getBricksDict(self, source, source_details, dimensions, R, updateCursor):
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        # current_source_hash = json.dumps(hash_object(source))
+        if not cm.matrixIsDirty and cm.BFMCache != "" and not cm.sourceIsDirty and (self.action != "UPDATE_ANIM" or not cm.animIsDirty):#current_source_hash == cm.source_hash:
+            if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
+                bricksDict = json.loads(cm.BFMCache)
+            elif self.action == "UPDATE_ANIM":
+                bricksDict = json.loads(cm.BFMCache)[str(curFrame)]
+        else:
+            bricksDict = makeBricksDict(source, source_details, dimensions, R, cursorStatus=updateCursor)
+            if self.action in ["CREATE", "UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
+                # cm.source_hash = current_source_hash
+                cm.BFMCache = json.dumps(bricksDict)
+            elif self.action in ["ANIMATE", "UPDATE_ANIM"]:
+                if cm.BFMCache != "":
+                    BFMCache = json.loads(cm.BFMCache)
+                else:
+                    BFMCache = {}
+                BFMCache[curFrame] = bricksDict
+                cm.BFMCache = json.dumps(BFMCache)
+        return bricksDict
+
     def createNewBricks(self, source, parent, source_details, dimensions, refLogo, curFrame=None):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
@@ -171,7 +196,7 @@ class RebrickrBrickify(bpy.types.Operator):
             customObj_details = None
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
         updateCursor = self.action in ["CREATE", "UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] # evaluates to boolean value
-        bricksDict = makeBricksDict(source, source_details, dimensions, R, cursorStatus=updateCursor)
+        bricksDict = self.getBricksDict(source, source_details, dimensions, R, updateCursor)
         if curFrame is not None:
             group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
@@ -353,6 +378,9 @@ class RebrickrBrickify(bpy.types.Operator):
         Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
         Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
         sceneCurFrame = scn.frame_current
+
+        if self.action == "ANIMATE":
+            cm.BFMCache = ""
 
         self.sourceOrig = self.getObjectToBrickify()
         if self.action == "UPDATE_ANIM":
@@ -804,6 +832,7 @@ class RebrickrBrickify(bpy.types.Operator):
         cm.buildIsDirty = False
         cm.sourceIsDirty = False
         cm.bricksAreDirty = False
+        cm.matrixIsDirty = False
         scn.Rebrickr_runningOperation = False
 
         # apply random materials

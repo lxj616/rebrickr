@@ -46,9 +46,6 @@ from .buttons import *
 # store keymaps here to access after registration
 addon_keymaps = []
 
-# initialize the brick bmesh cache dictionary
-rebrickr_bm_cache = {}
-
 def deleteUnprotected(context, use_global=False):
     scn = context.scene
     protected = []

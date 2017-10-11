@@ -35,6 +35,7 @@ from .common_functions import *
 from .generate_lattice import generateLattice
 from .makeBricks import *
 from .wrappers import *
+from .hashObject import *
 from ..classes.Brick import Bricks
 
 def getSafeScn():
@@ -504,8 +505,12 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
 
     # set up brickFreqMatrix values for bricks inside shell
     j = 1
+    # NOTE: Following two lines are alternative for calculating partial brickFreqMatrix (insideness only calculated as deep as necessary)
     denom = min([(cm.shellThickness-1), max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)])/2
-    for idx in range(cm.shellThickness-1): # TODO: set to 100 if brickFreqMatrix should be prepared for higher thickness values
+    for idx in range(cm.shellThickness-1):
+    # NOTE: Following two lines are alternative for calculating full brickFreqMatrix
+    # denom = max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)/2
+    # for idx in range(100):
         # print status to terminal
         if not scn.Rebrickr_printTimes:
             percent = idx/denom
@@ -648,6 +653,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     faceIdxMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
 
     brickFreqMatrix = getBrickMatrix(source, faceIdxMatrix, coordMatrix, cm.brickShell, axes=calculationAxes, cursorStatus=cursorStatus)
+
     # get coordinate list from intersections of edges with faces
     threshold = 1.01 - (cm.shellThickness / 100)
 

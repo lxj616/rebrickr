@@ -25,6 +25,7 @@ import math
 import time
 import sys
 import random
+import json
 import numpy as np
 
 # Blender imports
@@ -36,6 +37,7 @@ from ..classes.Brick import Bricks
 from ..functions import *
 from ..functions.wrappers import *
 from .__init__ import bounds
+from ..lib.rebrickr_caches import rebrickr_bm_cache
 
 def brickAvail(sourceBrick, brick):
     scn = bpy.context.scene
@@ -67,6 +69,10 @@ def combineMeshes(meshes):
     bm.to_mesh( finalMesh )
     return finalMesh
 
+def transformBMToCo(bm, co, mult=1):
+    for v in bm.verts:
+        v.co = (v.co[0] + (co[0] * mult), v.co[1] + (co[1] * mult), v.co[2] + (co[2] * mult))
+
 def randomizeLoc(width, height, bm):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -77,7 +83,12 @@ def randomizeLoc(width, height, bm):
         v.co.x += x
         v.co.y += y
         v.co.z += z
-
+    return (x,y,z)
+def translateBack(bm, loc):
+    for v in bm.verts:
+        v.co.x -= loc[0]
+        v.co.y -= loc[1]
+        v.co.z -= loc[2]
 
 def randomizeRot(center, brickType, bm):
     scn = bpy.context.scene
@@ -92,6 +103,11 @@ def randomizeRot(center, brickType, bm):
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(x, 3, 'X'))
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(y, 3, 'Y'))
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(z, 3, 'Z'))
+    return (x,y,z)
+def rotateBack(bm, center, rot):
+    for i,axis in enumerate(['Z', 'Y', 'X']):
+        bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(-rot[2-i], 3, axis))
+
 
 def prepareLogoAndGetDetails(logo):
     scn = bpy.context.scene
@@ -112,6 +128,21 @@ def prepareLogoAndGetDetails(logo):
     else:
         logo_details = None
     return logo_details, logo
+
+def getBrickMesh(cm, dimensions, brickType, undersideDetail, logoDetail, logo_details, logo_scale, logo_inset, studDetail, numStudVerts):
+    # get bm_cache_string
+    bm_cache_string = ""
+    if cm.logoDetail in ["None", "LEGO Logo"] and cm.brickType in ["Bricks", "Plates"]:
+        bm_cache_string = json.dumps((cm.brickHeight, brickType, undersideDetail, logoDetail, cm.logoResolution, studDetail, cm.studVerts))
+    # check for bmesh in cache
+    if bm_cache_string in rebrickr_bm_cache.keys():
+        bm = rebrickr_bm_cache[bm_cache_string]
+    # if not found in rebrickr_bm_cache, create new brick mesh and store to cache
+    else:
+        bm = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=studDetail, numStudVerts=cm.studVerts)
+        if cm.logoDetail in ["None", "LEGO Logo"] and cm.brickType in ["Bricks", "Plates"]:
+            rebrickr_bm_cache[bm_cache_string] = bm
+    return bm
 
 @timed_call('Time Elapsed')
 def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customData=None, customObj_details=None, group_name=None, frameNum=None, cursorStatus=False):
@@ -414,31 +445,32 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 if cm.brickType == "Custom":
                     bm = bmesh.new()
                     bm.from_mesh(customData)
-                    for v in bm.verts:
-                        v.co = (v.co[0] - customObj_details.x.mid, v.co[1] - customObj_details.y.mid, v.co[2] - customObj_details.z.mid)
+                    transformBMToCo(bm, (-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid))
                     maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
                     bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
-                    # for v in bm.verts:
-                    #     v.co = (v.co[0] + brickD["co"][0], v.co[1] + brickD["co"][1], v.co[2] + brickD["co"][2])
-                    m = bpy.data.meshes.new(brickD["name"])
-                    bm.to_mesh(m)
                 else:
-                    # create new brick mesh
-                    bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, logo_details=logo_details, stud=studDetail, returnType="bmesh")
-                    # create new mesh
-                    m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
-                    # apply random location/rotation according to parameters
-                    if cm.randomLoc > 0:
-                        randomizeLoc(dimensions["width"], dimensions["height"], bm)
+                    # get brick mesh
+                    # bm = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=studDetail, numStudVerts=cm.studVerts)
+                    bm = getBrickMesh(cm, dimensions, brickType, undersideDetail, logoDetail, logo_details, cm.logoScale, cm.logoInset, studDetail, cm.studVerts)
+                # apply random location/rotation according to parameters
+                if cm.randomLoc > 0:
+                    randLoc = randomizeLoc(dimensions["width"], dimensions["height"], bm)
+                if cm.randomRot > 0:
+                    d = dimensions["width"]/2
+                    sX = (brickType[0] * 2) - 1
+                    sY = (brickType[1] * 2) - 1
+                    center = ( ((d*sX)-d) / 2, ((d*sY)-d) / 2, 0.0 )
+                    randRot = randomizeRot(center, brickType, bm)
+                # create new mesh and send bm to it
+                m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
+                bm.to_mesh(m)
+                # undo bm transformations if not custom, since 'bm' points to bmesh used by all other similar bricks
+                if cm.brickType != "Custom":
                     if cm.randomRot > 0:
-                        d = dimensions["width"]/2
-                        sX = (brickType[0] * 2) - 1
-                        sY = (brickType[1] * 2) - 1
-                        center = ( ((d*sX)-d) / 2, ((d*sY)-d) / 2, 0.0 )
-                        randomizeRot(center, brickType, bm)
-                    # send mesh to bm
-                    bm.to_mesh(m)
-                    # return updated brick object
+                        rotateBack(bm, center, randRot)
+                    if cm.randomLoc > 0:
+                        translateBack(bm, randLoc)
+                # create new object with mesh data
                 brick = bpy.data.objects.new(brickD["name"], m)
                 brick.location = Vector(brickD["co"])
                 if cm.materialType == "Custom":
@@ -463,28 +495,38 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 if cm.brickType == "Custom":
                     bm = bmesh.new()
                     bm.from_mesh(customData)
-                    for v in bm.verts:
-                        v.co = (v.co[0] - customObj_details.x.mid, v.co[1] - customObj_details.y.mid, v.co[2] - customObj_details.z.mid)
+                    transformBMToCo(bm, (-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid))
 
                     maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
                     bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
-                    for v in bm.verts:
-                        v.co = (v.co[0] + brickD["co"][0], v.co[1] + brickD["co"][1], v.co[2] + brickD["co"][2])
+                    transformBMToCo(bm, brickD["co"])
                 else:
-                    # create new brick mesh
-                    bm = Bricks.new_mesh(dimensions=dimensions, name=brickD["name"], gap_percentage=cm.gap, type=brickType, transform=brickD["co"], undersideDetail=undersideDetail, logo=logoDetail, logo_details=logo_details, stud=studDetail, returnType="bmesh")
+                    # get brick mesh
+                    # bm = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoDetail, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=studDetail, numStudVerts=cm.studVerts)
+                    bm = getBrickMesh(cm, dimensions, brickType, undersideDetail, logoDetail, logo_details, cm.logoScale, cm.logoInset, studDetail, cm.studVerts)
+                    # trainsform brick mesh to coordinate on matrix
+                    transformBMToCo(bm, brickD["co"])
                 # apply random location/rotation according to parameters
                 if cm.randomLoc > 0:
-                    randomizeLoc(dimensions["width"], dimensions["height"], bm)
+                    randLoc = randomizeLoc(dimensions["width"], dimensions["height"], bm)
                 if cm.randomRot > 0:
                     d = dimensions["width"]/2
                     sX = (brickType[0] * 2) - 1
                     sY = (brickType[1] * 2) - 1
                     center = ( (((d*sX)-d) / 2) + brickD["co"][0], (((d*sY)-d) / 2) + brickD["co"][1], brickD["co"][2] )
-                    randomizeRot(center, brickType, bm)
-                # create new mesh and send to bm
+                    randRot = randomizeRot(center, brickType, bm)
+                # create new mesh and send bm to it
                 tempMesh = bpy.data.meshes.new(brickD["name"])
                 bm.to_mesh(tempMesh)
+                # undo bm transformations if not custom, since 'bm' points to bmesh used by all other similar bricks
+                if cm.brickType != "Custom":
+                    if cm.randomRot > 0:
+                        rotateBack(bm, center, randRot)
+                    if cm.randomLoc > 0:
+                        translateBack(bm, randLoc)
+                    transformBMToCo(bm, brickD["co"], mult=-1)
+                    # print(bm.verts[0].co)
+                    # print()
                 # set up materials for tempMesh
                 if mat in mats:
                     matIdx = mats.index(mat)
