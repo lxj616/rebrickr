@@ -26,6 +26,7 @@ import bmesh
 import bpy
 from mathutils import Vector
 
+# from CG Cookie's retopoflow plugin
 def hash_object(obj:bpy.types.Object):
     if obj is None: return None
     assert type(obj) is bpy.types.Object, "Only call RFMesh.hash_object on mesh objects!"
@@ -42,7 +43,7 @@ def hash_object(obj:bpy.types.Object):
     hashed = (counts, bbox, vsum, xform, hash(obj))      # ob.name???
     return hashed
 
-@staticmethod
+# from CG Cookie's retopoflow plugin
 def hash_bmesh(bme:bmesh.types.BMesh):
     if bme is None: return None
     assert type(bme) is bmesh.types.BMesh, 'Only call RFMesh.hash_bmesh on BMesh objects!'

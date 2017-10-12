@@ -35,6 +35,34 @@ from .app_handlers import *
 from ..buttons.delete import RebrickrDelete
 from ..functions import *
 
+from .. import addon_updater_ops
+
+class RebrickrUpdatesPanel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "Rebrickr Updates"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_updates"
+    # bl_context     = "objectmode"
+    bl_category    = "Rebrickr"
+
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if addon_updater_ops.updater.update_ready == True:
+            return True
+        return False
+
+    def draw(self, context):
+        layout = self.layout
+        scn = context.scene
+
+		# could also use your own custom drawing
+		# based on shared variables
+        layout.label("Rebrickr update available!", icon="INFO")
+        layout.label("")
+
+		# call built-in function with draw code/checks
+        addon_updater_ops.update_notice_box_ui(self, context)
 
 class RebrickrStoragePanel(Panel):
     bl_space_type  = "VIEW_3D"
@@ -129,6 +157,14 @@ class BrickModelsPanel(Panel):
             col.label('ERROR: upgrade needed', icon='ERROR')
             col.label('Rebrickr requires Blender 2.78+')
             return
+
+		# Call to check for update in background
+		# note: built-in checks ensure it runs at most once
+		# and will run in the background thread, not blocking
+		# or hanging blender
+		# Internal also checks to see if auto-check enabeld
+		# and if the time interval has passed
+        addon_updater_ops.check_for_update_background(context)
 
         # draw UI list and list actions
         if len(scn.cmlist) < 2:

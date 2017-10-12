@@ -1,7 +1,7 @@
 bl_info = {
     "name"        : "Rebrickr",
     "author"      : "Christopher Gearhart <chris@bblanimation.com>",
-    "version"     : (1, 0, 0),
+    "version"     : (1, 0, 1),
     "blender"     : (2, 78, 0),
     "description" : "Turn any mesh into a 3D brick sculpture or simulation with the click of a button",
     "location"    : "View3D > Tools > Rebrickr",
@@ -44,23 +44,53 @@ props = bpy.props
 from .ui import *
 from .buttons import *
 
+# updater ops import, all setup in this file
+from . import addon_updater_ops
+
 # store keymaps here to access after registration
 addon_keymaps = []
 
-class AssemblMePreferences(AddonPreferences):
-    bl_idname = __name__
+class RebrickrPreferences(AddonPreferences):
+    bl_idname = __package__
 
-    # auto save preferences
+    # cacheing preferences
     useCaching = BoolProperty(
             name="Use Cacheing",
             description="Store brick meshes and sculpture matrices to speed up operator run times (up to 3x speed boost)",
             default=True)
+
+	# addon updater preferences
+    auto_check_update = bpy.props.BoolProperty(
+        name = "Auto-check for Update",
+        description = "If enabled, auto-check for updates using an interval",
+        default = False)
+    updater_intrval_months = bpy.props.IntProperty(
+        name='Months',
+        description = "Number of months between checking for updates",
+        default=0, min=0)
+    updater_intrval_days = bpy.props.IntProperty(
+        name='Days',
+        description = "Number of days between checking for updates",
+        default=7, min=0)
+    updater_intrval_hours = bpy.props.IntProperty(
+        name='Hours',
+        description = "Number of hours between checking for updates",
+        min=0, max=23,
+        default=0)
+    updater_intrval_minutes = bpy.props.IntProperty(
+        name='Minutes',
+        description = "Number of minutes between checking for updates",
+        min=0, max=59,
+        default=0)
 
     def draw(self, context):
         layout = self.layout
         col = layout.column(align=True)
         row = col.row(align=True)
         row.prop(self, "useCaching")
+
+        # updater draw function
+        addon_updater_ops.update_settings_ui(self,context)
 
 def deleteUnprotected(context, use_global=False):
     scn = context.scene
@@ -130,9 +160,8 @@ class delete_override(bpy.types.Operator):
             self.runDelete(context)
             return {'FINISHED'}
 
-def register():
-    bpy.utils.register_class(AssemblMePreferences)
 
+def register():
     bpy.utils.register_module(__name__)
 
     bpy.props.rebrickr_module_name = __name__
@@ -217,8 +246,14 @@ def register():
     bpy.types.Scene.cmlist = CollectionProperty(type=Rebrickr_CreatedModels)
     bpy.types.Scene.cmlist_index = IntProperty(default=-1)
 
+    # addon updater code and configurations
+    addon_updater_ops.register(bl_info)
+
 def unregister():
     Scn = bpy.types.Scene
+
+    # addon updater unregister
+    addon_updater_ops.unregister()
 
     del Scn.cmlist_index
     del Scn.cmlist
