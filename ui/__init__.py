@@ -35,6 +35,7 @@ from .app_handlers import *
 from ..buttons.delete import RebrickrDelete
 from ..functions import *
 
+# updater import
 from .. import addon_updater_ops
 
 class RebrickrStoragePanel(Panel):
@@ -133,14 +134,6 @@ class BrickModelsPanel(Panel):
             col.label('ERROR: upgrade needed', icon='ERROR')
             col.label('Rebrickr requires Blender 2.78+')
             return
-
-		# Call to check for update in background
-		# note: built-in checks ensure it runs at most once
-		# and will run in the background thread, not blocking
-		# or hanging blender
-		# Internal also checks to see if auto-check enabeld
-		# and if the time interval has passed
-        addon_updater_ops.check_for_update_background(context)
 
         # draw UI list and list actions
         if len(scn.cmlist) < 2:

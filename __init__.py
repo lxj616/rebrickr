@@ -44,7 +44,7 @@ props = bpy.props
 from .ui import *
 from .buttons import *
 
-# updater ops import, all setup in this file
+# updater import
 from . import addon_updater_ops
 
 # store keymaps here to access after registration
