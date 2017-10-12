@@ -101,6 +101,7 @@ class Bricks:
                     v.co.x -= xOffset
                     v.co.y -= yOffset
                     v.co.z -= zOffset
+                    v.select = True
                 # scale logo
                 distMax = max(logo_details.x.distance, logo_details.y.distance)
                 bmesh.ops.scale(logoBM_ref, vec=Vector((lw/distMax, lw/distMax, lw/distMax)), verts=logoBM_ref.verts)

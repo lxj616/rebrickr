@@ -49,7 +49,8 @@ def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limit
     if vertexGroup:
         try:
             dMod.vertex_group = vertexGroup
-        except:
+        except Exception as e:
+            print(e)
             dMod.limit_method = "ANGLE"
     dMod.angle_limit = angleLimit
     dMod.offset_type = offsetType
@@ -63,10 +64,7 @@ def setBevelMods(bricks):
     for brick in bricks:
         segments = cm.bevelSegments
         profile = cm.bevelProfile
-        if not cm.lastSplitModel:
-            vGroupName = "Rebrickr_%(n)s_bricks_combined_bevel" % locals()
-        else:
-            vGroupName = brick.name + "_bevel"
+        vGroupName = brick.name + "_bevel"
         createBevelMod(obj=brick, width=cm.bevelWidth, segments=segments, profile=profile, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
 
 def removeBevelMods(objs):
