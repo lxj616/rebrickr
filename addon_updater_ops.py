@@ -896,7 +896,7 @@ def register(bl_info):
 	#updater.addon = # define at top of module, MUST be done first
 
 	# Website for manual addon download, optional but recommended to set
-	updater.website = "https://github.com/bblanimation/rebrickr"
+	updater.website = "https://www.blendermarket.com/products/rebrickr"
 
 	# used to check/compare versions
 	updater.current_version = bl_info["version"]
