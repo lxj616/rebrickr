@@ -21,3 +21,6 @@ Created by Jonathan Denning, Jonathan Williamson, and Patrick Moore
 
 # initialize the brick bmesh cache dictionary
 rebrickr_bm_cache = {}
+
+# initialize the source mesh cache dictionary
+rebrickr_source_mesh_cache = {}

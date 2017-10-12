@@ -21,6 +21,5 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add "Bricks and Plates" option for merging stacked plates into bricks where possible
       * Add eyedropper for source/custom object selection
       * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
-      * Add auto-updater
   * Known bugs:
       * When source is dirty (mesh edited to change location of center of mass) for split Brick Model with rotation applied after it's Brickified, the model shifts slightly to the side.
