@@ -876,10 +876,12 @@ class AdvancedPanel(Panel):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
+        useCaching = bpy.context.user_preferences.addons[props.rebrickr_module_name].preferences.useCaching
 
         col = layout.column(align=True)
-        row = col.row(align=True)
-        row.operator("scene.rebrickr_clear_cache", text="Clear Cache")
+        if useCaching:
+            row = col.row(align=True)
+            row.operator("scene.rebrickr_clear_cache", text="Clear Cache")
         row = col.row(align=True)
         row.label("Insideness:")
         row = col.row(align=True)

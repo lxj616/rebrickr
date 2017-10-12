@@ -152,24 +152,26 @@ class RebrickrBrickify(bpy.types.Operator):
     def getBricksDict(self, source, source_details, dimensions, R, updateCursor, curFrame=None):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
+        useCaching = bpy.context.user_preferences.addons[props.rebrickr_module_name].preferences.useCaching
         # current_source_hash = json.dumps(hash_object(source))
-        if not cm.matrixIsDirty and cm.BFMCache != "" and not cm.sourceIsDirty and (self.action != "UPDATE_ANIM" or not cm.animIsDirty):#current_source_hash == cm.source_hash:
+        if useCaching and not cm.matrixIsDirty and cm.BFMCache != "" and not cm.sourceIsDirty and (self.action != "UPDATE_ANIM" or not cm.animIsDirty):#current_source_hash == cm.source_hash:
             if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
                 bricksDict = json.loads(cm.BFMCache)
             elif self.action == "UPDATE_ANIM":
                 bricksDict = json.loads(cm.BFMCache)[str(curFrame)]
         else:
             bricksDict = makeBricksDict(source, source_details, dimensions, R, cursorStatus=updateCursor)
-            if self.action in ["CREATE", "UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
-                # cm.source_hash = current_source_hash
-                cm.BFMCache = json.dumps(bricksDict)
-            elif self.action in ["ANIMATE", "UPDATE_ANIM"]:
-                if cm.BFMCache == "":
-                    BFMCache = {}
-                else:
-                    BFMCache = json.loads(cm.BFMCache)
-                BFMCache[curFrame] = bricksDict
-                cm.BFMCache = json.dumps(BFMCache)
+            if useCaching:
+                if self.action in ["CREATE", "UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
+                    # cm.source_hash = current_source_hash
+                    cm.BFMCache = json.dumps(bricksDict)
+                elif self.action in ["ANIMATE", "UPDATE_ANIM"]:
+                    if cm.BFMCache == "":
+                        BFMCache = {}
+                    else:
+                        BFMCache = json.loads(cm.BFMCache)
+                    BFMCache[curFrame] = bricksDict
+                    cm.BFMCache = json.dumps(BFMCache)
         # after dict is stored to cache, update materials
         if len(source.material_slots) > 0:
             bricksDict = addMaterialsToBricksDict(bricksDict, source)

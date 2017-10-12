@@ -21,6 +21,3 @@ Created by Jonathan Denning, Jonathan Williamson, and Patrick Moore
 
 # initialize the brick bmesh cache dictionary
 rebrickr_bm_cache = {}
-
-# initialize the brick freq matrix cache for animations
-rebrickr_anim_matrix_cache = []

@@ -37,6 +37,7 @@ Created by Christopher Gearhart
 # Blender imports
 import bpy
 from bpy.props import *
+from bpy.types import Operator, AddonPreferences
 props = bpy.props
 
 # Rebrickr imports
@@ -45,6 +46,21 @@ from .buttons import *
 
 # store keymaps here to access after registration
 addon_keymaps = []
+
+class AssemblMePreferences(AddonPreferences):
+    bl_idname = __name__
+
+    # auto save preferences
+    useCaching = BoolProperty(
+            name="Use Cacheing",
+            description="Store brick meshes and sculpture matrices to speed up operator run times (up to 3x speed boost)",
+            default=True)
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop(self, "useCaching")
 
 def deleteUnprotected(context, use_global=False):
     scn = context.scene
@@ -115,6 +131,8 @@ class delete_override(bpy.types.Operator):
             return {'FINISHED'}
 
 def register():
+    bpy.utils.register_class(AssemblMePreferences)
+
     bpy.utils.register_module(__name__)
 
     bpy.props.rebrickr_module_name = __name__
