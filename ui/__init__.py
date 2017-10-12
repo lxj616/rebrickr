@@ -37,33 +37,6 @@ from ..functions import *
 
 from .. import addon_updater_ops
 
-class RebrickrUpdatesPanel(Panel):
-    bl_space_type  = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_label       = "Rebrickr Updates"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_updates"
-    # bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
-
-    @classmethod
-    def poll(self, context):
-        scn = context.scene
-        if addon_updater_ops.updater.update_ready == True:
-            return True
-        return False
-
-    def draw(self, context):
-        layout = self.layout
-        scn = context.scene
-
-		# could also use your own custom drawing
-		# based on shared variables
-        layout.label("Rebrickr update available!", icon="INFO")
-        layout.label("")
-
-		# call built-in function with draw code/checks
-        addon_updater_ops.update_notice_box_ui(self, context)
-
 class RebrickrStoragePanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -150,6 +123,9 @@ class BrickModelsPanel(Panel):
     def draw(self, context):
         layout = self.layout
         scn = context.scene
+
+		# call built-in function with draw code/checks
+        addon_updater_ops.update_notice_box_ui(self, context)
 
         # if blender version is before 2.78, ask user to upgrade Blender
         if bversion() < '002.078.00':
@@ -913,6 +889,15 @@ class AdvancedPanel(Panel):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         useCaching = bpy.context.user_preferences.addons[props.rebrickr_module_name].preferences.useCaching
+
+        # Alert user that update is available
+        if addon_updater_ops.updater.update_ready == True:
+            col = layout.column(align=True)
+            col.scale_y = 0.7
+            col.label("Rebrickr update available!", icon="INFO")
+            col.label("Install from Rebrickr addon prefs")
+
+        layout.separator()
 
         col = layout.column(align=True)
         if useCaching:
