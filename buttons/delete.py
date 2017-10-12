@@ -179,7 +179,7 @@ class RebrickrDelete(bpy.types.Operator):
         wm.progress_end()
 
         # set scene layers back to original layers
-        scn.layers = curLayers
+        scn.layers = curLayers # TODO: fix 'DAG Zero' error caused by this line
 
         return source, brickLoc, brickRot, brickScale
 

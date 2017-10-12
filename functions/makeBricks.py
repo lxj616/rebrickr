@@ -33,6 +33,7 @@ import bpy
 from mathutils import Vector, Matrix
 
 # Rebrickr imports
+from .hashObject import hash_object
 from ..classes.Brick import Bricks
 from ..functions import *
 from ..functions.wrappers import *
@@ -119,7 +120,6 @@ def rotateBack(bm, center, rot):
     for i,axis in enumerate(['Z', 'Y', 'X']):
         bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(-rot[2-i], 3, axis))
 
-
 def prepareLogoAndGetDetails(logo):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -140,24 +140,25 @@ def prepareLogoAndGetDetails(logo):
         logo_details = None
     return logo_details, logo
 
-def getBrickMesh(cm, dimensions, brickType, undersideDetail, logoToUse, logo_details, logo_scale, logo_inset, useStud, numStudVerts):
+def getBrickMesh(cm, rand, dimensions, brickType, undersideDetail, logoToUse, logo_type, logo_details, logo_scale, logo_inset, useStud, numStudVerts):
     # get bm_cache_string
     bm_cache_string = ""
-    if cm.logoDetail in ["None", "LEGO Logo"] and cm.brickType in ["Bricks", "Plates"]:
-        bm_cache_string = json.dumps((cm.brickHeight, brickType, undersideDetail, cm.logoResolution if logoToUse is not None else None, cm.studVerts if useStud else None))
+    if cm.brickType in ["Bricks", "Plates"]:
+        custom_logo_used = logoToUse is not None and logo_type == "Custom Logo"
+        bm_cache_string = json.dumps((cm.brickHeight, brickType, undersideDetail, cm.logoResolution if logoToUse is not None else None, hash_object(logoToUse) if custom_logo_used else None, logo_scale if custom_logo_used else None, logo_inset if custom_logo_used else None, cm.studVerts if useStud else None))
     # check for bmesh in cache
     if bm_cache_string in rebrickr_bm_cache.keys():
-        bm = rebrickr_bm_cache[bm_cache_string]
-    # if not found in rebrickr_bm_cache, create new brick mesh and store to cache
-    else:
-        if logoToUse is not None and cm.logoDetail == "LEGO Logo":
-            bms = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
-            if cm.logoDetail == "LEGO Logo":
-                rebrickr_bm_cache[bm_cache_string] = bm
+        bms = rebrickr_bm_cache[bm_cache_string]
+        if len(bms) > 1:
+            bm = bms[rand.randint(0,len(bms))]
         else:
-            bm = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
-            if cm.brickType in ["Bricks", "Plates"]:
-                rebrickr_bm_cache[bm_cache_string] = bm
+            bm = bms[0]
+    # if not found in rebrickr_bm_cache, create new brick mesh(es) and store to cache
+    else:
+        bms = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
+        if cm.brickType in ["Bricks", "Plates"]:
+            rebrickr_bm_cache[bm_cache_string] = bms
+        bm = bms[rand.randint(0,len(bms))]
     return bm
 
 @timed_call('Time Elapsed')
@@ -220,7 +221,8 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     # initialize random states
     randS1 = np.random.RandomState(cm.mergeSeed) # for brickType calc
     randS2 = np.random.RandomState(0) # for random colors, seed will be changed later
-    randS3 = np.random.RandomState(cm.mergeSeed)
+    randS3 = np.random.RandomState(cm.mergeSeed+1)
+    randS4 = np.random.RandomState(cm.mergeSeed+2)
     k = 0
 
     mats = []
@@ -469,7 +471,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 else:
                     # get brick mesh
                     # bm = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
-                    bm = getBrickMesh(cm, dimensions, brickType, undersideDetail, logoToUse, logo_details, cm.logoScale, cm.logoInset, useStud, cm.studVerts)
+                    bm = getBrickMesh(cm, randS4, dimensions, brickType, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.studVerts)
                 # apply random rotation to BMesh according to parameters
                 if cm.randomRot > 0:
                     d = dimensions["width"]/2
@@ -516,11 +518,10 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
 
                     maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
                     bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
-                    transformMeshToCO(brickD["co"], bm=bm)
                 else:
                     # get brick mesh
                     # bm = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
-                    bm = getBrickMesh(cm, dimensions, brickType, undersideDetail, logoToUse, logo_details, cm.logoScale, cm.logoInset, useStud, cm.studVerts)
+                    bm = getBrickMesh(cm, randS4, dimensions, brickType, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.studVerts)
                 # apply random rotation to BMesh according to parameters
                 if cm.randomRot > 0:
                     d = dimensions["width"]/2
@@ -538,8 +539,8 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     # undo bm rotation if not custom, since 'bm' points to bmesh used by all other similar bricks
                     if cm.randomRot > 0:
                         rotateBack(bm, center, randRot)
-                    # transform brick mesh to coordinate on matrix
-                    transformMeshToCO(brickD["co"], mesh=tempMesh)
+                # transform brick mesh to coordinate on matrix
+                transformMeshToCO(brickD["co"], mesh=tempMesh)
                 # set up materials for tempMesh
                 if mat in mats:
                     matIdx = mats.index(mat)

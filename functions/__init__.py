@@ -634,6 +634,10 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     """ Make bricks """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
+    # update source data in case data needs to be refreshed
+    source.data.update()
+    for scn in bpy.data.scenes:
+        scn.update()
     # get lattice bmesh
     print("\ngenerating blueprint...")
     lScale = (source_details.x.distance, source_details.y.distance, source_details.z.distance)

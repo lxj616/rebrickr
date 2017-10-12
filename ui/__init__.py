@@ -879,6 +879,8 @@ class AdvancedPanel(Panel):
 
         col = layout.column(align=True)
         row = col.row(align=True)
+        row.operator("scene.rebrickr_clear_cache", text="Clear Cache")
+        row = col.row(align=True)
         row.label("Insideness:")
         row = col.row(align=True)
         row.prop(cm, "insidenessRayCastDir", text="")

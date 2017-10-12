@@ -164,10 +164,10 @@ class RebrickrBrickify(bpy.types.Operator):
                 # cm.source_hash = current_source_hash
                 cm.BFMCache = json.dumps(bricksDict)
             elif self.action in ["ANIMATE", "UPDATE_ANIM"]:
-                if cm.BFMCache != "":
-                    BFMCache = json.loads(cm.BFMCache)
-                else:
+                if cm.BFMCache == "":
                     BFMCache = {}
+                else:
+                    BFMCache = json.loads(cm.BFMCache)
                 BFMCache[curFrame] = bricksDict
                 cm.BFMCache = json.dumps(BFMCache)
         # after dict is stored to cache, update materials
@@ -231,13 +231,13 @@ class RebrickrBrickify(bpy.types.Operator):
             if cm.customObjectName == "":
                 self.report({"WARNING"}, "Custom brick type object not specified.")
                 return False
-            if cm.customObjectName == cm.source_name:
-                self.report({"WARNING"}, "Source object cannot be its own brick type.")
-                return False
             customObj = bpy.data.objects.get(cm.customObjectName)
             if customObj is None:
                 n = cm.customObjectName
                 self.report({"WARNING"}, "Custom brick type object '%(n)s' could not be found" % locals())
+                return False
+            if cm.customObjectName == cm.source_name and (not (cm.animated or cm.modelCreated) or customObj.protected):
+                self.report({"WARNING"}, "Source object cannot be its own brick type.")
                 return False
             if customObj.type != "MESH":
                 self.report({"WARNING"}, "Custom brick type object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
@@ -335,18 +335,19 @@ class RebrickrBrickify(bpy.types.Operator):
                 return False
 
         # check that custom logo object exists in current scene and is of type "MESH"
-        if cm.logoDetail == "Custom Logo":
+        if cm.logoDetail == "Custom Logo" and cm.brickType != "Custom":
             if cm.logoObjectName == "":
                 self.report({"WARNING"}, "Custom logo object not specified.")
                 return False
-            if cm.logoObjectName == cm.source_name:
-                self.report({"WARNING"}, "Source object cannot be its own logo.")
-                return False
-            if bpy.data.objects.find(cm.logoObjectName) == -1:
+            logoObject = bpy.data.objects.get(cm.logoObjectName)
+            if logoObject is None:
                 n = cm.logoObjectName
                 self.report({"WARNING"}, "Custom logo object '%(n)s' could not be found" % locals())
                 return False
-            if bpy.data.objects[cm.logoObjectName].type != "MESH":
+            if cm.logoObjectName == cm.source_name and (not (cm.animated or cm.modelCreated) or logoObject.protected):
+                self.report({"WARNING"}, "Source object cannot be its own logo.")
+                return False
+            if logoObject.type != "MESH":
                 self.report({"WARNING"}, "Custom logo object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
 
@@ -382,7 +383,7 @@ class RebrickrBrickify(bpy.types.Operator):
         Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
         sceneCurFrame = scn.frame_current
 
-        if self.action == "ANIMATE":
+        if self.action == "ANIMATE" or cm.matrixIsDirty or cm.sourceIsDirty or cm.animIsDirty:
             cm.BFMCache = ""
 
         self.sourceOrig = self.getObjectToBrickify()

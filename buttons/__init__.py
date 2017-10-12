@@ -19,4 +19,4 @@
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
     """
 
-__all__ = ["brickify", "delete", "bevel", "materials", "editSource", "reportError"]
+__all__ = ["bevel", "brickify", "cache", "delete", "editSource", "materials", "reportError"]
