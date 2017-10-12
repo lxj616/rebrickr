@@ -822,12 +822,12 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Use Normals",
         description="Use normals to calculate insideness of bricks (WARNING: May produce inaccurate model if source is not single closed mesh)",
         default=False,
-        update=dirtyBuild)
+        update=dirtyMatrix)
     verifyExposure = BoolProperty(
         name="Verify Exposure",
         description="Run additional calculations to verify exposure of studs and underside detailing (WARNING: May compromise 'Shell Thickness' functionality if source is not single closed mesh)",
         default=False,
-        update=dirtyBuild)
+        update=dirtyMatrix)
     insidenessRayCastDir = EnumProperty(
         name="Insideness Ray Cast Direction",
         description="Choose which axis/axes to cast rays for calculation of insideness",
@@ -836,13 +836,13 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
               ("Y", "Y", "Cast rays along Y axis for insideness calculations"),
               ("Z", "Z", "Cast rays along Z axis for insideness calculations"),
               ("XYZ", "XYZ", "Cast rays in all axis directions for insideness calculation (uses result consistent for at least 2 of the 3 rays)")],
-        update=dirtyBuild,
+        update=dirtyMatrix,
         default="High Efficiency")
     castDoubleCheckRays = BoolProperty(
         name="Cast Both Directions",
         description="Cast rays in both positive and negative directions on the axes specified for insideness calculation (Favors outside; uncheck to cast only in positive direction)",
         default=True,
-        update=dirtyBuild)
+        update=dirtyMatrix)
 
     objVerts = IntProperty(default=0)
     objPolys = IntProperty(default=0)
