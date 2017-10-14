@@ -54,6 +54,9 @@ class RebrickrApplyMaterial(bpy.types.Operator):
             return False
         return True
 
+    def __init__(self):
+        self.setAction()
+
     def setAction(self):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
@@ -125,7 +128,6 @@ class RebrickrApplyMaterial(bpy.types.Operator):
 
     @timed_call('Total Time Elapsed')
     def runApplyMaterial(self, context):
-        self.setAction()
 
         # set up variables
         scn = bpy.context.scene

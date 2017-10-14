@@ -68,11 +68,9 @@ class RebrickrStoragePanel(Panel):
             col = layout.column(align=True)
             col.scale_y = 0.7
             row = col.row(align=True)
-            row.label("Run 'Update Model'")
+            row.label("Run 'Update Model' after")
             row = col.row(align=True)
-            row.label("Model' after changes")
-            row = col.row(align=True)
-            row.label("are committed.")
+            row.label("changes are committed.")
         else:
             col = layout.column(align=True)
             col.scale_y = 0.7
@@ -889,7 +887,7 @@ class AdvancedPanel(Panel):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        useCaching = bpy.context.user_preferences.addons[props.rebrickr_module_name].preferences.useCaching
+        useCaching = bpy.context.user_preferences.addons[bpy.props.rebrickr_module_name].preferences.useCaching
 
         # Alert user that update is available
         if addon_updater_ops.updater.update_ready == True:
@@ -897,8 +895,7 @@ class AdvancedPanel(Panel):
             col.scale_y = 0.7
             col.label("Rebrickr update available!", icon="INFO")
             col.label("Install from Rebrickr addon prefs")
-
-        layout.separator()
+            layout.separator()
 
         col = layout.column(align=True)
         if useCaching:

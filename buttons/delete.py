@@ -56,7 +56,7 @@ class RebrickrDelete(bpy.types.Operator):
         return True
 
     @classmethod
-    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False):
+    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, preservedFrames=None):
         # set up variables
         scn = bpy.context.scene
         if cm is None:
@@ -109,32 +109,55 @@ class RebrickrDelete(bpy.types.Operator):
         if groupExists(Rebrickr_source_dupes_gn) and not skipDupes:
             dGroup = bpy.data.groups[Rebrickr_source_dupes_gn]
             dObjects = list(dGroup.objects)
+            # if preserve frames, remove those objects from dObjects
+            objsToRemove = []
+            if modelType == "ANIMATION" and preservedFrames is not None:
+                for obj in dObjects:
+                    frameNumIdx = obj.name.rfind("_") + 1
+                    curFrameNum = int(obj.name[frameNumIdx:])
+                    if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
+                        objsToRemove.append(obj)
+                for obj in objsToRemove:
+                    dObjects.remove(obj)
+                print(dObjects)
             if len(dObjects) > 0:
                 delete(dObjects)
-            bpy.data.groups.remove(dGroup, do_unlink=True)
+            if preservedFrames is None:
+                bpy.data.groups.remove(dGroup, do_unlink=True)
 
         if not skipParents:
-            p = bpy.data.objects.get(Rebrickr_parent_on)
-            if modelType == "ANIMATION" or cm.lastSplitModel:
-                # store transform data of transformation parent object
-                storeTransformData(p)
-            if not cm.lastSplitModel and groupExists(Rebrickr_bricks_gn):
-                brickGroup = bpy.data.groups[Rebrickr_bricks_gn]
-                bgObjects = list(brickGroup.objects)
-                if len(bgObjects) > 0:
-                    b = bgObjects[0]
-                    scn.update()
-                    brickLoc = b.matrix_world.to_translation().copy()
-                    brickRot = b.matrix_world.to_euler().copy()
-                    brickScale = b.matrix_world.to_scale().copy()
+            if preservedFrames is None:
+                p = bpy.data.objects.get(Rebrickr_parent_on)
+                if modelType == "ANIMATION" or cm.lastSplitModel:
+                    # store transform data of transformation parent object
+                    storeTransformData(p)
+                if not cm.lastSplitModel and groupExists(Rebrickr_bricks_gn):
+                    brickGroup = bpy.data.groups[Rebrickr_bricks_gn]
+                    bgObjects = list(brickGroup.objects)
+                    if len(bgObjects) > 0:
+                        b = bgObjects[0]
+                        scn.update()
+                        brickLoc = b.matrix_world.to_translation().copy()
+                        brickRot = b.matrix_world.to_euler().copy()
+                        brickScale = b.matrix_world.to_scale().copy()
             # clean up Rebrickr_parent objects
             pGroup = bpy.data.groups.get(Rebrickr_parent_on)
             if pGroup:
                 for parent in pGroup.objects:
+                    # if preserve frames, skip those parents
+                    if modelType == "ANIMATION" and preservedFrames is not None:
+                        frameNumIdx = parent.name.rfind("_") + 1
+                        try:
+                            curFrameNum = int(parent.name[frameNumIdx:])
+                            if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
+                                continue
+                        except ValueError:
+                            continue
                     m = parent.data
                     bpy.data.objects.remove(parent, True)
                     bpy.data.meshes.remove(m, True)
-                bpy.data.groups.remove(pGroup, do_unlink=True)
+                if preservedFrames is None:
+                    bpy.data.groups.remove(pGroup, do_unlink=True)
 
         # initialize variables for cursor status updates
         wm = bpy.context.window_manager
@@ -164,6 +187,8 @@ class RebrickrDelete(bpy.types.Operator):
             # clean up Rebrickr_bricks group
             cm.animated = False
             for i in range(cm.lastStartFrame, cm.lastStopFrame + 1):
+                if preservedFrames is not None and i >= preservedFrames[0] and i <= preservedFrames[1]:
+                    continue
                 percent = (i - cm.lastStartFrame + 1)/(cm.lastStopFrame - cm.lastStartFrame + 1)
                 if percent < 1:
                     update_progress("Deleting", percent)

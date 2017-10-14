@@ -37,13 +37,11 @@ Created by Christopher Gearhart
 # Blender imports
 import bpy
 from bpy.props import *
-from bpy.types import Operator, AddonPreferences
-props = bpy.props
 
 # Rebrickr imports
 from .ui import *
 from .buttons import *
-from .eyedropper import *
+from .lib.preferences import *
 
 # updater import
 from . import addon_updater_ops
@@ -51,125 +49,14 @@ from . import addon_updater_ops
 # store keymaps here to access after registration
 addon_keymaps = []
 
-class RebrickrPreferences(AddonPreferences):
-    bl_idname = __package__
-
-    # cacheing preferences
-    useCaching = BoolProperty(
-            name="Use Cacheing",
-            description="Store brick meshes and sculpture matrices to speed up operator run times (up to 3x speed boost)",
-            default=True)
-
-	# addon updater preferences
-    auto_check_update = bpy.props.BoolProperty(
-        name = "Auto-check for Update",
-        description = "If enabled, auto-check for updates using an interval",
-        default = False)
-    updater_intrval_months = bpy.props.IntProperty(
-        name='Months',
-        description = "Number of months between checking for updates",
-        default=0, min=0)
-    updater_intrval_days = bpy.props.IntProperty(
-        name='Days',
-        description = "Number of days between checking for updates",
-        default=7, min=0)
-    updater_intrval_hours = bpy.props.IntProperty(
-        name='Hours',
-        description = "Number of hours between checking for updates",
-        min=0, max=23,
-        default=0)
-    updater_intrval_minutes = bpy.props.IntProperty(
-        name='Minutes',
-        description = "Number of minutes between checking for updates",
-        min=0, max=59,
-        default=0)
-
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column(align=True)
-        row = col.row(align=True)
-        row.prop(self, "useCaching")
-
-        # updater draw function
-        addon_updater_ops.update_settings_ui(self,context)
-
-def deleteUnprotected(context, use_global=False):
-    scn = context.scene
-    protected = []
-    for obj in context.selected_objects:
-        if obj.isBrickifiedObject or obj.isBrick:
-            cm = None
-            for cmCur in scn.cmlist:
-                n = cmCur.source_name
-                if "Rebrickr_%(n)s_bricks_combined" % locals() in obj.name:
-                    cm = cmCur
-                    break
-                elif "Rebrickr_%(n)s_brick_" % locals() in obj.name:
-                    bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks" % locals())
-                    if bGroup is not None and len(bGroup.objects) < 2:
-                        cm = cmCur
-                        break
-            if cm is not None:
-                RebrickrDelete.runFullDelete(cm=cm)
-                scn.objects.active.select = False
-            else:
-                obj_users_scene = len(obj.users_scene)
-                scn.objects.unlink(obj)
-                if use_global or obj_users_scene == 1:
-                    bpy.data.objects.remove(obj, True)
-        elif not obj.protected:
-            obj_users_scene = len(obj.users_scene)
-            scn.objects.unlink(obj)
-            if use_global or obj_users_scene == 1:
-                bpy.data.objects.remove(obj, True)
-        else:
-            print(obj.name +' is protected')
-            protected.append(obj.name)
-
-    return protected
-
-class delete_override(bpy.types.Operator):
-    """OK?"""
-    bl_idname = "object.delete"
-    bl_label = "Delete"
-    bl_options = {'REGISTER', 'INTERNAL'}
-
-    use_global = BoolProperty(default=False)
-
-    @classmethod
-    def poll(cls, context):
-        # return context.active_object is not None
-        return True
-
-    def runDelete(self, context):
-        protected = deleteUnprotected(context, self.use_global)
-        if len(protected) > 0:
-            self.report({"WARNING"}, "Rebrickr is using the following object(s): " + str(protected)[1:-1])
-        # push delete action to undo stack
-        bpy.ops.ed.undo_push(message="Delete")
-
-    def execute(self, context):
-        self.runDelete(context)
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        # Run confirmation popup for delete action
-        confirmation_returned = context.window_manager.invoke_confirm(self, event)
-        if confirmation_returned != {'FINISHED'}:
-            return confirmation_returned
-        else:
-            self.runDelete(context)
-            return {'FINISHED'}
-
-
 def register():
     bpy.utils.register_module(__name__)
 
     bpy.props.rebrickr_module_name = __name__
 
-    bpy.types.Object.protected = props.BoolProperty(name='protected', default=False)
-    bpy.types.Object.isBrickifiedObject = props.BoolProperty(name='Is Brickified Object', default=False)
-    bpy.types.Object.isBrick = props.BoolProperty(name='Is Brick', default=False)
+    bpy.types.Object.protected = BoolProperty(name='protected', default=False)
+    bpy.types.Object.isBrickifiedObject = BoolProperty(name='Is Brickified Object', default=False)
+    bpy.types.Object.isBrick = BoolProperty(name='Is Brick', default=False)
 
     bpy.types.Scene.Rebrickr_printTimes = BoolProperty(default=False)
     bpy.props.Rebrickr_origScene = StringProperty(default="")

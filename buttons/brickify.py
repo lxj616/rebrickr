@@ -94,6 +94,14 @@ class RebrickrBrickify(bpy.types.Operator):
             return False
         return True
 
+    def __init__(self):
+        self.createdObjects = []
+        self.createdGroups = []
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        self.setAction(scn, cm)
+        self.sourceOrig = self.getObjectToBrickify()
+
     def getObjectToBrickify(self):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
@@ -152,7 +160,7 @@ class RebrickrBrickify(bpy.types.Operator):
     def getBricksDict(self, source, source_details, dimensions, R, updateCursor, curFrame=None):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        useCaching = bpy.context.user_preferences.addons[props.rebrickr_module_name].preferences.useCaching
+        useCaching = bpy.context.user_preferences.addons[bpy.props.rebrickr_module_name].preferences.useCaching
         # current_source_hash = json.dumps(hash_object(source))
         if useCaching and not cm.matrixIsDirty and cm.BFMCache != "" and not cm.sourceIsDirty and (self.action != "UPDATE_ANIM" or not cm.animIsDirty):#current_source_hash == cm.source_hash:
             if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
@@ -380,6 +388,101 @@ class RebrickrBrickify(bpy.types.Operator):
 
         return True
 
+    def getDuplicateObjects(self, dGroup, source_name, startFrame, stopFrame):
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+
+        duplicates = {}
+
+        lastObj = self.sourceOrig
+        for curFrame in range(startFrame, stopFrame + 1):
+            source = None
+            if self.action == "UPDATE_ANIM":
+                # retrieve previously duplicated source
+                source = bpy.data.objects.get("Rebrickr_" + source_name + "_frame_" + str(curFrame))
+            if source is not None:
+                duplicates[curFrame] = {"obj":source, "isReused":True}
+                continue
+            # duplicate source for current frame
+            select(lastObj, active=lastObj)
+            bpy.ops.object.duplicate()
+            source = scn.objects.active
+            source.name = "Rebrickr_" + cm.source_name + "_frame_" + str(curFrame)
+            if source.name not in dGroup.objects.keys():
+                dGroup.objects.link(source)
+            duplicates[curFrame] = {"obj":source, "isReused":False}
+            lastObj = source
+
+        for curFrame in range(startFrame, stopFrame + 1):
+            if duplicates[curFrame]["isReused"]:
+                continue
+            source = duplicates[curFrame]["obj"]
+            self.createdObjects.append(source.name)
+            if source.parent is not None:
+                # apply parent transformation
+                select(source, active=source)
+                bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+            # apply shape keys if existing
+            shapeKeys = source.data.shape_keys
+            if shapeKeys is not None and len(shapeKeys.key_blocks) > 0:
+                select(source, active=source)
+                bpy.ops.object.shape_key_add(from_mix=True)
+                for i in range(len(shapeKeys.key_blocks)):
+                    source.shape_key_remove(source.data.shape_keys.key_blocks[0])
+                # bpy.ops.object.shape_key_remove(all=True)
+            # apply modifiers
+            for mod in source.modifiers:
+                if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"] and mod.show_viewport:
+                    try:
+                        bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
+                    except:
+                        mod.show_viewport = False
+
+        # store lastObj transform data to sourceOrig
+        if lastObj != self.sourceOrig:
+            self.sourceOrig["previous_location"] = lastObj.location.to_tuple()
+            lastObj.rotation_mode = "XYZ"
+            self.sourceOrig["previous_rotation"] = tuple(lastObj.rotation_euler)
+            self.sourceOrig["previous_scale"] = lastObj.scale.to_tuple()
+
+            # bake & apply cloth and soft body modifiers
+            for mod in lastObj.modifiers:
+                if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
+                    if not mod.point_cache.use_disk_cache:
+                        mod.point_cache.use_disk_cache = True
+                        mod.point_cache.use_library_path = True
+                    if mod.point_cache.frame_end >= stopFrame:
+                        mod.point_cache.frame_end = stopFrame
+                        override = {'scene': scn, 'active_object': lastObj, 'point_cache': mod.point_cache}
+                        bpy.ops.ptcache.bake(override, bake=True)
+
+        for curFrame in range(startFrame, stopFrame + 1):
+            if duplicates[curFrame]["isReused"]:
+                continue
+            source = duplicates[curFrame]["obj"]
+            scn.frame_set(curFrame)
+            select(source, active=source)
+            # apply baked cloth and soft body modifiers
+            for mod in lastObj.modifiers:
+                if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
+                    try:
+                        bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
+                    except:
+                        mod.show_viewport = False
+            # apply animated transform data
+            source.matrix_world = self.sourceOrig.matrix_world
+            source.animation_data_clear()
+            scn.update()
+            self.sourceOrig["previous_location"] = source.location.to_tuple()
+            source.rotation_mode = "XYZ"
+            self.sourceOrig["previous_rotation"] = tuple(source.rotation_euler)
+            self.sourceOrig["previous_scale"] = source.scale.to_tuple()
+            select(source, active=source)
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            scn.update()
+            safeUnlink(source)
+        return duplicates
+
     def brickifyAnimation(self):
         # set up variables
         scn = bpy.context.scene
@@ -389,11 +492,8 @@ class RebrickrBrickify(bpy.types.Operator):
         Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
         Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
         sceneCurFrame = scn.frame_current
+        objsToSelect = []
 
-        if self.action == "ANIMATE" or cm.matrixIsDirty or cm.sourceIsDirty or cm.animIsDirty:
-            cm.BFMCache = ""
-
-        self.sourceOrig = self.getObjectToBrickify()
         if self.action == "UPDATE_ANIM":
             safeLink(self.sourceOrig)
 
@@ -405,12 +505,19 @@ class RebrickrBrickify(bpy.types.Operator):
             else:
                 return "FINISHED"
 
+        if (self.action == "ANIMATE" or cm.matrixIsDirty or cm.sourceIsDirty or cm.animIsDirty) and not self.updatedFramesOnly:
+            cm.BFMCache = ""
+
         if cm.splitModel:
             cm.splitModel = False
 
         # delete old bricks if present
-        if self.action == "UPDATE_ANIM" and not self.updatedFramesOnly:
-            RebrickrDelete.cleanUp("ANIMATION", skipDupes=True, skipParents=True)
+        if self.action == "UPDATE_ANIM":
+            preservedFrames = None
+            if self.updatedFramesOnly:
+                # preserve duplicates, parents, and bricks for frames that haven't changed
+                preservedFrames = [cm.startFrame, cm.stopFrame]
+            RebrickrDelete.cleanUp("ANIMATION", skipDupes=not self.updatedFramesOnly, skipParents=not self.updatedFramesOnly, preservedFrames=preservedFrames)
             self.sourceOrig.name = self.sourceOrig.name + " (DO NOT RENAME)"
 
         # get or create duplicate and parent groups
@@ -445,84 +552,7 @@ class RebrickrBrickify(bpy.types.Operator):
         wm.progress_begin(0, cm.stopFrame + 1 - cm.startFrame)
 
         # prepare duplicate objects for animation
-        duplicates = {}
-        if self.action == "ANIMATE":
-            lastObj = self.sourceOrig
-            for curFrame in range(cm.startFrame, cm.stopFrame + 1):
-                # duplicate source for current frame
-                select(lastObj, active=lastObj)
-                bpy.ops.object.duplicate()
-                source = scn.objects.active
-                source.name = "Rebrickr_" + self.sourceOrig.name + "_frame_" + str(curFrame)
-                if curFrame == cm.startFrame:
-                    dGroup.objects.link(source)
-                duplicates[curFrame] = source
-                lastObj = source
-
-            for curFrame in range(cm.startFrame, cm.stopFrame + 1):
-                source = duplicates[curFrame]
-                self.createdObjects.append(source.name)
-                if source.parent is not None:
-                    # apply parent transformation
-                    select(source, active=source)
-                    bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
-                # apply shape keys if existing
-                shapeKeys = source.data.shape_keys
-                if shapeKeys is not None and len(shapeKeys.key_blocks) > 0:
-                    select(source, active=source)
-                    bpy.ops.object.shape_key_add(from_mix=True)
-                    for i in range(len(shapeKeys.key_blocks)):
-                        source.shape_key_remove(source.data.shape_keys.key_blocks[0])
-                    # bpy.ops.object.shape_key_remove(all=True)
-                # apply modifiers
-                for mod in source.modifiers:
-                    if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"] and mod.show_viewport:
-                        try:
-                            bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
-                        except:
-                            mod.show_viewport = False
-
-            # store lastObj transform data to sourceOrig
-            self.sourceOrig["previous_location"] = lastObj.location.to_tuple()
-            lastObj.rotation_mode = "XYZ"
-            self.sourceOrig["previous_rotation"] = tuple(lastObj.rotation_euler)
-            self.sourceOrig["previous_scale"] = lastObj.scale.to_tuple()
-
-            # bake & apply cloth and soft body modifiers
-            for mod in lastObj.modifiers:
-                if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
-                    if not mod.point_cache.use_disk_cache:
-                        mod.point_cache.use_disk_cache = True
-                        mod.point_cache.use_library_path = True
-                    if mod.point_cache.frame_end >= cm.stopFrame:
-                        mod.point_cache.frame_end = cm.stopFrame
-                        override = {'scene': scn, 'active_object': lastObj, 'point_cache': mod.point_cache}
-                        bpy.ops.ptcache.bake(override, bake=True)
-
-            for curFrame in range(cm.startFrame, cm.stopFrame + 1):
-                source = duplicates[curFrame]
-                scn.frame_set(curFrame)
-                select(source, active=source)
-                # apply baked cloth and soft body modifiers
-                for mod in lastObj.modifiers:
-                    if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
-                        try:
-                            bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
-                        except:
-                            mod.show_viewport = False
-                # apply animated transform data
-                source.matrix_world = self.sourceOrig.matrix_world
-                source.animation_data_clear()
-                scn.update()
-                self.sourceOrig["previous_location"] = source.location.to_tuple()
-                source.rotation_mode = "XYZ"
-                self.sourceOrig["previous_rotation"] = tuple(source.rotation_euler)
-                self.sourceOrig["previous_scale"] = source.scale.to_tuple()
-                select(source, active=source)
-                bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-                scn.update()
-                safeUnlink(source)
-
+        duplicates = self.getDuplicateObjects(dGroup, cm.source_name, cm.startFrame, cm.stopFrame)
 
         # iterate through frames of animation and generate Brick Model
         for curFrame in range(cm.startFrame, cm.stopFrame + 1):
@@ -532,16 +562,12 @@ class RebrickrBrickify(bpy.types.Operator):
                 continue
             scn.frame_set(curFrame)
             # get duplicated source
-            if self.action == "UPDATE_ANIM":
-                # retrieve previously duplicated source
-                source = bpy.data.objects.get("Rebrickr_" + self.sourceOrig.name + "_frame_" + str(curFrame))
-            else:
-                source = duplicates[curFrame]
+            source = duplicates[curFrame]["obj"]
 
             # get source_details and dimensions
             source_details, dimensions = getDimensionsAndBounds(source)
 
-            if self.action == "CREATE":
+            if self.action == "ANIMATE":
                 # set source model height for display in UI
                 cm.modelHeight = source_details.z.distance
 
@@ -558,7 +584,7 @@ class RebrickrBrickify(bpy.types.Operator):
                 scn.objects.link(parent)
                 scn.update()
                 safeUnlink(parent)
-            self.createdObjects.append(parent)
+                self.createdObjects.append(parent)
 
             # create new bricks
             try:
@@ -573,9 +599,16 @@ class RebrickrBrickify(bpy.types.Operator):
                     scn.frame_set(sceneCurFrame)
                     cm.animated = True
                 return
+
+            wm.progress_update(curFrame-cm.startFrame)
+            print("completed frame " + str(curFrame))
+
+        # prepare bricks to be displayed
+        for curFrame in range(cm.startFrame, cm.stopFrame + 1):
+            group_name = "Rebrickr_%(n)s_bricks_frame_%(curFrame)s" % locals()
             for obj in bpy.data.groups[group_name].objects:
                 if (curFrame == cm.startFrame and sceneCurFrame < cm.startFrame) or curFrame == sceneCurFrame or (curFrame == cm.stopFrame and sceneCurFrame > cm.stopFrame):
-                    selectFromGroup = bpy.data.groups[group_name]
+                    objsToSelect = bpy.data.groups[group_name].objects
                 else:
                     obj.hide = True
                     obj.hide_render = True
@@ -586,16 +619,16 @@ class RebrickrBrickify(bpy.types.Operator):
                 # match brick layers to source layers
                 obj.layers = self.sourceOrig.layers
 
-            wm.progress_update(curFrame-cm.startFrame)
-            print("completed frame " + str(curFrame))
-
-        for obj in selectFromGroup.objects:
+        for obj in objsToSelect:
+            obj.hide = False
+            obj.hide_render = False
             select(obj, active=obj)
 
         wm.progress_end()
         cm.lastStartFrame = cm.startFrame
         cm.lastStopFrame = cm.stopFrame
         scn.frame_set(sceneCurFrame)
+
         cm.animated = True
 
     def brickifyModel(self):
@@ -604,7 +637,6 @@ class RebrickrBrickify(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         origFrame = None
         source = None
-        self.sourceOrig = self.getObjectToBrickify()
         n = cm.source_name
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
         bGroup = bpy.data.groups.get(Rebrickr_bricks_gn)
@@ -836,13 +868,7 @@ class RebrickrBrickify(bpy.types.Operator):
         n = cm.source_name
         previously_animated = cm.animated
         previously_model_created = cm.modelCreated
-        self.createdObjects = []
-        self.createdGroups = []
-        self.sourceOrig = None
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-
-        # set self.action
-        self.setAction(scn, cm)
 
         # get source and initialize values
         source = self.getObjectToBrickify()

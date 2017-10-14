@@ -34,11 +34,11 @@ from mathutils import Vector, Matrix
 
 # Rebrickr imports
 from .hashObject import hash_object
-from ..classes.Brick import Bricks
+from ..lib.Brick import Bricks
 from ..functions import *
 from ..functions.wrappers import *
 from .__init__ import bounds
-from ..lib.rebrickr_caches import rebrickr_bm_cache
+from ..lib.caches import rebrickr_bm_cache
 
 def brickAvail(sourceBrick, brick):
     scn = bpy.context.scene
@@ -141,7 +141,7 @@ def prepareLogoAndGetDetails(logo):
     return logo_details, logo
 
 def getBrickMesh(cm, rand, dimensions, brickType, undersideDetail, logoToUse, logo_type, logo_details, logo_scale, logo_inset, useStud, numStudVerts):
-    useCaching = bpy.context.user_preferences.addons[props.rebrickr_module_name].preferences.useCaching
+    useCaching = bpy.context.user_preferences.addons[bpy.props.rebrickr_module_name].preferences.useCaching
     if useCaching:
         # get bm_cache_string
         bm_cache_string = ""

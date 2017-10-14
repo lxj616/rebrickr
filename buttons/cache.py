@@ -28,7 +28,7 @@ import bpy
 props = bpy.props
 
 # Rebrickr imports
-from ..lib.rebrickr_caches import rebrickr_bm_cache
+from ..lib.caches import rebrickr_bm_cache
 
 
 class clearCache(bpy.types.Operator):
