@@ -43,6 +43,7 @@ props = bpy.props
 # Rebrickr imports
 from .ui import *
 from .buttons import *
+from .eyedropper import *
 
 # updater import
 from . import addon_updater_ops
@@ -237,9 +238,9 @@ def register():
     kc = wm.keyconfigs.addon
     if kc:
         km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
-        kmi = km.keymap_items.new("scene.rebrickr_brickify", 'L', 'PRESS', alt=True, shift=True)
-        kmi = km.keymap_items.new("scene.rebrickr_delete", 'D', 'PRESS', alt=True, shift=True)#, ctrl=True)
-        kmi = km.keymap_items.new("scene.rebrickr_edit_source", 'TAB', 'PRESS', alt=True)#, ctrl=True)
+        kmi = km.keymap_items.new("rebrickr.brickify", 'L', 'PRESS', alt=True, shift=True)
+        kmi = km.keymap_items.new("rebrickr.delete", 'D', 'PRESS', alt=True, shift=True)#, ctrl=True)
+        kmi = km.keymap_items.new("rebrickr.edit_source", 'TAB', 'PRESS', alt=True)#, ctrl=True)
         addon_keymaps.append(km)
 
     # other things (UI List)

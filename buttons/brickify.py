@@ -73,7 +73,7 @@ def getDimensionsAndBounds(source, skipDimensions=False):
 
 class RebrickrBrickify(bpy.types.Operator):
     """ Create brick sculpture from source object mesh """                       # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.rebrickr_brickify"                                        # unique identifier for buttons and menu items to reference.
+    bl_idname = "rebrickr.brickify"                                        # unique identifier for buttons and menu items to reference.
     bl_label = "Create/Update Brick Model from Source Object"                 # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 

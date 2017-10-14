@@ -29,7 +29,7 @@ from ..functions import *
 
 class RebrickrEditSource(bpy.types.Operator):
     """ Edit Source Object Mesh """                                             # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.rebrickr_edit_source"                                             # unique identifier for buttons and menu items to reference.
+    bl_idname = "rebrickr.edit_source"                                             # unique identifier for buttons and menu items to reference.
     bl_label = "Edit Source Object Mesh"                                        # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
@@ -202,7 +202,7 @@ class RebrickrEditSource(bpy.types.Operator):
 
 class RebrickrCommitEdits(bpy.types.Operator):
     """ Commit Edits to Source Object Mesh """                                  # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.rebrickr_commit_edits"                                   # unique identifier for buttons and menu items to reference.
+    bl_idname = "rebrickr.commit_edits"                                   # unique identifier for buttons and menu items to reference.
     bl_label = "Commit Edits to Source Object Mesh"                             # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 

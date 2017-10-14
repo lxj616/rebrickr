@@ -43,7 +43,7 @@ def getModelType(self, cm=None):
 
 class RebrickrDelete(bpy.types.Operator):
     """ Delete Brickified model """                                               # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.rebrickr_delete"                                         # unique identifier for buttons and menu items to reference.
+    bl_idname = "rebrickr.delete"                                         # unique identifier for buttons and menu items to reference.
     bl_label = "Delete Brickified model from Blender"                             # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 

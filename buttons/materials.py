@@ -39,7 +39,7 @@ from .delete import RebrickrDelete
 
 class RebrickrApplyMaterial(bpy.types.Operator):
     """Apply specified material to all bricks """                        # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.rebrickr_apply_material"                                 # unique identifier for buttons and menu items to reference.
+    bl_idname = "rebrickr.apply_material"                                 # unique identifier for buttons and menu items to reference.
     bl_label = "Apply Material"                                         # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 

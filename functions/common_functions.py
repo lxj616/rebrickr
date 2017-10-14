@@ -65,6 +65,20 @@ def groupExists(groupName):
             groupExists = True
     return groupExists
 
+# def get_settings():
+#     if not hasattr(get_settings, 'settings'):
+#         addons = bpy.context.user_preferences.addons
+#         folderpath = os.path.dirname(os.path.abspath(__file__))
+#         while folderpath:
+#             folderpath,foldername = os.path.split(folderpath)
+#             if foldername in {'functions','addons'}: continue
+#             if foldername in addons: break
+#         else:
+#             assert False, 'Could not find non-"lib" folder'
+#         if not addons[foldername].preferences: return None
+#         get_settings.settings = addons[foldername].preferences
+#     return get_settings.settings
+
 # USE EXAMPLE: idfun=(lambda x: x.lower()) so that it ignores case
 # https://www.peterbe.com/plog/uniqifiers-benchmark
 def uniquify(seq, idfun=None):

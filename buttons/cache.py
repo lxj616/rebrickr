@@ -33,7 +33,7 @@ from ..lib.rebrickr_caches import rebrickr_bm_cache
 
 class clearCache(bpy.types.Operator):
     """Clear cache of brick meshes and matrices (try if you're experiencing slow UI or odd addon behaviors)""" # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.rebrickr_clear_cache"                                   # unique identifier for buttons and menu items to reference.
+    bl_idname = "rebrickr.clear_cache"                                   # unique identifier for buttons and menu items to reference.
     bl_label = "Clear Cache"                                                   # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 

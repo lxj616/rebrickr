@@ -74,7 +74,7 @@ def removeBevelMods(objs):
 
 class RebrickrBevel(bpy.types.Operator):
     """Execute bevel modifier to all bricks with above settings"""              # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.rebrickr_bevel"                                          # unique identifier for buttons and menu items to reference.
+    bl_idname = "rebrickr.bevel"                                          # unique identifier for buttons and menu items to reference.
     bl_label = "Bevel Bricks"                                                   # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 

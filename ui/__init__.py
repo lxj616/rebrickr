@@ -64,7 +64,7 @@ class RebrickrStoragePanel(Panel):
         if editingSourceInStorage:
             col = layout.column(align=True)
             row = col.row(align=True)
-            col.operator("scene.rebrickr_commit_edits", text="Commit Changes", icon="FILE_TICK")
+            col.operator("rebrickr.commit_edits", text="Commit Changes", icon="FILE_TICK")
             col = layout.column(align=True)
             col.scale_y = 0.7
             row = col.row(align=True)
@@ -167,7 +167,8 @@ class BrickModelsPanel(Panel):
                 col = split.column(align=True)
                 col.prop_search(cm, "source_name", scn, "objects", text='')
                 col = split.column(align=True)
-                col.operator("cmlist.set_to_active", icon="EDIT", text="")
+                col.operator("rebrickr.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'source_name'
+                # col.operator("cmlist.set_to_active", icon="EDIT", text="")
                 col = layout.column(align=True)
 
             if cm.modelCreated or cm.animated:
@@ -179,17 +180,17 @@ class BrickModelsPanel(Panel):
             if cm.useAnimation:
                 if cm.animated:
                     row = col.row(align=True)
-                    row.operator("scene.rebrickr_delete", text="Delete Brick Animation", icon="CANCEL")
+                    row.operator("rebrickr.delete", text="Delete Brick Animation", icon="CANCEL")
                     col = layout.column(align=True)
                     row = col.row(align=True)
-                    row.operator("scene.rebrickr_brickify", text="Update Animation", icon="FILE_REFRESH")
+                    row.operator("rebrickr.brickify", text="Update Animation", icon="FILE_REFRESH")
                 else:
                     row = col.row(align=True)
                     if obj:
                         row.active = obj.type == 'MESH'
                     else:
                         row.active = False
-                    row.operator("scene.rebrickr_brickify", text="Brickify Animation", icon="MOD_REMESH")
+                    row.operator("rebrickr.brickify", text="Brickify Animation", icon="MOD_REMESH")
             # if use animation is not selected, draw modeling options
             else:
                 if not cm.animated and not cm.modelCreated:
@@ -198,16 +199,16 @@ class BrickModelsPanel(Panel):
                         row.active = obj.type == 'MESH'
                     else:
                         row.active = False
-                    row.operator("scene.rebrickr_brickify", text="Brickify Object", icon="MOD_REMESH")
+                    row.operator("rebrickr.brickify", text="Brickify Object", icon="MOD_REMESH")
                 else:
                     row = col.row(align=True)
-                    row.operator("scene.rebrickr_delete", text="Delete Brickified Model", icon="CANCEL")
+                    row.operator("rebrickr.delete", text="Delete Brickified Model", icon="CANCEL")
                     col1 = layout.column(align=True)
                     split = col1.split(align=True, percentage=0.7)
                     col = split.column(align=True)
-                    col.operator("scene.rebrickr_brickify", text="Update Model", icon="FILE_REFRESH")
+                    col.operator("rebrickr.brickify", text="Update Model", icon="FILE_REFRESH")
                     col = split.column(align=True)
-                    col.operator("scene.rebrickr_edit_source", icon="EDIT", text="Edit")
+                    col.operator("rebrickr.edit_source", icon="EDIT", text="Edit")
                     if cm.sourceIsDirty:
                         row = col1.row(align=True)
                         row.label("Source mesh changed; update to reflect changes")
@@ -230,10 +231,10 @@ class BrickModelsPanel(Panel):
             split = layout.split(align=True, percentage = 0.9)
             col = split.column(align=True)
             row = col.row(align=True)
-            row.operator("scene.rebrickr_report_error", text="Report Error", icon="URL")
+            row.operator("rebrickr.report_error", text="Report Error", icon="URL")
             col = split.column(align=True)
             row = col.row(align=True)
-            row.operator("scene.rebrickr_close_report_error", text="", icon="PANEL_CLOSE")
+            row.operator("rebrickr.close_report_error", text="", icon="PANEL_CLOSE")
 
 def is_baked(mod):
     return mod.point_cache.is_baked is not False
@@ -521,8 +522,11 @@ class BrickTypesPanel(Panel):
 
         if cm.brickType == "Custom":
             col = layout.column(align=True)
-            row = col.row(align=True)
-            row.prop_search(cm, "customObjectName", scn, "objects", text='')
+            split = col.split(align=True, percentage=0.85)
+            col1 = split.column(align=True)
+            col1.prop_search(cm, "customObjectName", scn, "objects", text='')
+            col1 = split.column(align=True)
+            col1.operator("rebrickr.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'customObjectName'
 
             col = layout.column(align=True)
             col.label("Distance Offset:")
@@ -623,7 +627,7 @@ class MaterialsPanel(Panel):
             if cm.modelCreated or cm.animated:
                 col = layout.column(align=True)
                 row = col.row(align=True)
-                row.operator("scene.rebrickr_apply_material", icon="FILE_TICK")
+                row.operator("rebrickr.apply_material", icon="FILE_TICK")
         elif cm.materialType == "Random":
             col = layout.column(align=True)
             if bpy.context.scene.render.engine != 'CYCLES':
@@ -650,7 +654,7 @@ class MaterialsPanel(Panel):
                         if not cm.brickMaterialsAreDirty and ((not cm.useAnimation and cm.lastSplitModel) or (cm.lastMaterialType == cm.materialType)):
                             col = layout.column(align=True)
                             row = col.row(align=True)
-                            row.operator("scene.rebrickr_apply_material", icon="FILE_TICK")
+                            row.operator("rebrickr.apply_material", icon="FILE_TICK")
                         elif cm.materialIsDirty or cm.brickMaterialsAreDirty:
                             row = col.row(align=True)
                             row.label("Run 'Update Model' to apply changes")
@@ -691,7 +695,7 @@ class MaterialsPanel(Panel):
                     else:
                         col = layout.column(align=True)
                         row = col.row(align=True)
-                        row.operator("scene.rebrickr_apply_material", icon="FILE_TICK")
+                        row.operator("rebrickr.apply_material", icon="FILE_TICK")
 
         if cm.modelCreated or cm.animated:
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
@@ -749,8 +753,12 @@ class DetailingPanel(Panel):
                 row = col.row(align=True)
                 row.prop(cm, "logoResolution", text="Logo Resolution")
             else:
-                row = col.row(align=True)
-                row.prop_search(cm, "logoObjectName", scn, "objects", text="")
+                col = layout.column(align=True)
+                split = col.split(align=True, percentage=0.85)
+                col1 = split.column(align=True)
+                col1.prop_search(cm, "logoObjectName", scn, "objects", text="")
+                col1 = split.column(align=True)
+                col1.operator("rebrickr.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'logoObjectName'
                 row = col.row(align=True)
                 row.prop(cm, "logoScale", text="Logo Scale")
                 row = col.row(align=True)
@@ -853,9 +861,9 @@ class BevelPanel(Panel):
             row = col.row(align=True)
             row.prop(cm, "bevelProfile", text="Profile")
             row = col.row(align=True)
-            row.operator("scene.rebrickr_bevel", text="Remove Bevel", icon="CANCEL")
+            row.operator("rebrickr.bevel", text="Remove Bevel", icon="CANCEL")
         except:
-            row.operator("scene.rebrickr_bevel", text="Bevel bricks", icon="MOD_BEVEL")
+            row.operator("rebrickr.bevel", text="Bevel bricks", icon="MOD_BEVEL")
 
 class AdvancedPanel(Panel):
     bl_space_type  = "VIEW_3D"
@@ -895,7 +903,7 @@ class AdvancedPanel(Panel):
         col = layout.column(align=True)
         if useCaching:
             row = col.row(align=True)
-            row.operator("scene.rebrickr_clear_cache", text="Clear Cache")
+            row.operator("rebrickr.clear_cache", text="Clear Cache")
         row = col.row(align=True)
         row.label("Insideness:")
         row = col.row(align=True)

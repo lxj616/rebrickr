@@ -33,7 +33,7 @@ from ..functions import *
 
 class reportError(bpy.types.Operator):
     """Report a bug via an automatically generated issue ticket"""              # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.rebrickr_report_error"                                            # unique identifier for buttons and menu items to reference.
+    bl_idname = "rebrickr.report_error"                                            # unique identifier for buttons and menu items to reference.
     bl_label = "Report Error"                                                   # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
@@ -55,7 +55,7 @@ class reportError(bpy.types.Operator):
 
 class closeReportError(bpy.types.Operator):
     """Deletes error report from blender's memory (still exists in file system)"""    # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.rebrickr_close_report_error"                                            # unique identifier for buttons and menu items to reference.
+    bl_idname = "rebrickr.close_report_error"                                            # unique identifier for buttons and menu items to reference.
     bl_label = "Close Report Error"                                                   # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
