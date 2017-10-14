@@ -46,7 +46,7 @@ class EyeDropper(bpy.types.Operator):
         self.ob_preview = 'None'
 
     # from CG Cookie's retopoflow plugin
-    def hover_scene(self,context,x, y):
+    def hover_scene(self,context,x,y,source_name):
         scn = context.scene
         region = context.region
         rv3d = context.region_data
@@ -58,7 +58,7 @@ class EyeDropper(bpy.types.Operator):
 
         result, loc, normal, idx, ob, mx = scn.ray_cast(ray_origin, ray_target)
 
-        if result:
+        if result and not ob.name.startswith('Rebrickr_' + source_name):
             self.ob = ob
             self.ob_preview = ob.name
             context.area.header_text_set('Target object: ' + ob.name)
@@ -73,7 +73,8 @@ class EyeDropper(bpy.types.Operator):
         if event.type == 'MOUSEMOVE':
             bpy.context.window.cursor_set("EYEDROPPER")
             x, y = event.mouse_region_x, event.mouse_region_y
-            self.hover_scene(context, x, y)
+            cm = scn.cmlist[scn.cmlist_index]
+            self.hover_scene(context, x, y, cm.source_name)
 
         if event.type == 'LEFTMOUSE':
             bpy.context.window.cursor_set("DEFAULT")
