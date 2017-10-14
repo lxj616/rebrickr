@@ -439,26 +439,23 @@ class RebrickrBrickify(bpy.types.Operator):
         wm = bpy.context.window_manager
         wm.progress_begin(0, cm.stopFrame + 1 - cm.startFrame)
 
-        # iterate through frames of animation and generate Brick Model
-        for curFrame in range(cm.startFrame, cm.stopFrame + 1):
-
-            if self.updatedFramesOnly and cm.lastStartFrame <= curFrame and curFrame <= cm.lastStopFrame:
-                print("skipped frame %(curFrame)s" % locals())
-                continue
-            scn.frame_set(curFrame)
-            # get duplicated source
-            if self.action == "UPDATE_ANIM":
-                # retrieve previously duplicated source
-                source = bpy.data.objects.get("Rebrickr_" + self.sourceOrig.name + "_frame_" + str(curFrame))
-            else:
-                source = None
-            if source is None:
+        # prepare duplicate objects for animation
+        duplicates = {}
+        if self.action == "ANIMATE":
+            lastObj = self.sourceOrig
+            for curFrame in range(cm.startFrame, cm.stopFrame + 1):
                 # duplicate source for current frame
-                select(self.sourceOrig, active=self.sourceOrig)
+                select(lastObj, active=lastObj)
                 bpy.ops.object.duplicate()
                 source = scn.objects.active
-                dGroup.objects.link(source)
                 source.name = "Rebrickr_" + self.sourceOrig.name + "_frame_" + str(curFrame)
+                if curFrame == cm.startFrame:
+                    dGroup.objects.link(source)
+                duplicates[curFrame] = source
+                lastObj = source
+
+            for curFrame in range(cm.startFrame, cm.stopFrame + 1):
+                source = duplicates[curFrame]
                 self.createdObjects.append(source.name)
                 if source.parent is not None:
                     # apply parent transformation
@@ -472,21 +469,37 @@ class RebrickrBrickify(bpy.types.Operator):
                     for i in range(len(shapeKeys.key_blocks)):
                         source.shape_key_remove(source.data.shape_keys.key_blocks[0])
                     # bpy.ops.object.shape_key_remove(all=True)
-                # bake and apply modifiers
+                # apply modifiers
                 for mod in source.modifiers:
-                    # apply cloth and soft body modifiers
-                    if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
-                        if not mod.point_cache.use_disk_cache:
-                            mod.point_cache.use_disk_cache = True
-                        if mod.point_cache.frame_end >= scn.frame_current:
-                            mod.point_cache.frame_end = scn.frame_current
-                            override = {'scene': scn, 'active_object': source, 'point_cache': mod.point_cache}
-                            bpy.ops.ptcache.bake(override, bake=True)
-                            try:
-                                bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
-                            except:
-                                mod.show_viewport = False
                     if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"] and mod.show_viewport:
+                        try:
+                            bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
+                        except:
+                            mod.show_viewport = False
+
+            # store lastObj transform data to sourceOrig
+            self.sourceOrig["previous_location"] = lastObj.location.to_tuple()
+            lastObj.rotation_mode = "XYZ"
+            self.sourceOrig["previous_rotation"] = tuple(lastObj.rotation_euler)
+            self.sourceOrig["previous_scale"] = lastObj.scale.to_tuple()
+
+            # bake & apply cloth and soft body modifiers
+            for mod in lastObj.modifiers:
+                if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
+                    if not mod.point_cache.use_disk_cache:
+                        mod.point_cache.use_disk_cache = True
+                    if mod.point_cache.frame_end >= cm.stopFrame:
+                        mod.point_cache.frame_end = cm.stopFrame
+                        override = {'scene': scn, 'active_object': lastObj, 'point_cache': mod.point_cache}
+                        bpy.ops.ptcache.bake(override, bake=True)
+
+            for curFrame in range(cm.startFrame, cm.stopFrame + 1):
+                source = duplicates[curFrame]
+                scn.frame_set(curFrame)
+                select(source, active=source)
+                # apply baked cloth and soft body modifiers
+                for mod in lastObj.modifiers:
+                    if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
                         try:
                             bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
                         except:
@@ -503,6 +516,21 @@ class RebrickrBrickify(bpy.types.Operator):
                 bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
                 scn.update()
                 safeUnlink(source)
+
+
+        # iterate through frames of animation and generate Brick Model
+        for curFrame in range(cm.startFrame, cm.stopFrame + 1):
+
+            if self.updatedFramesOnly and cm.lastStartFrame <= curFrame and curFrame <= cm.lastStopFrame:
+                print("skipped frame %(curFrame)s" % locals())
+                continue
+            scn.frame_set(curFrame)
+            # get duplicated source
+            if self.action == "UPDATE_ANIM":
+                # retrieve previously duplicated source
+                source = bpy.data.objects.get("Rebrickr_" + self.sourceOrig.name + "_frame_" + str(curFrame))
+            else:
+                source = duplicates[curFrame]
 
             # get source_details and dimensions
             source_details, dimensions = getDimensionsAndBounds(source)
