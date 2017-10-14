@@ -324,6 +324,11 @@ class RebrickrBrickify(bpy.types.Operator):
                     return False
 
         if self.action in ["ANIMATE", "UPDATE_ANIM"]:
+            # if source is soft body or cloth and is enabled and file not saved, prompt user to save the file
+            for mod in source.modifiers:
+                if mod.type in ["SOFT_BODY", "CLOTH"] and mod.show_viewport and not bpy.data.is_saved:
+                    self.report({"WARNING"}, "Blend file must be saved before brickifying '" + str(mod.type) + "' modifiers.")
+                    return False
             # verify start frame is less than stop frame
             if cm.startFrame > cm.stopFrame:
                 self.report({"ERROR"}, "Start frame must be less than or equal to stop frame (see animation tab below).")
@@ -488,6 +493,7 @@ class RebrickrBrickify(bpy.types.Operator):
                 if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
                     if not mod.point_cache.use_disk_cache:
                         mod.point_cache.use_disk_cache = True
+                        mod.point_cache.use_library_path = True
                     if mod.point_cache.frame_end >= cm.stopFrame:
                         mod.point_cache.frame_end = cm.stopFrame
                         override = {'scene': scn, 'active_object': lastObj, 'point_cache': mod.point_cache}
