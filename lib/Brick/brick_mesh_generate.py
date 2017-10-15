@@ -621,9 +621,6 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                     v2 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"][0]
                     bme.faces.new((v1, v2, v14))
                 except:
-                    v1 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"][0]
-                    v2 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"][0]
-                    bme.faces.new((v1, v2, v14))
                     pass
                 try:
                     v1 = botVertsDofDs[str(xNum) + "," + str(0)]["y-"][0]
@@ -806,7 +803,7 @@ def get_dimensions(height=1, zScale=1, gap_percentage=0.01):
 def main():
     try:
         bpy.ops.object.select_all(action='TOGGLE')
-    except:
+    except RuntimeError:
         print("Not in object mode!")
         return
     deleteExisting()

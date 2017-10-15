@@ -29,8 +29,8 @@ from mathutils import Vector
 # from CG Cookie's retopoflow plugin
 def hash_object(obj:bpy.types.Object):
     if obj is None: return None
-    assert type(obj) is bpy.types.Object, "Only call RFMesh.hash_object on mesh objects!"
-    assert type(obj.data) is bpy.types.Mesh, "Only call RFMesh.hash_object on mesh objects!"
+    assert type(obj) is bpy.types.Object, "Only call hash_object on mesh objects!"
+    assert type(obj.data) is bpy.types.Mesh, "Only call hash_object on mesh objects!"
     # get object data to act as a hash
     me = obj.data
     counts = (len(me.vertices), len(me.edges), len(me.polygons), len(obj.modifiers))
@@ -46,7 +46,7 @@ def hash_object(obj:bpy.types.Object):
 # from CG Cookie's retopoflow plugin
 def hash_bmesh(bme:bmesh.types.BMesh):
     if bme is None: return None
-    assert type(bme) is bmesh.types.BMesh, 'Only call RFMesh.hash_bmesh on BMesh objects!'
+    assert type(bme) is bmesh.types.BMesh, 'Only call hash_bmesh on BMesh objects!'
     counts = (len(bme.verts), len(bme.edges), len(bme.faces))
     bbox   = BBox(from_bmverts=self.bme.verts)
     vsum   = tuple(sum((v.co for v in bme.verts), Vector((0,0,0))))

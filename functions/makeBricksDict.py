@@ -26,6 +26,7 @@ import time
 
 # Blender imports
 import bpy
+from bpy.types import Object
 from mathutils import Matrix, Vector
 
 # Rebrickr imports
@@ -34,6 +35,7 @@ from .generate_lattice import generateLattice
 from .wrappers import *
 
 def VectorRound(vec, dec, roundType="ROUND"):
+    """ round all vals in Vector 'vec' to 'dec' precision using 'ROUND', 'FLOOR', or 'CEIL' """
     lst = []
     for i in range(len(vec)):
         if roundType == "ROUND":
@@ -48,12 +50,25 @@ def VectorRound(vec, dec, roundType="ROUND"):
         lst.append(val)
     return Vector(lst)
 
-def rayObjIntersections(point,direction,miniDist,edgeLen,ob):
-    """ returns True if ray intersects obj """
+def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
+    """
+    cast ray(s) from point in direction to determine insideness and whether edge intersects obj within edgeLen
+
+    returned:
+    - not outside       - 'point' is inside object 'obj'
+    - edgeIntersects    - ray from 'point' in 'direction' of length 'edgeLen' intersects object 'obj'
+    - intersections     - number of ray-obj intersections from 'point' in 'direction' to infinity
+    - nextIntersection  - second ray intersection from 'point' in 'direction'
+    - firstIntersection - dictionary containing 'idx':index of first intersection and 'distance:distance from point to first intersection within edgeLen
+    - lastIntersection  - dictionary containing 'idx':index of last intersection and 'distance:distance from point to last intersection within edgeLen
+
+    """
+
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     # initialize variables
     intersections = 0
+    intersections1 = 0
     nextIntersection = None
     firstIntersection = None
     lastIntersection = None
@@ -72,7 +87,7 @@ def rayObjIntersections(point,direction,miniDist,edgeLen,ob):
         axes = "ZXY"
     # run initial intersection check
     while True:
-        _,location,normal,index = ob.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
+        _,location,normal,index = obj.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
         if index == -1: break
         if intersections == 0:
             firstDirection0 = direction.dot(normal)
@@ -97,7 +112,7 @@ def rayObjIntersections(point,direction,miniDist,edgeLen,ob):
             count = 0
             orig = point
             while True:
-                _,location,normal,index = ob.ray_cast(orig,-direction)#distance=edgeLen*1.00000000001)
+                _,location,normal,index = obj.ray_cast(orig,-direction)#distance=edgeLen*1.00000000001)
                 if index == -1: break
                 if count == 0:
                     firstDirection1 = (-direction).dot(normal)
@@ -120,21 +135,21 @@ def rayObjIntersections(point,direction,miniDist,edgeLen,ob):
                 direction = dirs[i][0]
                 miniDist = dirs[i][1]
                 while True:
-                    _,location,normal,i = ob.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
+                    _,location,normal,i = obj.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
                     if i == -1: break
-                    if intersections == 0:
+                    if intersections1 == 0:
                         firstDirection0 = direction.dot(normal)
-                    intersections += 1
+                    intersections1 += 1
                     location = VectorRound(location, 5, roundType="CEILING")
                     orig = location + miniDist
-                if intersections%2 == 0 and (not cm.useNormals or firstDirection0 <= 0):
+                if intersections1%2 == 0 and (not cm.useNormals or firstDirection0 <= 0):
                     outsideL[i] = 1
                 elif cm.castDoubleCheckRays:
                     # double check vert is inside mesh
                     count = 0
                     orig = point
                     while True:
-                        _,location,normal,i = ob.ray_cast(orig,-direction)#distance=edgeLen*1.00000000001)
+                        _,location,normal,i = obj.ray_cast(orig,-direction)#distance=edgeLen*1.00000000001)
                         if i == -1: break
                         if count == 0:
                             firstDirection1 = (-direction).dot(normal)
@@ -151,19 +166,20 @@ def rayObjIntersections(point,direction,miniDist,edgeLen,ob):
     outside = total/len(outsideL) >= 0.5
 
     # return helpful information
-    return not outside, edgeIntersects, intersections, nextIntersection, index, firstIntersection, lastIntersection
+    return not outside, edgeIntersects, intersections, nextIntersection, firstIntersection, lastIntersection
 
 def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x1, y1, z1, miniDist, inside=None):
+    """ update brickFreqMatrix[x0][y0][z0] based on results from rayObjIntersections """
     orig = coordMatrix[x0][y0][z0]
     try:
         rayEnd = coordMatrix[x1][y1][z1]
-    except:
+    except IndexError:
         return -1, None
     # check if point can be thrown away
     ray = rayEnd - orig
     edgeLen = ray.length
 
-    origInside, edgeIntersects, intersections, nextIntersection, index, firstIntersection, lastIntersection = rayObjIntersections(orig,ray,miniDist,edgeLen,source)
+    origInside, edgeIntersects, intersections, nextIntersection, firstIntersection, lastIntersection = rayObjIntersections(orig,ray,miniDist,edgeLen,source)
 
     if origInside:
         if brickFreqMatrix[x0][y0][z0] == 0:
@@ -185,14 +201,13 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, bric
 
     return intersections, nextIntersection
 
-def setNF(j, orig, target, faceIdxMatrix):
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
-    if ((1-j)*100) < cm.matShellDepth:
+def setNF(matShellDepth, j, orig, target, faceIdxMatrix):
+    """ match value in faceIdxMatrix of 'target' to 'orig' if within matShellDepth """
+    if ((1-j)*100) < matShellDepth:
         faceIdxMatrix[target[0]][target[1]][target[2]] = faceIdxMatrix[orig[0]][orig[1]][orig[2]]
 
-# TODO: Make this more efficient
 def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", cursorStatus=False):
+    """ returns new brickFreqMatrix """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     brickFreqMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
@@ -336,39 +351,40 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                             missed = False
                             if j == 0.99:
                                 if brickFreqMatrix[x+1][y][z] == 2:
-                                    setNF(j, (x+1,y,z), (x,y,z), faceIdxMatrix)
+                                    setNF(cm.matShellDepth, j, (x+1,y,z), (x,y,z), faceIdxMatrix)
                                 elif brickFreqMatrix[x-1][y][z] == 2:
-                                    setNF(j, (x-1,y,z), (x,y,z), faceIdxMatrix)
+                                    setNF(cm.matShellDepth, j, (x-1,y,z), (x,y,z), faceIdxMatrix)
                                 elif brickFreqMatrix[x][y+1][z] == 2:
-                                    setNF(j, (x,y+1,z), (x,y,z), faceIdxMatrix)
+                                    setNF(cm.matShellDepth, j, (x,y+1,z), (x,y,z), faceIdxMatrix)
                                 elif brickFreqMatrix[x][y-1][z] == 2:
-                                    setNF(j, (x,y-1,z), (x,y,z), faceIdxMatrix)
+                                    setNF(cm.matShellDepth, j, (x,y-1,z), (x,y,z), faceIdxMatrix)
                                 elif brickFreqMatrix[x][y][z+1] == 2:
-                                    setNF(j, (x,y,z+1), (x,y,z), faceIdxMatrix)
+                                    setNF(cm.matShellDepth, j, (x,y,z+1), (x,y,z), faceIdxMatrix)
                                 elif brickFreqMatrix[x][y][z-1] == 2:
-                                    setNF(j, (x,y,z-1), (x,y,z), faceIdxMatrix)
+                                    setNF(cm.matShellDepth, j, (x,y,z-1), (x,y,z), faceIdxMatrix)
                                 else:
                                     brickFreqMatrix[x][y][z] = origVal
                                     missed = True
                             else:
                                 if brickFreqMatrix[x+1][y][z] == round(j + 0.01,2):
-                                    setNF(j, (x+1,y,z), (x,y,z), faceIdxMatrix)
+                                    setNF(cm.matShellDepth, j, (x+1,y,z), (x,y,z), faceIdxMatrix)
                                 elif brickFreqMatrix[x-1][y][z] == round(j + 0.01,2):
-                                    setNF(j, (x-1,y,z), (x,y,z), faceIdxMatrix)
+                                    setNF(cm.matShellDepth, j, (x-1,y,z), (x,y,z), faceIdxMatrix)
                                 elif brickFreqMatrix[x][y+1][z] == round(j + 0.01,2):
-                                    setNF(j, (x,y+1,z), (x,y,z), faceIdxMatrix)
+                                    setNF(cm.matShellDepth, j, (x,y+1,z), (x,y,z), faceIdxMatrix)
                                 elif brickFreqMatrix[x][y-1][z] == round(j + 0.01,2):
-                                    setNF(j, (x,y-1,z), (x,y,z), faceIdxMatrix)
+                                    setNF(cm.matShellDepth, j, (x,y-1,z), (x,y,z), faceIdxMatrix)
                                 elif brickFreqMatrix[x][y][z+1] == round(j + 0.01,2):
-                                    setNF(j, (x,y,z+1), (x,y,z), faceIdxMatrix)
+                                    setNF(cm.matShellDepth, j, (x,y,z+1), (x,y,z), faceIdxMatrix)
                                 elif brickFreqMatrix[x][y][z-1] == round(j + 0.01,2):
-                                    setNF(j, (x,y,z-1), (x,y,z), faceIdxMatrix)
+                                    setNF(cm.matShellDepth, j, (x,y,z-1), (x,y,z), faceIdxMatrix)
                                 else:
                                     brickFreqMatrix[x][y][z] = origVal
                                     missed = True
                             if not missed:
                                 gotOne = True
-                        except:
+                        except Exception as e:
+                            print(e)
                             pass
         if not gotOne:
             break
@@ -423,6 +439,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     return brickFreqMatrix
 
 def getCOList(brickFreqMatrix, coordMatrix, threshold):
+    """ return matrix containing coordinates from coordMatrix where brickFreqMatrix >= threshold """
     coList = [[[-1 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
@@ -511,6 +528,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     return bricksDict
 
 def addMaterialsToBricksDict(bricksDict, source):
+    """ sets all matNames in bricksDict based on nearestFaceIdx """
     for key in bricksDict.keys():
         nf = bricksDict[key]["nearestFaceIdx"]
         if bricksDict[key]["name"] != "DNE" and nf is not None:

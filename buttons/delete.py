@@ -32,6 +32,7 @@ from ..functions import *
 
 
 def getModelType(self, cm=None):
+    """ return 'MODEL' if modelCreated, 'ANIMATION' if animated """
     scn = bpy.context.scene
     if cm is None:
         cm = scn.cmlist[scn.cmlist_index]
@@ -57,6 +58,7 @@ class RebrickrDelete(bpy.types.Operator):
 
     @classmethod
     def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, preservedFrames=None):
+        """ externally callable cleanup function for bricks, source, dupes, and parents """
         # set up variables
         scn = bpy.context.scene
         if cm is None:
@@ -132,10 +134,9 @@ class RebrickrDelete(bpy.types.Operator):
                     # store transform data of transformation parent object
                     storeTransformData(p)
                 if not cm.lastSplitModel and groupExists(Rebrickr_bricks_gn):
-                    brickGroup = bpy.data.groups[Rebrickr_bricks_gn]
-                    bgObjects = list(brickGroup.objects)
-                    if len(bgObjects) > 0:
-                        b = bgObjects[0]
+                    bricks = getBricks()
+                    if len(bricks) > 0:
+                        b = bricks[0]
                         scn.update()
                         brickLoc = b.matrix_world.to_translation().copy()
                         brickRot = b.matrix_world.to_euler().copy()
@@ -166,16 +167,15 @@ class RebrickrDelete(bpy.types.Operator):
 
         if modelType == "MODEL":
             # clean up Rebrickr_bricks group
-            cm.modelCreated = False
             if groupExists(Rebrickr_bricks_gn):
                 brickGroup = bpy.data.groups[Rebrickr_bricks_gn]
-                bgObjects = list(brickGroup.objects)
+                bricks = getBricks()
                 if not cm.lastSplitModel:
-                    if len(bgObjects) > 0:
-                        storeTransformData(bgObjects[0])
+                    if len(bricks) > 0:
+                        storeTransformData(bricks[0])
                 # remove objects
-                for i,obj in enumerate(bgObjects):
-                    percent = i/len(bgObjects)
+                for i,obj in enumerate(bricks):
+                    percent = i/len(bricks)
                     if percent < 1:
                         update_progress("Deleting", percent)
                         wm.progress_update(percent*100)
@@ -183,9 +183,9 @@ class RebrickrDelete(bpy.types.Operator):
                     bpy.data.objects.remove(obj, True)
                     bpy.data.meshes.remove(m, True)
                 bpy.data.groups.remove(brickGroup, do_unlink=True)
+            cm.modelCreated = False
         elif modelType == "ANIMATION":
             # clean up Rebrickr_bricks group
-            cm.animated = False
             for i in range(cm.lastStartFrame, cm.lastStopFrame + 1):
                 if preservedFrames is not None and i >= preservedFrames[0] and i <= preservedFrames[1]:
                     continue
@@ -196,10 +196,11 @@ class RebrickrDelete(bpy.types.Operator):
                 Rebrickr_bricks_cur_frame_gn = Rebrickr_bricks_gn + "_frame_" + str(i)
                 brickGroup = bpy.data.groups.get(Rebrickr_bricks_cur_frame_gn)
                 if brickGroup is not None:
-                    bgObjects = list(brickGroup.objects)
-                    if len(bgObjects) > 0:
-                        delete(bgObjects)
+                    bricks = list(brickGroup.objects)
+                    if len(bricks) > 0:
+                        delete(bricks)
                     bpy.data.groups.remove(brickGroup, do_unlink=True)
+            cm.animated = False
         update_progress("Deleting", 1)
         wm.progress_end()
 
@@ -210,6 +211,7 @@ class RebrickrDelete(bpy.types.Operator):
 
     @classmethod
     def runFullDelete(cls, cm=None):
+        """ externally callable cleanup function for full delete action (clears everything from memory) """
         scn = bpy.context.scene
         scn.Rebrickr_runningOperation = True
         if cm is None:
@@ -270,7 +272,7 @@ class RebrickrDelete(bpy.types.Operator):
         for cPN in customPropNames:
             try:
                 del source[cPN]
-            except:
+            except KeyError:
                 pass
 
         # reset default values for select items in cmlist

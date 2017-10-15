@@ -47,6 +47,7 @@ class RebrickrEditSource(bpy.types.Operator):
         return True
 
     def modal(self, context, event):
+        """ runs while editing source; cleans up when finished """
         try:
             scn = bpy.context.scene
             source = bpy.data.objects.get(self.source_name)
@@ -92,6 +93,7 @@ class RebrickrEditSource(bpy.types.Operator):
         return {"PASS_THROUGH"}
 
     def execute(self, context):
+        """ prepares original source object for editing """
         try:
             # initialize variables
             scn = context.scene
@@ -215,6 +217,5 @@ class RebrickrCommitEdits(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        print("executing")
         bpy.props.Rebrickr_commitEdits = True
         return{"FINISHED"}

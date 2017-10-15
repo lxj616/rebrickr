@@ -23,35 +23,34 @@ Created by Christopher Gearhart
 import bpy
 
 def getColors():
-    colors = {}
-    colors["ABS Plastic Black"] = (0, 0.0009106, 0.002)
-    colors["ABS Plastic Blue"] = (0.033, 0.098, 0.402)
-    colors["ABS Plastic Bright Green"] = ()
-    colors["ABS Plastic Brown"] = ()
-    colors["ABS Plastic Dark Azur"] = ()
-    colors["ABS Plastic Dark Green"] = ()
-    colors["ABS Plastic Dark Grey"] = ()
-    colors["ABS Plastic Dark Red"] = ()
-    colors["ABS Plastic Gold"] = ()
-    colors["ABS Plastic Green"] = ()
-    colors["ABS Plastic Light Grey"] = ()
-    colors["ABS Plastic Lime"] = ()
-    colors["ABS Plastic Orange"] = ()
-    colors["ABS Plastic Pink"] = ()
-    colors["ABS Plastic Purple"] = ()
-    colors["ABS Plastic Red"] = ()
-    colors["ABS Plastic Tan"] = ()
-    colors["ABS Plastic Trans-Blue"] = ()
-    colors["ABS Plastic Trans-Clear"] = ()
-    colors["ABS Plastic Trans-Light Green"] = ()
-    colors["ABS Plastic Trans-Red"] = ()
-    colors["ABS Plastic Trans-Yellow"] = ()
-    colors["ABS Plastic White"] = ()
-    colors["ABS Plastic Yellow"] = ()
-
-
-
-    return colors
+    if not hasattr(getColors, 'colors'):
+        colors = {}
+        colors["ABS Plastic Black"] = (0, 0.0009106, 0.002)
+        colors["ABS Plastic Blue"] = (0.033, 0.098, 0.402)
+        colors["ABS Plastic Bright Green"] = ()
+        colors["ABS Plastic Brown"] = ()
+        colors["ABS Plastic Dark Azur"] = ()
+        colors["ABS Plastic Dark Green"] = ()
+        colors["ABS Plastic Dark Grey"] = ()
+        colors["ABS Plastic Dark Red"] = ()
+        colors["ABS Plastic Gold"] = ()
+        colors["ABS Plastic Green"] = ()
+        colors["ABS Plastic Light Grey"] = ()
+        colors["ABS Plastic Lime"] = ()
+        colors["ABS Plastic Orange"] = ()
+        colors["ABS Plastic Pink"] = ()
+        colors["ABS Plastic Purple"] = ()
+        colors["ABS Plastic Red"] = ()
+        colors["ABS Plastic Tan"] = ()
+        colors["ABS Plastic Trans-Blue"] = ()
+        colors["ABS Plastic Trans-Clear"] = ()
+        colors["ABS Plastic Trans-Light Green"] = ()
+        colors["ABS Plastic Trans-Red"] = ()
+        colors["ABS Plastic Trans-Yellow"] = ()
+        colors["ABS Plastic White"] = ()
+        colors["ABS Plastic Yellow"] = ()
+        getColors.colors = colors
+    return getColors.colors
 
 def rgbFromStr(s):
     # s starts with a #.

@@ -59,7 +59,7 @@ class RebrickrStoragePanel(Panel):
 
         try:
             editingSourceInStorage = bpy.context.window_manager["editingSourceInStorage"]
-        except:
+        except KeyError:
             editingSourceInStorage = False
         if editingSourceInStorage:
             col = layout.column(align=True)
@@ -599,7 +599,7 @@ class MaterialsPanel(Panel):
 
         try:
             brick_materials_installed = scn.isBrickMaterialsInstalled
-        except:
+        except AttributeError:
             brick_materials_installed = False
 
         if cm.materialType == "Custom":
@@ -608,7 +608,7 @@ class MaterialsPanel(Panel):
             row.prop_search(cm, "materialName", bpy.data, "materials", text="")
             try:
                 brick_materials_installed = scn.isBrickMaterialsInstalled
-            except:
+            except AttributeError:
                 brick_materials_installed = False
             if brick_materials_installed:
                 if bpy.context.scene.render.engine != 'CYCLES':
@@ -848,10 +848,7 @@ class BevelPanel(Panel):
         row = col.row(align=True)
         try:
             ff = cm.lastStartFrame
-            if cm.modelCreated:
-                testBrick = bpy.data.groups['Rebrickr_%(n)s_bricks' % locals()].objects[0]
-            elif cm.animated:
-                testBrick = bpy.data.groups['Rebrickr_%(n)s_bricks_frame_%(ff)s' % locals()].objects[0]
+            testBrick = getBricks()[0]
             testBrick.modifiers[testBrick.name + '_bevel']
             row.prop(cm, "bevelWidth", text="Width")
             row = col.row(align=True)
@@ -860,7 +857,7 @@ class BevelPanel(Panel):
             row.prop(cm, "bevelProfile", text="Profile")
             row = col.row(align=True)
             row.operator("rebrickr.bevel", text="Remove Bevel", icon="CANCEL")
-        except:
+        except (IndexError, KeyError):
             row.operator("rebrickr.bevel", text="Bevel bricks", icon="MOD_BEVEL")
 
 class AdvancedPanel(Panel):

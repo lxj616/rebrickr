@@ -34,6 +34,7 @@ props = bpy.props
 from ..functions import *
 
 def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limitMethod='NONE', angleLimit=0.523599, vertexGroup=None, offsetType='OFFSET'):
+    """ create bevel modifier for 'obj' with given parameters """
     dMod = obj.modifiers.get(obj.name + '_bevel')
     if not dMod:
         dMod = obj.modifiers.new(obj.name + '_bevel', 'BEVEL')
@@ -55,19 +56,21 @@ def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limit
     dMod.angle_limit = angleLimit
     dMod.offset_type = offsetType
 
-def setBevelMods(bricks):
-    bricks = confirmList(bricks)
-    # get bricks to bevel
+def createBevelMods(objs):
+    """ runs 'createBevelMod' on objects in 'objs' """
+    objs = confirmList(objs)
+    # get objs to bevel
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     n = cm.source_name
-    for brick in bricks:
+    for obj in objs:
         segments = cm.bevelSegments
         profile = cm.bevelProfile
-        vGroupName = brick.name + "_bevel"
-        createBevelMod(obj=brick, width=cm.bevelWidth, segments=segments, profile=profile, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
+        vGroupName = obj.name + "_bevel"
+        createBevelMod(obj=obj, width=cm.bevelWidth, segments=segments, profile=profile, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
 
 def removeBevelMods(objs):
+    """ removes bevel modifier 'obj.name + "_bevel"' for objects in 'objs' """
     objs = confirmList(objs)
     for obj in objs:
         obj.modifiers.remove(obj.modifiers[obj.name + "_bevel"])
@@ -84,23 +87,21 @@ class RebrickrBevel(bpy.types.Operator):
         scn = context.scene
         try:
             cm = scn.cmlist[scn.cmlist_index]
-            n = cm.source_name
-            if cm.modelCreated or cm.animated:
-                return True
-        except:
+        except IndexError:
             return False
+        n = cm.source_name
+        if cm.modelCreated or cm.animated:
+            return True
         return False
 
     @staticmethod
-    def runBevelAction(bGroup, cm, action="ADD"):
-        if bGroup is not None:
-            bricks = list(bGroup.objects)
-            if action == "REMOVE":
-                removeBevelMods(objs=bricks)
-                cm.bevelAdded = False
-            elif action == "ADD":
-                setBevelMods(bricks)
-                cm.bevelAdded = True
+    def runBevelAction(bricks, cm, action="ADD"):
+        if action == "REMOVE":
+            removeBevelMods(objs=bricks)
+            cm.bevelAdded = False
+        elif action == "ADD":
+            createBevelMods(objs=bricks)
+            cm.bevelAdded = True
 
     def execute(self, context):
         try:
@@ -119,13 +120,8 @@ class RebrickrBevel(bpy.types.Operator):
             cm.bevelWidth = cm.brickHeight/100
 
             # create or remove bevel
-            if cm.modelCreated:
-                bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks" % locals())
-                RebrickrBevel.runBevelAction(bGroup, cm, action)
-            elif cm.animated:
-                for cf in range(cm.lastStartFrame, cm.lastStopFrame+1):
-                    bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks_frame_%(cf)s" % locals())
-                    RebrickrBevel.runBevelAction(bGroup, cm, action)
+            bricks = getBricks()
+            RebrickrBevel.runBevelAction(bricks, cm, action)
         except:
             self.handle_exception()
 

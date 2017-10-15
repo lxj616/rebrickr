@@ -39,7 +39,7 @@ def bversion():
     return bversion
 
 def stopWatch(text, value, precision=2):
-    '''From seconds to Days;Hours:Minutes;Seconds'''
+    """From seconds to Days;Hours:Minutes;Seconds"""
 
     valueD = (((value/365)/24)/60)
     Days = int(valueD)
@@ -162,6 +162,12 @@ def most_common(L):
         return count, -min_index
     # pick the highest-count/earliest item
     return max(groups, key=_auxfun)[0]
+
+def confirmList(objList):
+    """ if single object passed, convert to list """
+    if type(objList) != list:
+        objList = [objList]
+    return objList
 
 def confirmList(objList):
     """ if single object passed, convert to list """
@@ -343,5 +349,5 @@ def writeErrorToFile(errorReportPath, txtName, addonVersion):
     f.write("\nError:")
     try:
         f.write("\n" + bpy.data.texts[txtName].as_string())
-    except:
+    except KeyError:
         f.write(" No exception found")

@@ -71,6 +71,16 @@ def getDimensionsAndBounds(source, skipDimensions=False):
     else:
         return source_details
 
+def importLogo():
+    """ import logo object from Rebrickr addon folder """
+    addonsPath = bpy.utils.user_resource('SCRIPTS', "addons")
+    Rebrickr = bpy.props.rebrickr_module_name
+    logoObjPath = "%(addonsPath)s/%(Rebrickr)s/lego_logo.obj" % locals()
+    bpy.ops.import_scene.obj(filepath=logoObjPath)
+    logoObj = bpy.context.selected_objects[0]
+    return logoObj
+
+
 class RebrickrBrickify(bpy.types.Operator):
     """ Create brick sculpture from source object mesh """                       # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "rebrickr.brickify"                                        # unique identifier for buttons and menu items to reference.
@@ -224,7 +234,7 @@ class RebrickrBrickify(bpy.types.Operator):
         return group_name
 
     def setAction(self, scn, cm):
-
+        """ sets self.action """
         if cm.modelCreated:
             self.action = "UPDATE_MODEL"
         elif cm.animated:
@@ -234,7 +244,8 @@ class RebrickrBrickify(bpy.types.Operator):
         else:
             self.action = "ANIMATE"
 
-    def isValid(self, source, Rebrickr_bricks_gn,):
+    def isValid(self, source, Rebrickr_bricks_gn):
+        """ returns True if brickify action can run, else report WARNING/ERROR and return False """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         if cm.brickType == "Custom":
@@ -368,13 +379,10 @@ class RebrickrBrickify(bpy.types.Operator):
 
 
         success = False
-        if cm.modelCreated:
-            g = bpy.data.groups.get(Rebrickr_bricks_gn)
-        elif cm.animated:
-            g = bpy.data.groups.get(Rebrickr_bricks_gn + "_frame_" + str(cm.lastStartFrame))
         if cm.modelCreated or cm.animated:
-            if g is not None and len(g.objects) > 0:
-                obj = g.objects[0]
+            bricks = getBricks()
+            if len(bricks) > 0:
+                obj = bricks[0]
             else:
                 obj = None
         else:
@@ -388,7 +396,71 @@ class RebrickrBrickify(bpy.types.Operator):
 
         return True
 
+    def transformBricks(self, bGroup, cm, parent, parentLoc, updateParentLoc):
+            # set transformation of objects in brick group
+            if (self.action == "CREATE" and cm.sourceIsDirty):
+                setTransformData(list(bGroup.objects))
+            # transfer transformation of parent to object
+            elif cm.lastSplitModel and not cm.splitModel:
+                parent.rotation_mode = "XYZ"
+                for obj in bGroup.objects:
+                    obj.location = parent.location
+                    obj.rotation_mode = parent.rotation_mode
+                    obj.rotation_euler = parent.rotation_euler
+                    obj.scale = parent.scale
+                parent.location = (0,0,0)
+                parent.rotation_euler = Euler((0,0,0), "XYZ")
+                parent.scale = (1,1,1)
+            elif not cm.splitModel:
+                setTransformData(list(bGroup.objects), self.sourceOrig)
+            # set transformation of brick group parent
+            elif not cm.lastSplitModel:
+                print("entered here...")
+                setTransformData(parent, self.sourceOrig)
+            # in this case, the parent was not removed so the transformations should stay the same
+            elif cm.sourceIsDirty:
+                pass
+            # if not split model, select the bricks object
+            obj = bGroup.objects[0]
+            if not cm.splitModel:
+                select(obj, active=obj)
+                # if the model contains armature, lock the location, rotation, and scale
+                if cm.armature:
+                    # lock location, rotation, and scale of created bricks
+                    obj.lock_location = [True, True, True]
+                    obj.lock_rotation = [True, True, True]
+                    obj.lock_scale    = [True, True, True]
+            else:
+                select(obj, active=obj, only=False)
+                obj.select = False
+            # match brick layers to source layers
+            obj.layers = self.sourceOrig.layers
+            # update location of bricks in case source mesh has been edited
+            if updateParentLoc:
+                l = cm.lastSourceMid.split(",")
+                for i in range(len(l)):
+                    l[i] = float(l[i])
+                lastSourceMid = tuple(l)
+                v = Vector(parentLoc) - Vector(lastSourceMid)
+                center_v = Vector((0, 0, 0))
+                v_new = v - center_v
+                if not cm.splitModel:
+                    parent.rotation_mode = "XYZ"
+                    eu1 = parent.rotation_euler
+                    v_new.rotate(eu1)
+                if not cm.lastSplitModel:
+                    bGroup.objects[0].rotation_mode = "XYZ"
+                    eu2 = bGroup.objects[0].rotation_euler
+                    v_new.rotate(eu2)
+                v_new += center_v
+                for brick in bGroup.objects:
+                    if not cm.lastSplitModel:
+                        brick.location += Vector((v_new.x * parent.scale[0] * bGroup.objects[0].scale[0], v_new.y * parent.scale[1] * bGroup.objects[0].scale[1], v_new.z * parent.scale[2] * bGroup.objects[0].scale[2]))
+                    else:
+                        brick.location += Vector((v_new.x * parent.scale[0], v_new.y * parent.scale[1], v_new.z * parent.scale[2]))
+
     def getDuplicateObjects(self, dGroup, source_name, startFrame, stopFrame):
+        """ returns list of duplicates from sourceOrig with all traits applied """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
 
@@ -484,6 +556,7 @@ class RebrickrBrickify(bpy.types.Operator):
         return duplicates
 
     def brickifyAnimation(self):
+        """ create brick animation """
         # set up variables
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
@@ -632,6 +705,7 @@ class RebrickrBrickify(bpy.types.Operator):
         cm.animated = True
 
     def brickifyModel(self):
+        """ create brick model """
         # set up variables
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
@@ -639,8 +713,6 @@ class RebrickrBrickify(bpy.types.Operator):
         source = None
         n = cm.source_name
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-        bGroup = bpy.data.groups.get(Rebrickr_bricks_gn)
-        self.createdGroups.append(Rebrickr_bricks_gn)
         Rebrickr_last_origin_on = "Rebrickr_%(n)s_last_origin" % locals()
         Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
         updateParentLoc = False
@@ -791,57 +863,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
         bGroup = bpy.data.groups.get(Rebrickr_bricks_gn) # redefine bGroup since it was removed
         if bGroup is not None:
-            # set transformation of objects in brick group
-            if (self.action == "CREATE" and cm.sourceIsDirty):
-                setTransformData(list(bGroup.objects))
-            elif cm.lastSplitModel and not cm.splitModel:
-                pass
-            elif not cm.splitModel:
-                setTransformData(list(bGroup.objects), self.sourceOrig)
-            # set transformation of brick group parent
-            elif not cm.lastSplitModel:
-                setTransformData(parent, self.sourceOrig)
-            # in this case, the parent was not removed so the transformations should stay the same
-            elif cm.sourceIsDirty:
-                pass
-            # if not split model, select the bricks object
-            obj = bGroup.objects[0]
-            if not cm.splitModel:
-                select(obj, active=obj)
-                # if the model contains armature, lock the location, rotation, and scale
-                if cm.armature:
-                    # lock location, rotation, and scale of created bricks
-                    obj.lock_location = [True, True, True]
-                    obj.lock_rotation = [True, True, True]
-                    obj.lock_scale    = [True, True, True]
-            else:
-                select(obj, active=obj, only=False)
-                obj.select = False
-            # match brick layers to source layers
-            obj.layers = self.sourceOrig.layers
-            # update location of bricks in case source mesh has been edited
-            if updateParentLoc:
-                l = cm.lastSourceMid.split(",")
-                for i in range(len(l)):
-                    l[i] = float(l[i])
-                lastSourceMid = tuple(l)
-                v = Vector(parentLoc) - Vector(lastSourceMid)
-                center_v = Vector((0, 0, 0))
-                v_new = v - center_v
-                if not cm.splitModel:
-                    parent.rotation_mode = "XYZ"
-                    eu1 = parent.rotation_euler
-                    v_new.rotate(eu1)
-                if not cm.lastSplitModel:
-                    bGroup.objects[0].rotation_mode = "XYZ"
-                    eu2 = bGroup.objects[0].rotation_euler
-                    v_new.rotate(eu2)
-                v_new += center_v
-                for brick in bGroup.objects:
-                    if not cm.lastSplitModel:
-                        brick.location += Vector((v_new.x * parent.scale[0] * bGroup.objects[0].scale[0], v_new.y * parent.scale[1] * bGroup.objects[0].scale[1], v_new.z * parent.scale[2] * bGroup.objects[0].scale[2]))
-                    else:
-                        brick.location += Vector((v_new.x * parent.scale[0], v_new.y * parent.scale[1], v_new.z * parent.scale[2]))
+            self.transformBricks(bGroup, cm, parent, parentLoc, updateParentLoc)
 
         # unlink source duplicate if created
         if source != self.sourceOrig and source.name in scn.objects.keys():
@@ -849,8 +871,8 @@ class RebrickrBrickify(bpy.types.Operator):
 
         # add bevel if it was previously added
         if self.action == "UPDATE_MODEL" and cm.bevelAdded:
-            bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks" % locals())
-            RebrickrBevel.runBevelAction(bGroup, cm)
+            bricks = getBricks()
+            RebrickrBevel.runBevelAction(bricks, cm)
 
         cm.modelCreated = True
 
@@ -903,7 +925,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
         # apply random materials
         if cm.materialType == "Random":
-            bricks = RebrickrApplyMaterial.getBricks(cm)
+            bricks = getBricks()
             RebrickrApplyMaterial.applyRandomMaterial(context, bricks)
 
         # unlink source from scene and link to safe scene

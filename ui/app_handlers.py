@@ -35,7 +35,7 @@ def handle_animation(scene):
     scn = scene
     try:
         rebrickrIsActive = bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
-    except:
+    except AttributeError:
         rebrickrIsActive = False
     if rebrickrIsActive:
         for i,cm in enumerate(scn.cmlist):
@@ -82,11 +82,11 @@ def handle_selections(scene):
     scn = bpy.context.scene
     try:
         rebrickrIsActive = bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
-    except:
+    except AttributeError:
         rebrickrIsActive = False
     try:
         rebrickrRunningOp = scn.Rebrickr_runningOperation
-    except:
+    except AttributeError:
         rebrickrRunningOp = False
     if rebrickrIsActive and not rebrickrRunningOp:
         # if scn.layers changes and active object is no longer visible, set scn.cmlist_index to -1
@@ -117,9 +117,9 @@ def handle_selections(scene):
             if obj is not None:
                 if cm.modelCreated:
                     n = cm.source_name
-                    gn = "Rebrickr_%(n)s_bricks" % locals()
-                    if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
-                        select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
+                    bricks = getBricks()
+                    if bricks is not None and len(bricks) > 0:
+                        select(bricks, active=bricks[0])
                         scn.Rebrickr_last_active_object_name = scn.objects.active.name
                 elif cm.animated:
                     n = cm.source_name
@@ -181,13 +181,13 @@ bpy.app.handlers.scene_update_pre.append(handle_selections)
 def handle_saving_in_edit_mode(scene):
     try:
         rebrickrIsActive = bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
-    except:
+    except AttributeError:
         rebrickrIsActive = False
     if rebrickrIsActive:
         sto_scn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
         try:
             editingSourceInfo = bpy.context.window_manager["editingSourceInStorage"]
-        except:
+        except KeyError:
             editingSourceInfo = False
         if editingSourceInfo and bpy.context.scene == sto_scn:
             scn = bpy.context.scene

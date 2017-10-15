@@ -312,16 +312,6 @@ class Rebrickr_Uilist_setSourceToActive(bpy.types.Operator):
         for i in range(20):
             if scn.layers[i] and active_obj.layers[i]:
                 return True
-        # cm = scn.cmlist[scn.cmlist_index]
-        # n = cm.source_name
-        # Rebrickr_source = "Rebrickr_%(n)s" % locals()
-        # if groupExists(Rebrickr_source) and len(bpy.data.groups[Rebrickr_source].objects) == 1:
-        #     return True
-        # try:
-        #     if bpy.data.objects[cm.source_name].type == 'MESH':
-        #         return True
-        # except:
-        #     return False
         return False
 
     def execute(self, context):
@@ -350,12 +340,9 @@ class Rebrickr_Uilist_selectSource(bpy.types.Operator):
         Rebrickr_source = "Rebrickr_%(n)s" % locals()
         if groupExists(Rebrickr_source) and len(bpy.data.groups[Rebrickr_source].objects) == 1:
             return True
-        try:
-            cm = scn.cmlist[scn.cmlist_index]
-            if bpy.data.objects[cm.source_name].type == 'MESH':
-                return True
-        except:
-            return False
+        obj = py.data.objects.get(n)
+        if obj is not None and obj.type == "MESH":
+            return True
         return False
 
     def execute(self, context):
@@ -408,7 +395,7 @@ def uniquifyName(self, context):
         if name[-4] == ".":
             try:
                 num = int(name[-3:])+1
-            except:
+            except ValueError:
                 num = 1
             name = name[:-3] + "%03d" % (num)
         else:
@@ -452,19 +439,13 @@ def updateBevel(self, context):
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         if cm.lastBevelWidth != cm.bevelWidth or cm.lastBevelSegments != cm.bevelSegments or cm.lastBevelProfile != cm.bevelProfile:
-            if cm.modelCreated:
-                bricks = list(bpy.data.groups["Rebrickr_%(n)s_bricks" % locals()].objects)
-            elif cm.animated:
-                bricks = []
-                for cf in range(cm.lastStartFrame, cm.lastStopFrame + 1):
-                    bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks_frame_%(cf)s" % locals())
-                    if bGroup is not None:
-                        bricks.append(bGroup.objects[0])
-            setBevelMods(bricks)
+            bricks = getBricks()
+            createBevelMods(bricks)
             cm.lastBevelWidth = cm.bevelWidth
             cm.lastBevelSegments = cm.bevelSegments
             cm.lastBevelProfile = cm.bevelProfile
     except Exception as e:
+        print(e)
         pass
 
 def updateStartAndStopFrames(self, context):
@@ -847,7 +828,6 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     objVerts = IntProperty(default=0)
     objPolys = IntProperty(default=0)
     objEdges = IntProperty(default=0)
-    isOneMesh = BoolProperty(default=False)
     isWaterTight = BoolProperty(default=False)
     maxDepthExceeded = BoolProperty(default=False)
 

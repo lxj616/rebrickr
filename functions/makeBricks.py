@@ -41,6 +41,7 @@ from .__init__ import bounds
 from ..lib.caches import rebrickr_bm_cache
 
 def brickAvail(sourceBrick, brick):
+    """ check brick is available to merge """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     n = cm.source_name
@@ -52,9 +53,10 @@ def brickAvail(sourceBrick, brick):
     return False
 
 def getNextBrick(bricks, loc, x, y, z=0):
+    """ get next brick at loc + (x,y,z) """
     try:
         return bricks[str(loc[0] + x) + "," + str(loc[1] + y) + "," + str(loc[2] + z)]
-    except:
+    except KeyError:
         return None
 
 def addEdgeSplitMod(obj):
@@ -62,6 +64,7 @@ def addEdgeSplitMod(obj):
     eMod = obj.modifiers.new('Edge Split', 'EDGE_SPLIT')
 
 def combineMeshes(meshes):
+    """ return combined mesh from 'meshes' """
     bm = bmesh.new()
     # add meshes to bmesh
     for m in meshes:
@@ -70,16 +73,18 @@ def combineMeshes(meshes):
     bm.to_mesh( finalMesh )
     return finalMesh
 
-def transformMeshToCO(co, bm=None, mesh=None, mult=1):
+def addToMeshLoc(co, bm=None, mesh=None):
+    """ add 'co' to bm/mesh location """
     assert bm is not None or mesh is not None # one or the other must not be None!
     if bm is not None:
         verts = bm.verts
     else:
         verts = mesh.vertices
     for v in verts:
-        v.co = (v.co[0] + (co[0] * mult), v.co[1] + (co[1] * mult), v.co[2] + (co[2] * mult))
+        v.co = (v.co[0] + co[0], v.co[1] + co[1], v.co[2] + co[2])
 
 def randomizeLoc(rand, width, height, bm=None, mesh=None):
+    """ translate bm/mesh location by (width,width,height) randomized by cm.randomLoc """
     assert bm is not None or mesh is not None # one or the other must not be None!
     if bm is not None:
         verts = bm.verts
@@ -97,12 +102,14 @@ def randomizeLoc(rand, width, height, bm=None, mesh=None):
         v.co.z += z
     return (x,y,z)
 def translateBack(bm, loc):
+    """ translate bm location by -loc """
     for v in bm.verts:
         v.co.x -= loc[0]
         v.co.y -= loc[1]
         v.co.z -= loc[2]
 
 def randomizeRot(rand, center, brickType, bm):
+    """ rotate 'bm' around 'center' randomized by cm.randomRot """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     if max(brickType) == 0:
@@ -117,10 +124,12 @@ def randomizeRot(rand, center, brickType, bm):
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(z, 3, 'Z'))
     return (x,y,z)
 def rotateBack(bm, center, rot):
+    """ rotate bm around center -rot """
     for i,axis in enumerate(['Z', 'Y', 'X']):
         bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(-rot[2-i], 3, axis))
 
 def prepareLogoAndGetDetails(logo):
+    """ duplicate and normalize custom logo object; return logo and bounds(logo) """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     if cm.logoDetail != "LEGO Logo" and logo is not None:
@@ -207,7 +216,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     brick_mats = []
     try:
         brick_materials_installed = scn.isBrickMaterialsInstalled
-    except:
+    except AttributeError:
         brick_materials_installed = False
     if cm.materialType == "Random" and brick_materials_installed:
         mats = bpy.data.materials.keys()
@@ -385,7 +394,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                                     val = bricksD[valKeysChecked1[-1]]["val"]
                                     if val == 0:
                                         topExposed = True
-                        except:
+                        except KeyError:
                             topExposed = True
                         # if outside (0) hit before shell (2) above exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
                         if topExposed and len(valKeysChecked1) > 0:
@@ -407,7 +416,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                                     val = bricksD[valKeysChecked2[-1]]["val"]
                                     if val == 0:
                                         botExposed = True
-                        except:
+                        except KeyError:
                             botExposed = True
                         # if outside (0) hit before shell (2) below exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
                         if botExposed and len(valKeysChecked2) > 0:
@@ -468,7 +477,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 if cm.brickType == "Custom":
                     bm = bmesh.new()
                     bm.from_mesh(customData)
-                    transformMeshToCO((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
+                    addToMeshLoc((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
                     maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
                     bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
                 else:
@@ -517,7 +526,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 if cm.brickType == "Custom":
                     bm = bmesh.new()
                     bm.from_mesh(customData)
-                    transformMeshToCO((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
+                    addToMeshLoc((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
 
                     maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
                     bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
@@ -543,7 +552,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     if cm.randomRot > 0:
                         rotateBack(bm, center, randRot)
                 # transform brick mesh to coordinate on matrix
-                transformMeshToCO(brickD["co"], mesh=tempMesh)
+                addToMeshLoc(brickD["co"], mesh=tempMesh)
                 # set up materials for tempMesh
                 if mat in mats:
                     matIdx = mats.index(mat)

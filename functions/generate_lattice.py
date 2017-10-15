@@ -33,9 +33,9 @@ def tupleAdd(p1, p2):
     """ returns linear sum of two given tuples """
     return tuple(x+y for x,y in zip(p1, p2))
 
-# R = resolution, s = 3D scale tuple, o = offset lattice center from origin
+# R = resolution tuple, s = 3D scale tuple, o = offset lattice center from origin
 def generateLattice(R, s, o=(0,0,0)):
-    # TODO: Raise exception if R is less than 2
+    """ returns matrix with lattice vert coords given R, s, and o """
     # bme = bmesh.new()
 
     o = (o[0] - (o[0] % R[0]), o[1] - (o[1] % R[1]), o[2] - (o[2] % R[2]))

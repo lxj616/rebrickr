@@ -58,6 +58,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
         self.setAction()
 
     def setAction(self):
+        """ sets self.action """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         if cm.materialType == "Use Source Materials":
@@ -66,22 +67,6 @@ class RebrickrApplyMaterial(bpy.types.Operator):
             self.action = "CUSTOM"
         elif cm.materialType == "Random":
             self.action = "RANDOM"
-
-    @classmethod
-    def getBricks(cls, cm):
-        n = cm.source_name
-        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-        if cm.modelCreated:
-            bricks = list(bpy.data.groups[Rebrickr_bricks_gn].objects)
-        elif cm.animated:
-            bricks = []
-            for cf in range(cm.lastStartFrame, cm.lastStopFrame+1):
-                gn = "Rebrickr_%(n)s_bricks_frame_%(cf)s" % locals()
-                bGroup = bpy.data.groups.get(gn)
-                for obj in bGroup.objects:
-                    bricks.append(obj)
-
-        return bricks
 
     @classmethod
     def applyRandomMaterial(cls, context, bricks):
@@ -132,7 +117,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
         # set up variables
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        bricks = RebrickrApplyMaterial.getBricks(cm)
+        bricks = getBricks()
         cm.lastMaterialType = cm.materialType
         if self.action == "CUSTOM":
             matName = cm.materialName
