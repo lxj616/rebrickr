@@ -121,7 +121,6 @@ class RebrickrDelete(bpy.types.Operator):
                         objsToRemove.append(obj)
                 for obj in objsToRemove:
                     dObjects.remove(obj)
-                print(dObjects)
             if len(dObjects) > 0:
                 delete(dObjects)
             if preservedFrames is None:

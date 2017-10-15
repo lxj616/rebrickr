@@ -404,7 +404,6 @@ def uniquifyName(self, context):
         cm.name = name
 
 # def updateMeshObjectName(self, context, n):
-#     print("here 0")
 #     obj = bpy.data.objects.get(n)
 #     if obj is None:
 #         self.report({"WARNING"}, "Object could not be found in the scene")

@@ -66,22 +66,12 @@ def setTransformData(objList, source=None, skipLocation=False, skipRotation=Fals
                     obj.location -= Vector(last_origin_obj.location) - Vector(source["previous_location"])
                 else:
                     obj.location -= Vector(source.location) - Vector(source["previous_location"])
-        try:
-            print(obj.rotation_euler)
-            print(source.rotation_euler)
-        except:
-            pass
         if not skipRotation:
             obj.rotation_mode = "XYZ"
             obj.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
             if source is not None:
                 obj.rotation_euler.rotate(source.rotation_euler.to_matrix().inverted())
                 obj.rotation_euler.rotate(Euler(tuple(source["previous_rotation"]), "XYZ"))
-        try:
-            print(obj.rotation_euler)
-            print(source.rotation_euler)
-        except:
-            pass
         if not skipScale:
             obj.scale = (obj.scale[0] * s[0], obj.scale[1] * s[1], obj.scale[2] * s[2])
             if source is not None:

@@ -415,7 +415,6 @@ class RebrickrBrickify(bpy.types.Operator):
                 setTransformData(list(bGroup.objects), self.sourceOrig)
             # set transformation of brick group parent
             elif not cm.lastSplitModel:
-                print("entered here...")
                 setTransformData(parent, self.sourceOrig)
             # in this case, the parent was not removed so the transformations should stay the same
             elif cm.sourceIsDirty:
