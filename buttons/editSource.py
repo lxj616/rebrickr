@@ -109,14 +109,19 @@ class RebrickrEditSource(bpy.types.Operator):
 
             # if model isn't split, get brick loc/rot/scale
             if not cm.lastSplitModel and groupExists(Rebrickr_bricks_gn):
-                brickGroup = bpy.data.groups[Rebrickr_bricks_gn]
-                bgObjects = list(brickGroup.objects)
-                b = bgObjects[0]
+                bricks = getBricks()
+                b = bricks[0]
                 scn.update()
                 brickLoc = b.matrix_world.to_translation().copy()
                 brickRot = b.matrix_world.to_euler().copy()
                 brickScale = b.matrix_world.to_scale().copy()
-
+            # else, get parent loc/rot/scale
+            elif bpy.data.objects.find(Rebrickr_parent_on) > 0:
+                p = bpy.data.objects.get(Rebrickr_parent_on)
+                scn.update()
+                brickLoc = p.matrix_world.to_translation().copy()
+                brickRot = p.matrix_world.to_euler().copy()
+                brickScale = p.matrix_world.to_scale().copy()
 
             # get Rebrickr_storage (DO NOT RENAME) scene
             sto_scn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
@@ -161,7 +166,6 @@ class RebrickrEditSource(bpy.types.Operator):
                     setSourceTransform(source, obj=obj, objParent=objParent, skipLocation=True)
                 else:
                     setSourceTransform(source, obj=obj, objParent=objParent)
-
 
             select(source, active=source)
 
