@@ -123,7 +123,7 @@ class BrickModelsPanel(Panel):
         layout = self.layout
         scn = context.scene
 
-		# call built-in function with draw code/checks
+		# draw auto-updater update box
         addon_updater_ops.update_notice_box_ui(self, context)
 
         # if blender version is before 2.78, ask user to upgrade Blender

@@ -1,9 +1,9 @@
 '''
-Copyright (C) 2014 CG Cookie
-http://cgcookie.com
-hello@cgcookie.com
+Copyright (C) 2017 Bricks Brought to Life
+http://bblanimation.com/
+chris@bblanimation.com
 
-Created by Jonathan Denning, Jonathan Williamson, and Patrick Moore
+Created by Christopher Gearhart
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
