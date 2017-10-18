@@ -70,43 +70,6 @@ def register():
 
     bpy.types.Scene.Rebrickr_copy_from_id = IntProperty(default=-1)
 
-    bpy.props.abs_plastic_materials = [
-        'ABS Plastic Black',
-        'ABS Plastic Blue',
-        'ABS Plastic Bright Green',
-        'ABS Plastic Bright Light Orange',
-        'ABS Plastic Brown',
-        'ABS Plastic Dark Azur',
-        'ABS Plastic Dark Brown',
-        'ABS Plastic Dark Green',
-        'ABS Plastic Dark Grey',
-        'ABS Plastic Dark Red',
-        'ABS Plastic Dark Tan',
-        'ABS Plastic Gold',
-        'ABS Plastic Green',
-        'ABS Plastic Light Grey',
-        'ABS Plastic Lime',
-        'ABS Plastic Orange',
-        'ABS Plastic Pink',
-        'ABS Plastic Purple',
-        'ABS Plastic Red',
-        'ABS Plastic Sand Blue',
-        'ABS Plastic Sand Green',
-        'ABS Plastic Silver',
-        'ABS Plastic Tan',
-        'ABS Plastic Trans-Clear',
-        'ABS Plastic Trans-Yellowish Clear',
-        'ABS Plastic Trans-Light Blue',
-        'ABS Plastic Trans-Blue',
-        'ABS Plastic Trans-Green',
-        'ABS Plastic Trans-Light Green',
-        'ABS Plastic Trans-Orange',
-        'ABS Plastic Trans-Reddish Orange',
-        'ABS Plastic Trans-Red',
-        'ABS Plastic Trans-Yellow',
-        'ABS Plastic White',
-        'ABS Plastic Yellow']
-
     bpy.props.abs_plastic_materials_for_random = [
         'ABS Plastic Black',
         'ABS Plastic Blue',
@@ -162,7 +125,6 @@ def unregister():
     del Scn.cmlist_index
     del Scn.cmlist
     del bpy.props.abs_plastic_materials_for_random
-    del bpy.props.abs_plastic_materials
     del Scn.Rebrickr_copy_from_id
     del Scn.Rebrickr_last_active_object_name
     del Scn.Rebrickr_active_object_name
