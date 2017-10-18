@@ -825,10 +825,11 @@ def register(bl_info):
 
 	updater.user = "bblanimation"
 	updater.repo = "rebrickr"
-	updater.addon =  "Rebrickr" # optional, default gets from __package__ name
+	# updater.addon =  "Rebrickr" # optional, default gets from __package__ name
 	updater.website = "https://www.blendermarket.com/products/rebrickr" # optional
 	updater.use_releases = False # ie use tags instead of releases, default True
 	updater.current_version = bl_info["version"]
+	print(updater.addon, updater.current_version)
 
 	# Below: ie  make users restart blender to load
 	# instead of auto-reload which can cause issues
