@@ -152,6 +152,7 @@ class Bricks:
         brick_dimensions["stud_diameter"] = round(scale*4.8, 8)
         brick_dimensions["stud_radius"] = round(scale*2.4, 8)
         brick_dimensions["stud_offset"] = round((brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"] / 2), 8)
+        brick_dimensions["stud_offset_triple"] = round(((brick_dimensions["height"]*3) / 2) + (brick_dimensions["stud_height"] / 2), 8)
         brick_dimensions["thickness"] = round(scale*1.6, 8)
         brick_dimensions["tube_thickness"] = round(scale*0.855, 8)
         brick_dimensions["bar_radius"] = round(scale*1.6, 8)
@@ -160,6 +161,7 @@ class Bricks:
         brick_dimensions["tick_width"] = round(scale*0.6, 8)
         brick_dimensions["tick_depth"] = round(scale*0.3, 8)
         brick_dimensions["support_height"] = round(brick_dimensions["height"]*0.65, 8)
+        brick_dimensions["support_height_triple"] = round((brick_dimensions["height"]*3)*0.65, 8)
 
         brick_dimensions["logo_offset"] = round((brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"]), 8)
         return brick_dimensions

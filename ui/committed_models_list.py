@@ -664,10 +664,17 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         description="Type of brick used to build the model",
         items=[("Plates", "Plates", "Use plates to build the model"),
               ("Bricks", "Bricks", "Use bricks to build the model"),
-              #("Bricks and Plates", "Bricks and Plates", "Use bricks and plates to build the model")],
+              ("Bricks and Plates", "Bricks and Plates", "Use bricks and plates to build the model"),
               ("Custom", "Custom", "Use custom object to build the model")],
         update=dirtyMatrix,
         default="Bricks")
+    offsetBrickLayers = IntProperty(
+        name="Offset Brick Layers",
+        description="Offset the layers that will be merged into bricks if possible",
+        update=dirtyBuild,
+        step=1,
+        min=0, max=2,
+        default=0)
 
     originSet = BoolProperty(
         name="Center brick origins",

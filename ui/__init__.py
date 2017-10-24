@@ -420,8 +420,8 @@ class ModelSettingsPanel(Panel):
         # draw Brick Model dimensions to UI if set
         if sX != -1 and sY != -1 and sZ != -1:
             noCustomObj = False
-            if cm.brickType in ["Bricks", "Plates"]:
-                if cm.brickType == "Plates":
+            if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
+                if cm.brickType in ["Plates", "Bricks and Plates"]:
                     zScale = 0.333
                 elif cm.brickType == "Bricks":
                     zScale = 1
@@ -542,6 +542,11 @@ class BrickTypesPanel(Panel):
             row = col.row(align=True)
             row.prop(cm, "distOffsetZ", text="Z")
         else:
+            if cm.brickType == "Bricks and Plates":
+                col = layout.column(align=True)
+                row = col.row(align=True)
+                row.prop(cm, "offsetBrickLayers")
+
             col = layout.column(align=True)
             col.label("Max Brick Scales:")
             split = col.split(align=True, percentage=0.5)

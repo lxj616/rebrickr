@@ -208,6 +208,14 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
     sX = (brickSize[0] * 2) - 1
     sY = (brickSize[1] * 2) - 1
 
+    # set z1 and z2 values for use later
+    z1 = dZ-thickZ
+    z2a = -dZ
+    if cm.brickType == "Bricks and Plates" and brickSize[2] == 3:
+        z2b = dZ-thickZ-dimensions["support_height_triple"]
+    else:
+        z2b = dZ-thickZ-dimensions["support_height"]
+
     # half scale inputs
     dX = dX/2
     dY = dY/2
@@ -233,7 +241,11 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
         studInset = thickZ * 0.9
         for xNum in range(brickSize[0]):
             for yNum in range(brickSize[1]):
-                _,botVerts,_ = makeCylinder(r=dimensions["stud_radius"], N=numStudVerts, h=dimensions["stud_height"]+studInset, co=(xNum*dX*2,yNum*dY*2,dimensions["stud_offset"]-(studInset/2)), botFace=False, bme=bme)
+                if cm.brickType == "Bricks and Plates" and brickSize[2] == 3:
+                    zCO = dimensions["stud_offset_triple"]-(studInset/2)
+                else:
+                    zCO = dimensions["stud_offset"]-(studInset/2)
+                _,botVerts,_ = makeCylinder(r=dimensions["stud_radius"], N=numStudVerts, h=dimensions["stud_height"]+studInset, co=(xNum*dX*2,yNum*dY*2,zCO), botFace=False, bme=bme)
                 for v in botVerts:
                     v.select = True
 
@@ -275,8 +287,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         x2 = x1+dimensions["tick_depth"]
                         y1 = yNum*dY*2+dimensions["tick_width"]/2
                         y2 = yNum*dY*2-dimensions["tick_width"]/2
-                        z1 = dZ-thickZ
-                        z2 = -dZ
+                        z2 = z2a
                         # CREATING SUPPORT BEAM
                         v1 = bme.verts.new((x1, y1, z1))
                         v2 = bme.verts.new((x1, y2, z1))
@@ -311,7 +322,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         y1 = yNum*dY*2+dimensions["tick_width"]/2
                         y2 = yNum*dY*2-dimensions["tick_width"]/2
                         z1 = dZ-thickZ
-                        z2 = -dZ
+                        z2 = z2a
                         # CREATING SUPPORT BEAM
                         v1 = bme.verts.new((x1, y1, z1))
                         v2 = bme.verts.new((x1, y2, z1))
@@ -346,7 +357,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         x1 = xNum*dX*2+dimensions["tick_width"]/2
                         x2 = xNum*dX*2-dimensions["tick_width"]/2
                         z1 = dZ-thickZ
-                        z2 = -dZ
+                        z2 = z2a
                         # CREATING SUPPORT BEAM
                         v1 = bme.verts.new((x1, y1, z1))
                         v2 = bme.verts.new((x2, y1, z1))
@@ -382,7 +393,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         x1 = xNum*dX*2+dimensions["tick_width"]/2
                         x2 = xNum*dX*2-dimensions["tick_width"]/2
                         z1 = dZ-thickZ
-                        z2 = -dZ
+                        z2 = z2a
                         # CREATING SUPPORT BEAM
                         v1 = bme.verts.new((x1, y1, z1))
                         v2 = bme.verts.new((x1, y2, z1))
@@ -444,7 +455,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                             y3 = tubeY - r
                             y4 = tubeY - dY*2+thickXY
                             z1 = dZ-thickZ
-                            z2 = dZ-thickZ-dimensions["support_height"]
+                            z2 = z2b
                             # CREATING SUPPORT BEAM
                             v1a = bme.verts.new((x1, y1, z1))
                             v2a = bme.verts.new((x2, y1, z1))
@@ -478,7 +489,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                             y1 = tubeY + (dimensions["support_width"]/2)
                             y2 = tubeY - (dimensions["support_width"]/2)
                             z1 = dZ-thickZ
-                            z2 = dZ-thickZ-dimensions["support_height"]
+                            z2 = z2b
                             # CREATING SUPPORT BEAM
                             v1a = bme.verts.new((x1, y1, z1))
                             v2a = bme.verts.new((x1, y2, z1))
@@ -521,7 +532,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         y1 = barY + (dimensions["support_width"]/2)
                         y2 = barY - (dimensions["support_width"]/2)
                         z1 = dZ-thickZ
-                        z2 = dZ-thickZ-dimensions["support_height"]
+                        z2 = z2b
                         # CREATING SUPPORT BEAM
                         v1 = bme.verts.new((x2, y1, z1))
                         v2 = bme.verts.new((x2, y2, z1))
@@ -553,7 +564,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         y2 = barY + dY-thickXY
                         y4 = barY - dY+thickXY
                         z1 = dZ-thickZ
-                        z2 = dZ-thickZ-dimensions["support_height"]
+                        z2 = z2b
                         # CREATING SUPPORT BEAM
                         v1 = bme.verts.new((x1, y2, z1))
                         v2 = bme.verts.new((x2, y2, z1))

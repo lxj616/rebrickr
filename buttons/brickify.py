@@ -167,33 +167,33 @@ class RebrickrBrickify(bpy.types.Operator):
 
         return refLogo
 
-    def getBricksDict(self, source, source_details, dimensions, R, updateCursor, curFrame=None):
+    def getBricksArray(self, source, source_details, dimensions, R, updateCursor, curFrame=None):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         useCaching = bpy.context.user_preferences.addons[bpy.props.rebrickr_module_name].preferences.useCaching
         # current_source_hash = json.dumps(hash_object(source))
         if useCaching and not cm.matrixIsDirty and cm.BFMCache != "" and not cm.sourceIsDirty and (self.action != "UPDATE_ANIM" or not cm.animIsDirty):#current_source_hash == cm.source_hash:
             if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
-                bricksDict = json.loads(cm.BFMCache)
+                bricksArray = json.loads(cm.BFMCache)
             elif self.action == "UPDATE_ANIM":
-                bricksDict = json.loads(cm.BFMCache)[str(curFrame)]
+                bricksArray = json.loads(cm.BFMCache)[str(curFrame)]
         else:
-            bricksDict = makeBricksDict(source, source_details, dimensions, R, cursorStatus=updateCursor)
+            bricksArray = makeBricksArray(source, source_details, dimensions, R, cursorStatus=updateCursor)
             if useCaching:
                 if self.action in ["CREATE", "UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
                     # cm.source_hash = current_source_hash
-                    cm.BFMCache = json.dumps(bricksDict)
+                    cm.BFMCache = json.dumps(bricksArray)
                 elif self.action in ["ANIMATE", "UPDATE_ANIM"]:
                     if cm.BFMCache == "":
                         BFMCache = {}
                     else:
                         BFMCache = json.loads(cm.BFMCache)
-                    BFMCache[curFrame] = bricksDict
+                    BFMCache[curFrame] = bricksArray
                     cm.BFMCache = json.dumps(BFMCache)
-        # after dict is stored to cache, update materials
+        # after array is stored to cache, update materials
         if len(source.material_slots) > 0:
-            bricksDict = addMaterialsToBricksDict(bricksDict, source)
-        return bricksDict
+            bricksArray = addMaterialsToBricksArray(bricksArray, source)
+        return bricksArray
 
     def createNewBricks(self, source, parent, source_details, dimensions, refLogo, curFrame=None):
         scn = bpy.context.scene
@@ -219,12 +219,12 @@ class RebrickrBrickify(bpy.types.Operator):
             customObj_details = None
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
         updateCursor = self.action in ["CREATE", "UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] # evaluates to boolean value
-        bricksDict = self.getBricksDict(source, source_details, dimensions, R, updateCursor, curFrame)
+        bricksArray = self.getBricksArray(source, source_details, dimensions, R, updateCursor, curFrame)
         if curFrame is not None:
             group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
             group_name = None
-        makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor)
+        makeBricks(parent, refLogo, dimensions, bricksArray, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor)
         if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
             self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
         if int(round((source_details.y.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
