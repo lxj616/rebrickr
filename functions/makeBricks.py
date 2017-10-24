@@ -200,18 +200,10 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     logo_details, logo = prepareLogoAndGetDetails(logo)
 
     # get brick dicts in seeded order
-    keysOrig = list(bricksD.keys())
-    keysOrig.sort()
+    keys = list(bricksD.keys())
+    keys.sort()
     random.seed(cm.mergeSeed)
-    random.shuffle(keysOrig)
-    # init new keys list
-    keys = []
-    # split the keys into lists and convert to integers
-    for i in range(len(keysOrig)):
-        curKeyL = keysOrig[i].split(",")
-        keys[int(curKeyL[0])][int(curKeyL[1])][int(curKeyL[2])]
-
-
+    random.shuffle(keys)
     # sort the list by the first character only
     keys.sort(key=lambda x: x[2])
 
@@ -266,435 +258,448 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     # initialize supportBrickDs
     supportBrickDs = []
     update_progress("Building", 0.0)
-    # iterate through locations in bricksD from bottom to top
-    for i,key in enumerate(keys):
-        ct = time.time()
-        brickD = bricksD[key]
-        if brickD["name"] != "DNE" and not brickD["connected"]:
-            loc = key.split(",")
-            for j in range(len(loc)):
-                loc[j] = int(loc[j])
-            if lowestRow == -1:
-                lowestRow = loc[2]
-
-            # Set up brick types
-            isBrick = False
-            if cm.brickType == "Bricks and Plates" and (loc[2] - lowestRow) % 3 == cm.offsetBrickLayers:
-                if plateIsBrick(brickD, bricksD, loc, 0, 0):
-                    isBrick = True
-                    brickTypes = [[1,1,3]]
-                else:
-
-                    brickTypes = [[1,1,1]]
-            else:
-                brickTypes = [[1,1,bt2]]
-            nextBrick0 = getNextBrick(bricksD, loc, 1, 0)
-            canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 1, 0)
-            if brickAvail(brickD, nextBrick0) and canBeBrick and cm.maxBrickScale1 > 1 and cm.brickType != "Custom":
-                nextBrick = getNextBrick(bricksD, loc, 2, 0)
-                canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 2, 0)
-                if brickAvail(brickD, nextBrick) and canBeBrick and cm.maxBrickScale1 > 2:
-                    if isBrick:
-                        brickTypes.append([3,1,3])
-                    else:
-                        brickTypes.append([3,1,bt2])
-                    nextBrick = getNextBrick(bricksD, loc, 3, 0)
-                    canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 3, 0)
-                    if brickAvail(brickD, nextBrick) and canBeBrick and cm.maxBrickScale1 > 3:
-                        if isBrick:
-                            brickTypes.append([4,1,3])
-                        else:
-                            brickTypes.append([4,1,bt2])
-                        nextBrick0 = getNextBrick(bricksD, loc, 4, 0)
-                        nextBrick1 = getNextBrick(bricksD, loc, 5, 0)
-                        canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 4, 0) and plateIsBrick(brickD, bricksD, loc, 5, 0)
-                        if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 5:
-                            if isBrick:
-                                brickTypes.append([6,1,3])
-                            else:
-                                brickTypes.append([6,1,bt2])
-                            nextBrick0 = getNextBrick(bricksD, loc, 6, 0)
-                            nextBrick1 = getNextBrick(bricksD, loc, 7, 0)
-                            canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 6, 0) and plateIsBrick(brickD, bricksD, loc, 7, 0)
-                            if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 7:
-                                if isBrick:
-                                    brickTypes.append([8,1,3])
-                                else:
-                                    brickTypes.append([8,1,bt2])
-            nextBrick1 = getNextBrick(bricksD, loc, 0, 1)
-            canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 0, 1)
-            if brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 1 and cm.brickType != "Custom":
-                if isBrick:
-                    brickTypes.append([1,2,3])
-                else:
-                    brickTypes.append([1,2,bt2])
-                nextBrick = getNextBrick(bricksD, loc, 0, 2)
-                canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 0, 2)
-                if brickAvail(brickD, nextBrick) and canBeBrick and cm.maxBrickScale1 > 2:
-                    if isBrick:
-                        brickTypes.append([1,3,3])
-                    else:
-                        brickTypes.append([1,3,bt2])
-                    nextBrick = getNextBrick(bricksD, loc, 0, 3)
-                    canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 0, 3)
-                    if brickAvail(brickD, nextBrick) and canBeBrick and cm.maxBrickScale1 > 3:
-                        if isBrick:
-                            brickTypes.append([1,4,3])
-                        else:
-                            brickTypes.append([1,4,bt2])
-                        nextBrick0 = getNextBrick(bricksD, loc, 0, 4)
-                        nextBrick1 = getNextBrick(bricksD, loc, 0, 5)
-                        canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 4) and plateIsBrick(brickD, bricksD, loc, 0, 5))
-                        if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 5:
-                            if isBrick:
-                                brickTypes.append([1,6,3])
-                            else:
-                                brickTypes.append([1,6,bt2])
-                            nextBrick0 = getNextBrick(bricksD, loc, 0, 6)
-                            nextBrick1 = getNextBrick(bricksD, loc, 0, 7)
-                            canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 6) and plateIsBrick(brickD, bricksD, loc, 0, 7))
-                            if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 7:
-                                if isBrick:
-                                    brickTypes.append([1,8,3])
-                                else:
-                                    brickTypes.append([1,8,bt2])
-            nextBrick2 = getNextBrick(bricksD, loc, 1, 1)
-            canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 1, 1)
-            if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and canBeBrick and cm.maxBrickScale2 > 1 and cm.brickType != "Custom":
-                if isBrick:
-                    brickTypes.append([2,2,3])
-                else:
-                    brickTypes.append([2,2,bt2])
-                nextBrick0 = getNextBrick(bricksD, loc, 0, 2)
-                nextBrick1 = getNextBrick(bricksD, loc, 1, 2)
-                canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 2) and plateIsBrick(brickD, bricksD, loc, 1, 2))
-                if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 2:
-                    if isBrick:
-                        brickTypes.append([2,3,3])
-                    else:
-                        brickTypes.append([2,3,bt2])
-                    nextBrick0 = getNextBrick(bricksD, loc, 0, 3)
-                    nextBrick1 = getNextBrick(bricksD, loc, 1, 3)
-                    canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 3) and plateIsBrick(brickD, bricksD, loc, 1, 3))
-                    if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 3:
-                        if isBrick:
-                            brickTypes.append([2,4,3])
-                        else:
-                            brickTypes.append([2,4,bt2])
-                        nextBrick0 = getNextBrick(bricksD, loc, 0, 4)
-                        nextBrick1 = getNextBrick(bricksD, loc, 1, 4)
-                        nextBrick2 = getNextBrick(bricksD, loc, 0, 5)
-                        nextBrick3 = getNextBrick(bricksD, loc, 1, 5)
-                        canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 4) and plateIsBrick(brickD, bricksD, loc, 1, 4) and plateIsBrick(brickD, bricksD, loc, 0, 5) and plateIsBrick(brickD, bricksD, loc, 1, 5))
-                        if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 5:
-                            if isBrick:
-                                brickTypes.append([2,6,3])
-                            else:
-                                brickTypes.append([2,6,bt2])
-                            nextBrick0 = getNextBrick(bricksD, loc, 0, 6)
-                            nextBrick1 = getNextBrick(bricksD, loc, 1, 6)
-                            nextBrick2 = getNextBrick(bricksD, loc, 0, 7)
-                            nextBrick3 = getNextBrick(bricksD, loc, 1, 7)
-                            canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 6) and plateIsBrick(brickD, bricksD, loc, 1, 6) and plateIsBrick(brickD, bricksD, loc, 0, 7) and plateIsBrick(brickD, bricksD, loc, 1, 7))
-                            if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 7:
-                                if isBrick:
-                                    brickTypes.append([2,8,3])
-                                else:
-                                    brickTypes.append([2,8,bt2])
-                                nextBrick0 = getNextBrick(bricksD, loc, 0, 8)
-                                nextBrick1 = getNextBrick(bricksD, loc, 1, 8)
-                                nextBrick2 = getNextBrick(bricksD, loc, 0, 9)
-                                nextBrick3 = getNextBrick(bricksD, loc, 1, 9)
-                                canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 8) and plateIsBrick(brickD, bricksD, loc, 1, 8) and plateIsBrick(brickD, bricksD, loc, 0, 9) and plateIsBrick(brickD, bricksD, loc, 1, 9))
-                                if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 9:
-                                    if isBrick:
-                                        brickTypes.append([2,10,3])
-                                    else:
-                                        brickTypes.append([2,10,bt2])
-                nextBrick0 = getNextBrick(bricksD, loc, 2, 0)
-                nextBrick1 = getNextBrick(bricksD, loc, 2, 1)
-                canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 2, 0) and plateIsBrick(brickD, bricksD, loc, 2, 1))
-                if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 2:
-                    if isBrick:
-                        brickTypes.append([3,2,3])
-                    else:
-                        brickTypes.append([3,2,bt2])
-                    nextBrick0 = getNextBrick(bricksD, loc, 3, 0)
-                    nextBrick1 = getNextBrick(bricksD, loc, 3, 1)
-                    canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 3, 0) and plateIsBrick(brickD, bricksD, loc, 3, 1))
-                    if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 3:
-                        if isBrick:
-                            brickTypes.append([4,2,3])
-                        else:
-                            brickTypes.append([4,2,bt2])
-                        nextBrick0 = getNextBrick(bricksD, loc, 4, 0)
-                        nextBrick1 = getNextBrick(bricksD, loc, 4, 1)
-                        nextBrick2 = getNextBrick(bricksD, loc, 5, 0)
-                        nextBrick3 = getNextBrick(bricksD, loc, 5, 1)
-                        canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 4, 0) and plateIsBrick(brickD, bricksD, loc, 4, 1) and plateIsBrick(brickD, bricksD, loc, 5, 0) and plateIsBrick(brickD, bricksD, loc, 5, 1))
-                        if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 5:
-                            if isBrick:
-                                brickTypes.append([6,2,3])
-                            else:
-                                brickTypes.append([6,2,bt2])
-                            nextBrick0 = getNextBrick(bricksD, loc, 6, 0)
-                            nextBrick1 = getNextBrick(bricksD, loc, 6, 1)
-                            nextBrick2 = getNextBrick(bricksD, loc, 7, 0)
-                            nextBrick3 = getNextBrick(bricksD, loc, 7, 1)
-                            canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 6, 0) and plateIsBrick(brickD, bricksD, loc, 6, 1) and plateIsBrick(brickD, bricksD, loc, 7, 0) and plateIsBrick(brickD, bricksD, loc, 7, 1))
-                            if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 7:
-                                if isBrick:
-                                    brickTypes.append([8,2,3])
-                                else:
-                                    brickTypes.append([8,2,bt2])
-                                nextBrick0 = getNextBrick(bricksD, loc, 8, 0)
-                                nextBrick1 = getNextBrick(bricksD, loc, 8, 1)
-                                nextBrick2 = getNextBrick(bricksD, loc, 9, 0)
-                                nextBrick3 = getNextBrick(bricksD, loc, 9, 1)
-                                canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 8, 0) and plateIsBrick(brickD, bricksD, loc, 8, 1) and plateIsBrick(brickD, bricksD, loc, 9, 0) and plateIsBrick(brickD, bricksD, loc, 9, 1))
-                                if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 9:
-                                    if isBrick:
-                                        brickTypes.append([10,2,3])
-                                    else:
-                                        brickTypes.append([10,2,bt2])
-
-            # sort brick types from smallest to largest
-            order = randS1.randint(1,2)
+    for timeThrough in range(1, 3):
+        # if second time through this for loop, go through keys left behind if "Bricks and Plates"
+        if timeThrough == 2: # second time
             if cm.brickType == "Bricks and Plates":
-                brickTypes.sort(key=lambda x: (x[2], x[order-1]))
+                keys = keysLeftBehind
             else:
-                brickTypes.sort(key=lambda x: x[order-1])
-            # grab the biggest brick type
-            brickType = brickTypes[-1]
+                break
+        else: # first time
+            keysLeftBehind = []
+            
+        # iterate through locations in bricksD from bottom to top
+        for i,key in enumerate(keys):
+            ct = time.time()
+            brickD = bricksD[key]
+            if brickD["name"] != "DNE" and not brickD["connected"]:
+                loc = key.split(",")
+                for j in range(len(loc)):
+                    loc[j] = int(loc[j])
+                if lowestRow == -1:
+                    lowestRow = loc[2]
 
-            topExposed = False
-            botExposed = False
-
-            # Iterate through merged bricks
-            idxZb = str(loc[2] - 1)
-            if cm.brickType == "Bricks and Plates" and brickType[2] == 3:
-                idxZa = str(loc[2] + 3)
-            else:
-                idxZa = str(loc[2] + 1)
-            for x in range(brickType[0]):
-                idxX = str(loc[0] + x)
-                for y in range(brickType[1]):
-                    idxY = str(loc[1] + y)
-                    for z in range(brickType[2]):
-                        if cm.brickType in ["Bricks", "Custom"] and z > 0:
+                # Set up brick types
+                isBrick = False
+                if cm.brickType == "Bricks and Plates" and (loc[2] - lowestRow) % 3 == cm.offsetBrickLayers:
+                    if plateIsBrick(brickD, bricksD, loc, 0, 0):
+                        isBrick = True
+                        brickTypes = [[1,1,3]]
+                    else:
+                        if timeThrough == 1:
+                            keysLeftBehind.append(key)
                             continue
-                        idxZ = str(loc[2] + z)
-                        # get brick at x,y location
-                        curBrick = bricksD["%(idxX)s,%(idxY)s,%(idxZ)s" % locals()]
-                        # check if brick top or bottom is exposed
-                        if curBrick["val"] == 2 and z == 0:
-                            try:
-                                valKeysChecked1 = []
-                                val = bricksD["%(idxX)s,%(idxY)s,%(idxZa)s" % locals()]["val"]
-                                if val == 0:
-                                    topExposed = True
-                                # Check bricks on Z axis above this brick until shell (2) hit. If ouside (0) hit first, top is exposed
-                                elif val < 1 and val > 0:
-                                    idxZab = idxZa
-                                    while val < 1 and val > 0:
-                                        idxZab = str(int(idxZab)+1)
-                                        # NOTE: if key does not exist, we will be sent to 'except'
-                                        valKeysChecked1.append("%(idxX)s,%(idxY)s,%(idxZab)s" % locals())
-                                        val = bricksD[valKeysChecked1[-1]]["val"]
-                                        if val == 0:
-                                            topExposed = True
-                            except KeyError:
-                                topExposed = True
-                            # if outside (0) hit before shell (2) above exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
-                            if topExposed and len(valKeysChecked1) > 0:
-                                for k in valKeysChecked1:
-                                    val = bricksD[k]["val"] = 0
+                        else:
+                            brickTypes = [[1,1,1]]
+                else:
+                    brickTypes = [[1,1,bt2]]
+                nextBrick0 = getNextBrick(bricksD, loc, 1, 0)
+                canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 1, 0)
+                if brickAvail(brickD, nextBrick0) and canBeBrick and cm.maxBrickScale1 > 1 and cm.brickType != "Custom":
+                    nextBrick = getNextBrick(bricksD, loc, 2, 0)
+                    canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 2, 0)
+                    if brickAvail(brickD, nextBrick) and canBeBrick and cm.maxBrickScale1 > 2:
+                        if isBrick:
+                            brickTypes.append([3,1,3])
+                        else:
+                            brickTypes.append([3,1,bt2])
+                        nextBrick = getNextBrick(bricksD, loc, 3, 0)
+                        canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 3, 0)
+                        if brickAvail(brickD, nextBrick) and canBeBrick and cm.maxBrickScale1 > 3:
+                            if isBrick:
+                                brickTypes.append([4,1,3])
+                            else:
+                                brickTypes.append([4,1,bt2])
+                            nextBrick0 = getNextBrick(bricksD, loc, 4, 0)
+                            nextBrick1 = getNextBrick(bricksD, loc, 5, 0)
+                            canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 4, 0) and plateIsBrick(brickD, bricksD, loc, 5, 0)
+                            if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 5:
+                                if isBrick:
+                                    brickTypes.append([6,1,3])
+                                else:
+                                    brickTypes.append([6,1,bt2])
+                                nextBrick0 = getNextBrick(bricksD, loc, 6, 0)
+                                nextBrick1 = getNextBrick(bricksD, loc, 7, 0)
+                                canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 6, 0) and plateIsBrick(brickD, bricksD, loc, 7, 0)
+                                if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 7:
+                                    if isBrick:
+                                        brickTypes.append([8,1,3])
+                                    else:
+                                        brickTypes.append([8,1,bt2])
+                nextBrick1 = getNextBrick(bricksD, loc, 0, 1)
+                canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 0, 1)
+                if brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 1 and cm.brickType != "Custom":
+                    if isBrick:
+                        brickTypes.append([1,2,3])
+                    else:
+                        brickTypes.append([1,2,bt2])
+                    nextBrick = getNextBrick(bricksD, loc, 0, 2)
+                    canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 0, 2)
+                    if brickAvail(brickD, nextBrick) and canBeBrick and cm.maxBrickScale1 > 2:
+                        if isBrick:
+                            brickTypes.append([1,3,3])
+                        else:
+                            brickTypes.append([1,3,bt2])
+                        nextBrick = getNextBrick(bricksD, loc, 0, 3)
+                        canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 0, 3)
+                        if brickAvail(brickD, nextBrick) and canBeBrick and cm.maxBrickScale1 > 3:
+                            if isBrick:
+                                brickTypes.append([1,4,3])
+                            else:
+                                brickTypes.append([1,4,bt2])
+                            nextBrick0 = getNextBrick(bricksD, loc, 0, 4)
+                            nextBrick1 = getNextBrick(bricksD, loc, 0, 5)
+                            canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 4) and plateIsBrick(brickD, bricksD, loc, 0, 5))
+                            if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 5:
+                                if isBrick:
+                                    brickTypes.append([1,6,3])
+                                else:
+                                    brickTypes.append([1,6,bt2])
+                                nextBrick0 = getNextBrick(bricksD, loc, 0, 6)
+                                nextBrick1 = getNextBrick(bricksD, loc, 0, 7)
+                                canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 6) and plateIsBrick(brickD, bricksD, loc, 0, 7))
+                                if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 7:
+                                    if isBrick:
+                                        brickTypes.append([1,8,3])
+                                    else:
+                                        brickTypes.append([1,8,bt2])
+                nextBrick2 = getNextBrick(bricksD, loc, 1, 1)
+                canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 1, 1)
+                if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and canBeBrick and cm.maxBrickScale2 > 1 and cm.brickType != "Custom":
+                    if isBrick:
+                        brickTypes.append([2,2,3])
+                    else:
+                        brickTypes.append([2,2,bt2])
+                    nextBrick0 = getNextBrick(bricksD, loc, 0, 2)
+                    nextBrick1 = getNextBrick(bricksD, loc, 1, 2)
+                    canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 2) and plateIsBrick(brickD, bricksD, loc, 1, 2))
+                    if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 2:
+                        if isBrick:
+                            brickTypes.append([2,3,3])
+                        else:
+                            brickTypes.append([2,3,bt2])
+                        nextBrick0 = getNextBrick(bricksD, loc, 0, 3)
+                        nextBrick1 = getNextBrick(bricksD, loc, 1, 3)
+                        canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 3) and plateIsBrick(brickD, bricksD, loc, 1, 3))
+                        if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 3:
+                            if isBrick:
+                                brickTypes.append([2,4,3])
+                            else:
+                                brickTypes.append([2,4,bt2])
+                            nextBrick0 = getNextBrick(bricksD, loc, 0, 4)
+                            nextBrick1 = getNextBrick(bricksD, loc, 1, 4)
+                            nextBrick2 = getNextBrick(bricksD, loc, 0, 5)
+                            nextBrick3 = getNextBrick(bricksD, loc, 1, 5)
+                            canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 4) and plateIsBrick(brickD, bricksD, loc, 1, 4) and plateIsBrick(brickD, bricksD, loc, 0, 5) and plateIsBrick(brickD, bricksD, loc, 1, 5))
+                            if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 5:
+                                if isBrick:
+                                    brickTypes.append([2,6,3])
+                                else:
+                                    brickTypes.append([2,6,bt2])
+                                nextBrick0 = getNextBrick(bricksD, loc, 0, 6)
+                                nextBrick1 = getNextBrick(bricksD, loc, 1, 6)
+                                nextBrick2 = getNextBrick(bricksD, loc, 0, 7)
+                                nextBrick3 = getNextBrick(bricksD, loc, 1, 7)
+                                canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 6) and plateIsBrick(brickD, bricksD, loc, 1, 6) and plateIsBrick(brickD, bricksD, loc, 0, 7) and plateIsBrick(brickD, bricksD, loc, 1, 7))
+                                if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 7:
+                                    if isBrick:
+                                        brickTypes.append([2,8,3])
+                                    else:
+                                        brickTypes.append([2,8,bt2])
+                                    nextBrick0 = getNextBrick(bricksD, loc, 0, 8)
+                                    nextBrick1 = getNextBrick(bricksD, loc, 1, 8)
+                                    nextBrick2 = getNextBrick(bricksD, loc, 0, 9)
+                                    nextBrick3 = getNextBrick(bricksD, loc, 1, 9)
+                                    canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 8) and plateIsBrick(brickD, bricksD, loc, 1, 8) and plateIsBrick(brickD, bricksD, loc, 0, 9) and plateIsBrick(brickD, bricksD, loc, 1, 9))
+                                    if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 9:
+                                        if isBrick:
+                                            brickTypes.append([2,10,3])
+                                        else:
+                                            brickTypes.append([2,10,bt2])
+                    nextBrick0 = getNextBrick(bricksD, loc, 2, 0)
+                    nextBrick1 = getNextBrick(bricksD, loc, 2, 1)
+                    canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 2, 0) and plateIsBrick(brickD, bricksD, loc, 2, 1))
+                    if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 2:
+                        if isBrick:
+                            brickTypes.append([3,2,3])
+                        else:
+                            brickTypes.append([3,2,bt2])
+                        nextBrick0 = getNextBrick(bricksD, loc, 3, 0)
+                        nextBrick1 = getNextBrick(bricksD, loc, 3, 1)
+                        canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 3, 0) and plateIsBrick(brickD, bricksD, loc, 3, 1))
+                        if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 3:
+                            if isBrick:
+                                brickTypes.append([4,2,3])
+                            else:
+                                brickTypes.append([4,2,bt2])
+                            nextBrick0 = getNextBrick(bricksD, loc, 4, 0)
+                            nextBrick1 = getNextBrick(bricksD, loc, 4, 1)
+                            nextBrick2 = getNextBrick(bricksD, loc, 5, 0)
+                            nextBrick3 = getNextBrick(bricksD, loc, 5, 1)
+                            canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 4, 0) and plateIsBrick(brickD, bricksD, loc, 4, 1) and plateIsBrick(brickD, bricksD, loc, 5, 0) and plateIsBrick(brickD, bricksD, loc, 5, 1))
+                            if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 5:
+                                if isBrick:
+                                    brickTypes.append([6,2,3])
+                                else:
+                                    brickTypes.append([6,2,bt2])
+                                nextBrick0 = getNextBrick(bricksD, loc, 6, 0)
+                                nextBrick1 = getNextBrick(bricksD, loc, 6, 1)
+                                nextBrick2 = getNextBrick(bricksD, loc, 7, 0)
+                                nextBrick3 = getNextBrick(bricksD, loc, 7, 1)
+                                canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 6, 0) and plateIsBrick(brickD, bricksD, loc, 6, 1) and plateIsBrick(brickD, bricksD, loc, 7, 0) and plateIsBrick(brickD, bricksD, loc, 7, 1))
+                                if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 7:
+                                    if isBrick:
+                                        brickTypes.append([8,2,3])
+                                    else:
+                                        brickTypes.append([8,2,bt2])
+                                    nextBrick0 = getNextBrick(bricksD, loc, 8, 0)
+                                    nextBrick1 = getNextBrick(bricksD, loc, 8, 1)
+                                    nextBrick2 = getNextBrick(bricksD, loc, 9, 0)
+                                    nextBrick3 = getNextBrick(bricksD, loc, 9, 1)
+                                    canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 8, 0) and plateIsBrick(brickD, bricksD, loc, 8, 1) and plateIsBrick(brickD, bricksD, loc, 9, 0) and plateIsBrick(brickD, bricksD, loc, 9, 1))
+                                    if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 9:
+                                        if isBrick:
+                                            brickTypes.append([10,2,3])
+                                        else:
+                                            brickTypes.append([10,2,bt2])
 
-                            try:
-                                valKeysChecked2 = []
-                                val = bricksD["%(idxX)s,%(idxY)s,%(idxZb)s" % locals()]["val"]
-                                if val == 0:
-                                    botExposed = True
-                                # Check bricks on Z axis below this brick until shell (2) hit. If ouside (0) hit first, bottom is exposed
-                                elif val < 1 and val > 0:
-                                    idxZbb = idxZb
-                                    while val < 1 and val > 0:
-                                        idxZbb = str(int(idxZbb)+1)
-                                        # NOTE: if key does not exist, we will be sent to 'except'
-                                        valKeysChecked2.append("%(idxX)s,%(idxY)s,%(idxZbb)s" % locals())
-                                        val = bricksD[valKeysChecked2[-1]]["val"]
-                                        if val == 0:
-                                            botExposed = True
-                            except KeyError:
-                                botExposed = True
-                            # if outside (0) hit before shell (2) below exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
-                            if botExposed and len(valKeysChecked2) > 0:
-                                for k in valKeysChecked2:
-                                    val = bricksD[k]["val"] = 0
-                        # skip the original brick
-                        if (x + y + z) == 0: # checks that x,y,z are all 0
-                            brickD["connected"] = True
-                            continue
-                        # add brick to connected bricks
-                        curBrick["connected"] = True
-                        # set name of deleted brick to 'DNE'
-                        curBrick["name"] = "DNE"
+                # sort brick types from smallest to largest
+                order = randS1.randint(1,2)
+                if cm.brickType == "Bricks and Plates":
+                    brickTypes.sort(key=lambda x: (x[2], x[order-1]))
+                else:
+                    brickTypes.sort(key=lambda x: x[order-1])
+                # grab the biggest brick type
+                brickType = brickTypes[-1]
 
+                topExposed = False
+                botExposed = False
 
-            if topExposed:
-                logoToUse = logo
-            else:
-                logoToUse = None
-            if (topExposed and cm.studDetail != "None") or cm.studDetail == "On All Bricks":
-                useStud = True
-            else:
-                useStud = False
-            if botExposed:
-                undersideDetail = cm.exposedUndersideDetail
-            else:
-                undersideDetail = cm.hiddenUndersideDetail
-
-            # get closest material
-            mat = None
-            highestVal = 0
-            matsL = []
-            if cm.materialType == "Use Source Materials":
+                # Iterate through merged bricks
+                idxZb = str(loc[2] - 1)
+                if cm.brickType == "Bricks and Plates" and brickType[2] == 3:
+                    idxZa = str(loc[2] + 3)
+                else:
+                    idxZa = str(loc[2] + 1)
                 for x in range(brickType[0]):
+                    idxX = str(loc[0] + x)
                     for y in range(brickType[1]):
-                        idcs = key.split(",")
-                        curBrickD = bricksD[str(int(idcs[0])+x) + "," + str(int(idcs[1])+y) + "," + idcs[2]]
-                        if curBrickD["val"] >= highestVal:
-                            highestVal = curBrickD["val"]
-                            matName = curBrickD["matName"]
-                            if curBrickD["val"] == 2:
-                                matsL.append(matName)
-                # if multiple shell materials, use the most frequent one
-                if len(matsL) > 1:
-                    matName = most_common(matsL)
-                mat = bpy.data.materials.get(matName)
-            elif cm.materialType == "Random" and len(brick_mats) > 0:
-                randS2.seed(cm.randomMatSeed + k)
-                k += 1
-                if len(brick_mats) == 1:
-                    randIdx = 0
-                else:
-                    randIdx = randS2.randint(0, len(brick_mats))
-                matName = brick_mats[randIdx]
-                mat = bpy.data.materials.get(matName)
+                        idxY = str(loc[1] + y)
+                        for z in range(brickType[2]):
+                            if cm.brickType in ["Bricks", "Custom"] and z > 0:
+                                continue
+                            idxZ = str(loc[2] + z)
+                            # get brick at x,y location
+                            curBrick = bricksD["%(idxX)s,%(idxY)s,%(idxZ)s" % locals()]
+                            # check if brick top or bottom is exposed
+                            if curBrick["val"] == 2 and z == 0:
+                                try:
+                                    valKeysChecked1 = []
+                                    val = bricksD["%(idxX)s,%(idxY)s,%(idxZa)s" % locals()]["val"]
+                                    if val == 0:
+                                        topExposed = True
+                                    # Check bricks on Z axis above this brick until shell (2) hit. If ouside (0) hit first, top is exposed
+                                    elif val < 1 and val > 0:
+                                        idxZab = idxZa
+                                        while val < 1 and val > 0:
+                                            idxZab = str(int(idxZab)+1)
+                                            # NOTE: if key does not exist, we will be sent to 'except'
+                                            valKeysChecked1.append("%(idxX)s,%(idxY)s,%(idxZab)s" % locals())
+                                            val = bricksD[valKeysChecked1[-1]]["val"]
+                                            if val == 0:
+                                                topExposed = True
+                                except KeyError:
+                                    topExposed = True
+                                # if outside (0) hit before shell (2) above exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
+                                if topExposed and len(valKeysChecked1) > 0:
+                                    for k in valKeysChecked1:
+                                        val = bricksD[k]["val"] = 0
 
-            # add brick with new mesh data at original location
-            if split:
-                if cm.brickType == "Custom":
-                    bm = bmesh.new()
-                    bm.from_mesh(customData)
-                    addToMeshLoc((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
-                    maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
-                    bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
+                                try:
+                                    valKeysChecked2 = []
+                                    val = bricksD["%(idxX)s,%(idxY)s,%(idxZb)s" % locals()]["val"]
+                                    if val == 0:
+                                        botExposed = True
+                                    # Check bricks on Z axis below this brick until shell (2) hit. If ouside (0) hit first, bottom is exposed
+                                    elif val < 1 and val > 0:
+                                        idxZbb = idxZb
+                                        while val < 1 and val > 0:
+                                            idxZbb = str(int(idxZbb)+1)
+                                            # NOTE: if key does not exist, we will be sent to 'except'
+                                            valKeysChecked2.append("%(idxX)s,%(idxY)s,%(idxZbb)s" % locals())
+                                            val = bricksD[valKeysChecked2[-1]]["val"]
+                                            if val == 0:
+                                                botExposed = True
+                                except KeyError:
+                                    botExposed = True
+                                # if outside (0) hit before shell (2) below exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
+                                if botExposed and len(valKeysChecked2) > 0:
+                                    for k in valKeysChecked2:
+                                        val = bricksD[k]["val"] = 0
+                            # skip the original brick
+                            if (x + y + z) == 0: # checks that x,y,z are all 0
+                                brickD["connected"] = True
+                                continue
+                            # add brick to connected bricks
+                            curBrick["connected"] = True
+                            # set name of deleted brick to 'DNE'
+                            curBrick["name"] = "DNE"
+
+
+                if topExposed:
+                    logoToUse = logo
                 else:
-                    # get brick mesh
-                    # bm = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
-                    bm = getBrickMesh(cm, randS4, dimensions, brickType, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.studVerts)
-                # apply random rotation to BMesh according to parameters
-                if cm.randomRot > 0:
-                    d = dimensions["width"]/2
-                    sX = (brickType[0] * 2) - 1
-                    sY = (brickType[1] * 2) - 1
-                    center = ( ((d*sX)-d) / 2, ((d*sY)-d) / 2, 0.0 )
-                    randRot = randomizeRot(randS3, center, brickType, bm)
-                # create new mesh and send bm to it
-                m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
-                bm.to_mesh(m)
-                # apply random location to edit mesh according to parameters
-                if cm.randomLoc > 0:
-                    randomizeLoc(randS3, dimensions["width"], dimensions["height"], mesh=m)
-                if cm.brickType != "Custom":
-                    # undo bm rotation if not custom, since 'bm' points to bmesh used by all other similar bricks
+                    logoToUse = None
+                if (topExposed and cm.studDetail != "None") or cm.studDetail == "On All Bricks":
+                    useStud = True
+                else:
+                    useStud = False
+                if botExposed:
+                    undersideDetail = cm.exposedUndersideDetail
+                else:
+                    undersideDetail = cm.hiddenUndersideDetail
+
+                # get closest material
+                mat = None
+                highestVal = 0
+                matsL = []
+                if cm.materialType == "Use Source Materials":
+                    for x in range(brickType[0]):
+                        for y in range(brickType[1]):
+                            idcs = key.split(",")
+                            curBrickD = bricksD[str(int(idcs[0])+x) + "," + str(int(idcs[1])+y) + "," + idcs[2]]
+                            if curBrickD["val"] >= highestVal:
+                                highestVal = curBrickD["val"]
+                                matName = curBrickD["matName"]
+                                if curBrickD["val"] == 2:
+                                    matsL.append(matName)
+                    # if multiple shell materials, use the most frequent one
+                    if len(matsL) > 1:
+                        matName = most_common(matsL)
+                    mat = bpy.data.materials.get(matName)
+                elif cm.materialType == "Random" and len(brick_mats) > 0:
+                    randS2.seed(cm.randomMatSeed + k)
+                    k += 1
+                    if len(brick_mats) == 1:
+                        randIdx = 0
+                    else:
+                        randIdx = randS2.randint(0, len(brick_mats))
+                    matName = brick_mats[randIdx]
+                    mat = bpy.data.materials.get(matName)
+
+                # add brick with new mesh data at original location
+                if split:
+                    if cm.brickType == "Custom":
+                        bm = bmesh.new()
+                        bm.from_mesh(customData)
+                        addToMeshLoc((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
+                        maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
+                        bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
+                    else:
+                        # get brick mesh
+                        # bm = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
+                        bm = getBrickMesh(cm, randS4, dimensions, brickType, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.studVerts)
+                    # apply random rotation to BMesh according to parameters
                     if cm.randomRot > 0:
-                        rotateBack(bm, center, randRot)
-                # create new object with mesh data
-                brick = bpy.data.objects.new(brickD["name"], m)
-                if brickType[2] == 3 and cm.brickType == "Bricks and Plates":
-                    brickLoc = Vector(brickD["co"])
-                    brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
-                else:
-                    brickLoc = Vector(brickD["co"])
-                brick.location = brickLoc
-                if cm.materialType == "Custom":
-                    mat = bpy.data.materials.get(cm.materialName)
-                    if mat is not None:
+                        d = dimensions["width"]/2
+                        sX = (brickType[0] * 2) - 1
+                        sY = (brickType[1] * 2) - 1
+                        center = ( ((d*sX)-d) / 2, ((d*sY)-d) / 2, 0.0 )
+                        randRot = randomizeRot(randS3, center, brickType, bm)
+                    # create new mesh and send bm to it
+                    m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
+                    bm.to_mesh(m)
+                    # apply random location to edit mesh according to parameters
+                    if cm.randomLoc > 0:
+                        randomizeLoc(randS3, dimensions["width"], dimensions["height"], mesh=m)
+                    if cm.brickType != "Custom":
+                        # undo bm rotation if not custom, since 'bm' points to bmesh used by all other similar bricks
+                        if cm.randomRot > 0:
+                            rotateBack(bm, center, randRot)
+                    # create new object with mesh data
+                    brick = bpy.data.objects.new(brickD["name"], m)
+                    if brickType[2] == 3 and cm.brickType == "Bricks and Plates":
+                        brickLoc = Vector(brickD["co"])
+                        brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
+                    else:
+                        brickLoc = Vector(brickD["co"])
+                    brick.location = brickLoc
+                    if cm.materialType == "Custom":
+                        mat = bpy.data.materials.get(cm.materialName)
+                        if mat is not None:
+                            brick.data.materials.append(mat)
+                    elif mat is not None:
                         brick.data.materials.append(mat)
-                elif mat is not None:
-                    brick.data.materials.append(mat)
+                    else:
+                        brick.data.materials.append(internalMat)
+
+                    if cm.originSet:
+                        scn.objects.link(brick)
+                        select(brick)
+                        bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+                        select(brick, deselect=True)
+                        scn.objects.unlink(brick)
+
+                    # Add edge split modifier
+                    addEdgeSplitMod(brick)
                 else:
-                    brick.data.materials.append(internalMat)
+                    if cm.brickType == "Custom":
+                        bm = bmesh.new()
+                        bm.from_mesh(customData)
+                        addToMeshLoc((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
 
-                if cm.originSet:
-                    scn.objects.link(brick)
-                    select(brick)
-                    bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
-                    select(brick, deselect=True)
-                    scn.objects.unlink(brick)
-
-                # Add edge split modifier
-                addEdgeSplitMod(brick)
-            else:
-                if cm.brickType == "Custom":
-                    bm = bmesh.new()
-                    bm.from_mesh(customData)
-                    addToMeshLoc((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
-
-                    maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
-                    bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
-                else:
-                    # get brick mesh
-                    # bm = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
-                    bm = getBrickMesh(cm, randS4, dimensions, brickType, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.studVerts)
-                # apply random rotation to BMesh according to parameters
-                if cm.randomRot > 0:
-                    d = dimensions["width"]/2
-                    sX = (brickType[0] * 2) - 1
-                    sY = (brickType[1] * 2) - 1
-                    center = ( ((d*sX)-d) / 2, ((d*sY)-d) / 2, 0)
-                    randRot = randomizeRot(randS3, center, brickType, bm)
-                # create new mesh and send bm to it
-                tempMesh = bpy.data.meshes.new(brickD["name"])
-                bm.to_mesh(tempMesh)
-                # apply random location to edit mesh according to parameters
-                if cm.randomLoc > 0:
-                    randomizeLoc(randS3, dimensions["width"], dimensions["height"], mesh=tempMesh)
-                if cm.brickType != "Custom":
-                    # undo bm rotation if not custom, since 'bm' points to bmesh used by all other similar bricks
+                        maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
+                        bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
+                    else:
+                        # get brick mesh
+                        # bm = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
+                        bm = getBrickMesh(cm, randS4, dimensions, brickType, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.studVerts)
+                    # apply random rotation to BMesh according to parameters
                     if cm.randomRot > 0:
-                        rotateBack(bm, center, randRot)
-                # transform brick mesh to coordinate on matrix
-                if brickType[2] == 3 and cm.brickType == "Bricks and Plates":
-                    brickLoc = Vector(brickD["co"])
-                    brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
-                else:
-                    brickLoc = Vector(brickD["co"])
-                addToMeshLoc(brickLoc, mesh=tempMesh)
-                # set up materials for tempMesh
-                if mat in mats:
-                    matIdx = mats.index(mat)
-                elif mat is not None:
-                    mats.append(mat)
-                    matIdx = len(mats) - 1
-                if mat is not None:
-                    tempMesh.materials.append(mat)
-                    for p in tempMesh.polygons:
-                        p.material_index = matIdx
-                else:
-                    for p in tempMesh.polygons:
-                        p.material_index = 0
-                allBrickMeshes.append(tempMesh)
+                        d = dimensions["width"]/2
+                        sX = (brickType[0] * 2) - 1
+                        sY = (brickType[1] * 2) - 1
+                        center = ( ((d*sX)-d) / 2, ((d*sY)-d) / 2, 0)
+                        randRot = randomizeRot(randS3, center, brickType, bm)
+                    # create new mesh and send bm to it
+                    tempMesh = bpy.data.meshes.new(brickD["name"])
+                    bm.to_mesh(tempMesh)
+                    # apply random location to edit mesh according to parameters
+                    if cm.randomLoc > 0:
+                        randomizeLoc(randS3, dimensions["width"], dimensions["height"], mesh=tempMesh)
+                    if cm.brickType != "Custom":
+                        # undo bm rotation if not custom, since 'bm' points to bmesh used by all other similar bricks
+                        if cm.randomRot > 0:
+                            rotateBack(bm, center, randRot)
+                    # transform brick mesh to coordinate on matrix
+                    if brickType[2] == 3 and cm.brickType == "Bricks and Plates":
+                        brickLoc = Vector(brickD["co"])
+                        brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
+                    else:
+                        brickLoc = Vector(brickD["co"])
+                    addToMeshLoc(brickLoc, mesh=tempMesh)
+                    # set up materials for tempMesh
+                    if mat in mats:
+                        matIdx = mats.index(mat)
+                    elif mat is not None:
+                        mats.append(mat)
+                        matIdx = len(mats) - 1
+                    if mat is not None:
+                        tempMesh.materials.append(mat)
+                        for p in tempMesh.polygons:
+                            p.material_index = matIdx
+                    else:
+                        for p in tempMesh.polygons:
+                            p.material_index = 0
+                    allBrickMeshes.append(tempMesh)
 
-            # print status to terminal
-            if i % denom < 1:
-                percent = i/len(keys)
-                if percent < 1:
-                    update_progress("Building", percent)
-                    if cursorStatus:
-                        wm.progress_update(percent*100)
+                # print status to terminal
+                if i % denom < 1:
+                    percent = i/len(keys)
+                    if percent < 1:
+                        update_progress("Building", percent)
+                        if cursorStatus:
+                            wm.progress_update(percent*100)
 
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO Logo" and logo is not None:
