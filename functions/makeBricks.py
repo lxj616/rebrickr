@@ -205,7 +205,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     random.seed(cm.mergeSeed)
     random.shuffle(keys)
     # sort the list by the first character only
-    keys.sort(key=lambda x: x[2])
+    keys.sort(key=lambda x: int(x.split(",")[2]))
 
     # create group for bricks
     if group_name:
@@ -267,7 +267,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 break
         else: # first time
             keysLeftBehind = []
-            
+
         # iterate through locations in bricksD from bottom to top
         for i,key in enumerate(keys):
             ct = time.time()
@@ -492,7 +492,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                             # get brick at x,y location
                             curBrick = bricksD["%(idxX)s,%(idxY)s,%(idxZ)s" % locals()]
                             # check if brick top or bottom is exposed
-                            if curBrick["val"] == 2 and z == 0:
+                            if curBrick["val"] == 2 or (cm.brickType == "Bricks and Plates" and brickType[2] == 3):
                                 try:
                                     valKeysChecked1 = []
                                     val = bricksD["%(idxX)s,%(idxY)s,%(idxZa)s" % locals()]["val"]
