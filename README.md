@@ -19,7 +19,7 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add support for texture maps transferring to materials
       * Add support for smoke animations
       * Add support for rigid bodies
-      * Add "Bricks and Plates" option for merging stacked plates into bricks where possible
+      * Test "Bricks and Plates" functionality for bugs
       * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
   * Known bugs:
       * When source is dirty (mesh edited to change location of center of mass) for split Brick Model, model shifts to new center of mass after applied a second time.
