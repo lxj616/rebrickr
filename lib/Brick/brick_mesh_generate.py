@@ -208,9 +208,8 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
     sX = (brickSize[0] * 2) - 1
     sY = (brickSize[1] * 2) - 1
 
-    # set z1 and z2 values for use later
-    z1 = dZ-thickZ
-    z2a = -dZ
+    # set z2b value for use later
+    z2 = -dZ
     if cm.brickType == "Bricks and Plates" and brickSize[2] == 3:
         z2b = dZ-thickZ-dimensions["support_height_triple"]
     else:
@@ -322,7 +321,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         y1 = yNum*dY*2+dimensions["tick_width"]/2
                         y2 = yNum*dY*2-dimensions["tick_width"]/2
                         z1 = dZ-thickZ
-                        z2 = z2a
+                        z2 = -dZ
                         # CREATING SUPPORT BEAM
                         v1 = bme.verts.new((x1, y1, z1))
                         v2 = bme.verts.new((x1, y2, z1))
@@ -357,7 +356,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         x1 = xNum*dX*2+dimensions["tick_width"]/2
                         x2 = xNum*dX*2-dimensions["tick_width"]/2
                         z1 = dZ-thickZ
-                        z2 = z2a
+                        z2 = -dZ
                         # CREATING SUPPORT BEAM
                         v1 = bme.verts.new((x1, y1, z1))
                         v2 = bme.verts.new((x2, y1, z1))
@@ -393,7 +392,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         x1 = xNum*dX*2+dimensions["tick_width"]/2
                         x2 = xNum*dX*2-dimensions["tick_width"]/2
                         z1 = dZ-thickZ
-                        z2 = z2a
+                        z2 = -dZ
                         # CREATING SUPPORT BEAM
                         v1 = bme.verts.new((x1, y1, z1))
                         v2 = bme.verts.new((x1, y2, z1))
