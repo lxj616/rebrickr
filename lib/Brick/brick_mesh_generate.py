@@ -208,17 +208,17 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
     sX = (brickSize[0] * 2) - 1
     sY = (brickSize[1] * 2) - 1
 
-    # set z2b value for use later
-    z2 = -dZ
-    if cm.brickType == "Bricks and Plates" and brickSize[2] == 3:
-        z2b = dZ-thickZ-dimensions["support_height_triple"]
-    else:
-        z2b = dZ-thickZ-dimensions["support_height"]
-
     # half scale inputs
     dX = dX/2
     dY = dY/2
     dZ = dZ/2
+
+    # set z2b value for use later
+    z2 = -dZ
+    if cm.brickType in ["Bricks and Plates"] and brickSize[2] == 3:
+        z2b = dZ-thickZ-dimensions["support_height_triple"]
+    else:
+        z2b = dZ-thickZ-dimensions["support_height"]
 
     # CREATING CUBE
     v1 = bme.verts.new(( dX * sX, dY * sY, dZ))
