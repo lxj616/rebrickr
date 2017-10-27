@@ -286,7 +286,8 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                         x2 = x1+dimensions["tick_depth"]
                         y1 = yNum*dY*2+dimensions["tick_width"]/2
                         y2 = yNum*dY*2-dimensions["tick_width"]/2
-                        z2 = z2a
+                        z1 = dZ-thickZ
+                        z2 = -dZ
                         # CREATING SUPPORT BEAM
                         v1 = bme.verts.new((x1, y1, z1))
                         v2 = bme.verts.new((x1, y2, z1))
