@@ -438,15 +438,15 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
 
     return brickFreqMatrix
 
-def getCOList(brickFreqMatrix, coordMatrix, threshold):
-    """ return matrix containing coordinates from coordMatrix where brickFreqMatrix >= threshold """
-    coList = [[[-1 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
-    for x in range(len(coordMatrix)):
-        for y in range(len(coordMatrix[0])):
-            for z in range(len(coordMatrix[0][0])):
-                if brickFreqMatrix[x][y][z] >= threshold:
-                    coList[x][y][z] = coordMatrix[x][y][z]
-    return coList
+# def getCOList(brickFreqMatrix, coordMatrix, threshold):
+#     """ return matrix containing coordinates from coordMatrix where brickFreqMatrix >= threshold """
+#     coList = [[[-1 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
+#     for x in range(len(coordMatrix)):
+#         for y in range(len(coordMatrix[0])):
+#             for z in range(len(coordMatrix[0][0])):
+#                 if brickFreqMatrix[x][y][z] >= threshold:
+#                     coList[x][y][z] = coordMatrix[x][y][z]
+#     return coList
 
 def uniquify3DMatrix(matrix):
     for i in range(len(matrix)):
@@ -486,55 +486,37 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     # get coordinate list from intersections of edges with faces
     threshold = 1.01 - (cm.shellThickness / 100)
 
-    coList = getCOList(brickFreqMatrix, coordMatrix, threshold)
-    # if no coords in coList, add a coord at center of source
-    if len(coList) == 0:
-        coList.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
+    if len(coordMatrix) == 0:
+        coordMatrix.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
 
     # create bricks dictionary with brickFreqMatrix values
     bricks = []
     i = 0
     bricksDict = {}
-    for x in range(len(coList)):
-        for y in range(len(coList[0])):
-            for z in range(len(coList[0][0])):
-                co = coList[x][y][z]
-                if co != -1:
-                    i += 1
-                    n = cm.source_name
-                    j = str(i+1)
+    for x in range(len(coordMatrix)):
+        for y in range(len(coordMatrix[0])):
+            for z in range(len(coordMatrix[0][0])):
+                co = coordMatrix[x][y][z]
+                i += 1
+                j = str(i+1)
+                n = cm.source_name
 
-                    # get nearest face index and mat name
-                    nf = None
-                    if type(faceIdxMatrix[x][y][z]) == dict:
-                        nf = faceIdxMatrix[x][y][z]["idx"]
-                    bricksDict[str(x) + "," + str(y) + "," + str(z)] = {
-                        "name":'Rebrickr_%(n)s_brick_%(j)s' % locals(),
-                        "val":brickFreqMatrix[x][y][z],
-                        "co":(co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
-                        "nearestFaceIdx":nf,
-                        "matName":"", # defined in 'addMaterialsToBricksDict' function
-                        "connected":False}
-                else:
-                    bricksDict[str(x) + "," + str(y) + "," + str(z)] = {
-                        "name":"DNE",
-                        "val":brickFreqMatrix[x][y][z],
-                        "co":None,
-                        "nearestFaceIdx":None,
-                        "matName":None,
-                        "connected":False}
+                # get nearest face index and mat name
+                nf = None
+                if type(faceIdxMatrix[x][y][z]) == dict:
+                    nf = faceIdxMatrix[x][y][z]["idx"]
+                bKey = '%(x)s,%(y)s,%(z)s' % locals()
+                drawBrick = brickFreqMatrix[x][y][z] >= threshold
+                bricksDict[bKey] = {
+                    "name":'Rebrickr_%(n)s_brick_%(j)s__%(bKey)s' % locals(),
+                    "val":brickFreqMatrix[x][y][z],
+                    "draw":drawBrick,
+                    "co":(co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
+                    "nearestFaceIdx":nf,
+                    "matName":"", # defined in 'addMaterialsToBricksDict' function
+                    "connected":False,
+                    "parent_brick":None,
+                    "type":None}
 
     # return list of created Brick objects
-    return bricksDict
-
-def addMaterialsToBricksDict(bricksDict, source):
-    """ sets all matNames in bricksDict based on nearestFaceIdx """
-    for key in bricksDict.keys():
-        nf = bricksDict[key]["nearestFaceIdx"]
-        if bricksDict[key]["name"] != "DNE" and nf is not None:
-            f = source.data.polygons[nf]
-            slot = source.material_slots[f.material_index]
-            mat = slot.material
-            matName = mat.name
-            bricksDict[key]["matName"] = matName
     return bricksDict

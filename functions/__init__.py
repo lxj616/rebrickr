@@ -31,6 +31,7 @@ from .common_functions import *
 from .generate_lattice import generateLattice
 from .makeBricks import *
 from .makeBricksDict import *
+from .modifyBricksDict import *
 from .wrappers import *
 from .hashObject import *
 from .transformData import *
