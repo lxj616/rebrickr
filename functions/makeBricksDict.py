@@ -514,8 +514,9 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                     "co":(co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
                     "nearestFaceIdx":nf,
                     "matName":"", # defined in 'addMaterialsToBricksDict' function
-                    "connected":False,
                     "parent_brick":None,
+                    "size":None,
+                    "attempted_merge":False,
                     "type":None}
 
     # return list of created Brick objects

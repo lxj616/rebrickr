@@ -37,19 +37,36 @@ Created by Christopher Gearhart
 # Blender imports
 import bpy
 from bpy.types import Operator
+from bpy.props import *
+
+# Rebrickr imports
+from ..buttons.brickify import getBricksDict, cacheBricksDict
 
 def deleteUnprotected(context, use_global=False):
     scn = context.scene
     protected = []
     for obj in context.selected_objects:
+        if obj.isBrick:
+            success = False
+            for cm in scn.cmlist:
+                if cm.id == obj.cmlist_id:
+                    success = True
+                    break
+            if success:
+                bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+
+                dictKey = obj.name.split("__")[1]
+                bricksDict[dictKey]["draw"] = False
+
+                cacheBricksDict("UPDATE_MODEL", cm, bricksDict) # store current bricksDict to cache
         if obj.isBrickifiedObject or obj.isBrick:
             cm = None
             for cmCur in scn.cmlist:
                 n = cmCur.source_name
-                if "Rebrickr_%(n)s_bricks_combined" % locals() in obj.name:
+                if obj.isBrickifiedObject:
                     cm = cmCur
                     break
-                elif "Rebrickr_%(n)s_brick_" % locals() in obj.name:
+                elif obj.isBrick:
                     bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks" % locals())
                     if bGroup is not None and len(bGroup.objects) < 2:
                         cm = cmCur

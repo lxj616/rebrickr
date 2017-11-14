@@ -557,13 +557,13 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     logoObjectName = StringProperty(
         name="Logo Object Name",
         description="Name of the logo object",
-        update=dirtyModel,
+        update=dirtyBricks,
         default="")
     logoScale = FloatProperty(
         name="Logo Scale",
         description="Scale of the logo (relative to stud scale)",
         step=1,
-        update=dirtyModel,
+        update=dirtyBricks,
         precision=2,
         min=0.000001, max=2,
         default=0.78)
@@ -571,7 +571,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Logo Scale",
         description="How deep to inset the logo into the stud",
         step=1,
-        update=dirtyModel,
+        update=dirtyBricks,
         precision=2,
         min=0.0, max=1.0,
         default=0.02)
@@ -644,7 +644,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     randomLoc = FloatProperty(
         name="Random Location",
         description="Max random location applied to each brick",
-        update=dirtyBuild,
+        update=dirtyModel,
         step=1,
         precision=3,
         min=0, max=1,
@@ -652,7 +652,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     randomRot = FloatProperty(
         name="Random Rotation",
         description="Max random rotation applied to each brick",
-        update=dirtyBuild,
+        update=dirtyModel,
         step=1,
         precision=3,
         min=0, max=1,
@@ -801,7 +801,6 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     randomMatSeed = IntProperty(
         name="Random Seed",
         description="Random seed for material assignment",
-        # update=dirtyMaterialIfNotSplit,
         min=-1, max=5000,
         default=1000)
 

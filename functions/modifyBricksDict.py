@@ -49,7 +49,7 @@ def brickAvail(sourceBrick, brick):
     Rebrickr_internal_mn = "Rebrickr_%(n)s_internal" % locals()
     if brick is not None:
         # This if statement ensures brick is present, brick isn't drawn already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal)
-        if brick["draw"] and not brick["parent_brick"] and (sourceBrick["matName"] == brick["matName"] or sourceBrick["matName"] == "" or brick["matName"] == "" or cm.mergeInconsistentMats):
+        if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["matName"] == brick["matName"] or sourceBrick["matName"] == "" or brick["matName"] == "" or cm.mergeInconsistentMats):
             return True
     return False
 
@@ -247,7 +247,7 @@ def attemptMerge(cm, bricksD, key, loc, isBrick, brickTypes, bt2, randState):
         brickTypes.sort(key=lambda x: x[order-1])
     # grab the biggest brick type and store to bricksD
     brickType = brickTypes[-1]
-    bricksD[key]["type"] = brickType
+    bricksD[key]["size"] = brickType
 
 
     # Iterate through merged bricks to set brick parents
@@ -260,19 +260,43 @@ def attemptMerge(cm, bricksD, key, loc, isBrick, brickTypes, bt2, randState):
                     continue
                 # get brick at x,y location
                 curBrick = bricksD["%(x)s,%(y)s,%(z)s" % locals()]
+                curBrick["attempted_merge"] = True
                  # checks that x,y,z refer to original brick
                 if (x + y + z) == startingLoc:
                     # set original brick as parent_brick
-                    brickD["parent_brick"] = True
+                    curBrick["parent_brick"] = "self"
                 else:
                     # point deleted brick to original brick
                     curBrick["parent_brick"] = key
 
     return brickType
 
-def getBrickExposure(cm, bricksD, key, loc, brickType):
+def checkExposure(bricksD, x, y, z, direction:int=1):
+    isExposed = False
+    try:
+        valKeysChecked = []
+        val = bricksD["%(x)s,%(y)s,%(z)s" % locals()]["val"]
+        if val == 0:
+            isExposed = True
+        # Check bricks on Z axis [above or below depending on 'direction'] this brick until shell (2) hit. If ouside (0) hit first, [top or bottom depending on 'direction'] is exposed
+        elif val < 1 and val > 0:
+            zz = z
+            while val < 1 and val > 0:
+                zz += direction
+                # NOTE: if key does not exist, we will be sent to 'except'
+                valKeysChecked.append("%(x)s,%(y)s,%(zz)s" % locals())
+                val = bricksD[valKeysChecked[-1]]["val"]
+                if val == 0:
+                    isExposed = True
+    except KeyError:
+        isExposed = True
+    # if outside (0) hit before shell (2) [above or below depending on 'direction'] exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
+    if isExposed and len(valKeysChecked) > 0:
+        for k in valKeysChecked:
+            val = bricksD[k]["val"] = 0
+    return isExposed
 
-    # initialize variables
+def getBrickExposure(cm, bricksD, key, loc, brickType):
     topExposed = False
     botExposed = False
 
@@ -294,58 +318,7 @@ def getBrickExposure(cm, bricksD, key, loc, brickType):
                 curBrick = bricksD["%(x)s,%(y)s,%(z)s" % locals()]
                 # check if brick top or bottom is exposed
                 if curBrick["val"] == 2 or (cm.brickType == "Bricks and Plates" and brickType[2] == 3):
-
-                    topExposed = checkExposure(bricksD, x, y, idxZa)
-                    botExposed = checkExposure(bricksD, x, y, idxZb)
-
-
-
-def checkExposure(bricksD, x, y, z):
-                    try:
-                        valKeysChecked = []
-                        val = bricksD["%(x)s,%(y)s,%(z)s" % locals()]["val"]
-                        if val == 0:
-                            isExposed = True
-                        # Check bricks on Z axis above this brick until shell (2) hit. If ouside (0) hit first, top is exposed
-                        elif val < 1 and val > 0:
-                            zz = z
-                            while val < 1 and val > 0:
-                                zz += 1
-                                # NOTE: if key does not exist, we will be sent to 'except'
-                                valKeysChecked.append("%(x)s,%(y)s,%(zz)s" % locals())
-                                val = bricksD[valKeysChecked[-1]]["val"]
-                                if val == 0:
-                                    isExposed = True
-                    except KeyError:
-                        isExposed = True
-                    # if outside (0) hit before shell (2) [above or below depending on z val] exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
-                    if isExposed and len(valKeysChecked) > 0:
-                        for k in valKeysChecked:
-                            val = bricksD[k]["val"] = 0
-
-
-
-
-                    try:
-                        valKeysChecked = []
-                        val = bricksD["%(x)s,%(y)s,%(z)s" % locals()]["val"]
-                        if val == 0:
-                            isExposed = True
-                        # Check bricks on Z axis below this brick until shell (2) hit. If ouside (0) hit first, bottom is exposed
-                        elif val < 1 and val > 0:
-                            zz = z
-                            while val < 1 and val > 0:
-                                zz += 1
-                                # NOTE: if key does not exist, we will be sent to 'except'
-                                valKeysChecked.append("%(x)s,%(y)s,%(zz)s" % locals())
-                                val = bricksD[valKeysChecked[-1]]["val"]
-                                if val == 0:
-                                    isExposed = True
-                    except KeyError:
-                        isExposed = True
-                    # if outside (0) hit before shell (2) below exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
-                    if isExposed and len(valKeysChecked) > 0:
-                        for k in valKeysChecked:
-                            val = bricksD[k]["val"] = 0
+                    topExposed = checkExposure(bricksD, x, y, idxZa, 1)
+                    botExposed = checkExposure(bricksD, x, y, idxZb, 1) # TODO: test -1 for last argument here
 
     return topExposed, botExposed

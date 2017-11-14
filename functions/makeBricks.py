@@ -155,7 +155,7 @@ def getBrickMesh(cm, rand, dimensions, brickType, undersideDetail, logoToUse, lo
     bm = bms[rand.randint(0,len(bms))]
     return bm
 
-def getClosestMaterial(cm, bricksD, key, brickType):
+def getClosestMaterial(cm, bricksD, key, brickType, randState, brick_mats, k):
     mat = None
     highestVal = 0
     matsL = []
@@ -174,12 +174,12 @@ def getClosestMaterial(cm, bricksD, key, brickType):
             matName = most_common(matsL)
         mat = bpy.data.materials.get(matName)
     elif cm.materialType == "Random" and len(brick_mats) > 0:
-        randS2.seed(cm.randomMatSeed + k)
+        randState.seed(cm.randomMatSeed + k)
         k += 1
         if len(brick_mats) == 1:
             randIdx = 0
         else:
-            randIdx = randS2.randint(0, len(brick_mats))
+            randIdx = randState.randint(0, len(brick_mats))
         matName = brick_mats[randIdx]
         mat = bpy.data.materials.get(matName)
     return mat
@@ -277,7 +277,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         # iterate through locations in bricksD from bottom to top
         for i,key in enumerate(keys):
             brickD = bricksD[key]
-            if brickD["draw"] and not brickD["parent_brick"]:
+            if brickD["draw"] and brickD["parent_brick"] in [None, "self"]:
 
                 # get location of brick
                 loc = key.split(",")
@@ -304,7 +304,10 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     brickTypes = [[1,1,bt2]]
 
                 # attempt to merge current brick with surrounding bricks, according to available brick types
-                brickType = attemptMerge(cm, bricksD, key, loc, isBrick, brickTypes, bt2, randS1)
+                if brickD["size"] is None or cm.buildIsDirty:
+                    brickType = attemptMerge(cm, bricksD, key, loc, isBrick, brickTypes, bt2, randS1)
+                else:
+                    brickType = brickD["size"]
 
                 # check exposure of current [merged] brick
                 topExposed, botExposed = getBrickExposure(cm, bricksD, key, loc, brickType)
@@ -326,7 +329,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     undersideDetail = cm.hiddenUndersideDetail
 
                 # get closest material
-                mat = getClosestMaterial(cm, bricksD, key, brickType)
+                mat = getClosestMaterial(cm, bricksD, key, brickType, randS2, brick_mats, k)
 
                 # add brick with new mesh data at original location
                 if split:
@@ -359,6 +362,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                             rotateBack(bm, center, randRot)
                     # create new object with mesh data
                     brick = bpy.data.objects.new(brickD["name"], m)
+                    brick.cmlist_id = cm.id
                     if brickType[2] == 3 and cm.brickType == "Bricks and Plates":
                         brickLoc = Vector(brickD["co"])
                         brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
@@ -458,7 +462,8 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             percent = i/len(bricksD)
             if percent < 1:
                 update_progress("Linking to Scene", percent)
-            if bricksD[key]["draw"]:
+
+            if bricksD[key]["parent_brick"] == "self" and bricksD[key]["draw"]:
                 name = bricksD[key]["name"]
                 brick = bpy.data.objects[name]
                 # create vert group for bevel mod (assuming only logo verts are selected):
@@ -482,6 +487,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             fn = ""
         name = 'Rebrickr_%(n)s_bricks_combined%(fn)s' % locals()
         allBricksObj = bpy.data.objects.new(name, m)
+        allBricksObj.cmlist_id = cm.id
         # create vert group for bevel mod (assuming only logo verts are selected):
         vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())
         vertList = []
@@ -502,3 +508,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         scn.objects.link(allBricksObj)
         # protect allBricksObj from being deleted
         allBricksObj.isBrickifiedObject = True
+
+    # reset 'attempted_merge' for all items in bricksD
+    for key0 in bricksD:
+        bricksD[key0]["attempted_merge"] = False

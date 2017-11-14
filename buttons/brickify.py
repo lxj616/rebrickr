@@ -80,6 +80,37 @@ def importLogo():
     logoObj = bpy.context.selected_objects[0]
     return logoObj
 
+def getBricksDict(action, source=None, source_details=None, dimensions=None, R=None, updateCursor=None, curFrame=None, cm=None):
+    scn = bpy.context.scene
+    if cm is None:
+        cm = scn.cmlist[scn.cmlist_index]
+    useCaching = bpy.context.user_preferences.addons[bpy.props.rebrickr_module_name].preferences.useCaching
+    loadedFromCache = False
+    # current_source_hash = json.dumps(hash_object(source))
+    if useCaching and not cm.matrixIsDirty and cm.BFMCache != "" and not cm.sourceIsDirty and (action != "UPDATE_ANIM" or not cm.animIsDirty):#current_source_hash == cm.source_hash:
+        if action == "UPDATE_MODEL":
+            bricksDict = json.loads(cm.BFMCache)
+        elif action == "UPDATE_ANIM":
+            bricksDict = json.loads(cm.BFMCache)[str(curFrame)]
+        loadedFromCache = useCaching
+    else:
+        bricksDict = makeBricksDict(source, source_details, dimensions, R, cursorStatus=updateCursor)
+        # after array is stored to cache, update materials
+        if len(source.material_slots) > 0:
+            bricksDict = addMaterialsToBricksDict(bricksDict, source)
+    return bricksDict, loadedFromCache
+
+def cacheBricksDict(action, cm, bricksDict):
+    if action in ["CREATE", "UPDATE_MODEL"]:
+        # cm.source_hash = current_source_hash
+        cm.BFMCache = json.dumps(bricksDict)
+    elif action in ["ANIMATE", "UPDATE_ANIM"]:
+        if cm.BFMCache == "":
+            BFMCache = {}
+        else:
+            BFMCache = json.loads(cm.BFMCache)
+        BFMCache[curFrame] = bricksDict
+        cm.BFMCache = json.dumps(BFMCache)
 
 class RebrickrBrickify(bpy.types.Operator):
     """ Create brick sculpture from source object mesh """                       # blender will use this as a tooltip for menu items and buttons.
@@ -115,7 +146,7 @@ class RebrickrBrickify(bpy.types.Operator):
     def getObjectToBrickify(self):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL", "UPDATE_ANIM"]:
+        if self.action in ["UPDATE_MODEL", "UPDATE_ANIM"]:
             objToBrickify = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         elif self.action in ["CREATE", "ANIMATE"]:
             objToBrickify = bpy.data.objects.get(cm.source_name)
@@ -167,33 +198,6 @@ class RebrickrBrickify(bpy.types.Operator):
 
         return refLogo
 
-    def getBricksDict(self, source, source_details, dimensions, R, updateCursor, curFrame=None):
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        useCaching = bpy.context.user_preferences.addons[bpy.props.rebrickr_module_name].preferences.useCaching
-        # current_source_hash = json.dumps(hash_object(source))
-        if useCaching and not cm.matrixIsDirty and cm.BFMCache != "" and not cm.sourceIsDirty and (self.action != "UPDATE_ANIM" or not cm.animIsDirty):#current_source_hash == cm.source_hash:
-            if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
-                bricksDict = json.loads(cm.BFMCache)
-            elif self.action == "UPDATE_ANIM":
-                bricksDict = json.loads(cm.BFMCache)[str(curFrame)]
-        else:
-            bricksDict = makeBricksDict(source, source_details, dimensions, R, cursorStatus=updateCursor)
-            if useCaching:
-                if self.action in ["CREATE", "UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
-                    # cm.source_hash = current_source_hash
-                    cm.BFMCache = json.dumps(bricksDict)
-                elif self.action in ["ANIMATE", "UPDATE_ANIM"]:
-                    if cm.BFMCache == "":
-                        BFMCache = {}
-                    else:
-                        BFMCache = json.loads(cm.BFMCache)
-                    BFMCache[curFrame] = bricksDict
-                    cm.BFMCache = json.dumps(BFMCache)
-        # after array is stored to cache, update materials
-        if len(source.material_slots) > 0:
-            bricksDict = addMaterialsToBricksDict(bricksDict, source)
-        return bricksDict
 
     def createNewBricks(self, source, parent, source_details, dimensions, refLogo, curFrame=None):
         scn = bpy.context.scene
@@ -218,13 +222,19 @@ class RebrickrBrickify(bpy.types.Operator):
             customData = None
             customObj_details = None
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
-        updateCursor = self.action in ["CREATE", "UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] # evaluates to boolean value
-        bricksDict = self.getBricksDict(source, source_details, dimensions, R, updateCursor, curFrame)
+        updateCursor = self.action in ["CREATE", "UPDATE_MODEL"] # evaluates to boolean value
+        bricksDict, loadedFromCache = getBricksDict(self.action, source, source_details, dimensions, R, updateCursor, curFrame)
         if curFrame is not None:
             group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
             group_name = None
+        if self.action == "UPDATE_MODEL" and cm.buildIsDirty and not loadedFromCache:
+            for kk in bricksDict:
+                bD = bricksDict[kk]
+                bD["size"] = None
+                bD["parent_brick"] = None
         makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor)
+        cacheBricksDict(self.action, cm, bricksDict) # store current bricksDict to cache
         if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
             self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
         if int(round((source_details.y.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
@@ -354,7 +364,7 @@ class RebrickrBrickify(bpy.types.Operator):
                 return False
             # TODO: Alert user to bake fluid/cloth simulation before attempting to Brickify
 
-        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
+        if self.action in ["UPDATE_MODEL"]:
             # make sure 'Rebrickr_[source name]_bricks' group exists
             if not groupExists(Rebrickr_bricks_gn):
                 self.report({"WARNING"}, "Brickified Model doesn't exist. Create one with the 'Brickify Object' button.")
@@ -744,7 +754,7 @@ class RebrickrBrickify(bpy.types.Operator):
             safeUnlink(obj)
 
         # if there are no changes to apply, simply return "FINISHED"
-        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"] and not updateCanRun("MODEL"):
+        if self.action in ["UPDATE_MODEL"] and not updateCanRun("MODEL"):
             return{"FINISHED"}
 
         sto_scn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
@@ -752,7 +762,7 @@ class RebrickrBrickify(bpy.types.Operator):
             sto_scn.update()
 
         # delete old bricks if present
-        if self.action in ["UPDATE_MODEL", "COMMIT_UPDATE_MODEL"]:
+        if self.action in ["UPDATE_MODEL"]:
             if cm.sourceIsDirty:
                 # alert that parent loc needs updating at the end
                 updateParentLoc = True

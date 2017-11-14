@@ -177,6 +177,39 @@ def handle_selections(scene):
 
 bpy.app.handlers.scene_update_pre.append(handle_selections)
 
+def find_3dview_space():
+    # Find 3D_View window and its scren space
+    area = None
+    for a in bpy.data.window_managers[0].windows[0].screen.areas:
+        if a.type == 'VIEW_3D':
+            area = a
+            break
+
+    if area:
+        space = area.spaces[0]
+    else:
+        space = bpy.context.space_data
+
+    return space
+
+@persistent
+def handle_snapping(scene):
+    scn = bpy.context.scene
+
+    if scn.Rebrickr_snapping:
+        # disable regular snapping if enabled
+        if not scn.tool_settings.use_snap:
+            scn.tool_settings.use_snap = True
+
+        if scn.cmlist_index != -1:
+            # snap transformations to scale
+            space = find_3dview_space()
+            cm = scn.cmlist[scn.cmlist_index]
+            space.grid_scale = cm.brickHeight + cm.gap
+
+
+bpy.app.handlers.scene_update_pre.append(handle_snapping)
+
 @persistent
 def handle_saving_in_edit_mode(scene):
     try:

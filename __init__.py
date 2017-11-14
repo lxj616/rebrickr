@@ -41,6 +41,7 @@ from bpy.props import *
 # Rebrickr imports
 from .ui import *
 from .buttons import *
+from .operators import *
 from .lib.preferences import *
 
 # updater import
@@ -57,6 +58,7 @@ def register():
     bpy.types.Object.protected = BoolProperty(name='protected', default=False)
     bpy.types.Object.isBrickifiedObject = BoolProperty(name='Is Brickified Object', default=False)
     bpy.types.Object.isBrick = BoolProperty(name='Is Brick', default=False)
+    bpy.types.Object.cmlist_id = IntProperty(name='Custom Model ID', description="ID of cmlist entry to which this object refers", default=-1)
 
     bpy.types.Scene.Rebrickr_printTimes = BoolProperty(default=False)
     bpy.props.Rebrickr_origScene = StringProperty(default="")
@@ -69,6 +71,12 @@ def register():
     bpy.types.Scene.Rebrickr_last_active_object_name = StringProperty(default="")
 
     bpy.types.Scene.Rebrickr_copy_from_id = IntProperty(default=-1)
+
+    bpy.types.Scene.Rebrickr_snapping = BoolProperty(
+        name="Rebrickr Snap",
+        description="Snap to brick dimensions",
+        default=False)
+    bpy.types.VIEW3D_HT_header.append(Rebrickr_snap_button)
 
     bpy.props.abs_plastic_materials_for_random = [
         'ABS Plastic Black',
@@ -125,6 +133,8 @@ def unregister():
     del Scn.cmlist_index
     del Scn.cmlist
     del bpy.props.abs_plastic_materials_for_random
+    bpy.types.VIEW3D_HT_header.remove(addon_button)
+    del Scn.Rebrickr_snapping
     del Scn.Rebrickr_copy_from_id
     del Scn.Rebrickr_last_active_object_name
     del Scn.Rebrickr_active_object_name
@@ -145,6 +155,7 @@ def unregister():
     for km in addon_keymaps:
         wm.keyconfigs.addon.keymaps.remove(km)
     addon_keymaps.clear()
+
 
     bpy.utils.unregister_module(__name__)
 
