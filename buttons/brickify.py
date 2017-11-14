@@ -228,7 +228,7 @@ class RebrickrBrickify(bpy.types.Operator):
             group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
             group_name = None
-        if self.action == "UPDATE_MODEL" and cm.buildIsDirty and not loadedFromCache:
+        if self.action == "UPDATE_MODEL" and cm.buildIsDirty and loadedFromCache:
             for kk in bricksDict:
                 bD = bricksDict[kk]
                 bD["size"] = None

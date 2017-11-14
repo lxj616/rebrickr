@@ -53,12 +53,24 @@ def deleteUnprotected(context, use_global=False):
                     success = True
                     break
             if success:
+                # get bricksDict from cache
                 bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
 
+                # get dict key details of current obj
                 dictKey = obj.name.split("__")[1]
-                bricksDict[dictKey]["draw"] = False
+                dictKeyLoc = dictKey.split(",")
+                dictKeyLoc = list(map(int, dictKeyLoc))
+                # get size of current brick (e.g. [2, 4, 1])
+                objSize = bricksDict[dictKey]["size"]
+                # set 'draw' to false for all locations in bricksDict covered by current obj
+                for x in range(dictKeyLoc[0], dictKeyLoc[0] + objSize[0]):
+                    for y in range(dictKeyLoc[1], dictKeyLoc[1] + objSize[1]):
+                        for z in range(dictKeyLoc[2], dictKeyLoc[2] + objSize[2]):
+                            curKey = "%(x)s,%(y)s,%(z)s" % locals()
+                            bricksDict[curKey]["draw"] = False
 
-                cacheBricksDict("UPDATE_MODEL", cm, bricksDict) # store current bricksDict to cache
+                # store bricksDict to cache
+                cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
         if obj.isBrickifiedObject or obj.isBrick:
             cm = None
             for cmCur in scn.cmlist:
