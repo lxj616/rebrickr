@@ -327,7 +327,9 @@ def getBrickExposure(cm, bricksD, key, loc=None):
                 curBrick = bricksD["%(x)s,%(y)s,%(z)s" % locals()]
                 # check if brick top or bottom is exposed
                 if curBrick["val"] == 2 or (cm.brickType == "Bricks and Plates" and size[2] == 3):
-                    topExposed = checkExposure(bricksD, x, y, idxZa, 1)
-                    botExposed = checkExposure(bricksD, x, y, idxZb, 1) # TODO: test -1 for last argument here
+                    returnVal0 = checkExposure(bricksD, x, y, idxZa, 1)
+                    if returnVal0: topExposed = True
+                    returnVal1 = checkExposure(bricksD, x, y, idxZb, 1) # TODO: test -1 for last argument here
+                    if returnVal1: botExposed = True
 
     return topExposed, botExposed
