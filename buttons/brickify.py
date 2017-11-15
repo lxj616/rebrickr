@@ -140,7 +140,7 @@ class RebrickrBrickify(bpy.types.Operator):
         self.createdGroups = []
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        self.setAction(scn, cm)
+        self.action = self.getAction(cm)
         self.sourceOrig = self.getObjectToBrickify()
 
     def getObjectToBrickify(self):
@@ -163,6 +163,17 @@ class RebrickrBrickify(bpy.types.Operator):
         safeScn = getSafeScn()
         safeScn.objects.link(parent)
         return parent
+
+    @classmethod
+    def getLogo(cls, cm):
+        if cm.brickType != "Custom":
+            if cm.logoDetail == "LEGO Logo":
+                refLogo = cls.getLegoLogo(cls)
+            else:
+                refLogo = bpy.data.objects.get(cm.logoObjectName)
+        else:
+            refLogo = None
+        return refLogo
 
     def getLegoLogo(self):
         scn = bpy.context.scene
@@ -198,8 +209,18 @@ class RebrickrBrickify(bpy.types.Operator):
 
         return refLogo
 
+    def runCreateNewBricks(self, source, parent, source_details, dimensions, refLogo, action, curFrame=None):
+        group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, action, curFrame=curFrame)
+        if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
+            self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
+        if int(round((source_details.y.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
+            self.report({"WARNING"}, "Model is too small on Y axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
+        if int(round((source_details.z.distance)/(dimensions["height"]+dimensions["gap"]))) == 0:
+            self.report({"WARNING"}, "Model is too small on Z axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
+        return group_name
 
-    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, curFrame=None):
+    @classmethod
+    def createNewBricks(cls, source, parent, source_details, dimensions, refLogo, action, curFrame=None, bricksDict=None, keys="ALL", createGroup=True, selectCreated=False):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
@@ -222,39 +243,41 @@ class RebrickrBrickify(bpy.types.Operator):
             customData = None
             customObj_details = None
             R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
-        updateCursor = self.action in ["CREATE", "UPDATE_MODEL"] # evaluates to boolean value
-        bricksDict, loadedFromCache = getBricksDict(self.action, source, source_details, dimensions, R, updateCursor, curFrame)
+        updateCursor = action in ["CREATE", "UPDATE_MODEL"] # evaluates to boolean value
+        if bricksDict is None:
+            bricksDict, loadedFromCache = getBricksDict(action, source, source_details, dimensions, R, updateCursor, curFrame)
         if curFrame is not None:
             group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
             group_name = None
-        if self.action == "UPDATE_MODEL" and cm.buildIsDirty and loadedFromCache:
+        # reset all values for certain keys in bricksDict dictionaries
+        if action == "UPDATE_MODEL" and cm.buildIsDirty and loadedFromCache:
             for kk in bricksDict:
                 bD = bricksDict[kk]
                 bD["size"] = None
                 bD["parent_brick"] = None
                 bD["top_exposed"] = None
                 bD["bot_exposed"] = None
-        makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor)
-        cacheBricksDict(self.action, cm, bricksDict) # store current bricksDict to cache
-        if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
-            self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
-        if int(round((source_details.y.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
-            self.report({"WARNING"}, "Model is too small on Y axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
-        if int(round((source_details.z.distance)/(dimensions["height"]+dimensions["gap"]))) == 0:
-            self.report({"WARNING"}, "Model is too small on Z axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
+        bricksCreated = makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, createGroup=createGroup)
+        if selectCreated:
+            for brick in bricksCreated:
+                brick.select = True 
+        cacheBricksDict(action, cm, bricksDict) # store current bricksDict to cache
         return group_name
 
-    def setAction(self, scn, cm):
-        """ sets self.action """
+    @classmethod
+    def getAction(cls, cm):
+        """ returns action """
         if cm.modelCreated:
-            self.action = "UPDATE_MODEL"
+            action = "UPDATE_MODEL"
         elif cm.animated:
-            self.action = "UPDATE_ANIM"
+            action = "UPDATE_ANIM"
         elif not cm.useAnimation:
-            self.action = "CREATE"
+            action = "CREATE"
         else:
-            self.action = "ANIMATE"
+            action = "ANIMATE"
+
+        return action
 
     def isValid(self, source, Rebrickr_bricks_gn):
         """ returns True if brickify action can run, else report WARNING/ERROR and return False """
@@ -623,13 +646,7 @@ class RebrickrBrickify(bpy.types.Operator):
         self.createdObjects.append(parent0.name)
 
         # update refLogo
-        if cm.brickType != "Custom":
-            if cm.logoDetail == "LEGO Logo":
-                refLogo = self.getLegoLogo()
-            else:
-                refLogo = bpy.data.objects.get(cm.logoObjectName)
-        else:
-            refLogo = None
+        refLogo = self.getLogo(cm)
 
         # begin drawing status to cursor
         wm = bpy.context.window_manager
@@ -672,7 +689,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
             # create new bricks
             try:
-                group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, curFrame=curFrame)
+                group_name = self.runCreateNewBricks(source, parent, source_details, dimensions, refLogo, self.action, curFrame=curFrame)
                 self.createdGroups.append(group_name)
             except KeyboardInterrupt:
                 self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
@@ -861,16 +878,10 @@ class RebrickrBrickify(bpy.types.Operator):
         self.createdObjects.append(parent.name)
 
         # update refLogo
-        if cm.brickType != "Custom":
-            if cm.logoDetail == "LEGO Logo":
-                refLogo = self.getLegoLogo()
-            else:
-                refLogo = bpy.data.objects.get(cm.logoObjectName)
-        else:
-            refLogo = None
+        refLogo = self.getLogo(cm)
 
         # create new bricks
-        self.createNewBricks(source, parent, source_details, dimensions, refLogo)
+        self.runCreateNewBricks(source, parent, source_details, dimensions, refLogo, self.action)
 
         bGroup = bpy.data.groups.get(Rebrickr_bricks_gn) # redefine bGroup since it was removed
         if bGroup is not None:

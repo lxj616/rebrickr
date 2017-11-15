@@ -186,7 +186,7 @@ def getClosestMaterial(cm, bricksD, key, brickType, randState, brick_mats, k):
 
 
 @timed_call('Time Elapsed')
-def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customData=None, customObj_details=None, group_name=None, frameNum=None, cursorStatus=False):
+def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customData=None, customObj_details=None, group_name=None, frameNum=None, cursorStatus=False, keys="ALL", createGroup=True):
     # set up variables
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -205,8 +205,9 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     # apply transformation to logo duplicate and get bounds(logo)
     logo_details, logo = prepareLogoAndGetDetails(logo)
 
-    # get brick dicts in seeded order
-    keys = list(bricksD.keys())
+    # get bricksD dicts in seeded order
+    if keys == "ALL":
+        keys = list(bricksD.keys())
     keys.sort()
     random.seed(cm.mergeSeed)
     random.shuffle(keys)
@@ -214,13 +215,17 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     keys.sort(key=lambda x: int(x.split(",")[2]))
 
     # create group for bricks
-    if group_name:
+    if group_name is not None:
         Rebrickr_bricks = group_name
     else:
         Rebrickr_bricks = 'Rebrickr_%(n)s_bricks' % locals()
-    if groupExists(Rebrickr_bricks):
-        bpy.data.groups.remove(group=bpy.data.groups[Rebrickr_bricks], do_unlink=True)
-    bGroup = bpy.data.groups.new(Rebrickr_bricks)
+    if createGroup:
+        if groupExists(Rebrickr_bricks):
+            bpy.data.groups.remove(group=bpy.data.groups[Rebrickr_bricks], do_unlink=True)
+        bGroup = bpy.data.groups.new(Rebrickr_bricks)
+    else:
+        bGroup = bpy.data.groups.get(Rebrickr_bricks)
+
 
     tempMesh = bpy.data.meshes.new("tempMesh")
 
@@ -461,9 +466,10 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     if cursorStatus:
         wm.progress_end()
 
+    bricksCreated = []
     # combine meshes, link to scene, and add relevant data to the new Blender MESH object
     if split:
-        for i,key in enumerate(bricksD):
+        for i,key in enumerate(keys):
             # print status to terminal
             percent = i/len(bricksD)
             if percent < 1:
@@ -483,6 +489,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 brick.parent = parent
                 scn.objects.link(brick)
                 brick.isBrick = True
+                bricksCreated.append(brick)
         update_progress("Linking to Scene", 1)
     else:
         m = combineMeshes(allBrickMeshes)
@@ -514,7 +521,10 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         scn.objects.link(allBricksObj)
         # protect allBricksObj from being deleted
         allBricksObj.isBrickifiedObject = True
+        bricksCreated.append(allBricksObj)
 
     # reset 'attempted_merge' for all items in bricksD
-    for key0 in bricksD:
+    for key0 in keys:
         bricksD[key0]["attempted_merge"] = False
+
+    return bricksCreated

@@ -90,6 +90,12 @@ class RebrickrBrickModPanel(Panel):
         # change brick type
         row = col1.row(align=True)
         row.operator("rebrickr.change_brick_type", text="Change Type")
+        # print bricksDict key for active object
+        row = col1.row(align=True)
+        try:
+            row.label(scn.objects.active.name.split("__")[1])
+        except:
+            pass
 
         # next level:
         # enter brick sculpt mode
