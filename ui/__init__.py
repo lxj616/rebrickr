@@ -33,6 +33,7 @@ props = bpy.props
 from .committed_models_list import *
 from .app_handlers import *
 from .buttons import *
+from .brick_mod import *
 from ..buttons.delete import RebrickrDelete
 from ..functions import *
 

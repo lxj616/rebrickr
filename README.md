@@ -15,7 +15,7 @@ Blender add-on for automated generation of Brick sculptures and simulations from
   * Future improvements:
       * Priority 1:
           * Add UI panel drawn inside Blender like Retopoflow for adding/adjusting/maneuvering bricks
-          * EITHER  Add UI for selecting verts at inside locations and adding bricks there
+          * EITHER  Add UI for selecting verts at inside/outside locations and adding bricks there
           * OR      Add button for recalculating new shell
           * Add functionality for "add brick above/below/right/left/front/back" current selected brick
           * Add functionality for changing brick type

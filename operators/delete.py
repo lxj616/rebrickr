@@ -68,6 +68,7 @@ def deleteUnprotected(context, use_global=False):
                         for z in range(dictKeyLoc[2], dictKeyLoc[2] + objSize[2]):
                             curKey = "%(x)s,%(y)s,%(z)s" % locals()
                             bricksDict[curKey]["draw"] = False
+                            # bricksDict[curKey]["val"] = 0
 
                 # store bricksDict to cache
                 cacheBricksDict("UPDATE_MODEL", cm, bricksDict)

@@ -517,6 +517,8 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                     "parent_brick":None,
                     "size":None,
                     "attempted_merge":False,
+                    "top_exposed":None,
+                    "bot_exposed":None,
                     "type":None}
 
     # return list of created Brick objects

@@ -233,6 +233,8 @@ class RebrickrBrickify(bpy.types.Operator):
                 bD = bricksDict[kk]
                 bD["size"] = None
                 bD["parent_brick"] = None
+                bD["top_exposed"] = None
+                bD["bot_exposed"] = None
         makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor)
         cacheBricksDict(self.action, cm, bricksDict) # store current bricksDict to cache
         if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:

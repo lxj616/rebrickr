@@ -310,7 +310,13 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     brickType = brickD["size"]
 
                 # check exposure of current [merged] brick
-                topExposed, botExposed = getBrickExposure(cm, bricksD, key, loc, brickType)
+                if brickD["top_exposed"] is None or brickD["bot_exposed"] is None or cm.buildIsDirty:
+                    topExposed, botExposed = getBrickExposure(cm, bricksD, key, loc)
+                    brickD["top_exposed"] = topExposed
+                    brickD["bot_exposed"] = botExposed
+                else:
+                    topExposed = brickD["top_exposed"]
+                    botExposed = brickD["bot_exposed"]
 
                 # set 'logoToUse'
                 if topExposed:

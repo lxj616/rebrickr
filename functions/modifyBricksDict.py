@@ -296,28 +296,37 @@ def checkExposure(bricksD, x, y, z, direction:int=1):
             val = bricksD[k]["val"] = 0
     return isExposed
 
-def getBrickExposure(cm, bricksD, key, loc, brickType):
+def getBrickExposure(cm, bricksD, key, loc=None):
     topExposed = False
     botExposed = False
 
+    if loc is None:
+        # get location of brick
+        loc = key.split(",")
+        for j in range(len(loc)):
+            loc[j] = int(loc[j])
+
+    # get size of brick
+    size = bricksD[key]["size"]
+
     # set z-indices
     idxZb = loc[2] - 1
-    if cm.brickType == "Bricks and Plates" and brickType[2] == 3:
+    if cm.brickType == "Bricks and Plates" and size[2] == 3:
         idxZa = loc[2] + 3
     else:
         idxZa = loc[2] + 1
 
     # Iterate through merged bricks to check top and bottom exposure
-    for x in range(loc[0], brickType[0] + loc[0]):
-        for y in range(loc[1], brickType[1] + loc[1]):
-            for z in range(loc[2], brickType[2] + loc[2]):
+    for x in range(loc[0], size[0] + loc[0]):
+        for y in range(loc[1], size[1] + loc[1]):
+            for z in range(loc[2], size[2] + loc[2]):
                 # TODO: figure out what this does
                 if cm.brickType in ["Bricks", "Custom"] and z > loc[2]:
                     continue
                 # get brick at x,y location
                 curBrick = bricksD["%(x)s,%(y)s,%(z)s" % locals()]
                 # check if brick top or bottom is exposed
-                if curBrick["val"] == 2 or (cm.brickType == "Bricks and Plates" and brickType[2] == 3):
+                if curBrick["val"] == 2 or (cm.brickType == "Bricks and Plates" and size[2] == 3):
                     topExposed = checkExposure(bricksD, x, y, idxZa, 1)
                     botExposed = checkExposure(bricksD, x, y, idxZb, 1) # TODO: test -1 for last argument here
 
