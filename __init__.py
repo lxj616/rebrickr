@@ -115,6 +115,11 @@ def register():
         kmi = km.keymap_items.new("rebrickr.brickify", 'L', 'PRESS', alt=True, shift=True)
         kmi = km.keymap_items.new("rebrickr.delete", 'D', 'PRESS', alt=True, shift=True)#, ctrl=True)
         kmi = km.keymap_items.new("rebrickr.edit_source", 'TAB', 'PRESS', alt=True)#, ctrl=True)
+        kmi = km.keymap_items.new("rebrickr.draw_adjacent", 'EQUAL', 'PRESS', shift=True, alt=True)
+        kmi = km.keymap_items.new("rebrickr.split_bricks", 'S', 'PRESS', shift=True, alt=True)
+        kmi = km.keymap_items.new("rebrickr.merge_bricks", 'M', 'PRESS', shift=True, alt=True)
+        kmi = km.keymap_items.new("rebrickr.set_exposure", 'UP_ARROW', 'PRESS', shift=True, alt=True).properties.side = "TOP"
+        kmi = km.keymap_items.new("rebrickr.set_exposure", 'DOWN_ARROW', 'PRESS', shift=True, alt=True).properties.side = "BOTTOM"
         addon_keymaps.append(km)
 
     # other things (UI List)

@@ -60,9 +60,6 @@ class splitBrick(bpy.types.Operator):
         """ ensures operator can execute (if not, returns False) """
         scn = bpy.context.scene
         objs = bpy.context.selected_objects
-        # check that at least 1 object is selected
-        if len(objs) == 0:
-            return False
         # check that at least 1 selected object is a brick
         for obj in objs:
             if obj.isBrick:
@@ -128,7 +125,6 @@ class splitBrick(bpy.types.Operator):
             cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
             # draw modified bricks
             if len(keysToUpdate) > 0:
-                print(keysToUpdate)
                 runCreateNewBricks(cm, bricksDict, keysToUpdate)
 
         return{"FINISHED"}
@@ -144,11 +140,8 @@ class mergeBricks(bpy.types.Operator):
         """ ensures operator can execute (if not, returns False) """
         scn = bpy.context.scene
         objs = bpy.context.selected_objects
-        # check that at least 2 objects are selected
-        if len(objs) <= 1:
-            return False
-        # check that at least 2 selected objects are bricks
         i = 0
+        # check that at least 2 objects are selected and are bricks
         for obj in objs:
             if obj.isBrick:
                 i += 1
@@ -245,9 +238,6 @@ class setExposure(bpy.types.Operator):
         """ ensures operator can execute (if not, returns False) """
         scn = bpy.context.scene
         objs = bpy.context.selected_objects
-        # check that at least 1 object is selected
-        if len(objs) == 0:
-            return False
         # check that at least 1 selected object is a brick
         for obj in objs:
             if obj.isBrick:
@@ -266,6 +256,9 @@ class setExposure(bpy.types.Operator):
     def execute(self, context):
         scn = bpy.context.scene
         selected_objects = bpy.context.selected_objects
+        active_obj = scn.objects.active
+        if active_obj is not None: initial_active_obj_name = active_obj.name
+
         bricksDicts = {}
 
         for obj in selected_objects:
@@ -301,7 +294,6 @@ class setExposure(bpy.types.Operator):
                         break
 
         for cm_idx in bricksDicts.keys():
-            # store bricksDicts to cache
             cm = scn.cmlist[cm_idx]
             bricksDict = bricksDicts[cm_idx]["dict"]
             keysToUpdate = bricksDicts[cm_idx]["keys_to_update"]
@@ -310,6 +302,10 @@ class setExposure(bpy.types.Operator):
             # draw modified bricks
             if len(keysToUpdate) > 0:
                 runCreateNewBricks(cm, bricksDict, keysToUpdate)
+
+        # select original brick
+        orig_obj = bpy.data.objects.get(initial_active_obj_name)
+        if orig_obj is not None: select(orig_obj, active=orig_obj, only=False)
 
         return {"FINISHED"}
 
@@ -396,7 +392,6 @@ class drawAdjacent(bpy.types.Operator):
         self.adjBricksCreated = []
         for i in range(6):
             self.adjBricksCreated.append([False]*len(self.adjDKLs[i]))
-        print(self.adjBricksCreated)
 
     # define direction bools
     zPos = bpy.props.BoolProperty(name="Top    (+Z)", default=False)
@@ -435,7 +430,6 @@ class drawAdjacent(bpy.types.Operator):
             return False
 
         # if brick exists there
-        # print(adjBrickD["draw"], addBrick, self.adjBricksCreated[side][brickNum])
         if adjBrickD["draw"] and not (addBrick and self.adjBricksCreated[side][brickNum]):
             # if attempting to add brick
             if addBrick:
@@ -479,6 +473,7 @@ class drawAdjacent(bpy.types.Operator):
         scn = bpy.context.scene
         cm = scn.cmlist[self.cm_idx]
         obj = scn.objects.active
+        initial_active_obj_name = obj.name
         self.keysToUpdate = []
 
         # get dict key details of current obj
@@ -494,17 +489,19 @@ class drawAdjacent(bpy.types.Operator):
         for i in range(6):
             if (createAdjBricks[i] or (not createAdjBricks[i] and self.adjBricksCreated[i][0])):
                 # add or remove bricks in all adjacent locations in current direction
-                # print(i)
                 for j,dkl in enumerate(self.adjDKLs[i]):
                     self.toggleBrick(cm, dkl, dictKey, objSize, i, j, createAdjBricks[i])
 
         # draw created bricks
-        print(self.keysToUpdate)
         if len(self.keysToUpdate) > 0:
             runCreateNewBricks(cm, self.bricksDict, self.keysToUpdate, selectCreated=False)
 
         # store bricksDict to cache
         cacheBricksDict("UPDATE_MODEL", cm, self.bricksDict)
+
+        # select original brick
+        orig_obj = bpy.data.objects.get(initial_active_obj_name)
+        if orig_obj is not None: select(orig_obj, active=orig_obj)
 
         return {'FINISHED'}
 

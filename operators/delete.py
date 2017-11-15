@@ -62,10 +62,17 @@ def deleteUnprotected(context, use_global=False):
                 dictKeyLoc = list(map(int, dictKeyLoc))
                 # get size of current brick (e.g. [2, 4, 1])
                 objSize = bricksDict[dictKey]["size"]
+
+                # define zStep
+                if cm.brickType in ["Bricks", "Custom"]:
+                    zStep = 3
+                else:
+                    zStep = 1
+
                 # set 'draw' to false for all locations in bricksDict covered by current obj
                 for x in range(dictKeyLoc[0], dictKeyLoc[0] + objSize[0]):
                     for y in range(dictKeyLoc[1], dictKeyLoc[1] + objSize[1]):
-                        for z in range(dictKeyLoc[2], dictKeyLoc[2] + objSize[2]):
+                        for z in range(dictKeyLoc[2], dictKeyLoc[2] + (objSize[2]//zStep)):
                             curKey = "%(x)s,%(y)s,%(z)s" % locals()
                             bricksDict[curKey]["draw"] = False
                             # bricksDict[curKey]["val"] = 0
