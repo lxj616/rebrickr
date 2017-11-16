@@ -215,6 +215,7 @@ class RebrickrBrickify(bpy.types.Operator):
         updateCursor = action in ["CREATE", "UPDATE_MODEL"] # evaluates to boolean value
         if bricksDict is None:
             bricksDict, loadedFromCache = getBricksDict(action, source, source_details, dimensions, R, updateCursor, curFrame)
+            cm.activeBFMKey = random.choice(list(bricksDict.keys()))
         if curFrame is not None:
             group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:

@@ -132,25 +132,22 @@ def prepareLogoAndGetDetails(logo):
     return logo_details, logo
 
 def getBrickMesh(cm, rand, dimensions, brickType, undersideDetail, logoToUse, logo_type, logo_details, logo_scale, logo_inset, useStud, numStudVerts):
-    useCaching = bpy.context.user_preferences.addons[bpy.props.rebrickr_module_name].preferences.useCaching
-    if useCaching:
-        # get bm_cache_string
-        bm_cache_string = ""
-        if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
-            custom_logo_used = logoToUse is not None and logo_type == "Custom Logo"
-            bm_cache_string = json.dumps((cm.brickHeight, brickType, undersideDetail, cm.logoResolution if logoToUse is not None else None, hash_object(logoToUse) if custom_logo_used else None, logo_scale if custom_logo_used else None, logo_inset if custom_logo_used else None, cm.studVerts if useStud else None))
-        # check for bmesh in cache
-        if bm_cache_string in rebrickr_bm_cache.keys():
-            bms = rebrickr_bm_cache[bm_cache_string]
-            if len(bms) > 1:
-                bm = bms[rand.randint(0,len(bms))]
-            else:
-                bm = bms[0]
-            return bm
+    # get bm_cache_string
+    bm_cache_string = ""
+    if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
+        custom_logo_used = logoToUse is not None and logo_type == "Custom Logo"
+        bm_cache_string = json.dumps((cm.brickHeight, brickType, undersideDetail, cm.logoResolution if logoToUse is not None else None, hash_object(logoToUse) if custom_logo_used else None, logo_scale if custom_logo_used else None, logo_inset if custom_logo_used else None, cm.studVerts if useStud else None))
+    # check for bmesh in cache
+    if bm_cache_string in rebrickr_bm_cache.keys():
+        bms = rebrickr_bm_cache[bm_cache_string]
+        if len(bms) > 1:
+            bm = bms[rand.randint(0,len(bms))]
+        else:
+            bm = bms[0]
+        return bm
     # if not found in rebrickr_bm_cache, create new brick mesh(es) and store to cache
-    writeMultiple = useCaching and logoToUse is not None
-    bms = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoToUse, logo_type=logo_type, all_vars=writeMultiple, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
-    if useCaching and cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
+    bms = Bricks.new_mesh(dimensions=dimensions, type=brickType, undersideDetail=undersideDetail, logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
+    if logoToUse is not None and cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
         rebrickr_bm_cache[bm_cache_string] = bms
     bm = bms[rand.randint(0,len(bms))]
     return bm

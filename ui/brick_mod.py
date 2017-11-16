@@ -53,9 +53,6 @@ class RebrickrBrickModPanel(Panel):
     @classmethod
     def poll(self, context):
         scn = context.scene
-        useCaching = bpy.context.user_preferences.addons[bpy.props.rebrickr_module_name].preferences.useCaching
-        if not useCaching:
-            return False
         if scn.cmlist_index == -1:
             return False
         cm = scn.cmlist[scn.cmlist_index]
@@ -121,9 +118,6 @@ class RebrickrBrickDetailsPanel(Panel):
     @classmethod
     def poll(self, context):
         scn = context.scene
-        useCaching = bpy.context.user_preferences.addons[bpy.props.rebrickr_module_name].preferences.useCaching
-        if not useCaching:
-            return False
         if scn.cmlist_index == -1:
             return False
         cm = scn.cmlist[scn.cmlist_index]
@@ -131,7 +125,7 @@ class RebrickrBrickDetailsPanel(Panel):
             return False
         if not (cm.modelCreated or cm.animated):
             return False
-        if (rebrickr_bfm_cache[0] != cm.id or rebrickr_bfm_cache[1] is None) and cm.BFMCache == "":
+        if rebrickr_bfm_cache.get(cm.id) is None and cm.BFMCache == "":
             return False
         return True
 
@@ -151,6 +145,7 @@ class RebrickrBrickDetailsPanel(Panel):
         try:
             brickD = bricksDict[dictKey]
         except Exception as e:
+            # if len(cm.BFMKeys) != 0:
             print("Key", dictKey, "not found")
             return
 
@@ -166,12 +161,16 @@ class RebrickrBrickDetailsPanel(Panel):
         # draw keys
         col = split.column(align=True)
         col.scale_y = 0.65
+        row = col.row(align=True)
+        row.label("key:")
         for key in keys:
             row = col.row(align=True)
             row.label(key + ":")
         # draw values
         col = split.column(align=True)
         col.scale_y = 0.65
+        row = col.row(align=True)
+        row.label(dictKey)
         for key in keys:
             row = col.row(align=True)
             row.label(str(brickD[key]))

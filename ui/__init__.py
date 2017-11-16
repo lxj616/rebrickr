@@ -891,7 +891,6 @@ class AdvancedPanel(Panel):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        useCaching = bpy.context.user_preferences.addons[bpy.props.rebrickr_module_name].preferences.useCaching
 
         # Alert user that update is available
         if addon_updater_ops.updater.update_ready == True:
@@ -902,9 +901,8 @@ class AdvancedPanel(Panel):
             layout.separator()
 
         col = layout.column(align=True)
-        if useCaching:
-            row = col.row(align=True)
-            row.operator("rebrickr.clear_cache", text="Clear Cache")
+        row = col.row(align=True)
+        row.operator("rebrickr.clear_cache", text="Clear Cache")
         row = col.row(align=True)
         row.label("Insideness:")
         row = col.row(align=True)

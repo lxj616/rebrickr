@@ -30,12 +30,12 @@ from .. import addon_updater_ops
 class RebrickrPreferences(AddonPreferences):
     bl_idname = __package__[:__package__.index(".lib")]
 
-    # cacheing preferences
-    useCaching = BoolProperty(
-            name="Use Cacheing",
-            description="Store brick meshes and sculpture matrices to speed up operator run times (up to 3x speed boost)",
-            default=True)
-
+    # # cacheing preferences
+    # useCaching = BoolProperty(
+    #         name="Use Cacheing",
+    #         description="Store brick meshes and sculpture matrices to speed up operator run times (up to 3x speed boost)",
+    #         default=True)
+    #
 	# addon updater preferences
     auto_check_update = bpy.props.BoolProperty(
         name = "Auto-check for Update",
@@ -64,7 +64,7 @@ class RebrickrPreferences(AddonPreferences):
         layout = self.layout
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(self, "useCaching")
+        # row.prop(self, "useCaching")
 
         # updater draw function
         addon_updater_ops.update_settings_ui(self,context)

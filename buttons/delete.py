@@ -290,6 +290,7 @@ class RebrickrDelete(bpy.types.Operator):
         cm.sourceIsDirty = True
         cm.bricksAreDirty = True
         cm.bevelAdded = False
+        cm.activeBFMKey = ""
 
         # reset frame (for proper update), update scene and redraw 3D view
         scn.frame_set(origFrame)
