@@ -65,6 +65,17 @@ def groupExists(groupName):
             groupExists = True
     return groupExists
 
+def getItemByID(collection, id):
+    success = False
+    for item in collection:
+        if item.id == id:
+            success = True
+            break
+    if success:
+        return item
+    else:
+        return None
+
 # def get_settings():
 #     if not hasattr(get_settings, 'settings'):
 #         addons = bpy.context.user_preferences.addons

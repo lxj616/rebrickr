@@ -29,6 +29,8 @@ from mathutils import Vector, Euler
 
 # Rebrickr imports
 from ..functions import *
+from ..lib.bricksDict import lightToDeepCache
+from ..lib.caches import rebrickr_bfm_cache
 
 @persistent
 def handle_animation(scene):
@@ -163,9 +165,16 @@ def handle_selections(scene):
                 if cm.source_name == scn.Rebrickr_active_object_name and (not usingSource or not cm.modelCreated):
                     scn.cmlist_index = i
                     scn.Rebrickr_last_cmlist_index = scn.cmlist_index
-                    # adjust scn.active_brick_detail based on active brick
-                    if scn.objects.active.isBrick:
-                        cm.activeBFMKey = scn.objects.active.name.split("__")[1]
+                    active_obj = scn.objects.active
+                    if active_obj.isBrick:
+                        # adjust scn.active_brick_detail based on active brick
+                        cm.activeBFMKey = active_obj.name.split("__")[1]
+                        # if active cmlist item changes
+                        if active_obj.cmlist_id != rebrickr_bfm_cache[0]:
+                            # push light cache for last cm to deep cache 
+                            lightToDeepCache(rebrickr_bfm_cache)
+                            # pull deep cache from current cm to light cache
+                            deepToLightCache(rebrickr_bfm_cache, cm=cm)
                     return
             # if no matching cmlist item found, set cmlist_index to -1
             scn.cmlist_index = -1
@@ -253,3 +262,23 @@ def handle_saving_in_edit_mode(scene):
             scn.update()
 
 bpy.app.handlers.save_pre.append(handle_saving_in_edit_mode)
+
+@persistent
+def handle_storing_to_deep_cache(scene):
+    lightToDeepCache(rebrickr_bfm_cache)
+
+bpy.app.handlers.save_pre.append(handle_storing_to_deep_cache)
+
+@persistent
+def handle_loading_to_light_cache(dummy):
+    scn = bpy.context.scene
+    active_obj = scn.objects.active
+    if active_obj is not None and active_obj.cmlist_id != -1:
+        deepToLightCache(rebrickr_bfm_cache, cmlist_id=active_obj.cmlist_id)
+    elif len(scn.cmlist) != 0:
+        cm = scn.cmlist[0]
+        deepToLightCache(rebrickr_bfm_cache, cm=cm)
+    else:
+        return
+
+bpy.app.handlers.load_post.append(handle_loading_to_light_cache)

@@ -28,7 +28,7 @@ import bpy
 # Rebrickr imports
 from ..functions import *
 
-def timed_call(label):
+def timed_call(label, precision=2):
     def wrapper(fn):
         def wrapped(*args, **kwargs):
             time_beg = time.time()
@@ -36,7 +36,7 @@ def timed_call(label):
             time_end = time.time()
 
             time_delta = time_end - time_beg
-            stopWatch(label, time_delta)
+            stopWatch(label, time_delta, precision=precision)
             return ret
         return wrapped
     return wrapper

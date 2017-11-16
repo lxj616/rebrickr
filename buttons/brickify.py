@@ -109,7 +109,7 @@ class RebrickrBrickify(bpy.types.Operator):
         self.createdGroups = []
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        self.action = self.getAction(cm)
+        self.action = getAction(cm)
         self.sourceOrig = self.getObjectToBrickify()
 
     def getObjectToBrickify(self):
@@ -233,20 +233,6 @@ class RebrickrBrickify(bpy.types.Operator):
                 brick.select = True
         cacheBricksDict(action, cm, bricksDict) # store current bricksDict to cache
         return group_name
-
-    @classmethod
-    def getAction(cls, cm):
-        """ returns action """
-        if cm.modelCreated:
-            action = "UPDATE_MODEL"
-        elif cm.animated:
-            action = "UPDATE_ANIM"
-        elif not cm.useAnimation:
-            action = "CREATE"
-        else:
-            action = "ANIMATE"
-
-        return action
 
     def isValid(self, source, Rebrickr_bricks_gn):
         """ returns True if brickify action can run, else report WARNING/ERROR and return False """

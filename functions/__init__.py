@@ -126,3 +126,15 @@ def getBricks(cm=None):
             if bGroup is not None:
                 bricks += list(bGroup.objects)
     return bricks
+
+def getAction(cm):
+    """ returns action """
+    if cm.modelCreated:
+        action = "UPDATE_MODEL"
+    elif cm.animated:
+        action = "UPDATE_ANIM"
+    elif not cm.useAnimation:
+        action = "CREATE"
+    else:
+        action = "ANIMATE"
+    return action

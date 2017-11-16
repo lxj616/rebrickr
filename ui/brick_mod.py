@@ -36,6 +36,7 @@ from .buttons import *
 from ..lib.bricksDict import *
 from ..buttons.delete import RebrickrDelete
 from ..functions import *
+from ..lib.caches import rebrickr_bfm_cache
 
 # updater import
 from .. import addon_updater_ops
@@ -60,7 +61,7 @@ class RebrickrBrickModPanel(Panel):
         cm = scn.cmlist[scn.cmlist_index]
         if cm.matrixIsDirty:
             return False
-        if not cm.splitModel:
+        if not cm.lastSplitModel:
             return False
         return True
 
@@ -128,7 +129,9 @@ class RebrickrBrickDetailsPanel(Panel):
         cm = scn.cmlist[scn.cmlist_index]
         if cm.matrixIsDirty:
             return False
-        if cm.BFMCache == "" or not (cm.modelCreated or cm.animated):
+        if not (cm.modelCreated or cm.animated):
+            return False
+        if (rebrickr_bfm_cache[0] != cm.id or rebrickr_bfm_cache[1] is None) and cm.BFMCache == "":
             return False
         return True
 

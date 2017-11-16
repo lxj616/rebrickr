@@ -77,47 +77,45 @@ class splitBrick(bpy.types.Operator):
                 continue
 
             # get cmlist item referred to by object
-            for cm in scn.cmlist:
-                if cm.id == obj.cmlist_id:
-                    # get bricksDict for current cm
-                    if cm.idx not in bricksDicts.keys():
-                        # get bricksDict from cache
-                        bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-                        bricksDicts[cm.idx] = {"dict":bricksDict, "keys_to_update":[]}
-                    else:
-                        # get bricksDict from bricksDicts
-                        bricksDict = bricksDicts[cm.idx]["dict"]
+            cm = getItemByID(scn.cmlist, obj.cmlist_id)
+            # get bricksDict for current cm
+            if cm.idx not in bricksDicts.keys():
+                # get bricksDict from cache
+                bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+                bricksDicts[cm.idx] = {"dict":bricksDict, "keys_to_update":[]}
+            else:
+                # get bricksDict from bricksDicts
+                bricksDict = bricksDicts[cm.idx]["dict"]
 
-                    # get dict key details of current obj
-                    dictKey, dictKeyLoc = getDictKeyDetails(obj)
-                    x0,y0,z0 = dictKeyLoc
-                    # get size of current brick (e.g. [2, 4, 1])
-                    objSize = bricksDict[dictKey]["size"]
+            # get dict key details of current obj
+            dictKey, dictKeyLoc = getDictKeyDetails(obj)
+            x0,y0,z0 = dictKeyLoc
+            # get size of current brick (e.g. [2, 4, 1])
+            objSize = bricksDict[dictKey]["size"]
 
-                    # skip 1x1 bricks
-                    if objSize[0] + objSize[1] == 2:
-                        break
+            # skip 1x1 bricks
+            if objSize[0] + objSize[1] == 2:
+                continue
 
-                    # delete the current object
-                    delete(obj)
+            # delete the current object
+            delete(obj)
 
-                    # define zStep
-                    if cm.brickType in ["Bricks", "Custom"]:
-                        zStep = 3
-                    else:
-                        zStep = 1
+            # define zStep
+            if cm.brickType in ["Bricks", "Custom"]:
+                zStep = 3
+            else:
+                zStep = 1
 
-                    # set size of active brick's bricksDict entries to 1x1x[lastZSize]
-                    zType = bricksDict[dictKey]["size"][2]
-                    for x in range(x0, x0 + objSize[0]):
-                        for y in range(y0, y0 + objSize[1]):
-                            for z in range(z0, z0 + objSize[2], zStep):
-                                curKey = "%(x)s,%(y)s,%(z)s" % locals()
-                                bricksDict[curKey]["size"] = [1, 1, zType]
-                                bricksDict[curKey]["parent_brick"] = "self"
-                                # add bricksDict[dictKey] to simple bricksDict for drawing
-                                bricksDicts[cm.idx]["keys_to_update"].append(curKey)
-                    break
+            # set size of active brick's bricksDict entries to 1x1x[lastZSize]
+            zType = bricksDict[dictKey]["size"][2]
+            for x in range(x0, x0 + objSize[0]):
+                for y in range(y0, y0 + objSize[1]):
+                    for z in range(z0, z0 + objSize[2], zStep):
+                        curKey = "%(x)s,%(y)s,%(z)s" % locals()
+                        bricksDict[curKey]["size"] = [1, 1, zType]
+                        bricksDict[curKey]["parent_brick"] = "self"
+                        # add bricksDict[dictKey] to simple bricksDict for drawing
+                        bricksDicts[cm.idx]["keys_to_update"].append(curKey)
         for cm_idx in bricksDicts.keys():
             # store bricksDicts to cache
             cm = scn.cmlist[cm_idx]
@@ -159,14 +157,12 @@ class mergeBricks(bpy.types.Operator):
         for obj in selected_objects:
             if obj.isBrick:
                 # get cmlist item referred to by object
-                for cm in scn.cmlist:
-                    if cm.id == obj.cmlist_id:
-                        # add object to cm key in bricks_to_merge
-                        if cm.idx not in bricks_to_merge.keys():
-                            bricks_to_merge[cm.idx] = [obj]
-                        else:
-                            bricks_to_merge[cm.idx].append(obj)
-                        break
+                cm = getItemByID(scn.cmlist, obj.cmlist_id)
+                # add object to cm key in bricks_to_merge
+                if cm.idx not in bricks_to_merge.keys():
+                    bricks_to_merge[cm.idx] = [obj]
+                else:
+                    bricks_to_merge[cm.idx].append(obj)
 
         # iterate through keys in bricks_to_merge
         for cm_idx in bricks_to_merge.keys():
@@ -265,34 +261,32 @@ class setExposure(bpy.types.Operator):
         for obj in selected_objects:
             if obj.isBrick:
                 # get cmlist item referred to by object
-                for cm in scn.cmlist:
-                    if cm.id == obj.cmlist_id:
-                        # get bricksDict for current cm
-                        if cm.idx not in bricksDicts.keys():
-                            # get bricksDict from cache
-                            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-                            bricksDicts[cm.idx] = {"dict":bricksDict, "keys_to_update":[]}
-                        else:
-                            # get bricksDict from bricksDicts
-                            bricksDict = bricksDicts[cm.idx]["dict"]
+                cm = getItemByID(scn.cmlist, obj.cmlist_id)
+                # get bricksDict for current cm
+                if cm.idx not in bricksDicts.keys():
+                    # get bricksDict from cache
+                    bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+                    bricksDicts[cm.idx] = {"dict":bricksDict, "keys_to_update":[]}
+                else:
+                    # get bricksDict from bricksDicts
+                    bricksDict = bricksDicts[cm.idx]["dict"]
 
-                        # get dict key details of current obj
-                        dictKey, dictKeyLoc = getDictKeyDetails(obj)
-                        # get size of current brick (e.g. [2, 4, 1])
-                        objSize = bricksDict[dictKey]["size"]
+                # get dict key details of current obj
+                dictKey, dictKeyLoc = getDictKeyDetails(obj)
+                # get size of current brick (e.g. [2, 4, 1])
+                objSize = bricksDict[dictKey]["size"]
 
-                        # delete the current object
-                        delete(obj)
+                # delete the current object
+                delete(obj)
 
-                        # set top as exposed
-                        if self.side in ["TOP", "BOTH"]:
-                            bricksDict[dictKey]["top_exposed"] = not bricksDict[dictKey]["top_exposed"]
-                        # set bottom as exposed
-                        if self.side in ["BOTTOM", "BOTH"]:
-                            bricksDict[dictKey]["bot_exposed"] = not bricksDict[dictKey]["bot_exposed"]
-                        # add bricksDict[dictKey] to simple bricksDict for drawing
-                        bricksDicts[cm.idx]["keys_to_update"].append(dictKey)
-                        break
+                # set top as exposed
+                if self.side in ["TOP", "BOTH"]:
+                    bricksDict[dictKey]["top_exposed"] = not bricksDict[dictKey]["top_exposed"]
+                # set bottom as exposed
+                if self.side in ["BOTTOM", "BOTH"]:
+                    bricksDict[dictKey]["bot_exposed"] = not bricksDict[dictKey]["bot_exposed"]
+                # add bricksDict[dictKey] to simple bricksDict for drawing
+                bricksDicts[cm.idx]["keys_to_update"].append(dictKey)
 
         for cm_idx in bricksDicts.keys():
             cm = scn.cmlist[cm_idx]
@@ -335,12 +329,10 @@ class drawAdjacent(bpy.types.Operator):
         obj = scn.objects.active
 
         # get cmlist item referred to by object
-        for cm in scn.cmlist:
-            if cm.id == obj.cmlist_id:
-                # get bricksDict from cache
-                self.bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-                self.cm_idx = cm.idx
-                break
+        cm = getItemByID(scn.cmlist, obj.cmlist_id)
+        # get bricksDict from cache
+        self.bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+        self.cm_idx = cm.idx
 
         # initialize direction bools
         self.zPos = False
@@ -533,12 +525,10 @@ class changeBrickType(bpy.types.Operator):
         obj = scn.objects.active
         cm = scn.cmlist[scn.cmlist_index]
         # get cmlist item referred to by object
-        for cm in scn.cmlist:
-            if cm.id == obj.cmlist_id:
-                # get bricksDict from cache
-                self.bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-                self.cm_idx = cm.idx
-                return
+        cm = getItemByID(scn.cmlist, obj.cmlist_id)
+        # get bricksDict from cache
+        self.bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+        self.cm_idx = cm.idx
 
     def get_items(self, context):
         scn = bpy.context.scene
@@ -594,7 +584,7 @@ class changeBrickType(bpy.types.Operator):
 
         # skip bricks that are already of type self.brickType
         if self.bricksDict[dictKey]["type"] == self.brickType:
-            return {"CANCELLED"}
+            return
 
         # turn 1x1 & 1x2 plates into slopes
         if (self.brickType == "SLOPE" and
@@ -635,7 +625,7 @@ class changeBrickType(bpy.types.Operator):
             pass
         # skip anything else
         else:
-            return {"CANCELLED"}
+            return
 
         # set type of parent_brick to self.brickType
         self.bricksDict[dictKey]["type"] = self.brickType
