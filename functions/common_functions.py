@@ -293,6 +293,16 @@ def showErrorMessage(message, wrap=80):
     bpy.context.window_manager.popup_menu(draw, title="Error Message", icon="ERROR")
     return
 
+def handle_exception():
+    errormsg = print_exception('Rebrickr_log')
+    # if max number of exceptions occur within threshold of time, abort!
+    print('\n'*5)
+    print('-'*100)
+    print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)")
+    print('-'*100)
+    print('\n'*5)
+    showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)", wrap=240)
+
 # http://stackoverflow.com/questions/14519177/python-exception-handling-line-number
 def print_exception(txtName, showError=False):
     exc_type, exc_obj, tb = sys.exc_info()

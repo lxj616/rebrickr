@@ -163,7 +163,11 @@ def handle_selections(scene):
                 if cm.source_name == scn.Rebrickr_active_object_name and (not usingSource or not cm.modelCreated):
                     scn.cmlist_index = i
                     scn.Rebrickr_last_cmlist_index = scn.cmlist_index
+                    # adjust scn.active_brick_detail based on active brick
+                    if scn.objects.active.isBrick:
+                        cm.activeBFMKey = scn.objects.active.name.split("__")[1]
                     return
+            # if no matching cmlist item found, set cmlist_index to -1
             scn.cmlist_index = -1
         if scn.cmlist_index != -1:
             cm = scn.cmlist[scn.cmlist_index]

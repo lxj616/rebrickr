@@ -20,7 +20,7 @@ Created by Christopher Gearhart
 """
 
 # System imports
-# NONE!
+from operator import itemgetter
 
 # Blender imports
 import bpy
@@ -503,6 +503,20 @@ def dirtyBricks(self, context):
     cm = scn.cmlist[scn.cmlist_index]
     cm.bricksAreDirty = True
 
+# def updateActiveObject(self, context):
+#     scn = bpy.context.scene
+#     cm = scn.cmlist[scn.cmlist_index]
+#     dictKey = cm.activeBFMKey
+#     bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+#     brickD = bricksDict[dictKey]
+#     obj = bpy.data.objects.get(brickD["name"])
+#     if obj is not None:
+#         select(obj, active=obj, only=False)
+#     print("here")
+
+class stringPropertyGroup(bpy.types.PropertyGroup):
+    name = StringProperty()
+
 # Create custom property group
 class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     name = StringProperty(update=uniquifyName)
@@ -927,6 +941,18 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
               ("Z", "Z", "PLACEHOLDER")],
         update=dirtyMatrix,
         default="XY")
+
+    BFMKeys = CollectionProperty(type=stringPropertyGroup)
+    activeBFMKey = StringProperty(default="")#, update=updateActiveObject)
+        # EnumProperty(
+        # name="Active brick dictionary",
+        # description="",
+        # items=get_items,
+        # # options={"ANIMATABLE"},
+        # # update=None,
+        # # get=None,
+        # # set=None,
+        # default=None)
 
     modelCreatedOnFrame = IntProperty(default=-1)
 

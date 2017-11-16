@@ -87,7 +87,7 @@ class RebrickrEditSource(bpy.types.Operator):
             if bpy.context.scene.name == "Rebrickr_storage (DO NOT RENAME)":
                 for screen in bpy.data.screens:
                     screen.scene = bpy.data.scenes.get(bpy.props.Rebrickr_origScene)
-            self.handle_exception()
+            handle_exception()
             return {"CANCELLED"}
 
         return {"PASS_THROUGH"}
@@ -191,20 +191,10 @@ class RebrickrEditSource(bpy.types.Operator):
             if bpy.context.scene.name == "Rebrickr_storage (DO NOT RENAME)":
                 for screen in bpy.data.screens:
                     screen.scene = bpy.data.scenes.get(bpy.props.Rebrickr_origScene)
-            self.handle_exception()
+            handle_exception()
             return {"CANCELLED"}
 
         return {"RUNNING_MODAL"}
-
-    def handle_exception(self):
-        errormsg = print_exception('Rebrickr_log')
-        # if max number of exceptions occur within threshold of time, abort!
-        print('\n'*5)
-        print('-'*100)
-        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)")
-        print('-'*100)
-        print('\n'*5)
-        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)", wrap=240)
 
 class RebrickrCommitEdits(bpy.types.Operator):
     """ Commit Edits to Source Object Mesh """                                  # blender will use this as a tooltip for menu items and buttons.

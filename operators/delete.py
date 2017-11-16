@@ -40,7 +40,7 @@ from bpy.types import Operator
 from bpy.props import *
 
 # Rebrickr imports
-from ..buttons.brickify import getBricksDict, cacheBricksDict
+from ..lib.bricksDict import *
 
 def deleteUnprotected(context, use_global=False):
     scn = context.scene

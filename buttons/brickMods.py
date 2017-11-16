@@ -24,6 +24,7 @@
 
 # Blender imports
 import bpy
+from bpy.props import *
 
 # Rebrickr imports
 from ..functions import *
@@ -455,7 +456,7 @@ class drawAdjacent(bpy.types.Operator):
             if addBrick:
                 adjBrickD["draw"] = True
                 adjBrickD["val"] = 2
-                adjBrickD["matName"] = self.bricksDict[dictKey]["matName"]
+                adjBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"]
                 adjBrickD["size"] = [1, 1, objSize[2]]
                 adjBrickD["parent_brick"] = "self"
                 topExposed, botExposed = getBrickExposure(cm, self.bricksDict, adjacent_key)
@@ -530,6 +531,7 @@ class changeBrickType(bpy.types.Operator):
     def __init__(self):
         scn = bpy.context.scene
         obj = scn.objects.active
+        cm = scn.cmlist[scn.cmlist_index]
         # get cmlist item referred to by object
         for cm in scn.cmlist:
             if cm.id == obj.cmlist_id:
@@ -538,16 +540,38 @@ class changeBrickType(bpy.types.Operator):
                 self.cm_idx = cm.idx
                 return
 
+    def get_items(self, context):
+        scn = bpy.context.scene
+        obj = scn.objects.active
+        cm = scn.cmlist[scn.cmlist_index]
+        items = [("STANDARD", "Standard", "")]
+
+        dictKey, dictKeyLoc = getDictKeyDetails(obj)
+        bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+        objSize = bricksDict[dictKey]["size"]
+
+        if (objSize[2] == 3 and
+           (objSize[0] + objSize[1] < 8 or
+           (objSize[0] == 6 and objSize[1] == 2) or
+           (objSize[0] == 2 and objSize[1] == 6))):
+            items.append(("SLOPE", "Slope", ""))
+        if (objSize[2] == 3 and
+           (objSize[0] + objSize[1] < 6 and objSize[0] + objSize[1] > 2)):
+            items.append(("SLOPE_INVERTED", "Slope Inverted", ""))
+        if objSize[0] + objSize[1] == 2:
+            if objSize[2] == 3:
+                items.append(("CYLINDER", "Cylinder", ""))
+            if objSize[2] == 1:
+                items.append(("STUD", "Stud", ""))
+        if objSize[2] == 1:
+            items.append(("TILE", "Tile", ""))
+        return items
+
     brickType = bpy.props.EnumProperty(
         name="Brick Type",
         description="Choose what type of brick should be drawn at this location",
-        items=[("STANDARD", "Standard", ""),
-               ("TILE", "Tile", ""),
-               ("STUD", "Stud", ""),
-               ("CYLINDER", "Cylinder", ""),
-               ("SLOPE", "Slope", ""),
-               ("SLOPE_INVERTED", "Slope Inverted", "")],
-        default="STANDARD")
+        items=get_items,
+        default=None)
 
     flipBrick = bpy.props.BoolProperty(
         name="Flip Brick Orientation",
@@ -570,7 +594,7 @@ class changeBrickType(bpy.types.Operator):
 
         # skip bricks that are already of type self.brickType
         if self.bricksDict[dictKey]["type"] == self.brickType:
-            return
+            return {"CANCELLED"}
 
         # turn 1x1 & 1x2 plates into slopes
         if (self.brickType == "SLOPE" and
@@ -611,7 +635,7 @@ class changeBrickType(bpy.types.Operator):
             pass
         # skip anything else
         else:
-            return
+            return {"CANCELLED"}
 
         # set type of parent_brick to self.brickType
         self.bricksDict[dictKey]["type"] = self.brickType

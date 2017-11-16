@@ -24,3 +24,6 @@ rebrickr_bm_cache = {}
 
 # initialize the source mesh cache dictionary
 rebrickr_source_mesh_cache = {}
+
+# initialize the BFMCache
+rebrickr_bfm_cache = [None, None]

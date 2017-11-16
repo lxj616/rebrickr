@@ -123,16 +123,6 @@ class RebrickrBevel(bpy.types.Operator):
             bricks = getBricks()
             RebrickrBevel.runBevelAction(bricks, cm, action)
         except:
-            self.handle_exception()
+            handle_exception()
 
         return{"FINISHED"}
-
-    def handle_exception(self):
-        errormsg = print_exception('Rebrickr_log')
-        # if max number of exceptions occur within threshold of time, abort!
-        print('\n'*5)
-        print('-'*100)
-        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)")
-        print('-'*100)
-        print('\n'*5)
-        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)", wrap=240)

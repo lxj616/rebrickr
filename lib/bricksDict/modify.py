@@ -29,16 +29,16 @@ import bpy
 # NONE!
 
 def addMaterialsToBricksDict(bricksDict, source):
-    """ sets all matNames in bricksDict based on nearestFaceIdx """
+    """ sets all matNames in bricksDict based on nearest_face_idx """
     for key in bricksDict.keys():
-        nf = bricksDict[key]["nearestFaceIdx"]
+        nf = bricksDict[key]["nearest_face_idx"]
         nearestFaceExists = nf is not None
         if bricksDict[key]["draw"] and nearestFaceExists:
             f = source.data.polygons[nf]
             slot = source.material_slots[f.material_index]
             mat = slot.material
             matName = mat.name
-            bricksDict[key]["matName"] = matName
+            bricksDict[key]["mat_name"] = matName
     return bricksDict
 
 def brickAvail(sourceBrick, brick):
@@ -49,7 +49,7 @@ def brickAvail(sourceBrick, brick):
     Rebrickr_internal_mn = "Rebrickr_%(n)s_internal" % locals()
     if brick is not None:
         # This if statement ensures brick is present, brick isn't drawn already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal)
-        if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["matName"] == brick["matName"] or sourceBrick["matName"] == "" or brick["matName"] == "" or cm.mergeInconsistentMats):
+        if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats):
             return True
     return False
 

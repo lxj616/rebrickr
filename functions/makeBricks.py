@@ -33,9 +33,9 @@ import bpy
 from mathutils import Vector, Matrix
 
 # Rebrickr imports
-from .modifyBricksDict import *
 from .hashObject import hash_object
 from ..lib.Brick import Bricks
+from ..lib.bricksDict import *
 from ..functions import *
 from ..functions.wrappers import *
 from .__init__ import bounds
@@ -166,7 +166,7 @@ def getClosestMaterial(cm, bricksD, key, brickType, randState, brick_mats, k):
                 curBrickD = bricksD[str(int(idcs[0])+x) + "," + str(int(idcs[1])+y) + "," + idcs[2]]
                 if curBrickD["val"] >= highestVal:
                     highestVal = curBrickD["val"]
-                    matName = curBrickD["matName"]
+                    matName = curBrickD["mat_name"]
                     if curBrickD["val"] == 2:
                         matsL.append(matName)
         # if multiple shell materials, use the most frequent one

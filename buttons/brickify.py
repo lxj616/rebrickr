@@ -34,6 +34,7 @@ props = bpy.props
 
 # Rebrickr imports
 from ..functions import *
+from ..lib.bricksDict import *
 # from ..functions.wrappers import timed_call
 from .materials import RebrickrApplyMaterial
 from .delete import RebrickrDelete
@@ -79,38 +80,6 @@ def importLogo():
     bpy.ops.import_scene.obj(filepath=logoObjPath)
     logoObj = bpy.context.selected_objects[0]
     return logoObj
-
-def getBricksDict(action, source=None, source_details=None, dimensions=None, R=None, updateCursor=None, curFrame=None, cm=None):
-    scn = bpy.context.scene
-    if cm is None:
-        cm = scn.cmlist[scn.cmlist_index]
-    useCaching = bpy.context.user_preferences.addons[bpy.props.rebrickr_module_name].preferences.useCaching
-    loadedFromCache = False
-    # current_source_hash = json.dumps(hash_object(source))
-    if useCaching and not cm.matrixIsDirty and cm.BFMCache != "" and not cm.sourceIsDirty and (action != "UPDATE_ANIM" or not cm.animIsDirty):#current_source_hash == cm.source_hash:
-        if action == "UPDATE_MODEL":
-            bricksDict = json.loads(cm.BFMCache)
-        elif action == "UPDATE_ANIM":
-            bricksDict = json.loads(cm.BFMCache)[str(curFrame)]
-        loadedFromCache = useCaching
-    else:
-        bricksDict = makeBricksDict(source, source_details, dimensions, R, cursorStatus=updateCursor)
-        # after array is stored to cache, update materials
-        if len(source.material_slots) > 0:
-            bricksDict = addMaterialsToBricksDict(bricksDict, source)
-    return bricksDict, loadedFromCache
-
-def cacheBricksDict(action, cm, bricksDict):
-    if action in ["CREATE", "UPDATE_MODEL"]:
-        # cm.source_hash = current_source_hash
-        cm.BFMCache = json.dumps(bricksDict)
-    elif action in ["ANIMATE", "UPDATE_ANIM"]:
-        if cm.BFMCache == "":
-            BFMCache = {}
-        else:
-            BFMCache = json.loads(cm.BFMCache)
-        BFMCache[curFrame] = bricksDict
-        cm.BFMCache = json.dumps(BFMCache)
 
 class RebrickrBrickify(bpy.types.Operator):
     """ Create brick sculpture from source object mesh """                       # blender will use this as a tooltip for menu items and buttons.
@@ -261,7 +230,7 @@ class RebrickrBrickify(bpy.types.Operator):
         bricksCreated = makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, createGroup=createGroup)
         if selectCreated:
             for brick in bricksCreated:
-                brick.select = True 
+                brick.select = True
         cacheBricksDict(action, cm, bricksDict) # store current bricksDict to cache
         return group_name
 
@@ -977,16 +946,6 @@ class RebrickrBrickify(bpy.types.Operator):
             print()
             self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
         except:
-            self.handle_exception()
+            handle_exception()
 
         return{"FINISHED"}
-
-    def handle_exception(self):
-        errormsg = print_exception('Rebrickr_log')
-        # if max number of exceptions occur within threshold of time, abort!
-        print('\n'*5)
-        print('-'*100)
-        print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)")
-        print('-'*100)
-        print('\n'*5)
-        showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)", wrap=240)

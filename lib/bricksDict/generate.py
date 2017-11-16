@@ -30,9 +30,9 @@ from bpy.types import Object
 from mathutils import Matrix, Vector
 
 # Rebrickr imports
-from .common_functions import *
-from .generate_lattice import generateLattice
-from .wrappers import *
+from ...functions.common_functions import *
+from ...functions.generate_lattice import generateLattice
+from ...functions.wrappers import *
 
 def VectorRound(vec, dec, roundType="ROUND"):
     """ round all vals in Vector 'vec' to 'dec' precision using 'ROUND', 'FLOOR', or 'CEIL' """
@@ -438,16 +438,6 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
 
     return brickFreqMatrix
 
-# def getCOList(brickFreqMatrix, coordMatrix, threshold):
-#     """ return matrix containing coordinates from coordMatrix where brickFreqMatrix >= threshold """
-#     coList = [[[-1 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
-#     for x in range(len(coordMatrix)):
-#         for y in range(len(coordMatrix[0])):
-#             for z in range(len(coordMatrix[0][0])):
-#                 if brickFreqMatrix[x][y][z] >= threshold:
-#                     coList[x][y][z] = coordMatrix[x][y][z]
-#     return coList
-
 def uniquify3DMatrix(matrix):
     for i in range(len(matrix)):
         for j in range(len(matrix[i])):
@@ -456,7 +446,7 @@ def uniquify3DMatrix(matrix):
 
 @timed_call('Time Elapsed')
 def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
-    """ Make bricks """
+    """ Make bricksDict """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     # update source data in case data needs to be refreshed
@@ -512,8 +502,8 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                     "val":brickFreqMatrix[x][y][z],
                     "draw":drawBrick,
                     "co":(co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
-                    "nearestFaceIdx":nf,
-                    "matName":"", # defined in 'addMaterialsToBricksDict' function
+                    "nearest_face_idx":nf,
+                    "mat_name":"", # defined in 'addMaterialsToBricksDict' function
                     "parent_brick":None,
                     "size":None,
                     "attempted_merge":False,
