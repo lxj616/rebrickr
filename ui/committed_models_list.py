@@ -943,6 +943,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         default="XY")
 
     BFMKeys = CollectionProperty(type=stringPropertyGroup)
+    
     activeBFMKey = StringProperty(default="")#, update=updateActiveObject)
         # EnumProperty(
         # name="Active brick dictionary",

@@ -38,16 +38,18 @@ def getBricksDict(action, source=None, source_details=None, dimensions=None, R=N
         cm = scn.cmlist[scn.cmlist_index]
     loadedFromCache = False
     if not cm.matrixIsDirty and (cm.BFMCache != "" or cm.id in rebrickr_bfm_cache.keys()) and not cm.sourceIsDirty and (action != "UPDATE_ANIM" or not cm.animIsDirty):
+        # try getting bricksDict from light cache
         bricksDict = rebrickr_bfm_cache.get(cm.id)
         if bricksDict is None:
+            # get bricksDict from deep cache
             print("Accessing deep cache")
-            if action == "UPDATE_MODEL":
-                bricksDict = json.loads(cm.BFMCache)
-            elif action == "UPDATE_ANIM":
-                bricksDict = json.loads(cm.BFMCache)[str(curFrame)]
+            bricksDict = json.loads(cm.BFMCache)
         else:
             print("Accessing light cache")
         loadedFromCache = True
+        # if animated, index into that dict
+        if action == "UPDATE_ANIM":
+            bricksDict = bricksDict[str(curFrame)]
     else:
         bricksDict = makeBricksDict(source, source_details, dimensions, R, cursorStatus=updateCursor)
         # after array is stored to cache, update materials
@@ -80,7 +82,7 @@ def deepToLightCache(rebrickr_bfm_cache):
     if numpulledIDs > 0:
         print("pulled {numKeys} dicts from deep cache to light cache".format(numKeys=numpulledIDs))
 
-def cacheBricksDict(action, cm, bricksDict):
+def cacheBricksDict(action, cm, bricksDict, curFrame=None):
     scn = bpy.context.scene
     if action in ["CREATE", "UPDATE_MODEL"]:
         rebrickr_bfm_cache[cm.id] = bricksDict
@@ -88,4 +90,4 @@ def cacheBricksDict(action, cm, bricksDict):
         if (cm.id not in rebrickr_bfm_cache.keys() or
            type(rebrickr_bfm_cache[cm.id]) != dict):
             rebrickr_bfm_cache[cm.id] = {}
-        rebrickr_bfm_cache[cm.id][curFrame] = bricksDict
+        rebrickr_bfm_cache[cm.id][str(curFrame)] = bricksDict

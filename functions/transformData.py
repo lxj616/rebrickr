@@ -27,7 +27,7 @@ import bpy
 from mathutils import Vector, Euler
 
 # Rebrickr imports
-from .common_functions import confirmList
+from .common import confirmList
 
 def storeTransformData(obj):
     """ store transform data from obj into cm.modelLoc/Rot/Scale """

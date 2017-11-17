@@ -27,7 +27,7 @@ import bpy
 from mathutils import Vector
 
 # Rebrickr imports
-from .common_functions import drawBMesh
+from .common import drawBMesh
 
 def tupleAdd(p1, p2):
     """ returns linear sum of two given tuples """

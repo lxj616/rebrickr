@@ -30,7 +30,7 @@ from bpy.types import Object
 from mathutils import Matrix, Vector
 
 # Rebrickr imports
-from ...functions.common_functions import *
+from ...functions.common import *
 from ...functions.generate_lattice import generateLattice
 from ...functions.wrappers import *
 

@@ -27,7 +27,7 @@ import bpy
 from mathutils import Vector, Euler
 
 # Rebrickr imports
-from .common_functions import *
+from .common import *
 from .generate_lattice import generateLattice
 from .makeBricks import *
 from .wrappers import *

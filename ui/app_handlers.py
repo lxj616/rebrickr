@@ -32,14 +32,17 @@ from ..functions import *
 from ..lib.bricksDict import lightToDeepCache
 from ..lib.caches import rebrickr_bfm_cache
 
-@persistent
-def handle_animation(scene):
-    scn = scene
+def rebrickrIsActive():
     try:
         rebrickrIsActive = bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
     except AttributeError:
         rebrickrIsActive = False
-    if rebrickrIsActive:
+    return rebrickrIsActive
+
+@persistent
+def handle_animation(scene):
+    scn = scene
+    if rebrickrIsActive():
         for i,cm in enumerate(scn.cmlist):
             if cm.animated:
                 n = cm.source_name
@@ -54,11 +57,23 @@ def handle_animation(scene):
                                 brick.hide_render = not onCurF
                             if scn.objects.active is not None and "Rebrickr_%(n)s_bricks_combined_frame_" % locals() in scn.objects.active.name and onCurF:
                                 select(brick, active=brick)
+                                cm.activeBFMKey = ""
                             # prevent bricks from being selected on frame change
                             elif brick.select:
                                 brick.select = False
 
 bpy.app.handlers.frame_change_pre.append(handle_animation)
+
+@persistent
+def handle_clearing_bfmkeys(scene):
+    scn = scene
+    if rebrickrIsActive():
+        cm = scn.cmlist[scn.cmlist_index]
+        if cm.animated:
+            if cm.BFMKeys != "":
+                cm.BFMKeys.clear()
+
+bpy.app.handlers.frame_change_pre.append(handle_clearing_bfmkeys)
 
 def isObjVisible(scn, cm):
     scn = bpy.context.scene
@@ -83,14 +98,10 @@ def isObjVisible(scn, cm):
 def handle_selections(scene):
     scn = bpy.context.scene
     try:
-        rebrickrIsActive = bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
-    except AttributeError:
-        rebrickrIsActive = False
-    try:
         rebrickrRunningOp = scn.Rebrickr_runningOperation
     except AttributeError:
         rebrickrRunningOp = False
-    if rebrickrIsActive and not rebrickrRunningOp:
+    if rebrickrIsActive() and not rebrickrRunningOp:
         # if scn.layers changes and active object is no longer visible, set scn.cmlist_index to -1
         if scn.Rebrickr_last_layers != str(list(scn.layers)):
             scn.Rebrickr_last_layers = str(list(scn.layers))
@@ -202,8 +213,7 @@ def find_3dview_space():
 @persistent
 def handle_snapping(scene):
     scn = bpy.context.scene
-
-    if scn.Rebrickr_snapping:
+    if rebrickrIsActive() and scn.Rebrickr_snapping:
         # disable regular snapping if enabled
         if not scn.tool_settings.use_snap:
             scn.tool_settings.use_snap = True
@@ -219,11 +229,7 @@ bpy.app.handlers.scene_update_pre.append(handle_snapping)
 
 @persistent
 def handle_saving_in_edit_mode(scene):
-    try:
-        rebrickrIsActive = bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
-    except AttributeError:
-        rebrickrIsActive = False
-    if rebrickrIsActive:
+    if rebrickrIsActive():
         sto_scn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
         try:
             editingSourceInfo = bpy.context.window_manager["editingSourceInStorage"]
@@ -260,11 +266,13 @@ bpy.app.handlers.save_pre.append(handle_saving_in_edit_mode)
 # pull dicts from deep cache to light cache on load
 @persistent
 def handle_loading_to_light_cache(dummy):
-    deepToLightCache(rebrickr_bfm_cache)
+    if rebrickrIsActive():
+        deepToLightCache(rebrickr_bfm_cache)
 bpy.app.handlers.load_post.append(handle_loading_to_light_cache)
 
 # push dicts from light cache to deep cache on save
 @persistent
 def handle_storing_to_deep_cache(scene):
-    lightToDeepCache(rebrickr_bfm_cache)
+    if rebrickrIsActive():
+        lightToDeepCache(rebrickr_bfm_cache)
 bpy.app.handlers.save_pre.append(handle_storing_to_deep_cache)

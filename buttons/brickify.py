@@ -178,8 +178,8 @@ class RebrickrBrickify(bpy.types.Operator):
 
         return refLogo
 
-    def runCreateNewBricks(self, source, parent, source_details, dimensions, refLogo, action, curFrame=None):
-        group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, action, curFrame=curFrame)
+    def runCreateNewBricks(self, source, parent, source_details, dimensions, refLogo, action, curFrame=None, sceneCurFrame=None):
+        group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, action, curFrame=curFrame, sceneCurFrame=sceneCurFrame)
         if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
             self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
         if int(round((source_details.y.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
@@ -189,7 +189,7 @@ class RebrickrBrickify(bpy.types.Operator):
         return group_name
 
     @classmethod
-    def createNewBricks(cls, source, parent, source_details, dimensions, refLogo, action, curFrame=None, bricksDict=None, keys="ALL", createGroup=True, selectCreated=False):
+    def createNewBricks(cls, source, parent, source_details, dimensions, refLogo, action, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", createGroup=True, selectCreated=False):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
@@ -215,7 +215,8 @@ class RebrickrBrickify(bpy.types.Operator):
         updateCursor = action in ["CREATE", "UPDATE_MODEL"] # evaluates to boolean value
         if bricksDict is None:
             bricksDict, loadedFromCache = getBricksDict(action, source, source_details, dimensions, R, updateCursor, curFrame)
-            cm.activeBFMKey = random.choice(list(bricksDict.keys()))
+            if curFrame == sceneCurFrame:
+                cm.activeBFMKey = "" # random.choice(list(bricksDict.keys()))
         if curFrame is not None:
             group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
@@ -232,7 +233,7 @@ class RebrickrBrickify(bpy.types.Operator):
         if selectCreated:
             for brick in bricksCreated:
                 brick.select = True
-        cacheBricksDict(action, cm, bricksDict) # store current bricksDict to cache
+        cacheBricksDict(action, cm, bricksDict, curFrame=curFrame) # store current bricksDict to cache
         return group_name
 
     def isValid(self, source, Rebrickr_bricks_gn):
@@ -645,7 +646,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
             # create new bricks
             try:
-                group_name = self.runCreateNewBricks(source, parent, source_details, dimensions, refLogo, self.action, curFrame=curFrame)
+                group_name = self.runCreateNewBricks(source, parent, source_details, dimensions, refLogo, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame)
                 self.createdGroups.append(group_name)
             except KeyboardInterrupt:
                 self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")

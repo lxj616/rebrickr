@@ -137,16 +137,31 @@ class RebrickrBrickDetailsPanel(Panel):
         if len(cm.BFMKeys) == 0:
             layout.operator("rebrickr.populate_dict_keys", text="Populate Dict Keys")
 
-        if cm.activeBFMKey != "" or len(cm.BFMKeys) == 0:
-            dictKey = cm.activeBFMKey
-        else:
-            dictKey = cm.BFMKeys[0].name
-        bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
         try:
+            if cm.animated:
+                bricksDict,_ = getBricksDict("UPDATE_ANIM", cm=cm, curFrame=scn.frame_current)
+            elif cm.modelCreated:
+                bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            if cm.activeBFMKey != "":
+                dictKey = cm.activeBFMKey
+            elif len(cm.BFMKeys) != 0:
+                dictKey = cm.BFMKeys[0].name
+            else:
+                dictKey = None
             brickD = bricksDict[dictKey]
         except Exception as e:
-            # if len(cm.BFMKeys) != 0:
-            print("Key", dictKey, "not found")
+            if len(bricksDict) == 0:
+                print("Skipped drawing Brick Details")
+            elif str(e)[1:-1] == dictKey:
+                print("Key '" + str(dictKey) + "' not found")
+                # try:
+                #     print("Num Keys:", str(len(bricksDict)))
+                # except:
+                #     pass
+            elif dictKey is None:
+                print("Key not set (entered else)")
+            else:
+                print("Error fetching brickD:", e)
             return
 
         col1 = layout.column(align=True)
