@@ -940,9 +940,9 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyMatrix,
         default="XY")
 
-    activeKeyX = IntProperty(default=0)
-    activeKeyY = IntProperty(default=0)
-    activeKeyZ = IntProperty(default=0)
+    activeKeyX = IntProperty(default=1)
+    activeKeyY = IntProperty(default=1)
+    activeKeyZ = IntProperty(default=1)
 
     modelCreatedOnFrame = IntProperty(default=-1)
 

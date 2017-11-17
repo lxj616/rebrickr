@@ -35,7 +35,6 @@ props = bpy.props
 # Rebrickr imports
 from ..functions import *
 from ..lib.bricksDict import *
-# from ..functions.wrappers import *
 from .materials import RebrickrApplyMaterial
 from .delete import RebrickrDelete
 from .bevel import RebrickrBevel
@@ -56,21 +55,6 @@ def updateCanRun(type):
             n = cm.source_name
             Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
             return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.matrixIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and not (cm.materialType == "Random" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
-
-def getDimensionsAndBounds(source, skipDimensions=False):
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
-    # get dimensions and bounds
-    source_details = bounds(source)
-    if not skipDimensions:
-        if cm.brickType == "Plates" or cm.brickType == "Bricks and Plates":
-            zScale = 0.333
-        elif cm.brickType in ["Bricks", "Custom"]:
-            zScale = 1
-        dimensions = Bricks.get_dimensions(cm.brickHeight, zScale, cm.gap)
-        return source_details, dimensions
-    else:
-        return source_details
 
 def importLogo():
     """ import logo object from Rebrickr addon folder """
@@ -193,33 +177,15 @@ class RebrickrBrickify(bpy.types.Operator):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        if cm.brickType == "Custom":
-            customObj0 = bpy.data.objects[cm.customObjectName]
-            oldLayers = list(scn.layers) # store scene layers for later reset
-            scn.layers = customObj0.layers # set scene layers to sourceOrig layers
-            select(customObj0, active=customObj0)
-            bpy.ops.object.duplicate()
-            customObj = scn.objects.active
-            select(customObj, active=customObj)
-            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-            customObj_details = bounds(customObj)
-            customData = customObj.data
-            bpy.data.objects.remove(customObj, True)
-            scale = cm.brickHeight/customObj_details.z.distance
-            R = (scale * customObj_details.x.distance + dimensions["gap"], scale * customObj_details.y.distance + dimensions["gap"], scale * customObj_details.z.distance + dimensions["gap"])
-            scn.layers = oldLayers
-        else:
-            customData = None
-            customObj_details = None
-            R = (dimensions["width"]+dimensions["gap"], dimensions["width"]+dimensions["gap"], dimensions["height"]+dimensions["gap"])
+        _,_,_,R, customData, customObj_details = getArgumentsForBricksDict(cm, source=source, source_details=source_details, dimensions=dimensions)
         updateCursor = action in ["CREATE", "UPDATE_MODEL"] # evaluates to boolean value
         if bricksDict is None:
-            bricksDict, loadedFromCache = getBricksDict(action, source, source_details, dimensions, R, updateCursor, curFrame)
+            bricksDict, loadedFromCache = getBricksDict(action, source=source, source_details=source_details, dimensions=dimensions, R=R, updateCursor=updateCursor, curFrame=curFrame)
             if curFrame == sceneCurFrame:
                 # random.choice(list(bricksDict.keys()))
-                cm.activeKeyX = 0
-                cm.activeKeyY = 0
-                cm.activeKeyZ = 0
+                cm.activeKeyX = 1
+                cm.activeKeyY = 1
+                cm.activeKeyZ = 1
         if curFrame is not None:
             group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
@@ -630,7 +596,7 @@ class RebrickrBrickify(bpy.types.Operator):
             source = duplicates[curFrame]["obj"]
 
             # get source_details and dimensions
-            source_details, dimensions = getDimensionsAndBounds(source)
+            source_details, dimensions = getDetailsAndBounds(source)
 
             if self.action == "ANIMATE":
                 # set source model height for display in UI
@@ -825,7 +791,7 @@ class RebrickrBrickify(bpy.types.Operator):
             scn.update()
 
         # get source_details and dimensions
-        source_details, dimensions = getDimensionsAndBounds(source)
+        source_details, dimensions = getDetailsAndBounds(source)
 
         if self.action == "CREATE":
             # set source model height for display in UI

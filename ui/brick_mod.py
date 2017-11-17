@@ -102,14 +102,6 @@ class RebrickrBrickModPanel(Panel):
         row.operator("rebrickr.change_brick_type", text="Change Type")
         # print bricksDict key for active object
         row = col1.row(align=True)
-        try:
-            dictKey = scn.objects.active.name.split("__")[1]
-            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-            brickD = bricksDict[dictKey]
-            row.label(brickD["location"])
-            row.label()
-        except:
-            pass
 
         # next level:
         # enter brick sculpt mode
@@ -155,18 +147,15 @@ class RebrickrBrickDetailsPanel(Panel):
         col = split.column(align=True)
         col.prop(cm, "activeKeyZ", text="z")
 
+        if cm.animated:
+            bricksDict,_ = getBricksDict("UPDATE_ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current), restrictContext=True)
+        elif cm.modelCreated:
+            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)
+        aKX = cm.activeKeyX
+        aKY = cm.activeKeyY
+        aKZ = cm.activeKeyZ
         try:
-            if cm.animated:
-                bricksDict,_ = getBricksDict("UPDATE_ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current))
-            elif cm.modelCreated:
-                bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-            aKX = cm.activeKeyX
-            aKY = cm.activeKeyY
-            aKZ = cm.activeKeyZ
-            if aKX != -1 and aKY != -1 and aKZ != -1:
-                dictKey = "%(aKX)s,%(aKY)s,%(aKZ)s" % locals()
-            else:
-                dictKey = None
+            dictKey = "%(aKX)s,%(aKY)s,%(aKZ)s" % locals()
             brickD = bricksDict[dictKey]
         except Exception as e:
             layout.label("No brick details available")
@@ -188,8 +177,6 @@ class RebrickrBrickDetailsPanel(Panel):
         split = col1.split(align=True, percentage=0.35)
         # hard code keys so that they are in the order I want
         keys = ["name", "val", "draw", "co", "nearest_face_idx", "mat_name", "parent_brick", "size", "attempted_merge", "top_exposed", "bot_exposed", "type"]
-        # keys = list(brickD.keys())
-        # keys.sort()
         # draw keys
         col = split.column(align=True)
         col.scale_y = 0.65

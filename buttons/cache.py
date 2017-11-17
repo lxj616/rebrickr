@@ -28,8 +28,7 @@ import bpy
 props = bpy.props
 
 # Rebrickr imports
-from ..lib.caches import rebrickr_bm_cache
-
+from ..lib.caches import *
 
 class clearCache(bpy.types.Operator):
     """Clear cache of brick meshes and matrices (try if you're experiencing slow UI or odd addon behaviors)""" # blender will use this as a tooltip for menu items and buttons.
@@ -41,12 +40,17 @@ class clearCache(bpy.types.Operator):
         try:
             scn = context.scene
 
-            # clear rebrickr_bm_cache
-            rebrickr_bm_cache = {}
+            # clear light caches
+            for key in rebrickr_bm_cache:
+                rebrickr_bm_cache[key] = None
+            for key in rebrickr_bfm_cache:
+                rebrickr_bfm_cache[key] = None
 
-            # clear matrix caches
+            # clear deep matrix caches
             for cm in scn.cmlist:
                 cm.BFMCache = ""
+
+            print("clearCache... " + str(len(rebrickr_bfm_cache)))
 
         except:
             handle_exception()

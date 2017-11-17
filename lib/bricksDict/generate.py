@@ -393,8 +393,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     if scn.Rebrickr_printTimes:
         stopWatch("Internal", time.time()-ct)
         ct = time.time()
-    elif cm.shellThickness-1:
-        update_progress("Internal", 1)
+    update_progress("Internal", 1)
 
     # Draw supports
     if cm.internalSupports == "Columns":
@@ -465,10 +464,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     if source.parent is not None:
         offset = Vector(offset)-source.parent.location
         offset = offset.to_tuple()
-    if cm.brickType == "Custom":
-        R = (R[0] * cm.distOffsetX, R[1] * cm.distOffsetY, R[2] * cm.distOffsetZ)
     coordMatrix = generateLattice(R, lScale, offset)
-    # drawBMesh(makeLattice(R, lScale, offset))
     if cm.brickShell != "Inside Mesh":
         calculationAxes = cm.calculationAxes
     else:

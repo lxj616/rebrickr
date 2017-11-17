@@ -29,7 +29,7 @@ from mathutils import Vector, Euler
 
 # Rebrickr imports
 from ..functions import *
-from ..lib.bricksDict import lightToDeepCache
+from ..lib.bricksDict import lightToDeepCache, deepToLightCache
 from ..lib.caches import rebrickr_bfm_cache
 
 def rebrickrIsActive():

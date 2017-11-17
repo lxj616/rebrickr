@@ -26,7 +26,7 @@ import time
 import bpy
 
 # Rebrickr imports
-from ..functions import *
+from ..functions.common import stopWatch
 
 # https://github.com/CGCookie/retopoflow
 def timed_call(label, precision=2):

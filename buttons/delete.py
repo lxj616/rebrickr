@@ -30,7 +30,6 @@ props = bpy.props
 # Rebrickr imports
 from ..functions import *
 
-
 def getModelType(self, cm=None):
     """ return 'MODEL' if modelCreated, 'ANIMATION' if animated """
     scn = bpy.context.scene
@@ -290,9 +289,9 @@ class RebrickrDelete(bpy.types.Operator):
         cm.sourceIsDirty = True
         cm.bricksAreDirty = True
         cm.bevelAdded = False
-        cm.activeKeyX = 0
-        cm.activeKeyY = 0
-        cm.activeKeyZ = 0
+        cm.activeKeyX = 1
+        cm.activeKeyY = 1
+        cm.activeKeyZ = 1
 
         # reset frame (for proper update), update scene and redraw 3D view
         scn.frame_set(origFrame)

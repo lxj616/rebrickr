@@ -42,7 +42,7 @@ def runCreateNewBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     # get arguments for createNewBricks
     n = cm.source_name
     source = bpy.data.objects.get(n + " (DO NOT RENAME)")
-    source_details, dimensions = getDimensionsAndBounds(source)
+    source_details, dimensions = getDetailsAndBounds(source)
     Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
     parent = bpy.data.objects.get(Rebrickr_parent_on)
     refLogo = RebrickrBrickify.getLogo(cm)
@@ -50,7 +50,7 @@ def runCreateNewBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     # actually draw the bricks
     RebrickrBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, action, bricksDict=bricksDict, keys=keysToUpdate, createGroup=False, selectCreated=selectCreated)
 
-class splitBrick(bpy.types.Operator):
+class splitBricks(bpy.types.Operator):
     """Split selected bricks into 1x1 bricks"""                                 # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "rebrickr.split_bricks"                                         # unique identifier for buttons and menu items to reference.
     bl_label = "Split Brick(s)"                                                 # display name in the interface.
@@ -64,7 +64,10 @@ class splitBrick(bpy.types.Operator):
         # check that at least 1 selected object is a brick
         for obj in objs:
             if obj.isBrick:
-                return True
+                # get cmlist item referred to by object
+                cm = getItemByID(scn.cmlist, obj.cmlist_id)
+                if cm.lastBrickType != "Custom":
+                    return True
         return False
 
     def execute(self, context):
@@ -143,9 +146,12 @@ class mergeBricks(bpy.types.Operator):
         # check that at least 2 objects are selected and are bricks
         for obj in objs:
             if obj.isBrick:
-                i += 1
-                if i == 2:
-                    return True
+                # get cmlist item referred to by object
+                cm = getItemByID(scn.cmlist, obj.cmlist_id)
+                if cm.lastBrickType != "Custom":
+                    i += 1
+                    if i == 2:
+                        return True
         return False
 
     def execute(self, context):
@@ -244,7 +250,10 @@ class setExposure(bpy.types.Operator):
         # check that at least 1 selected object is a brick
         for obj in objs:
             if obj.isBrick:
-                return True
+                # get cmlist item referred to by object
+                cm = getItemByID(scn.cmlist, obj.cmlist_id)
+                if cm.lastBrickType != "Custom":
+                    return True
         return False
 
     side = bpy.props.EnumProperty(
@@ -537,6 +546,11 @@ class changeBrickType(bpy.types.Operator):
             return False
         # check that active_object is brick
         if not active_obj.isBrick:
+            return False
+        # get cmlist item referred to by object
+        cm = getItemByID(scn.cmlist, active_obj.cmlist_id)
+        # confirm that active_obj brickType is not CUSTOM
+        if cm.lastBrickType == "Custom":
             return False
         return True
 
