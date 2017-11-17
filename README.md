@@ -17,9 +17,7 @@ Blender add-on for automated generation of Brick sculptures and simulations from
           * Add UI panel drawn inside Blender like Retopoflow for adding/adjusting/maneuvering bricks
           * EITHER  Add UI for selecting verts at inside/outside locations and adding bricks there
           * OR      Add button for recalculating new shell
-          * Add functionality for "add brick above/below/right/left/front/back" current selected brick
           * Add functionality for changing brick type
-          * Don't recalculate matrix when shell depth adjusted
           * Try to reduce need to recalculate matrix (maybe keep around lastBrickHeight, lastGap, etc. so it only updates if changed, not just clicked)
       * Priority 2:
           * For animation, if last frame's brickFreqMatrix matches current frame's brickFreqMatrix, save time by just keeping that model around for another frame or duplicating it for the next frame or something

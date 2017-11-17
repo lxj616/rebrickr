@@ -226,12 +226,15 @@ class RebrickrBrickify(bpy.types.Operator):
             group_name = None
         # reset all values for certain keys in bricksDict dictionaries
         if action == "UPDATE_MODEL" and cm.buildIsDirty and loadedFromCache:
+            threshold = getThreshold(cm)
             for kk in bricksDict:
                 bD = bricksDict[kk]
                 bD["size"] = None
                 bD["parent_brick"] = None
                 bD["top_exposed"] = None
                 bD["bot_exposed"] = None
+                if cm.lastShellThickness != cm.shellThickness:
+                    bD["draw"] = bD["val"] >= threshold
         bricksCreated = makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, createGroup=createGroup)
         if selectCreated:
             select(None)
@@ -897,6 +900,7 @@ class RebrickrBrickify(bpy.types.Operator):
         cm.lastSplitModel = cm.splitModel
         cm.lastBrickType = cm.brickType
         cm.lastMaterialType = cm.materialType
+        cm.lastShellThickness = cm.shellThickness
         cm.materialIsDirty = False
         cm.brickMaterialsAreDirty = False
         cm.modelIsDirty = False

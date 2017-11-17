@@ -531,10 +531,11 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         description="Name of the parent object for the brickified model",
         default="")
 
+    lastShellThickness = IntProperty(default=1)
     shellThickness = IntProperty(
         name="Shell Thickness",
         description="Thickness of the Brick shell",
-        update=dirtyMatrix,
+        update=dirtyBuild,
         min=1, max=100,
         default=1)
 

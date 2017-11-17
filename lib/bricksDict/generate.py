@@ -329,11 +329,11 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     # set up brickFreqMatrix values for bricks inside shell
     j = 1
     # NOTE: Following two lines are alternative for calculating partial brickFreqMatrix (insideness only calculated as deep as necessary)
-    denom = min([(cm.shellThickness-1), max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)])/2
-    for idx in range(cm.shellThickness-1):
+    # denom = min([(cm.shellThickness-1), max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)])/2
+    # for idx in range(cm.shellThickness-1):
     # NOTE: Following two lines are alternative for calculating full brickFreqMatrix
-    # denom = max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)/2
-    # for idx in range(100):
+    denom = max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)/2
+    for idx in range(100):
         # print status to terminal
         if not scn.Rebrickr_printTimes:
             percent = idx/denom
@@ -444,6 +444,11 @@ def uniquify3DMatrix(matrix):
             matrix[i][j] = uniquify(matrix[i][j], lambda x: (round(x[0], 2), round(x[1], 2), round(x[2], 2)))
     return matrix
 
+def getThreshold(cm):
+    """ returns threshold (draw bricks if val >= threshold) """
+    threshold = 1.01 - (cm.shellThickness / 100)
+    return threshold
+
 @timed_call('Time Elapsed')
 def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     """ Make bricksDict """
@@ -474,7 +479,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     brickFreqMatrix = getBrickMatrix(source, faceIdxMatrix, coordMatrix, cm.brickShell, axes=calculationAxes, cursorStatus=cursorStatus)
 
     # get coordinate list from intersections of edges with faces
-    threshold = 1.01 - (cm.shellThickness / 100)
+    threshold = getThreshold(cm)
 
     if len(coordMatrix) == 0:
         coordMatrix.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
