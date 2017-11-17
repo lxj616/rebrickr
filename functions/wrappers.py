@@ -28,6 +28,7 @@ import bpy
 # Rebrickr imports
 from ..functions import *
 
+# https://github.com/CGCookie/retopoflow
 def timed_call(label, precision=2):
     def wrapper(fn):
         def wrapped(*args, **kwargs):
@@ -40,3 +41,21 @@ def timed_call(label, precision=2):
             return ret
         return wrapped
     return wrapper
+
+# https://github.com/CGCookie/retopoflow
+def blender_version(op, ver):
+    def nop(*args, **kwargs): pass
+    def nop_decorator(fn): return nop
+    def fn_decorator(fn): return fn
+
+    major,minor,rev = bpy.app.version
+    blenderver = '%d.%02d' % (major,minor)
+    #dprint('%s %s %s' % (ver, op, blenderver))
+    if   op == '<':  retfn = (blenderver < ver)
+    elif op == '<=': retfn = (blenderver <= ver)
+    elif op == '==': retfn = (blenderver == ver)
+    elif op == '>=': retfn = (blenderver >= ver)
+    elif op == '>':  retfn = (blenderver > ver)
+    elif op == '!=': retfn = (blenderver != ver)
+    else: assert False, 'unhandled op: "%s"' % op
+    return fn_decorator if retfn else nop_decorator

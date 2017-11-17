@@ -514,9 +514,6 @@ def dirtyBricks(self, context):
 #         select(obj, active=obj, only=False)
 #     print("here")
 
-class stringPropertyGroup(bpy.types.PropertyGroup):
-    name = StringProperty()
-
 # Create custom property group
 class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     name = StringProperty(update=uniquifyName)
@@ -942,18 +939,9 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyMatrix,
         default="XY")
 
-    BFMKeys = CollectionProperty(type=stringPropertyGroup)
-    
-    activeBFMKey = StringProperty(default="")#, update=updateActiveObject)
-        # EnumProperty(
-        # name="Active brick dictionary",
-        # description="",
-        # items=get_items,
-        # # options={"ANIMATABLE"},
-        # # update=None,
-        # # get=None,
-        # # set=None,
-        # default=None)
+    activeKeyX = IntProperty(default=0)
+    activeKeyY = IntProperty(default=0)
+    activeKeyZ = IntProperty(default=0)
 
     modelCreatedOnFrame = IntProperty(default=-1)
 

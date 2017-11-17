@@ -67,23 +67,11 @@ def handle_animation(scene):
                                 brick.hide_render = not onCurF
                             if scn.objects.active is not None and "Rebrickr_%(n)s_bricks_combined_frame_" % locals() in scn.objects.active.name and onCurF:
                                 select(brick, active=brick)
-                                cm.activeBFMKey = ""
                             # prevent bricks from being selected on frame change
                             elif brick.select:
                                 brick.select = False
 
 bpy.app.handlers.frame_change_pre.append(handle_animation)
-
-@persistent
-def handle_clearing_bfmkeys(scene):
-    scn = scene
-    if rebrickrIsActive():
-        cm = scn.cmlist[scn.cmlist_index]
-        if cm.animated:
-            if cm.BFMKeys != "":
-                cm.BFMKeys.clear()
-
-bpy.app.handlers.frame_change_pre.append(handle_clearing_bfmkeys)
 
 def isObjVisible(scn, cm):
     scn = bpy.context.scene
@@ -189,7 +177,10 @@ def handle_selections(scene):
                     active_obj = scn.objects.active
                     if active_obj.isBrick:
                         # adjust scn.active_brick_detail based on active brick
-                        cm.activeBFMKey = active_obj.name.split("__")[1]
+                        activeKey = active_obj.name.split("__")[1].split(",")
+                        cm.activeKeyX = int(activeKey[0])
+                        cm.activeKeyY = int(activeKey[1])
+                        cm.activeKeyZ = int(activeKey[2])
                     return
             # if no matching cmlist item found, set cmlist_index to -1
             scn.cmlist_index = -1

@@ -51,27 +51,27 @@ class Bricks:
         return brickObjs
 
     @staticmethod
-    def new_mesh(dimensions, type=[1,1,3], logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_resolution=None, logo_inset=None, undersideDetail="Flat", stud=True, numStudVerts=None):
+    def new_mesh(dimensions, size=[1,1,3], logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_resolution=None, logo_inset=None, undersideDetail="Flat", stud=True, numStudVerts=None):
         """ create unlinked Brick at origin """
 
         bm = bmesh.new()
 
-        brickBM = makeBrick(dimensions=dimensions, brickSize=type, numStudVerts=numStudVerts, detail=undersideDetail, stud=stud)
+        brickBM = makeBrick(dimensions=dimensions, brickSize=size, numStudVerts=numStudVerts, detail=undersideDetail, stud=stud)
         if logo and stud:
-            # get logo rotation angle based on type of brick
+            # get logo rotation angle based on size of brick
             rot_mult = 180
             rot_vars = 2
             rot_add = 0
-            if type[0] == 1 and type[1] == 1:
+            if size[0] == 1 and size[1] == 1:
                 rot_mult = 90
                 rot_vars = 4
-            elif type[0] == 2 and type[1] > 2:
+            elif size[0] == 2 and size[1] > 2:
                 rot_add = 90
-            elif type[1] == 2 and type[0] > 2:
+            elif size[1] == 2 and size[0] > 2:
                 pass
-            elif type[0] == 2 and type[1] == 2:
+            elif size[0] == 2 and size[1] == 2:
                 pass
-            elif type[0] == 1:
+            elif size[0] == 1:
                 rot_add = 90
             # set zRot to random rotation angle
             if all_vars:
@@ -109,8 +109,8 @@ class Bricks:
             bms = []
             for zRot in zRots:
                 bm_cur = bm.copy()
-                for x in range(type[0]):
-                    for y in range(type[1]):
+                for x in range(size[0]):
+                    for y in range(size[1]):
                         logoBM = logoBM_ref.copy()
                         # rotate logo around stud
                         if zRot != 0:

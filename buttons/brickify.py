@@ -35,7 +35,7 @@ props = bpy.props
 # Rebrickr imports
 from ..functions import *
 from ..lib.bricksDict import *
-# from ..functions.wrappers import timed_call
+# from ..functions.wrappers import *
 from .materials import RebrickrApplyMaterial
 from .delete import RebrickrDelete
 from .bevel import RebrickrBevel
@@ -216,7 +216,10 @@ class RebrickrBrickify(bpy.types.Operator):
         if bricksDict is None:
             bricksDict, loadedFromCache = getBricksDict(action, source, source_details, dimensions, R, updateCursor, curFrame)
             if curFrame == sceneCurFrame:
-                cm.activeBFMKey = "" # random.choice(list(bricksDict.keys()))
+                # random.choice(list(bricksDict.keys()))
+                cm.activeKeyX = 0
+                cm.activeKeyY = 0
+                cm.activeKeyZ = 0
         if curFrame is not None:
             group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
@@ -231,8 +234,9 @@ class RebrickrBrickify(bpy.types.Operator):
                 bD["bot_exposed"] = None
         bricksCreated = makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, createGroup=createGroup)
         if selectCreated:
+            select(None)
             for brick in bricksCreated:
-                brick.select = True
+                select(brick, active=brick, only=False)
         cacheBricksDict(action, cm, bricksDict, curFrame=curFrame) # store current bricksDict to cache
         return group_name
 

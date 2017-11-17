@@ -56,15 +56,24 @@ class RebrickrBrickModPanel(Panel):
         if scn.cmlist_index == -1:
             return False
         cm = scn.cmlist[scn.cmlist_index]
-        if cm.matrixIsDirty:
-            return False
-        if not cm.lastSplitModel:
+        if not (cm.modelCreated or cm.animated):
             return False
         return True
 
     def draw(self, context):
         layout = self.layout
         scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+
+        if cm.matrixIsDirty:
+            layout.label("Matrix is dirty!")
+            return
+        if cm.animated:
+            layout.label("Not available for animations")
+            return
+        if not cm.lastSplitModel:
+            layout.label("Split model for brick mods")
+            return
 
         col1 = layout.column(align=True)
         col1.label("Toggle Exposure:")
@@ -121,11 +130,7 @@ class RebrickrBrickDetailsPanel(Panel):
         if scn.cmlist_index == -1:
             return False
         cm = scn.cmlist[scn.cmlist_index]
-        if cm.matrixIsDirty:
-            return False
         if not (cm.modelCreated or cm.animated):
-            return False
-        if rebrickr_bfm_cache.get(cm.id) is None and cm.BFMCache == "":
             return False
         return True
 
@@ -134,22 +139,37 @@ class RebrickrBrickDetailsPanel(Panel):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
 
-        if len(cm.BFMKeys) == 0:
-            layout.operator("rebrickr.populate_dict_keys", text="Populate Dict Keys")
+        if cm.matrixIsDirty:
+            layout.label("Matrix is dirty!")
+            return
+        if rebrickr_bfm_cache.get(cm.id) is None and cm.BFMCache == "":
+            layout.label("Matrix not cached!")
+            return
+
+        col1 = layout.column(align=True)
+        split = col1.split(align=True, percentage=0.33)
+        col = split.column(align=True)
+        col.prop(cm, "activeKeyX", text="x")
+        col = split.column(align=True)
+        col.prop(cm, "activeKeyY", text="y")
+        col = split.column(align=True)
+        col.prop(cm, "activeKeyZ", text="z")
 
         try:
             if cm.animated:
                 bricksDict,_ = getBricksDict("UPDATE_ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current))
             elif cm.modelCreated:
                 bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-            if cm.activeBFMKey != "":
-                dictKey = cm.activeBFMKey
-            elif len(cm.BFMKeys) != 0:
-                dictKey = cm.BFMKeys[0].name
+            aKX = cm.activeKeyX
+            aKY = cm.activeKeyY
+            aKZ = cm.activeKeyZ
+            if aKX != -1 and aKY != -1 and aKZ != -1:
+                dictKey = "%(aKX)s,%(aKY)s,%(aKZ)s" % locals()
             else:
                 dictKey = None
             brickD = bricksDict[dictKey]
         except Exception as e:
+            layout.label("No brick details available")
             if len(bricksDict) == 0:
                 print("Skipped drawing Brick Details")
             elif str(e)[1:-1] == dictKey:
@@ -165,9 +185,6 @@ class RebrickrBrickDetailsPanel(Panel):
             return
 
         col1 = layout.column(align=True)
-        if len(cm.BFMKeys) > 0:
-            col1.prop_search(cm, "activeBFMKey", cm, "BFMKeys", text="Dict Key")
-        # col1.prop(cm, "activeKeyInDetailViewer", text="DictKey")
         split = col1.split(align=True, percentage=0.35)
         # hard code keys so that they are in the order I want
         keys = ["name", "val", "draw", "co", "nearest_face_idx", "mat_name", "parent_brick", "size", "attempted_merge", "top_exposed", "bot_exposed", "type"]

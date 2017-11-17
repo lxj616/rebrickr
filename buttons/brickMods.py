@@ -193,6 +193,9 @@ class mergeBricks(bpy.types.Operator):
                             parentObjSize[1] += objSize[1]
                             curBrickD = bricksDict[parent_brick["dictKey"]]
                             curBrickD["size"][1] = parentObjSize[1]
+                            curBrickD["top_exposed"] = bricksDict[dictKey]["top_exposed"]
+                            curBrickD["bot_exposed"] = bricksDict[dictKey]["bot_exposed"]
+                            curBrickD["type"] = None
                             delete(obj)
                         # TODO: change to elif when above is uncommented
                         if (parentObjSize[1] in [1, objSize[1]] and
@@ -202,6 +205,9 @@ class mergeBricks(bpy.types.Operator):
                             parentObjSize[0] += objSize[0]
                             curBrickD = bricksDict[parent_brick["dictKey"]]
                             curBrickD["size"][0] = parentObjSize[0]
+                            curBrickD["top_exposed"] = bricksDict[dictKey]["top_exposed"]
+                            curBrickD["bot_exposed"] = bricksDict[dictKey]["bot_exposed"]
+                            curBrickD["type"] = None
                             delete(obj)
                     else:
                         # store parent_brick object size
@@ -254,7 +260,10 @@ class setExposure(bpy.types.Operator):
         scn = bpy.context.scene
         selected_objects = bpy.context.selected_objects
         active_obj = scn.objects.active
-        if active_obj is not None: initial_active_obj_name = active_obj.name
+        if active_obj is not None:
+            initial_active_obj_name = active_obj.name
+        else:
+            initial_active_obj_name = ""
 
         bricksDicts = {}
 
@@ -485,6 +494,17 @@ class drawAdjacent(bpy.types.Operator):
                 for j,dkl in enumerate(self.adjDKLs[i]):
                     self.toggleBrick(cm, dkl, dictKey, objSize, i, j, createAdjBricks[i])
 
+        # if bricks created on top, set top_exposed of original brick to False
+        if self.zPos:
+            self.bricksDict[dictKey]["top_exposed"] = False
+            self.keysToUpdate.append(dictKey)
+            delete(obj)
+        # if bricks created on bottom, set top_exposed of original brick to False
+        if self.zNeg:
+            self.bricksDict[dictKey]["bot_exposed"] = False
+            self.keysToUpdate.append(dictKey)
+            delete(obj)
+
         # draw created bricks
         if len(self.keysToUpdate) > 0:
             runCreateNewBricks(cm, self.bricksDict, self.keysToUpdate, selectCreated=False)
@@ -528,7 +548,13 @@ class changeBrickType(bpy.types.Operator):
         cm = getItemByID(scn.cmlist, obj.cmlist_id)
         # get bricksDict from cache
         self.bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+        dictKey, dictKeyLoc = getDictKeyDetails(obj)
         self.cm_idx = cm.idx
+        curBrickType = self.bricksDict[dictKey]["type"]
+        if curBrickType is not None:
+            self.brickType = curBrickType
+        else:
+            self.brickType = "STANDARD"
 
     def get_items(self, context):
         scn = bpy.context.scene
@@ -541,7 +567,7 @@ class changeBrickType(bpy.types.Operator):
         objSize = bricksDict[dictKey]["size"]
 
         if (objSize[2] == 3 and
-           (objSize[0] + objSize[1] < 8 or
+           (objSize[0] + objSize[1] in [3,4,5,6,7] or
            (objSize[0] == 6 and objSize[1] == 2) or
            (objSize[0] == 2 and objSize[1] == 6))):
             items.append(("SLOPE", "Slope", ""))
@@ -584,7 +610,7 @@ class changeBrickType(bpy.types.Operator):
 
         # skip bricks that are already of type self.brickType
         if self.bricksDict[dictKey]["type"] == self.brickType:
-            return
+            return {"CANCELLED"}
 
         # turn 1x1 & 1x2 plates into slopes
         if (self.brickType == "SLOPE" and
@@ -625,7 +651,7 @@ class changeBrickType(bpy.types.Operator):
             pass
         # skip anything else
         else:
-            return
+            return {"CANCELLED"}
 
         # set type of parent_brick to self.brickType
         self.bricksDict[dictKey]["type"] = self.brickType

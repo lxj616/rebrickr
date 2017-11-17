@@ -29,7 +29,7 @@ import bpy
 from .generate import *
 from .modify import *
 from ..caches import rebrickr_bfm_cache
-from ...functions.wrappers import timed_call
+from ...functions.wrappers import *
 from ...functions.__init__ import getAction
 
 def getBricksDict(action, source=None, source_details=None, dimensions=None, R=None, updateCursor=None, curFrame=None, cm=None):
