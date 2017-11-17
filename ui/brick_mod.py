@@ -139,7 +139,7 @@ class RebrickrBrickDetailsPanel(Panel):
 
         try:
             if cm.animated:
-                bricksDict,_ = getBricksDict("UPDATE_ANIM", cm=cm, curFrame=scn.frame_current)
+                bricksDict,_ = getBricksDict("UPDATE_ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current))
             elif cm.modelCreated:
                 bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
             if cm.activeBFMKey != "":

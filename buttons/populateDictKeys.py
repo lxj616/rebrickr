@@ -30,6 +30,7 @@ props = bpy.props
 # Rebrickr imports
 from ..functions import *
 from ..lib.bricksDict import *
+from ..ui.app_handlers import getAnimAdjustedFrame
 
 class RebrickrPopulateDictKeys(bpy.types.Operator):
     """ Populate bricksDict keys (cm.BFMKeys) """                               # blender will use this as a tooltip for menu items and buttons.
@@ -49,23 +50,11 @@ class RebrickrPopulateDictKeys(bpy.types.Operator):
         try:
             scn = bpy.context.scene
             cm = scn.cmlist[scn.cmlist_index]
-            # if cm.animated:
-            #     bricksDict,_ = getBricksDict("UPDATE_ANIM", cm=cm)
-            #     keys = list(bricksDict.keys())
-            #     keys.sort()
-            #     # keys = sorted(keys, key=lambda x: [x[4], x[0], x[2]])
-            #     animBFMFrame = cm.animBFMFrames.get(scn.frame_current)
-            #     if animBFMFrame is None:
-            #         cm.animBFMFrames.add().name = scn.frame_current
-            #         animBFMFrame = cm.animBFMFrames[scn.frame_current]
-            #     for key in keys:
-            #         if key not in list(animBFMFrame.keys()):
-            #             newKey = animBFMFrame.add().name = key
-            # elif cm.modelCreated:
-            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            if cm.animated:
+                bricksDict,_ = getBricksDict("UPDATE_ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current))
+            elif cm.modelCreated:
+                bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
             keys = list(bricksDict.keys())
-            keys.sort()
-            # keys = sorted(keys, key=lambda x: [x[4], x[0], x[2]])
             for key in keys:
                 if key not in list(cm.BFMKeys.keys()):
                     newKey = cm.BFMKeys.add().name = key

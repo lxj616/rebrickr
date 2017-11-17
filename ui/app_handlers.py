@@ -39,6 +39,15 @@ def rebrickrIsActive():
         rebrickrIsActive = False
     return rebrickrIsActive
 
+def getAnimAdjustedFrame(cm, frame):
+    if frame < cm.lastStartFrame:
+        curFrame = cm.lastStartFrame
+    elif frame > cm.lastStopFrame:
+        curFrame = cm.lastStopFrame
+    else:
+        curFrame = frame
+    return curFrame
+
 @persistent
 def handle_animation(scene):
     scn = scene
@@ -48,7 +57,8 @@ def handle_animation(scene):
                 n = cm.source_name
                 for cf in range(cm.lastStartFrame, cm.lastStopFrame + 1):
                     curBricks = bpy.data.groups.get("Rebrickr_%(n)s_bricks_frame_%(cf)s" % locals())
-                    onCurF = scn.frame_current == cf or (cf == cm.lastStartFrame and scn.frame_current < cm.lastStartFrame) or (cf == cm.lastStopFrame and scn.frame_current > cm.lastStopFrame)
+                    adjusted_frame_current = getAnimAdjustedFrame(cm, scn.frame_current)
+                    onCurF = adjusted_frame_current == cf
                     if curBricks is not None:
                         for brick in curBricks.objects:
                             # hide bricks from view and render unless on current frame

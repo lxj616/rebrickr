@@ -49,6 +49,8 @@ def getBricksDict(action, source=None, source_details=None, dimensions=None, R=N
         loadedFromCache = True
         # if animated, index into that dict
         if action == "UPDATE_ANIM":
+            if curFrame is None:
+                curFrame = scn.frame_current
             bricksDict = bricksDict[str(curFrame)]
     else:
         bricksDict = makeBricksDict(source, source_details, dimensions, R, cursorStatus=updateCursor)
