@@ -103,12 +103,7 @@ class splitBricks(bpy.types.Operator):
                 # delete the current object
                 delete(obj)
 
-                # define zStep
-                if cm.brickType in ["Bricks", "Custom"]:
-                    zStep = 3
-                else:
-                    zStep = 1
-
+                zStep = getZStep(cm)
                 # set size of active brick's bricksDict entries to 1x1x[lastZSize]
                 zType = bricksDict[dictKey]["size"][2]
                 for x in range(x0, x0 + objSize[0]):
@@ -399,12 +394,7 @@ class drawAdjacent(bpy.types.Operator):
             # get size of current brick (e.g. [2, 4, 1])
             objSize = self.bricksDict[dictKey]["size"]
 
-            # define zStep
-            if cm.brickType in ["Bricks", "Custom"]:
-                zStep = 3
-            else:
-                zStep = 1
-
+            zStep = getZStep(cm)
             self.adjDKLs = [[],[],[],[],[],[]]
             # set up self.adjDKLs
             for y0 in range(y, y + objSize[1]):
@@ -532,12 +522,7 @@ class drawAdjacent(bpy.types.Operator):
             # store enabled/disabled values
             createAdjBricks = [self.xPos, self.xNeg, self.yPos, self.yNeg, self.zPos, self.zNeg]
 
-            # define zStep
-            if cm.brickType in ["Bricks", "Custom"]:
-                zStep = 3
-            else:
-                zStep = 1
-
+            zStep = getZStep(cm)
             # check all 6 directions for action to be executed
             for i in range(6):
                 if (createAdjBricks[i] or (not createAdjBricks[i] and self.adjBricksCreated[i][0])):

@@ -34,6 +34,7 @@ from ...functions.common import *
 from ...functions.general import *
 from ...functions.generate_lattice import generateLattice
 from ...functions.wrappers import *
+from .functions import getZStep
 
 def VectorRound(vec, dec, roundType="ROUND"):
     """ round all vals in Vector 'vec' to 'dec' precision using 'ROUND', 'FLOOR', or 'CEIL' """
@@ -206,6 +207,42 @@ def setNF(matShellDepth, j, orig, target, faceIdxMatrix):
     """ match value in faceIdxMatrix of 'target' to 'orig' if within matShellDepth """
     if ((1-j)*100) < matShellDepth:
         faceIdxMatrix[target[0]][target[1]][target[2]] = faceIdxMatrix[orig[0]][orig[1]][orig[2]]
+
+def isInternal(bricksDict, key):
+    val = bricksDict[key]["val"]
+    return (val > 0 and val < 1) or val == -1
+
+def updateInternal(bricksDict, keys, cm, clearExisting=False):
+    # clear extisting internal structure
+    if clearExisting:
+        zStep = getZStep(cm)
+        for key in keys:
+            # set all bricks as unmerged
+            if bricksDict[key]["draw"]:
+                bricksDict[key]["parent_brick"] = "self"
+                bricksDict[key]["size"] = [1, 1, zStep]
+            if isInternal(bricksDict, key):
+                bricksDict[key]["draw"] = False
+    # Draw column supports
+    if cm.internalSupports == "Columns":
+        step = cm.colStep + cm.colThickness
+        for key in keys:
+            x,y,z = strToList(key)
+            if x % step in range(cm.colThickness):
+                if y % step in range(cm.colThickness):
+                    if isInternal(bricksDict, key):
+                        bricksDict[key]["draw"] = True
+    # draw lattice supports
+    elif cm.internalSupports == "Lattice":
+        step = cm.latticeStep
+        for key in keys:
+            x,y,z = strToList(key)
+            if x % step == 0 and (not cm.alternateXY or z % 2 == 0):
+                if isInternal(bricksDict, key):
+                    bricksDict[key]["draw"] = True
+            elif y % step == 0 and (not cm.alternateXY or z % 2 == 1):
+                if isInternal(bricksDict, key):
+                    bricksDict[key]["draw"] = True
 
 def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", cursorStatus=False):
     """ returns new brickFreqMatrix """
@@ -396,33 +433,6 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         ct = time.time()
     update_progress("Internal", 1)
 
-    # Draw supports
-    if cm.internalSupports == "Columns":
-        start = cm.colStep + cm.colThickness
-        stop = len(coordMatrix)
-        step = cm.colStep + cm.colThickness
-        for x in range(start, stop, step):
-            for y in range(start, len(coordMatrix[0]), step):
-                for z in range(0, len(coordMatrix[0][0])):
-                    for j in range(cm.colThickness):
-                        for k in range(cm.colThickness):
-                            if (brickFreqMatrix[x-j][y-k][z] > 0 and brickFreqMatrix[x-j][y-k][z] < 1) or brickFreqMatrix[x-j][y-k][z] == -1:
-                                brickFreqMatrix[x-j][y-k][z] = 1.5
-    elif cm.internalSupports == "Lattice":
-        if cm.alternateXY:
-            alt = 0
-        else:
-            alt = 0.5
-        for z in range(0, len(coordMatrix[0][0])):
-            alt += 1
-            for x in range(0, len(coordMatrix)):
-                for y in range(0, len(coordMatrix[0])):
-                    if x % cm.latticeStep != 0 or alt % 2 == 1:
-                        if y % cm.latticeStep != 0 or alt % 2 == 0:
-                            continue
-                    if (brickFreqMatrix[x][y][z] > 0 and brickFreqMatrix[x][y][z] < 1) or brickFreqMatrix[x][y][z] == -1:
-                        brickFreqMatrix[x][y][z] = 1.5
-
     # bm = bmesh.new()
     # for x in range(len(coordMatrix)):
     #     for y in range(len(coordMatrix[0])):
@@ -483,6 +493,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
 
     # create bricks dictionary with brickFreqMatrix values
     bricks = []
+    keys = []
     i = 0
     bricksDict = {}
     for x in range(len(coordMatrix)):
@@ -498,6 +509,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                 if type(faceIdxMatrix[x][y][z]) == dict:
                     nf = faceIdxMatrix[x][y][z]["idx"]
                 bKey = listToStr([x,y,z])
+                keys.append(bKey)
                 drawBrick = brickFreqMatrix[x][y][z] >= threshold
                 bricksDict[bKey] = {
                     "name":'Rebrickr_%(n)s_brick_%(j)s__%(bKey)s' % locals(),
@@ -512,6 +524,8 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                     "top_exposed":None,
                     "bot_exposed":None,
                     "type":None}
+
+    updateInternal(bricksDict, keys, cm)
 
     # return list of created Brick objects
     return bricksDict

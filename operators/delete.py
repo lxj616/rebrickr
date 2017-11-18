@@ -71,12 +71,7 @@ def deleteUnprotected(context, use_global=False):
             # get size of current brick (e.g. [2, 4, 1])
             objSize = bricksDict[dictKey]["size"]
 
-            # define zStep
-            if cm.brickType in ["Bricks", "Custom"]:
-                zStep = 3
-            else:
-                zStep = 1
-
+            zStep = getZStep(cm)
             # for all locations in bricksDict covered by current obj
             for x in range(x0, x0 + objSize[0]):
                 for y in range(y0, y0 + objSize[1]):

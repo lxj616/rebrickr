@@ -49,12 +49,12 @@ def updateCanRun(type):
     else:
         cm = scn.cmlist[scn.cmlist_index]
         if type == "ANIMATION":
-            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.matrixIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
+            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
         elif type == "MODEL":
             # set up variables
             n = cm.source_name
             Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.matrixIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and not (cm.materialType == "Random" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
+            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and not (cm.materialType == "Random" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
 
 def importLogo():
     """ import logo object from Rebrickr addon folder """
@@ -191,7 +191,7 @@ class RebrickrBrickify(bpy.types.Operator):
         else:
             group_name = None
         # reset all values for certain keys in bricksDict dictionaries
-        if action == "UPDATE_MODEL" and cm.buildIsDirty and loadedFromCache:
+        if cm.buildIsDirty and loadedFromCache:
             threshold = getThreshold(cm)
             for kk in bricksDict:
                 bD = bricksDict[kk]
@@ -201,6 +201,9 @@ class RebrickrBrickify(bpy.types.Operator):
                 bD["bot_exposed"] = None
                 if cm.lastShellThickness != cm.shellThickness:
                     bD["draw"] = bD["val"] >= threshold
+        if cm.internalIsDirty and loadedFromCache:
+            updateInternal(bricksDict, list(bricksDict.keys()), cm, clearExisting=True)
+            cm.buildIsDirty = True
         bricksCreated = makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, createGroup=createGroup)
         if selectCreated:
             select(None)
@@ -871,6 +874,7 @@ class RebrickrBrickify(bpy.types.Operator):
         cm.sourceIsDirty = False
         cm.bricksAreDirty = False
         cm.matrixIsDirty = False
+        cm.internalIsDirty = False
         scn.Rebrickr_runningOperation = False
 
         # apply random materials

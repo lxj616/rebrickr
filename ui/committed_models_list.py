@@ -509,6 +509,11 @@ def dirtyMatrix(self, context):
     cm = scn.cmlist[scn.cmlist_index]
     cm.matrixIsDirty = True
 
+def dirtyInternal(self, context):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    cm.internalIsDirty = True
+
 def dirtyBuild(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -773,30 +778,30 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         items=[("None", "None", "No internal supports"),
               ("Lattice", "Lattice", "Use latice inside model"),
               ("Columns", "Columns", "Use columns inside model")],
-        update=dirtyMatrix,
+        update=dirtyInternal,
         default="None")
     latticeStep = IntProperty(
         name="Lattice Step",
         description="Distance between cross-beams",
-        update=dirtyMatrix,
+        update=dirtyInternal,
         step=1,
         min=2, max=25,
         default=2)
     alternateXY = BoolProperty(
         name="Alternate X and Y",
         description="Alternate back-and-forth and side-to-side beams",
-        update=dirtyMatrix,
+        update=dirtyInternal,
         default=False)
     colThickness = IntProperty(
         name="Column Thickness",
         description="Thickness of the columns",
-        update=dirtyMatrix,
+        update=dirtyInternal,
         min=1, max=25,
         default=2)
     colStep = IntProperty(
         name="Column Step",
         description="Distance between columns",
-        update=dirtyMatrix,
+        update=dirtyInternal,
         step=1,
         min=1, max=25,
         default=2)
@@ -986,6 +991,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     sourceIsDirty = BoolProperty(default=True)
     bricksAreDirty = BoolProperty(default=True)
     matrixIsDirty = BoolProperty(default=True)
+    internalIsDirty = BoolProperty(default=True)
 
 # -------------------------------------------------------------------
 # register
