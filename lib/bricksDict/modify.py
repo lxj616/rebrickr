@@ -27,7 +27,6 @@ import bpy
 
 # Rebrickr imports
 from ...functions.general import *
-from .functions import getDictKey
 
 def addMaterialsToBricksDict(bricksDict, source):
     """ sets all matNames in bricksDict based on nearest_face_idx """
@@ -42,16 +41,15 @@ def addMaterialsToBricksDict(bricksDict, source):
             bricksDict[key]["mat_name"] = matName
     return bricksDict
 
-def brickAvail(sourceBrick, keys, brick):
+def brickAvail(sourceBrick, brick):
     """ check brick is available to merge """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     n = cm.source_name
     Rebrickr_internal_mn = "Rebrickr_%(n)s_internal" % locals()
     if brick is not None:
-        dictKey,_ = getDictKey(brick["name"])
-        # This if statement ensures brick is present, brick isn't drawn already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal), and finally that the brick is in 'keys'
-        if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats) and dictKey in keys:
+        # This if statement ensures brick is present, brick isn't drawn already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal)
+        if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats):
             return True
     return False
 
@@ -62,104 +60,104 @@ def getNextBrick(bricks, loc, x, y, z=0):
     except KeyError:
         return None
 
-def plateIsBrick(brickD, keys, bricksD, loc, x, y, h=3):
+def plateIsBrick(brickD, bricksD, loc, x, y, h=3):
     for i in range(1,h):
-        if not brickAvail(brickD, keys, getNextBrick(bricksD, loc, x, y, i)):
+        if not brickAvail(brickD, getNextBrick(bricksD, loc, x, y, i)):
             return False
     return True
 
-def attemptMerge(cm, bricksD, key, loc, isBrick, brickSizes, bt2, randState, keys=None):
+def attemptMerge(cm, bricksD, key, loc, isBrick, brickSizes, bt2, randState):
     brickD = bricksD[key]
 
     nextBrick0 = getNextBrick(bricksD, loc, 1, 0)
-    canBeBrick = not isBrick or plateIsBrick(brickD, keys, bricksD, loc, 1, 0)
-    if brickAvail(brickD, keys, nextBrick0) and canBeBrick and cm.maxBrickScale1 > 1 and cm.brickType != "Custom":
+    canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 1, 0)
+    if brickAvail(brickD, nextBrick0) and canBeBrick and cm.maxBrickScale1 > 1 and cm.brickType != "Custom":
         nextBrick = getNextBrick(bricksD, loc, 2, 0)
-        canBeBrick = not isBrick or plateIsBrick(brickD, keys, bricksD, loc, 2, 0)
-        if brickAvail(brickD, keys, nextBrick) and canBeBrick and cm.maxBrickScale1 > 2:
+        canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 2, 0)
+        if brickAvail(brickD, nextBrick) and canBeBrick and cm.maxBrickScale1 > 2:
             if isBrick:
                 brickSizes.append([3,1,3])
             else:
                 brickSizes.append([3,1,bt2])
             nextBrick = getNextBrick(bricksD, loc, 3, 0)
-            canBeBrick = not isBrick or plateIsBrick(brickD, keys, bricksD, loc, 3, 0)
-            if brickAvail(brickD, keys, nextBrick) and canBeBrick and cm.maxBrickScale1 > 3:
+            canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 3, 0)
+            if brickAvail(brickD, nextBrick) and canBeBrick and cm.maxBrickScale1 > 3:
                 if isBrick:
                     brickSizes.append([4,1,3])
                 else:
                     brickSizes.append([4,1,bt2])
                 nextBrick0 = getNextBrick(bricksD, loc, 4, 0)
                 nextBrick1 = getNextBrick(bricksD, loc, 5, 0)
-                canBeBrick = not isBrick or plateIsBrick(brickD, keys, bricksD, loc, 4, 0) and plateIsBrick(brickD, keys, bricksD, loc, 5, 0)
-                if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 5:
+                canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 4, 0) and plateIsBrick(brickD, bricksD, loc, 5, 0)
+                if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 5:
                     if isBrick:
                         brickSizes.append([6,1,3])
                     else:
                         brickSizes.append([6,1,bt2])
                     nextBrick0 = getNextBrick(bricksD, loc, 6, 0)
                     nextBrick1 = getNextBrick(bricksD, loc, 7, 0)
-                    canBeBrick = not isBrick or plateIsBrick(brickD, keys, bricksD, loc, 6, 0) and plateIsBrick(brickD, keys, bricksD, loc, 7, 0)
-                    if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 7:
+                    canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 6, 0) and plateIsBrick(brickD, bricksD, loc, 7, 0)
+                    if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 7:
                         if isBrick:
                             brickSizes.append([8,1,3])
                         else:
                             brickSizes.append([8,1,bt2])
     nextBrick1 = getNextBrick(bricksD, loc, 0, 1)
-    canBeBrick = not isBrick or plateIsBrick(brickD, keys, bricksD, loc, 0, 1)
-    if brickAvail(brickD, keys, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 1 and cm.brickType != "Custom":
+    canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 0, 1)
+    if brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 1 and cm.brickType != "Custom":
         if isBrick:
             brickSizes.append([1,2,3])
         else:
             brickSizes.append([1,2,bt2])
         nextBrick = getNextBrick(bricksD, loc, 0, 2)
-        canBeBrick = not isBrick or plateIsBrick(brickD, keys, bricksD, loc, 0, 2)
-        if brickAvail(brickD, keys, nextBrick) and canBeBrick and cm.maxBrickScale1 > 2:
+        canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 0, 2)
+        if brickAvail(brickD, nextBrick) and canBeBrick and cm.maxBrickScale1 > 2:
             if isBrick:
                 brickSizes.append([1,3,3])
             else:
                 brickSizes.append([1,3,bt2])
             nextBrick = getNextBrick(bricksD, loc, 0, 3)
-            canBeBrick = not isBrick or plateIsBrick(brickD, keys, bricksD, loc, 0, 3)
-            if brickAvail(brickD, keys, nextBrick) and canBeBrick and cm.maxBrickScale1 > 3:
+            canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 0, 3)
+            if brickAvail(brickD, nextBrick) and canBeBrick and cm.maxBrickScale1 > 3:
                 if isBrick:
                     brickSizes.append([1,4,3])
                 else:
                     brickSizes.append([1,4,bt2])
                 nextBrick0 = getNextBrick(bricksD, loc, 0, 4)
                 nextBrick1 = getNextBrick(bricksD, loc, 0, 5)
-                canBeBrick = not isBrick or (plateIsBrick(brickD, keys, bricksD, loc, 0, 4) and plateIsBrick(brickD, keys, bricksD, loc, 0, 5))
-                if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 5:
+                canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 4) and plateIsBrick(brickD, bricksD, loc, 0, 5))
+                if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 5:
                     if isBrick:
                         brickSizes.append([1,6,3])
                     else:
                         brickSizes.append([1,6,bt2])
                     nextBrick0 = getNextBrick(bricksD, loc, 0, 6)
                     nextBrick1 = getNextBrick(bricksD, loc, 0, 7)
-                    canBeBrick = not isBrick or (plateIsBrick(brickD, keys, bricksD, loc, 0, 6) and plateIsBrick(brickD, keys, bricksD, loc, 0, 7))
-                    if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 7:
+                    canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 6) and plateIsBrick(brickD, bricksD, loc, 0, 7))
+                    if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale1 > 7:
                         if isBrick:
                             brickSizes.append([1,8,3])
                         else:
                             brickSizes.append([1,8,bt2])
     nextBrick2 = getNextBrick(bricksD, loc, 1, 1)
-    canBeBrick = not isBrick or plateIsBrick(brickD, keys, bricksD, loc, 1, 1)
-    if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and brickAvail(brickD, keys, nextBrick2) and canBeBrick and cm.maxBrickScale2 > 1 and cm.brickType != "Custom":
+    canBeBrick = not isBrick or plateIsBrick(brickD, bricksD, loc, 1, 1)
+    if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and canBeBrick and cm.maxBrickScale2 > 1 and cm.brickType != "Custom":
         if isBrick:
             brickSizes.append([2,2,3])
         else:
             brickSizes.append([2,2,bt2])
         nextBrick0 = getNextBrick(bricksD, loc, 0, 2)
         nextBrick1 = getNextBrick(bricksD, loc, 1, 2)
-        canBeBrick = not isBrick or (plateIsBrick(brickD, keys, bricksD, loc, 0, 2) and plateIsBrick(brickD, keys, bricksD, loc, 1, 2))
-        if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 2:
+        canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 2) and plateIsBrick(brickD, bricksD, loc, 1, 2))
+        if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 2:
             if isBrick:
                 brickSizes.append([2,3,3])
             else:
                 brickSizes.append([2,3,bt2])
             nextBrick0 = getNextBrick(bricksD, loc, 0, 3)
             nextBrick1 = getNextBrick(bricksD, loc, 1, 3)
-            canBeBrick = not isBrick or (plateIsBrick(brickD, keys, bricksD, loc, 0, 3) and plateIsBrick(brickD, keys, bricksD, loc, 1, 3))
-            if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 3:
+            canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 3) and plateIsBrick(brickD, bricksD, loc, 1, 3))
+            if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 3:
                 if isBrick:
                     brickSizes.append([2,4,3])
                 else:
@@ -168,8 +166,8 @@ def attemptMerge(cm, bricksD, key, loc, isBrick, brickSizes, bt2, randState, key
                 nextBrick1 = getNextBrick(bricksD, loc, 1, 4)
                 nextBrick2 = getNextBrick(bricksD, loc, 0, 5)
                 nextBrick3 = getNextBrick(bricksD, loc, 1, 5)
-                canBeBrick = not isBrick or (plateIsBrick(brickD, keys, bricksD, loc, 0, 4) and plateIsBrick(brickD, keys, bricksD, loc, 1, 4) and plateIsBrick(brickD, keys, bricksD, loc, 0, 5) and plateIsBrick(brickD, keys, bricksD, loc, 1, 5))
-                if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and brickAvail(brickD, keys, nextBrick2) and brickAvail(brickD, keys, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 5:
+                canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 4) and plateIsBrick(brickD, bricksD, loc, 1, 4) and plateIsBrick(brickD, bricksD, loc, 0, 5) and plateIsBrick(brickD, bricksD, loc, 1, 5))
+                if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 5:
                     if isBrick:
                         brickSizes.append([2,6,3])
                     else:
@@ -178,8 +176,8 @@ def attemptMerge(cm, bricksD, key, loc, isBrick, brickSizes, bt2, randState, key
                     nextBrick1 = getNextBrick(bricksD, loc, 1, 6)
                     nextBrick2 = getNextBrick(bricksD, loc, 0, 7)
                     nextBrick3 = getNextBrick(bricksD, loc, 1, 7)
-                    canBeBrick = not isBrick or (plateIsBrick(brickD, keys, bricksD, loc, 0, 6) and plateIsBrick(brickD, keys, bricksD, loc, 1, 6) and plateIsBrick(brickD, keys, bricksD, loc, 0, 7) and plateIsBrick(brickD, keys, bricksD, loc, 1, 7))
-                    if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and brickAvail(brickD, keys, nextBrick2) and brickAvail(brickD, keys, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 7:
+                    canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 6) and plateIsBrick(brickD, bricksD, loc, 1, 6) and plateIsBrick(brickD, bricksD, loc, 0, 7) and plateIsBrick(brickD, bricksD, loc, 1, 7))
+                    if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 7:
                         if isBrick:
                             brickSizes.append([2,8,3])
                         else:
@@ -188,24 +186,24 @@ def attemptMerge(cm, bricksD, key, loc, isBrick, brickSizes, bt2, randState, key
                         nextBrick1 = getNextBrick(bricksD, loc, 1, 8)
                         nextBrick2 = getNextBrick(bricksD, loc, 0, 9)
                         nextBrick3 = getNextBrick(bricksD, loc, 1, 9)
-                        canBeBrick = not isBrick or (plateIsBrick(brickD, keys, bricksD, loc, 0, 8) and plateIsBrick(brickD, keys, bricksD, loc, 1, 8) and plateIsBrick(brickD, keys, bricksD, loc, 0, 9) and plateIsBrick(brickD, keys, bricksD, loc, 1, 9))
-                        if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and brickAvail(brickD, keys, nextBrick2) and brickAvail(brickD, keys, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 9:
+                        canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 0, 8) and plateIsBrick(brickD, bricksD, loc, 1, 8) and plateIsBrick(brickD, bricksD, loc, 0, 9) and plateIsBrick(brickD, bricksD, loc, 1, 9))
+                        if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 9:
                             if isBrick:
                                 brickSizes.append([2,10,3])
                             else:
                                 brickSizes.append([2,10,bt2])
         nextBrick0 = getNextBrick(bricksD, loc, 2, 0)
         nextBrick1 = getNextBrick(bricksD, loc, 2, 1)
-        canBeBrick = not isBrick or (plateIsBrick(brickD, keys, bricksD, loc, 2, 0) and plateIsBrick(brickD, keys, bricksD, loc, 2, 1))
-        if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 2:
+        canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 2, 0) and plateIsBrick(brickD, bricksD, loc, 2, 1))
+        if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 2:
             if isBrick:
                 brickSizes.append([3,2,3])
             else:
                 brickSizes.append([3,2,bt2])
             nextBrick0 = getNextBrick(bricksD, loc, 3, 0)
             nextBrick1 = getNextBrick(bricksD, loc, 3, 1)
-            canBeBrick = not isBrick or (plateIsBrick(brickD, keys, bricksD, loc, 3, 0) and plateIsBrick(brickD, keys, bricksD, loc, 3, 1))
-            if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 3:
+            canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 3, 0) and plateIsBrick(brickD, bricksD, loc, 3, 1))
+            if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and canBeBrick and cm.maxBrickScale2 > 3:
                 if isBrick:
                     brickSizes.append([4,2,3])
                 else:
@@ -214,8 +212,8 @@ def attemptMerge(cm, bricksD, key, loc, isBrick, brickSizes, bt2, randState, key
                 nextBrick1 = getNextBrick(bricksD, loc, 4, 1)
                 nextBrick2 = getNextBrick(bricksD, loc, 5, 0)
                 nextBrick3 = getNextBrick(bricksD, loc, 5, 1)
-                canBeBrick = not isBrick or (plateIsBrick(brickD, keys, bricksD, loc, 4, 0) and plateIsBrick(brickD, keys, bricksD, loc, 4, 1) and plateIsBrick(brickD, keys, bricksD, loc, 5, 0) and plateIsBrick(brickD, keys, bricksD, loc, 5, 1))
-                if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and brickAvail(brickD, keys, nextBrick2) and brickAvail(brickD, keys, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 5:
+                canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 4, 0) and plateIsBrick(brickD, bricksD, loc, 4, 1) and plateIsBrick(brickD, bricksD, loc, 5, 0) and plateIsBrick(brickD, bricksD, loc, 5, 1))
+                if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 5:
                     if isBrick:
                         brickSizes.append([6,2,3])
                     else:
@@ -224,8 +222,8 @@ def attemptMerge(cm, bricksD, key, loc, isBrick, brickSizes, bt2, randState, key
                     nextBrick1 = getNextBrick(bricksD, loc, 6, 1)
                     nextBrick2 = getNextBrick(bricksD, loc, 7, 0)
                     nextBrick3 = getNextBrick(bricksD, loc, 7, 1)
-                    canBeBrick = not isBrick or (plateIsBrick(brickD, keys, bricksD, loc, 6, 0) and plateIsBrick(brickD, keys, bricksD, loc, 6, 1) and plateIsBrick(brickD, keys, bricksD, loc, 7, 0) and plateIsBrick(brickD, keys, bricksD, loc, 7, 1))
-                    if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and brickAvail(brickD, keys, nextBrick2) and brickAvail(brickD, keys, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 7:
+                    canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 6, 0) and plateIsBrick(brickD, bricksD, loc, 6, 1) and plateIsBrick(brickD, bricksD, loc, 7, 0) and plateIsBrick(brickD, bricksD, loc, 7, 1))
+                    if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 7:
                         if isBrick:
                             brickSizes.append([8,2,3])
                         else:
@@ -234,8 +232,8 @@ def attemptMerge(cm, bricksD, key, loc, isBrick, brickSizes, bt2, randState, key
                         nextBrick1 = getNextBrick(bricksD, loc, 8, 1)
                         nextBrick2 = getNextBrick(bricksD, loc, 9, 0)
                         nextBrick3 = getNextBrick(bricksD, loc, 9, 1)
-                        canBeBrick = not isBrick or (plateIsBrick(brickD, keys, bricksD, loc, 8, 0) and plateIsBrick(brickD, keys, bricksD, loc, 8, 1) and plateIsBrick(brickD, keys, bricksD, loc, 9, 0) and plateIsBrick(brickD, keys, bricksD, loc, 9, 1))
-                        if brickAvail(brickD, keys, nextBrick0) and brickAvail(brickD, keys, nextBrick1) and brickAvail(brickD, keys, nextBrick2) and brickAvail(brickD, keys, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 9:
+                        canBeBrick = not isBrick or (plateIsBrick(brickD, bricksD, loc, 8, 0) and plateIsBrick(brickD, bricksD, loc, 8, 1) and plateIsBrick(brickD, bricksD, loc, 9, 0) and plateIsBrick(brickD, bricksD, loc, 9, 1))
+                        if brickAvail(brickD, nextBrick0) and brickAvail(brickD, nextBrick1) and brickAvail(brickD, nextBrick2) and brickAvail(brickD, nextBrick3) and canBeBrick and cm.maxBrickScale2 > 9:
                             if isBrick:
                                 brickSizes.append([10,2,3])
                             else:
