@@ -76,6 +76,14 @@ def getItemByID(collection, id):
     else:
         return None
 
+def str_to_bool(s):
+    if s == 'True':
+         return True
+    elif s == 'False':
+         return False
+    else:
+         raise ValueError # evil ValueError that doesn't tell you what the wrong value was
+
 # def get_settings():
 #     if not hasattr(get_settings, 'settings'):
 #         addons = bpy.context.user_preferences.addons

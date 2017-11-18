@@ -35,6 +35,7 @@ props = bpy.props
 # Rebrickr imports
 from ..functions import *
 from ..lib.bricksDict import *
+from ..ui.cmlist import dirtyMatrix
 from .materials import RebrickrApplyMaterial
 from .delete import RebrickrDelete
 from .bevel import RebrickrBevel
@@ -177,7 +178,6 @@ class RebrickrBrickify(bpy.types.Operator):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        if keys == "ALL": keys = list(bricksDict.keys())
         _,_,_,R, customData, customObj_details = getArgumentsForBricksDict(cm, source=source, source_details=source_details, dimensions=dimensions)
         updateCursor = action in ["CREATE", "UPDATE_MODEL"] # evaluates to boolean value
         if bricksDict is None:
@@ -193,17 +193,21 @@ class RebrickrBrickify(bpy.types.Operator):
             group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
             group_name = None
+        if keys == "ALL": keys = list(bricksDict.keys())
         # reset all values for certain keys in bricksDict dictionaries
         if cm.buildIsDirty and loadedFromCache:
             threshold = getThreshold(cm)
-            for kk in keys:
+            for kk in bricksDict.keys():
                 bD = bricksDict[kk]
-                bD["size"] = None
-                bD["parent_brick"] = None
-                bD["top_exposed"] = None
-                bD["bot_exposed"] = None
-                if cm.lastShellThickness != cm.shellThickness:
-                    bD["draw"] = bD["val"] >= threshold
+                if kk in keys:
+                    bD["size"] = None
+                    bD["parent_brick"] = None
+                    bD["top_exposed"] = None
+                    bD["bot_exposed"] = None
+                    if cm.lastShellThickness != cm.shellThickness:
+                        bD["draw"] = bD["val"] >= threshold
+                # else:
+                #     bD["attempted_merge"] = True
         if not loadedFromCache or cm.internalIsDirty:
             updateInternal(bricksDict, keys, cm, clearExisting=loadedFromCache)
             cm.buildIsDirty = True
@@ -407,7 +411,7 @@ class RebrickrBrickify(bpy.types.Operator):
             obj.layers = self.sourceOrig.layers
             # update location of bricks in case source mesh has been edited
             if updateParentLoc:
-                lastSourceMid = strToList(cm.lastSourceMid)
+                lastSourceMid = list(map(int, strToList(cm.lastSourceMid, float)))
                 v = Vector(parentLoc) - Vector(lastSourceMid)
                 center_v = Vector((0, 0, 0))
                 v_new = v - center_v
@@ -851,6 +855,11 @@ class RebrickrBrickify(bpy.types.Operator):
         source = self.getObjectToBrickify()
         source["old_parent"] = ""
 
+        # check if matrix is dirty
+        if cm.matrixIsDirty:
+            if cm.lastMatrixSettings == getMatrixSettings():
+                cm.matrixIsDirty = False
+
         if not self.isValid(source, Rebrickr_bricks_gn):
             return {"CANCELLED"}
 
@@ -870,6 +879,7 @@ class RebrickrBrickify(bpy.types.Operator):
         cm.lastBrickType = cm.brickType
         cm.lastMaterialType = cm.materialType
         cm.lastShellThickness = cm.shellThickness
+        cm.lastMatrixSettings = getMatrixSettings()
         cm.materialIsDirty = False
         cm.brickMaterialsAreDirty = False
         cm.modelIsDirty = False

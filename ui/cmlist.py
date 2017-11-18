@@ -504,7 +504,7 @@ def dirtyModel(self, context):
     cm = scn.cmlist[scn.cmlist_index]
     cm.modelIsDirty = True
 
-def dirtyMatrix(self, context):
+def dirtyMatrix(self=None, context=None):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     cm.matrixIsDirty = True
@@ -662,7 +662,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         step=1,
         precision=3,
         min=0.001, max=10,
-        default=.1)
+        default=0.1)
     gap = FloatProperty(
         name="Gap Between Bricks",
         description="Distance between bricks",
@@ -670,7 +670,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         step=1,
         precision=3,
         min=0, max=0.1,
-        default=.01)
+        default=0.01)
 
     mergeSeed = IntProperty(
         name="Random Seed",
@@ -842,6 +842,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         min=-1, max=5000,
         default=1000)
 
+    lastMatrixSettings = StringProperty(default="")
     useNormals = BoolProperty(
         name="Use Normals",
         description="Use normals to calculate insideness of bricks (WARNING: May produce inaccurate model if source is not single closed mesh)",

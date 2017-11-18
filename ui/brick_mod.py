@@ -30,7 +30,7 @@ from bpy.props import *
 props = bpy.props
 
 # Rebrickr imports
-from .committed_models_list import *
+from .cmlist import *
 from .app_handlers import *
 from .buttons import *
 from ..lib.bricksDict import *
@@ -65,7 +65,7 @@ class RebrickrBrickModPanel(Panel):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
 
-        if cm.matrixIsDirty:
+        if cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings():
             layout.label("Matrix is dirty!")
             return
         if cm.animated:
@@ -136,7 +136,7 @@ class RebrickrBrickDetailsPanel(Panel):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
 
-        if cm.matrixIsDirty:
+        if cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings():
             layout.label("Matrix is dirty!")
             return
         if rebrickr_bfm_cache.get(cm.id) is None and cm.BFMCache == "":
@@ -156,6 +156,9 @@ class RebrickrBrickDetailsPanel(Panel):
             bricksDict,_ = getBricksDict("UPDATE_ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current), restrictContext=True)
         elif cm.modelCreated:
             bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)
+        if bricksDict is None:
+            layout.label("Matrix not available")
+            return
         aKX = cm.activeKeyX
         aKY = cm.activeKeyY
         aKZ = cm.activeKeyZ

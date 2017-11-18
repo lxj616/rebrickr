@@ -159,7 +159,6 @@ def deleteUnprotected(context, use_global=False):
         cm = scn.cmlist[cm_idx]
         bricksDict = bricksDicts[cm_idx]["dict"]
         keysToUpdate = bricksDicts[cm_idx]["keys_to_update"]
-        # cm.buildIsDirty = True
         # draw modified bricks
         if len(keysToUpdate) > 0:
             # delete bricks that didn't get deleted already
@@ -168,6 +167,7 @@ def deleteUnprotected(context, use_global=False):
                 delete(brick)
             # create new bricks at all keysToUpdate locations
             runCreateNewBricks2(cm, bricksDict, keysToUpdate)
+        # cache the resulting bricksDict
         cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
 
     return protected

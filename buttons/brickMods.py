@@ -44,6 +44,32 @@ def runCreateNewBricks2(cm, bricksDict, keysToUpdate, selectCreated=True):
     # actually draw the bricks
     RebrickrBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, action, bricksDict=bricksDict, keys=keysToUpdate, createGroup=False, selectCreated=selectCreated)
 
+
+class RebrickrRevertSettings(bpy.types.Operator):
+    """Revert Matrix settings to save brick mods"""                             # blender will use this as a tooltip for menu items and buttons.
+    bl_idname = "rebrickr.revert_matrix_settings"                               # unique identifier for buttons and menu items to reference.
+    bl_label = "Revert Matrix Settings"                                         # display name in the interface.
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        """ ensures operator can execute (if not, returns False) """
+        scn = bpy.context.scene
+        if scn.cmlist_index == -1:
+            return False
+        cm = scn.cmlist[scn.cmlist_index]
+        # check that matrix settings have changed
+        if cm.sourceIsDirty or (cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings()):
+            return True
+        return False
+
+    def execute(self, context):
+        try:
+            revertMatrixSettings()
+        except:
+            handle_exception()
+        return{"FINISHED"}
+
 class splitBricks(bpy.types.Operator):
     """Split selected bricks into 1x1 bricks"""                                 # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "rebrickr.split_bricks"                                         # unique identifier for buttons and menu items to reference.

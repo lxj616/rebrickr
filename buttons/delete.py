@@ -280,6 +280,7 @@ class RebrickrDelete(bpy.types.Operator):
         cm.lastLogoResolution = 0
         cm.lastLogoDetail = 'None'
         cm.lastSplitModel = False
+        cm.lastMatrixSettings = ""
         cm.animIsDirty = True
         cm.materialIsDirty = True
         cm.modelIsDirty = True

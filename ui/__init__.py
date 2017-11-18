@@ -30,7 +30,7 @@ from bpy.props import *
 props = bpy.props
 
 # Rebrickr imports
-from .committed_models_list import *
+from .cmlist import *
 from .app_handlers import *
 from .buttons import *
 from .brick_mod import *
@@ -209,6 +209,11 @@ class BrickModelsPanel(Panel):
                     col.operator("rebrickr.brickify", text="Update Model", icon="FILE_REFRESH")
                     col = split.column(align=True)
                     col.operator("rebrickr.edit_source", icon="EDIT", text="Edit")
+                    if cm.sourceIsDirty or (cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings()):
+                        row = col1.row(align=True)
+                        row.label("Brick mods will be lost")
+                        row = col1.row(align=True)
+                        row.operator("rebrickr.revert_matrix_settings", text="Revert Settings", icon="LOOP_BACK")
                     if cm.sourceIsDirty:
                         row = col1.row(align=True)
                         row.label("Source mesh changed; update to reflect changes")

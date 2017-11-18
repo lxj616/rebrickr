@@ -46,6 +46,8 @@ class clearCache(bpy.types.Operator):
                 rebrickr_bm_cache[key] = None
             for key in rebrickr_bfm_cache:
                 rebrickr_bfm_cache[key] = None
+                cm = getItemByID(scn.cmlist, key)
+                cm.matrixIsDirty = True
 
             # clear deep matrix caches
             for cm in scn.cmlist:

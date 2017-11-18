@@ -21,6 +21,7 @@ Created by Christopher Gearhart
 
 # System imports
 import collections
+import json
 
 # Blender imports
 import bpy
@@ -121,14 +122,41 @@ def getBricks(cm=None):
                 bricks += list(bGroup.objects)
     return bricks
 
+def getMatrixSettings(cm=None):
+    if cm is None:
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+    return listToStr([cm.brickHeight, cm.gap, cm.brickType, cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ, cm.customObjectName, cm.useNormals, cm.verifyExposure, cm.insidenessRayCastDir, cm.castDoubleCheckRays, cm.brickShell, cm.calculationAxes])
+
+def revertMatrixSettings(cm=None):
+    if cm is None:
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+    settings = cm.lastMatrixSettings.split(",")
+    cm.brickHeight = float(settings[0])
+    cm.gap = float(settings[1])
+    cm.brickType = settings[2]
+    cm.distOffsetX = float(settings[3])
+    cm.distOffsetY = float(settings[4])
+    cm.distOffsetZ = float(settings[5])
+    cm.customObjectName = settings[6]
+    cm.useNormals = str_to_bool(settings[7])
+    cm.verifyExposure = str_to_bool(settings[8])
+    cm.insidenessRayCastDir = settings[9]
+    cm.castDoubleCheckRays = str_to_bool(settings[10])
+    cm.brickShell = settings[11]
+    cm.calculationAxes = settings[12]
+
 def listToStr(lst):
-    assert type(lst) in [list, tuple] and len(lst) == 3
-    x,y,z = lst
-    string = "%(x)s,%(y)s,%(z)s" % locals()
+    assert type(lst) in [list, tuple]
+    string = str(lst[0])
+    for i in range(1, len(lst)):
+        item = lst[i]
+        string = "%(string)s,%(item)s" % locals()
     return string
 def strToList(string, item_type=int, split_on=","):
     lst = string.split(split_on)
-    assert type(string) is str and len(lst) == 3 and type(split_on) is str
+    assert type(string) is str and type(split_on) is str
     lst = list(map(item_type, lst))
     return lst
 def strToTuple(string, item_type=int, split_on=","):
