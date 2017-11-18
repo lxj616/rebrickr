@@ -43,9 +43,10 @@ from bpy.props import *
 from ..lib.bricksDict import *
 from ..functions.common import *
 from ..functions.general import *
-from ..buttons.brickMods import getDictKey, getAdjKeysAndBrickVals, runCreateNewBricks2
+from ..buttons.brickMods import getAdjKeysAndBrickVals, runCreateNewBricks2
 from ..buttons.delete import RebrickrDelete
 from ..lib.Brick import Bricks
+from ..lib.bricksDict.functions import getDictKey
 
 def deleteUnprotected(context, use_global=False):
     scn = context.scene
@@ -67,7 +68,7 @@ def deleteUnprotected(context, use_global=False):
                 bricksDict = bricksDicts[cm.idx]["dict"]
 
             # get dict key details of current obj
-            dictKey, dictLoc = getDictKey(obj)
+            dictKey, dictLoc = getDictKey(obj.name)
             x0,y0,z0 = dictLoc
             # get size of current brick (e.g. [2, 4, 1])
             objSize = bricksDict[dictKey]["size"]
@@ -92,6 +93,7 @@ def deleteUnprotected(context, use_global=False):
                                         bricksDict[k0]["draw"] = True
                                         bricksDict[k0]["size"] = [1,1,zStep]
                                         bricksDict[k0]["parent_brick"] = "self"
+                                        bricksDict[k0]["mat_name"] = bricksDict[curKey]["mat_name"]
                                         if k0 not in keysToUpdate:
                                             # add key to simple bricksDict for drawing
                                             keysToUpdate.append(k0)
@@ -157,9 +159,7 @@ def deleteUnprotected(context, use_global=False):
         cm = scn.cmlist[cm_idx]
         bricksDict = bricksDicts[cm_idx]["dict"]
         keysToUpdate = bricksDicts[cm_idx]["keys_to_update"]
-        cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
-        Bricks.splitAll(bricksDict, keys=keysToUpdate, cm=cm)
-        cm.buildIsDirty = True
+        # cm.buildIsDirty = True
         # draw modified bricks
         if len(keysToUpdate) > 0:
             # delete bricks that didn't get deleted already
@@ -168,6 +168,7 @@ def deleteUnprotected(context, use_global=False):
                 delete(brick)
             # create new bricks at all keysToUpdate locations
             runCreateNewBricks2(cm, bricksDict, keysToUpdate)
+        cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
 
     return protected
 

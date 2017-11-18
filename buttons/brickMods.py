@@ -29,13 +29,8 @@ from bpy.props import *
 # Rebrickr imports
 from ..functions import *
 from .brickify import *
+from ..lib.bricksDict import getDictKey
 
-
-def getDictKey(obj):
-    """ get dict key details of obj """
-    dictKey = obj.name.split("__")[1]
-    dictLoc = strToList(dictKey)
-    return dictKey, dictLoc
 
 def runCreateNewBricks2(cm, bricksDict, keysToUpdate, selectCreated=True):
     # get arguments for createNewBricks
@@ -91,7 +86,7 @@ class splitBricks(bpy.types.Operator):
                     bricksDict = bricksDicts[cm.idx]["dict"]
 
                 # get dict key details of current obj
-                dictKey, dictLoc = getDictKey(obj=obj)
+                dictKey, dictLoc = getDictKey(obj.name)
                 x0,y0,z0 = dictLoc
                 # get size of current brick (e.g. [2, 4, 1])
                 objSize = bricksDict[dictKey]["size"]
@@ -182,7 +177,7 @@ class mergeBricks(bpy.types.Operator):
                 # iterate through objects in bricks_to_merge[cm_idx]
                 for obj in bricks_to_merge[cm_idx]:
                     # get dict key details of current obj
-                    dictKey, dictLoc = getDictKey(obj=obj)
+                    dictKey, dictLoc = getDictKey(obj.name)
                     x0,y0,z0 = dictLoc
                     # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
@@ -290,7 +285,7 @@ class setExposure(bpy.types.Operator):
                         bricksDict = bricksDicts[cm.idx]["dict"]
 
                     # get dict key details of current obj
-                    dictKey, dictLoc = getDictKey(obj=obj)
+                    dictKey, dictLoc = getDictKey(obj.name)
                     # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
 
@@ -392,7 +387,7 @@ class drawAdjacent(bpy.types.Operator):
             self.xNeg = False
 
             # get dict key details of current obj
-            dictKey, dictLoc = getDictKey(obj=obj)
+            dictKey, dictLoc = getDictKey(obj.name)
             x,y,z = dictLoc
             # get size of current brick (e.g. [2, 4, 1])
             objSize = self.bricksDict[dictKey]["size"]
@@ -517,7 +512,7 @@ class drawAdjacent(bpy.types.Operator):
             self.keysToUpdate = []
 
             # get dict key details of current obj
-            dictKey, dictLoc = getDictKey(obj=obj)
+            dictKey, dictLoc = getDictKey(obj.name)
             x0,y0,z0 = dictLoc
             # get size of current brick (e.g. [2, 4, 1])
             objSize = self.bricksDict[dictKey]["size"]
@@ -601,7 +596,7 @@ class changeBrickType(bpy.types.Operator):
             cm = getItemByID(scn.cmlist, obj.cmlist_id)
             # get bricksDict from cache
             self.bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-            dictKey, dictLoc = getDictKey(obj=obj)
+            dictKey, dictLoc = getDictKey(obj.name)
             self.cm_idx = cm.idx
             curBrickType = self.bricksDict[dictKey]["type"]
             if curBrickType is not None:
@@ -617,7 +612,7 @@ class changeBrickType(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         items = [("STANDARD", "Standard", "")]
 
-        dictKey, dictLoc = getDictKey(obj=obj)
+        dictKey, dictLoc = getDictKey(obj.name)
         bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
         objSize = bricksDict[dictKey]["size"]
 
@@ -659,7 +654,7 @@ class changeBrickType(bpy.types.Operator):
             obj = scn.objects.active
 
             # get dict key details of current obj
-            dictKey, dictLoc = getDictKey(obj=obj)
+            dictKey, dictLoc = getDictKey(obj.name)
             x0,y0,z0 = dictLoc
             # get size of current brick (e.g. [2, 4, 1])
             objSize = self.bricksDict[dictKey]["size"]
@@ -766,7 +761,7 @@ class redrawBricks(bpy.types.Operator):
                         bricksDict = bricksDicts[cm.idx]["dict"]
 
                     # get dict key details of current obj
-                    dictKey, dictLoc = getDictKey(obj=obj)
+                    dictKey, dictLoc = getDictKey(obj.name)
 
                     # delete the current object
                     delete(obj)

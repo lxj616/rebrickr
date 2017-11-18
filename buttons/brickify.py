@@ -177,6 +177,7 @@ class RebrickrBrickify(bpy.types.Operator):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
+        if keys == "ALL": keys = list(bricksDict.keys())
         _,_,_,R, customData, customObj_details = getArgumentsForBricksDict(cm, source=source, source_details=source_details, dimensions=dimensions)
         updateCursor = action in ["CREATE", "UPDATE_MODEL"] # evaluates to boolean value
         if bricksDict is None:
@@ -195,7 +196,7 @@ class RebrickrBrickify(bpy.types.Operator):
         # reset all values for certain keys in bricksDict dictionaries
         if cm.buildIsDirty and loadedFromCache:
             threshold = getThreshold(cm)
-            for kk in bricksDict:
+            for kk in keys:
                 bD = bricksDict[kk]
                 bD["size"] = None
                 bD["parent_brick"] = None
@@ -204,7 +205,7 @@ class RebrickrBrickify(bpy.types.Operator):
                 if cm.lastShellThickness != cm.shellThickness:
                     bD["draw"] = bD["val"] >= threshold
         if not loadedFromCache or cm.internalIsDirty:
-            updateInternal(bricksDict, list(bricksDict.keys()), cm, clearExisting=loadedFromCache)
+            updateInternal(bricksDict, keys, cm, clearExisting=loadedFromCache)
             cm.buildIsDirty = True
         bricksCreated = makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, createGroup=createGroup)
         if selectCreated:

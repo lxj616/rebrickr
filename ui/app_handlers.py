@@ -29,7 +29,7 @@ from mathutils import Vector, Euler
 
 # Rebrickr imports
 from ..functions import *
-from ..lib.bricksDict import lightToDeepCache, deepToLightCache
+from ..lib.bricksDict import lightToDeepCache, deepToLightCache, getDictKey
 from ..lib.caches import rebrickr_bfm_cache
 from ..buttons.brickMods import *
 
@@ -178,7 +178,7 @@ def handle_selections(scene):
                     active_obj = scn.objects.active
                     if active_obj.isBrick:
                         # adjust scn.active_brick_detail based on active brick
-                        _,dictLoc = getDictKey(active_obj)
+                        _,dictLoc = getDictKey(active_obj.name)
                         x0,y0,z0 = dictLoc
                         cm.activeKeyX = x0
                         cm.activeKeyY = y0
@@ -265,6 +265,14 @@ def handle_saving_in_edit_mode(scene):
             scn.update()
 
 bpy.app.handlers.save_pre.append(handle_saving_in_edit_mode)
+
+# clear light cache before file load
+@persistent
+def clear_bfm_cache(dummy):
+    if rebrickrIsActive():
+        for key in rebrickr_bfm_cache.keys():
+            rebrickr_bfm_cache[key] = None
+bpy.app.handlers.load_pre.append(clear_bfm_cache)
 
 # pull dicts from deep cache to light cache on load
 @persistent

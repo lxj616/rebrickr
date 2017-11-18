@@ -308,7 +308,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
 
                 # attempt to merge current brick with surrounding bricks, according to available brick types
                 if brickD["size"] is None or cm.buildIsDirty:
-                    brickSize = attemptMerge(cm, bricksD, key, loc, isBrick, brickSizes, bt2, randS1)
+                    brickSize = attemptMerge(cm, bricksD, key, loc, isBrick, brickSizes, bt2, randS1, keys=keys)
                 else:
                     brickSize = brickD["size"]
 

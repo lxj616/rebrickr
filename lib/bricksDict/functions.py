@@ -29,6 +29,12 @@ import bpy
 from ...functions import *
 from ..Brick import Bricks
 
+def getDictKey(name):
+    """ get dict key details of obj """
+    dictKey = name.split("__")[1]
+    dictLoc = strToList(dictKey)
+    return dictKey, dictLoc
+
 def getDetailsAndBounds(source, skipDimensions=False):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
