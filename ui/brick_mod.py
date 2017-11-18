@@ -100,8 +100,13 @@ class RebrickrBrickModPanel(Panel):
         # change brick type
         row = col1.row(align=True)
         row.operator("rebrickr.change_brick_type", text="Change Type")
-        # print bricksDict key for active object
-        row = col1.row(align=True)
+        # additional controls
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop(cm, "autoUpdateExposed")
+        row = col.row(align=True)
+        row.operator("rebrickr.redraw_bricks")
+
 
         # next level:
         # enter brick sculpt mode
@@ -155,7 +160,7 @@ class RebrickrBrickDetailsPanel(Panel):
         aKY = cm.activeKeyY
         aKZ = cm.activeKeyZ
         try:
-            dictKey = "%(aKX)s,%(aKY)s,%(aKZ)s" % locals()
+            dictKey = listToStr([aKX, aKY, aKZ])
             brickD = bricksDict[dictKey]
         except Exception as e:
             layout.label("No brick details available")

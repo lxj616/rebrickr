@@ -935,6 +935,11 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         update=updateStartAndStopFrames,
         default=False)
 
+    autoUpdateExposed = BoolProperty(
+        name="Auto Update Exposed",
+        description="When bricks are deleted, automatically update bricks that become exposed",
+        default=True)
+
     # CACHED BRICKFREQMATRIX
     BFMCache = StringProperty(default="")
     # source_hash = StringProperty(default="")

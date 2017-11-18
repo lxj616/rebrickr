@@ -28,26 +28,22 @@ from mathutils import Vector, Euler
 
 # Rebrickr imports
 from .common import confirmList
+from .general import *
 
 def storeTransformData(obj):
     """ store transform data from obj into cm.modelLoc/Rot/Scale """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     if obj is not None:
-        cm.modelLoc = str(obj.location.to_tuple())[1:-1]
-        # cm.modelLoc = str(obj.matrix_world.to_translation().to_tuple())[1:-1]
+        cm.modelLoc = listToStr(obj.location.to_tuple())
+        # cm.modelLoc = listToStr(obj.matrix_world.to_translation().to_tuple())
         obj.rotation_mode = "XYZ"
-        cm.modelRot = str(tuple(obj.rotation_euler))[1:-1]
-        cm.modelScale = str(obj.scale.to_tuple())[1:-1]
+        cm.modelRot = listToStr(tuple(obj.rotation_euler))
+        cm.modelScale = listToStr(obj.scale.to_tuple())
     elif obj is None:
         cm.modelLoc = "0,0,0"
         cm.modelRot = "0,0,0"
         cm.modelScale = "1,1,1"
-
-def convertToFloats(lst):
-    for i in range(len(lst)):
-        lst[i] = float(lst[i])
-    return lst
 
 def setTransformData(objList, source=None, skipLocation=False, skipRotation=False, skipScale=False):
     """ apply transform data from cm.modelLoc/Rot/Scale to objects in objList """
@@ -73,7 +69,10 @@ def setTransformData(objList, source=None, skipLocation=False, skipRotation=Fals
                 obj.rotation_euler.rotate(source.rotation_euler.to_matrix().inverted())
                 obj.rotation_euler.rotate(Euler(tuple(source["previous_rotation"]), "XYZ"))
         if not skipScale:
-            obj.scale = (obj.scale[0] * s[0], obj.scale[1] * s[1], obj.scale[2] * s[2])
+            osx,osy,osz = obj.scale
+            obj.scale = (osx * s[0],
+                         osy * s[1],
+                         osz * s[2])
             if source is not None:
                 obj.scale -= Vector(source.scale) - Vector(source["previous_scale"])
 
@@ -81,9 +80,9 @@ def getTransformData():
     """ return transform data from cm.modelLoc/Rot/Scale """
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
-    l = tuple(convertToFloats(cm.modelLoc.split(",")))
-    r = tuple(convertToFloats(cm.modelRot.split(",")))
-    s = tuple(convertToFloats(cm.modelScale.split(",")))
+    l = tuple(strToList(cm.modelLoc, float))
+    r = tuple(strToList(cm.modelRot, float))
+    s = tuple(strToList(cm.modelScale, float))
     return l,r,s
 
 def setSourceTransform(source, obj=None, objParent=None, last_origin_obj=None, skipLocation=False):
@@ -113,4 +112,9 @@ def setSourceTransform(source, obj=None, objParent=None, last_origin_obj=None, s
     source.rotation_mode = "XYZ"
     source.rotation_euler.rotate(objRot)
     source.rotation_euler.rotate(objParentRot)
-    source.scale = (source.scale[0] * objScale[0] * objParentScale[0], source.scale[1] * objScale[1] * objParentScale[1], source.scale[2] * objScale[2] * objParentScale[2])
+    ssx,ssy,ssz = source.scale
+    osx,osy,osz = objScale
+    opsx,opsy,opsz = objParentScale
+    source.scale = (ssx * osx * opsx,
+                    ssy * osy * opsy,
+                    ssz * osz * opsz)

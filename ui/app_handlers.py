@@ -177,10 +177,11 @@ def handle_selections(scene):
                     active_obj = scn.objects.active
                     if active_obj.isBrick:
                         # adjust scn.active_brick_detail based on active brick
-                        activeKey = active_obj.name.split("__")[1].split(",")
-                        cm.activeKeyX = int(activeKey[0])
-                        cm.activeKeyY = int(activeKey[1])
-                        cm.activeKeyZ = int(activeKey[2])
+                        _,dictLoc = getDictKey(active_obj)
+                        x0,y0,z0 = dictLoc
+                        cm.activeKeyX = x0
+                        cm.activeKeyY = y0
+                        cm.activeKeyZ = z0
                     return
             # if no matching cmlist item found, set cmlist_index to -1
             scn.cmlist_index = -1
@@ -211,22 +212,22 @@ def find_3dview_space():
 
     return space
 
-@persistent
-def handle_snapping(scene):
-    scn = bpy.context.scene
-    if rebrickrIsActive() and scn.Rebrickr_snapping:
-        # disable regular snapping if enabled
-        if not scn.tool_settings.use_snap:
-            scn.tool_settings.use_snap = True
-
-        if scn.cmlist_index != -1:
-            # snap transformations to scale
-            space = find_3dview_space()
-            cm = scn.cmlist[scn.cmlist_index]
-            space.grid_scale = cm.brickHeight + cm.gap
-
-
-bpy.app.handlers.scene_update_pre.append(handle_snapping)
+# @persistent
+# def handle_snapping(scene):
+#     scn = bpy.context.scene
+#     if rebrickrIsActive() and scn.Rebrickr_snapping:
+#         # disable regular snapping if enabled
+#         if not scn.tool_settings.use_snap:
+#             scn.tool_settings.use_snap = True
+#
+#         if scn.cmlist_index != -1:
+#             # snap transformations to scale
+#             space = find_3dview_space()
+#             cm = scn.cmlist[scn.cmlist_index]
+#             space.grid_scale = cm.brickHeight + cm.gap
+#
+#
+# bpy.app.handlers.scene_update_pre.append(handle_snapping)
 
 @persistent
 def handle_saving_in_edit_mode(scene):

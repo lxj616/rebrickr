@@ -26,7 +26,7 @@ Created by Christopher Gearhart
 import bpy
 
 # Rebrickr imports
-# NONE!
+from ...functions.general import *
 
 def addMaterialsToBricksDict(bricksDict, source):
     """ sets all matNames in bricksDict based on nearest_face_idx """
@@ -258,7 +258,8 @@ def attemptMerge(cm, bricksD, key, loc, isBrick, brickSizes, bt2, randState):
                 if cm.brickType in ["Bricks", "Custom"] and z > loc[2]:
                     continue
                 # get brick at x,y location
-                curBrick = bricksD["%(x)s,%(y)s,%(z)s" % locals()]
+                k0 = listToStr([x,y,z])
+                curBrick = bricksD[k0]
                 curBrick["attempted_merge"] = True
                  # checks that x,y,z refer to original brick
                 if (x + y + z) == startingLoc:
@@ -274,22 +275,24 @@ def checkExposure(bricksD, x, y, z, direction:int=1):
     isExposed = False
     try:
         valKeysChecked = []
-        val = bricksD["%(x)s,%(y)s,%(z)s" % locals()]["val"]
+        k0 = listToStr([x,y,z])
+        val = bricksD[k0]["val"]
         if val == 0:
             isExposed = True
-        # Check bricks on Z axis [above or below depending on 'direction'] this brick until shell (2) hit. If ouside (0) hit first, [top or bottom depending on 'direction'] is exposed
-        elif val < 1 and val > 0:
+        # Check bricks on Z axis [above or below depending on 'direction'] this brick until shell (1) hit. If ouside (0) hit first, [top or bottom depending on 'direction'] is exposed
+        elif val > 0 and val < 1:
             zz = z
-            while val < 1 and val > 0:
+            while val > 0 and val < 1:
                 zz += direction
                 # NOTE: if key does not exist, we will be sent to 'except'
-                valKeysChecked.append("%(x)s,%(y)s,%(zz)s" % locals())
+                k1 = listToStr([x,y,zz])
+                valKeysChecked.append(k1)
                 val = bricksD[valKeysChecked[-1]]["val"]
                 if val == 0:
                     isExposed = True
     except KeyError:
         isExposed = True
-    # if outside (0) hit before shell (2) [above or below depending on 'direction'] exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
+    # if outside (0) hit before shell (1) [above or below depending on 'direction'] exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
     if isExposed and len(valKeysChecked) > 0:
         for k in valKeysChecked:
             val = bricksD[k]["val"] = 0
@@ -301,9 +304,7 @@ def getBrickExposure(cm, bricksD, key, loc=None):
 
     if loc is None:
         # get location of brick
-        loc = key.split(",")
-        for j in range(len(loc)):
-            loc[j] = int(loc[j])
+        loc = strToList(key)
 
     # get size of brick
     size = bricksD[key]["size"]
@@ -323,9 +324,10 @@ def getBrickExposure(cm, bricksD, key, loc=None):
                 if cm.brickType in ["Bricks", "Custom"] and z > loc[2]:
                     continue
                 # get brick at x,y location
-                curBrick = bricksD["%(x)s,%(y)s,%(z)s" % locals()]
+                k0 = listToStr([x,y,z])
+                curBrick = bricksD[k0]
                 # check if brick top or bottom is exposed
-                if curBrick["val"] == 2 or (cm.brickType == "Bricks and Plates" and size[2] == 3):
+                if curBrick["val"] == 1 or (cm.brickType == "Bricks and Plates" and size[2] == 3):
                     returnVal0 = checkExposure(bricksD, x, y, idxZa, 1)
                     if returnVal0: topExposed = True
                     returnVal1 = checkExposure(bricksD, x, y, idxZb, 1) # TODO: test -1 for last argument here

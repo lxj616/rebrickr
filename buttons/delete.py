@@ -239,10 +239,8 @@ class RebrickrDelete(bpy.types.Operator):
         if (modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (modelType == "ANIMATION" and cm.applyToSourceObject):
             l,r,s = getTransformData()
             if modelType == "MODEL":
-                loc = cm.lastSourceMid.split(",")
-                for i in range(len(loc)):
-                    loc[i] = float(loc[i])
-                setOriginToObjOrigin(toObj=source, fromLoc=tuple(loc))
+                loc = strToTuple(cm.lastSourceMid, float)
+                setOriginToObjOrigin(toObj=source, fromLoc=loc)
                 if brickLoc is not None:
                     source.location = source.location + brickLoc - source.matrix_world.to_translation()
                 else:

@@ -72,11 +72,11 @@ def register():
 
     bpy.types.Scene.Rebrickr_copy_from_id = IntProperty(default=-1)
 
-    bpy.types.Scene.Rebrickr_snapping = BoolProperty(
-        name="Rebrickr Snap",
-        description="Snap to brick dimensions",
-        default=False)
-    bpy.types.VIEW3D_HT_header.append(Rebrickr_snap_button)
+    # bpy.types.Scene.Rebrickr_snapping = BoolProperty(
+    #     name="Rebrickr Snap",
+    #     description="Snap to brick dimensions",
+    #     default=False)
+    # bpy.types.VIEW3D_HT_header.append(Rebrickr_snap_button)
 
     bpy.props.abs_plastic_materials_for_random = [
         'ABS Plastic Black',
@@ -139,7 +139,7 @@ def unregister():
     del Scn.cmlist
     del bpy.props.abs_plastic_materials_for_random
     bpy.types.VIEW3D_HT_header.remove(Rebrickr_snap_button)
-    del Scn.Rebrickr_snapping
+    # del Scn.Rebrickr_snapping
     del Scn.Rebrickr_copy_from_id
     del Scn.Rebrickr_last_active_object_name
     del Scn.Rebrickr_active_object_name

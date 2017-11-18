@@ -31,14 +31,13 @@ from ..functions import *
 from .brickify import *
 
 
-def getDictKeyDetails(brick):
-    """ get dict key details of brick """
-    dictKey = brick.name.split("__")[1]
-    dictKeyLoc = dictKey.split(",")
-    dictKeyLoc = list(map(int, dictKeyLoc))
-    return dictKey, dictKeyLoc
+def getDictKey(obj):
+    """ get dict key details of obj """
+    dictKey = obj.name.split("__")[1]
+    dictLoc = strToList(dictKey)
+    return dictKey, dictLoc
 
-def runCreateNewBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
+def runCreateNewBricks2(cm, bricksDict, keysToUpdate, selectCreated=True):
     # get arguments for createNewBricks
     n = cm.source_name
     source = bpy.data.objects.get(n + " (DO NOT RENAME)")
@@ -92,8 +91,8 @@ class splitBricks(bpy.types.Operator):
                     bricksDict = bricksDicts[cm.idx]["dict"]
 
                 # get dict key details of current obj
-                dictKey, dictKeyLoc = getDictKeyDetails(obj)
-                x0,y0,z0 = dictKeyLoc
+                dictKey, dictLoc = getDictKey(obj=obj)
+                x0,y0,z0 = dictLoc
                 # get size of current brick (e.g. [2, 4, 1])
                 objSize = bricksDict[dictKey]["size"]
 
@@ -115,10 +114,10 @@ class splitBricks(bpy.types.Operator):
                 for x in range(x0, x0 + objSize[0]):
                     for y in range(y0, y0 + objSize[1]):
                         for z in range(z0, z0 + objSize[2], zStep):
-                            curKey = "%(x)s,%(y)s,%(z)s" % locals()
+                            curKey = listToStr([x,y,z])
                             bricksDict[curKey]["size"] = [1, 1, zType]
                             bricksDict[curKey]["parent_brick"] = "self"
-                            # add bricksDict[dictKey] to simple bricksDict for drawing
+                            # add curKey to simple bricksDict for drawing
                             bricksDicts[cm.idx]["keys_to_update"].append(curKey)
             for cm_idx in bricksDicts.keys():
                 # store bricksDicts to cache
@@ -128,10 +127,11 @@ class splitBricks(bpy.types.Operator):
                 cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
                 # draw modified bricks
                 if len(keysToUpdate) > 0:
-                    runCreateNewBricks(cm, bricksDict, keysToUpdate)
+                    runCreateNewBricks2(cm, bricksDict, keysToUpdate)
         except:
             handle_exception()
         return{"FINISHED"}
+
 
 class mergeBricks(bpy.types.Operator):
     """Merge selected bricks"""                                                 # blender will use this as a tooltip for menu items and buttons.
@@ -187,8 +187,8 @@ class mergeBricks(bpy.types.Operator):
                 # iterate through objects in bricks_to_merge[cm_idx]
                 for obj in bricks_to_merge[cm_idx]:
                     # get dict key details of current obj
-                    dictKey, dictKeyLoc = getDictKeyDetails(obj)
-                    x0,y0,z0 = dictKeyLoc
+                    dictKey, dictLoc = getDictKey(obj=obj)
+                    x0,y0,z0 = dictLoc
                     # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
 
@@ -220,22 +220,22 @@ class mergeBricks(bpy.types.Operator):
                                 delete(obj)
                         else:
                             # store parent_brick object size
-                            parent_brick = {"obj":obj, "dictKey":dictKey, "dictKeyLoc":dictKeyLoc}
+                            parent_brick = {"obj":obj, "dictKey":dictKey, "dictLoc":dictLoc}
                             parentObjSize = objSize
                             keysToUpdate.append(dictKey)
                             delete(obj)
 
-                    # store lastDictKeyLoc
-                    lastDictKeyLoc = dictKeyLoc
+                    # store lastdictLoc
+                    lastdictLoc = dictLoc
                     for i in range(3):
-                        lastDictKeyLoc[i] += objSize[i] - 1
-                    x1,y1,z1 = lastDictKeyLoc
+                        lastdictLoc[i] += objSize[i] - 1
+                    x1,y1,z1 = lastdictLoc
 
                 # store bricksDict to cache
                 cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
                 # draw modified bricks
                 if len(keysToUpdate) > 0:
-                    runCreateNewBricks(cm, bricksDict, keysToUpdate)
+                    runCreateNewBricks2(cm, bricksDict, keysToUpdate)
         except:
             handle_exception()
         return{"FINISHED"}
@@ -295,7 +295,7 @@ class setExposure(bpy.types.Operator):
                         bricksDict = bricksDicts[cm.idx]["dict"]
 
                     # get dict key details of current obj
-                    dictKey, dictKeyLoc = getDictKeyDetails(obj)
+                    dictKey, dictLoc = getDictKey(obj=obj)
                     # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
 
@@ -308,7 +308,7 @@ class setExposure(bpy.types.Operator):
                     # set bottom as exposed
                     if self.side in ["BOTTOM", "BOTH"]:
                         bricksDict[dictKey]["bot_exposed"] = not bricksDict[dictKey]["bot_exposed"]
-                    # add bricksDict[dictKey] to simple bricksDict for drawing
+                    # add curKey to simple bricksDict for drawing
                     bricksDicts[cm.idx]["keys_to_update"].append(dictKey)
 
             for cm_idx in bricksDicts.keys():
@@ -319,7 +319,7 @@ class setExposure(bpy.types.Operator):
                 cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
                 # draw modified bricks
                 if len(keysToUpdate) > 0:
-                    runCreateNewBricks(cm, bricksDict, keysToUpdate)
+                    runCreateNewBricks2(cm, bricksDict, keysToUpdate)
 
             # select original brick
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
@@ -328,6 +328,32 @@ class setExposure(bpy.types.Operator):
             handle_exception()
         return {"FINISHED"}
 
+
+def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
+    assert loc is not None or key is not None
+    if loc is not None:
+        x,y,z = loc
+    else:
+        x,y,z = strToList(key)
+    adjKeys = [listToStr([x+1,y,z]),
+               listToStr([x-1,y,z]),
+               listToStr([x,y+1,z]),
+               listToStr([x,y-1,z]),
+               listToStr([x,y,z+1]),
+               listToStr([x,y,z-1])]
+    adjBrickVals = []
+    for key in adjKeys:
+        adjBrickVals.append(bricksDict[key]["val"])
+    return adjKeys, adjBrickVals
+
+def setCurBrickVal(bricksDict, loc):
+    _,adjBrickVals = getAdjKeysAndBrickVals(bricksDict, loc=loc)
+    if 0 in adjBrickVals:
+        newVal = 1
+    else:
+        highestAdjVal = max(adjBrickVals)
+        newVal = highestAdjVal - 0.01
+    bricksDict[listToStr(loc)]["val"] = newVal
 
 class drawAdjacent(bpy.types.Operator):
     """Draw brick to one side of active brick"""                                # blender will use this as a tooltip for menu items and buttons.
@@ -368,8 +394,8 @@ class drawAdjacent(bpy.types.Operator):
             self.xNeg = False
 
             # get dict key details of current obj
-            dictKey, dictKeyLoc = getDictKeyDetails(obj)
-            x,y,z = dictKeyLoc
+            dictKey, dictLoc = getDictKey(obj=obj)
+            x,y,z = dictLoc
             # get size of current brick (e.g. [2, 4, 1])
             objSize = self.bricksDict[dictKey]["size"]
 
@@ -435,7 +461,7 @@ class drawAdjacent(bpy.types.Operator):
 
     def getBrickD(self, dkl):
         """ set up adjBrickD """
-        adjacent_key = str(dkl).replace(" ","")[1:-1]
+        adjacent_key = listToStr(dkl)
         try:
             brickD = self.bricksDict[adjacent_key]
             return adjacent_key, brickD
@@ -474,7 +500,7 @@ class drawAdjacent(bpy.types.Operator):
             # if attempting to add brick
             if addBrick:
                 adjBrickD["draw"] = True
-                adjBrickD["val"] = 2
+                adjBrickD["val"] = self.bricksDict[dictKey]["val"]
                 adjBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"]
                 adjBrickD["size"] = [1, 1, objSize[2]]
                 adjBrickD["parent_brick"] = "self"
@@ -498,13 +524,19 @@ class drawAdjacent(bpy.types.Operator):
             self.keysToUpdate = []
 
             # get dict key details of current obj
-            dictKey, dictKeyLoc = getDictKeyDetails(obj)
-            x,y,z = dictKeyLoc
+            dictKey, dictLoc = getDictKey(obj=obj)
+            x0,y0,z0 = dictLoc
             # get size of current brick (e.g. [2, 4, 1])
             objSize = self.bricksDict[dictKey]["size"]
 
             # store enabled/disabled values
             createAdjBricks = [self.xPos, self.xNeg, self.yPos, self.yNeg, self.zPos, self.zNeg]
+
+            # define zStep
+            if cm.brickType in ["Bricks", "Custom"]:
+                zStep = 3
+            else:
+                zStep = 1
 
             # check all 6 directions for action to be executed
             for i in range(6):
@@ -512,6 +544,13 @@ class drawAdjacent(bpy.types.Operator):
                     # add or remove bricks in all adjacent locations in current direction
                     for j,dkl in enumerate(self.adjDKLs[i]):
                         self.toggleBrick(cm, dkl, dictKey, objSize, i, j, createAdjBricks[i])
+
+            # recalculate val for each bricksDict key in original brick
+            for x in range(x0, x0 + objSize[0]):
+                for y in range(y0, y0 + objSize[1]):
+                    for z in range(z0, z0 + objSize[2], zStep):
+                        curKeyLoc = [x, y, z]
+                        setCurBrickVal(self.bricksDict, curKeyLoc)
 
             # if bricks created on top, set top_exposed of original brick to False
             if self.zPos:
@@ -526,7 +565,7 @@ class drawAdjacent(bpy.types.Operator):
 
             # draw created bricks
             if len(self.keysToUpdate) > 0:
-                runCreateNewBricks(cm, self.bricksDict, self.keysToUpdate, selectCreated=False)
+                runCreateNewBricks2(cm, self.bricksDict, self.keysToUpdate, selectCreated=False)
 
             # store bricksDict to cache
             cacheBricksDict("UPDATE_MODEL", cm, self.bricksDict)
@@ -574,7 +613,7 @@ class changeBrickType(bpy.types.Operator):
             cm = getItemByID(scn.cmlist, obj.cmlist_id)
             # get bricksDict from cache
             self.bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-            dictKey, dictKeyLoc = getDictKeyDetails(obj)
+            dictKey, dictLoc = getDictKey(obj=obj)
             self.cm_idx = cm.idx
             curBrickType = self.bricksDict[dictKey]["type"]
             if curBrickType is not None:
@@ -590,7 +629,7 @@ class changeBrickType(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         items = [("STANDARD", "Standard", "")]
 
-        dictKey, dictKeyLoc = getDictKeyDetails(obj)
+        dictKey, dictLoc = getDictKey(obj=obj)
         bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
         objSize = bricksDict[dictKey]["size"]
 
@@ -632,8 +671,8 @@ class changeBrickType(bpy.types.Operator):
             obj = scn.objects.active
 
             # get dict key details of current obj
-            dictKey, dictKeyLoc = getDictKeyDetails(obj)
-            x0,y0,z0 = dictKeyLoc
+            dictKey, dictLoc = getDictKey(obj=obj)
+            x0,y0,z0 = dictLoc
             # get size of current brick (e.g. [2, 4, 1])
             objSize = self.bricksDict[dictKey]["size"]
 
@@ -693,3 +732,71 @@ class changeBrickType(bpy.types.Operator):
 
     def invoke(self, context, event):
         return context.window_manager.invoke_props_popup(self, event)
+
+class redrawBricks(bpy.types.Operator):
+    """redraw selected bricks from bricksDict"""                                # blender will use this as a tooltip for menu items and buttons.
+    bl_idname = "rebrickr.redraw_bricks"                                        # unique identifier for buttons and menu items to reference.
+    bl_label = "Redraw Bricks"                                                  # display name in the interface.
+    bl_options = {"REGISTER", "UNDO"}
+
+    # TODO: Add support for redrawing custom objects
+
+    @classmethod
+    def poll(cls, context):
+        """ ensures operator can execute (if not, returns False) """
+        scn = bpy.context.scene
+        objs = bpy.context.selected_objects
+        # check that at least 1 selected object is a brick
+        for obj in objs:
+            if obj.isBrick:
+                return True
+        return False
+
+    def execute(self, context):
+        try:
+            scn = bpy.context.scene
+            selected_objects = bpy.context.selected_objects
+            active_obj = scn.objects.active
+            if active_obj is not None:
+                initial_active_obj_name = active_obj.name
+            else:
+                initial_active_obj_name = ""
+
+            bricksDicts = {}
+
+            for obj in selected_objects:
+                if obj.isBrick:
+                    # get cmlist item referred to by object
+                    cm = getItemByID(scn.cmlist, obj.cmlist_id)
+                    # get bricksDict for current cm
+                    if cm.idx not in bricksDicts.keys():
+                        # get bricksDict from cache
+                        bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+                        bricksDicts[cm.idx] = {"dict":bricksDict, "keys_to_update":[]}
+                    else:
+                        # get bricksDict from bricksDicts
+                        bricksDict = bricksDicts[cm.idx]["dict"]
+
+                    # get dict key details of current obj
+                    dictKey, dictLoc = getDictKey(obj=obj)
+
+                    # delete the current object
+                    delete(obj)
+
+                    # add curKey to simple bricksDict for drawing
+                    bricksDicts[cm.idx]["keys_to_update"].append(dictKey)
+
+            for cm_idx in bricksDicts.keys():
+                cm = scn.cmlist[cm_idx]
+                bricksDict = bricksDicts[cm_idx]["dict"]
+                keysToUpdate = bricksDicts[cm_idx]["keys_to_update"]
+                # draw modified bricks
+                if len(keysToUpdate) > 0:
+                    runCreateNewBricks2(cm, bricksDict, keysToUpdate)
+
+            # select original brick
+            orig_obj = bpy.data.objects.get(initial_active_obj_name)
+            if orig_obj is not None: select(orig_obj, active=orig_obj, only=False)
+        except:
+            handle_exception()
+        return {"FINISHED"}

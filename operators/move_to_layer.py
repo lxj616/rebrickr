@@ -81,5 +81,8 @@ class move_to_layer_override(Operator):
         if confirmation_returned != {'FINISHED'}:
             return confirmation_returned
         else:
-            self.runMove(context)
+            try:
+                self.runMove(context)
+            except:
+                handle_exception()
             return {'FINISHED'}

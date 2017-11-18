@@ -160,12 +160,14 @@ def getClosestMaterial(cm, bricksD, key, brickSize, randState, brick_mats, k):
     if cm.materialType == "Use Source Materials":
         for x in range(brickSize[0]):
             for y in range(brickSize[1]):
-                idcs = key.split(",")
-                curBrickD = bricksD[str(int(idcs[0])+x) + "," + str(int(idcs[1])+y) + "," + idcs[2]]
+                loc = strToList(key)
+                x0,y0,z0 = loc
+                key0 = listToStr([x0 + x, y0 + y, z0])
+                curBrickD = bricksD[key0]
                 if curBrickD["val"] >= highestVal:
                     highestVal = curBrickD["val"]
                     matName = curBrickD["mat_name"]
-                    if curBrickD["val"] == 2:
+                    if curBrickD["val"] == 1:
                         matsL.append(matName)
         # if multiple shell materials, use the most frequent one
         if len(matsL) > 1:
@@ -283,9 +285,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
             if brickD["draw"] and brickD["parent_brick"] in [None, "self"]:
 
                 # get location of brick
-                loc = key.split(",")
-                for j in range(len(loc)):
-                    loc[j] = int(loc[j])
+                loc = strToList(key)
 
                 # initialize lowestRow (only set for first valid brick's row)
                 if lowestRow == -1:

@@ -25,9 +25,9 @@ Created by Christopher Gearhart
 # Blender imports
 import bpy
 
-def Rebrickr_snap_button(self, context):
-    scn = context.scene
-    if scn.Rebrickr_snapping:
-        self.layout.prop(scn, "Rebrickr_snapping", text="Brick Snap", icon="SNAP_ON")
-    else:
-        self.layout.prop(scn, "Rebrickr_snapping", text="Brick Snap", icon="SNAP_OFF")
+# def Rebrickr_snap_button(self, context):
+#     scn = context.scene
+#     if scn.Rebrickr_snapping:
+#         self.layout.prop(scn, "Rebrickr_snapping", text="Brick Snap", icon="SNAP_ON")
+#     else:
+#         self.layout.prop(scn, "Rebrickr_snapping", text="Brick Snap", icon="SNAP_OFF")

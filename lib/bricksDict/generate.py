@@ -31,6 +31,7 @@ from mathutils import Matrix, Vector
 
 # Rebrickr imports
 from ...functions.common import *
+from ...functions.general import *
 from ...functions.generate_lattice import generateLattice
 from ...functions.wrappers import *
 
@@ -188,13 +189,13 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, bric
     if edgeIntersects:
         if (origInside and brickShell == "Inside Mesh") or (not origInside and brickShell == "Outside Mesh") or brickShell == "Inside and Outside":
             # define brick as part of shell
-            brickFreqMatrix[x0][y0][z0] = 2
+            brickFreqMatrix[x0][y0][z0] = 1
             # set or update nearest face to brick
             if type(faceIdxMatrix[x0][y0][z0]) != dict or faceIdxMatrix[x0][y0][z0]["dist"] > firstIntersection["dist"]:
                 faceIdxMatrix[x0][y0][z0] = firstIntersection
         if (not origInside and brickShell == "Inside Mesh") or (origInside and brickShell == "Outside Mesh") or brickShell == "Inside and Outside":
             # define brick as part of shell
-            brickFreqMatrix[x1][y1][z1] = 2
+            brickFreqMatrix[x1][y1][z1] = 1
             # set or update nearest face to brick
             if type(faceIdxMatrix[x1][y1][z1]) != dict or faceIdxMatrix[x1][y1][z1]["dist"] > lastIntersection["dist"]:
                 faceIdxMatrix[x1][y1][z1] = lastIntersection
@@ -302,12 +303,12 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
-                # if current location is inside (-1) and adjacent location is out of bounds, current location is shell (2)
+                # if current location is inside (-1) and adjacent location is out of bounds, current location is shell (1)
                 if ((((z == len(coordMatrix[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0) or (z == 0 or brickFreqMatrix[x][y][z-1] == 0)) and ("z" not in axes)) or# or cm.verifyExposure)) or
                     (((y == len(coordMatrix[0])-1 or brickFreqMatrix[x][y+1][z] == 0) or (y == 0 or brickFreqMatrix[x][y-1][z] == 0)) and ("y" not in axes)) or# or cm.verifyExposure)) or
                     (((x == len(coordMatrix)-1 or brickFreqMatrix[x+1][y][z] == 0) or (x == 0 or brickFreqMatrix[x-1][y][z] == 0))) and ("x" not in axes)):# or cm.verifyExposure)):
                     if brickFreqMatrix[x][y][z] == -1:
-                        brickFreqMatrix[x][y][z] = 2
+                        brickFreqMatrix[x][y][z] = 1
                         # TODO: set faceIdxMatrix value to nearest shell value using some sort of built in nearest poly to point function
                     # break from current location, as boundary locs should not be verified
                     continue
@@ -316,8 +317,8 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                     if brickFreqMatrix[x][y][z] == -1:
                         if brickFreqMatrix[x+1][y][z] == 0 or brickFreqMatrix[x-1][y][z] == 0 or brickFreqMatrix[x][y+1][z] == 0 or brickFreqMatrix[x][y-1][z] == 0 or brickFreqMatrix[x][y][z+1] == 0 or brickFreqMatrix[x][y][z-1] == 0:
                             brickFreqMatrix[x][y][z] = 0
-                    # If shell location (2) does not intersect outside location (0), make it inside (-1)
-                    if brickFreqMatrix[x][y][z] == 2 and brickFreqMatrix[x+1][y][z] != 0 and brickFreqMatrix[x-1][y][z] != 0 and brickFreqMatrix[x][y+1][z] != 0 and brickFreqMatrix[x][y-1][z] != 0 and brickFreqMatrix[x][y][z+1] != 0 and brickFreqMatrix[x][y][z-1] != 0:
+                    # If shell location (1) does not intersect outside location (0), make it inside (-1)
+                    if brickFreqMatrix[x][y][z] == 1 and brickFreqMatrix[x+1][y][z] != 0 and brickFreqMatrix[x-1][y][z] != 0 and brickFreqMatrix[x][y+1][z] != 0 and brickFreqMatrix[x][y-1][z] != 0 and brickFreqMatrix[x][y][z+1] != 0 and brickFreqMatrix[x][y][z-1] != 0:
                         brickFreqMatrix[x][y][z] = -1
 
     # print status to terminal
@@ -350,17 +351,17 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                             brickFreqMatrix[x][y][z] = j
                             missed = False
                             if j == 0.99:
-                                if brickFreqMatrix[x+1][y][z] == 2:
+                                if brickFreqMatrix[x+1][y][z] == 1:
                                     setNF(cm.matShellDepth, j, (x+1,y,z), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x-1][y][z] == 2:
+                                elif brickFreqMatrix[x-1][y][z] == 1:
                                     setNF(cm.matShellDepth, j, (x-1,y,z), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x][y+1][z] == 2:
+                                elif brickFreqMatrix[x][y+1][z] == 1:
                                     setNF(cm.matShellDepth, j, (x,y+1,z), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x][y-1][z] == 2:
+                                elif brickFreqMatrix[x][y-1][z] == 1:
                                     setNF(cm.matShellDepth, j, (x,y-1,z), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x][y][z+1] == 2:
+                                elif brickFreqMatrix[x][y][z+1] == 1:
                                     setNF(cm.matShellDepth, j, (x,y,z+1), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x][y][z-1] == 2:
+                                elif brickFreqMatrix[x][y][z-1] == 1:
                                     setNF(cm.matShellDepth, j, (x,y,z-1), (x,y,z), faceIdxMatrix)
                                 else:
                                     brickFreqMatrix[x][y][z] = origVal
@@ -496,7 +497,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                 nf = None
                 if type(faceIdxMatrix[x][y][z]) == dict:
                     nf = faceIdxMatrix[x][y][z]["idx"]
-                bKey = '%(x)s,%(y)s,%(z)s' % locals()
+                bKey = listToStr([x,y,z])
                 drawBrick = brickFreqMatrix[x][y][z] >= threshold
                 bricksDict[bKey] = {
                     "name":'Rebrickr_%(n)s_brick_%(j)s__%(bKey)s' % locals(),

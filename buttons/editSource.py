@@ -155,11 +155,9 @@ class RebrickrEditSource(bpy.types.Operator):
                 else:
                     obj = None
                 objParent = bpy.data.objects.get("Rebrickr_%(n)s_parent" % locals())
-                l = cm.lastSourceMid.split(",")
-                for i in range(len(l)):
-                    l[i] = float(l[i])
+                tup = strToTuple(cm.lastSourceMid, float)
                 source["before_origin_set_location"] = source.matrix_world.to_translation().to_tuple()
-                setOriginToObjOrigin(toObj=source, fromLoc=tuple(l))
+                setOriginToObjOrigin(toObj=source, fromLoc=tup)
                 source["before_edit_location"] = source.location.to_tuple()
                 if brickLoc is not None:
                     source.location = source.location + brickLoc - source.matrix_world.to_translation()

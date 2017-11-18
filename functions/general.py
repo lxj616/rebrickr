@@ -123,6 +123,20 @@ def getBricks(cm=None):
                 bricks += list(bGroup.objects)
     return bricks
 
+def listToStr(lst):
+    assert type(lst) in [list, tuple] and len(lst) == 3
+    x,y,z = lst
+    string = "%(x)s,%(y)s,%(z)s" % locals()
+    return string
+def strToList(string, item_type=int, split_on=","):
+    lst = string.split(split_on)
+    assert type(string) is str and len(lst) == 3 and type(split_on) is str
+    lst = list(map(item_type, lst))
+    return lst
+def strToTuple(string, item_type=int, split_on=","):
+    tup = tuple(strToList(string, item_type, split_on))
+    return tup
+
 def getAction(cm):
     """ returns action """
     if cm.modelCreated:

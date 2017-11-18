@@ -401,10 +401,7 @@ class RebrickrBrickify(bpy.types.Operator):
             obj.layers = self.sourceOrig.layers
             # update location of bricks in case source mesh has been edited
             if updateParentLoc:
-                l = cm.lastSourceMid.split(",")
-                for i in range(len(l)):
-                    l[i] = float(l[i])
-                lastSourceMid = tuple(l)
+                lastSourceMid = strToList(cm.lastSourceMid)
                 v = Vector(parentLoc) - Vector(lastSourceMid)
                 center_v = Vector((0, 0, 0))
                 v_new = v - center_v
@@ -828,7 +825,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
         cm.modelCreated = True
 
-        cm.lastSourceMid = str(tuple(parentLoc))[1:-1]
+        cm.lastSourceMid = listToStr(parentLoc)
 
         if origFrame is not None:
             scn.frame_set(origFrame)
