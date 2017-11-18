@@ -124,5 +124,4 @@ class RebrickrBevel(bpy.types.Operator):
             RebrickrBevel.runBevelAction(bricks, cm, action)
         except:
             handle_exception()
-
         return{"FINISHED"}

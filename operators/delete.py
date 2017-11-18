@@ -41,6 +41,7 @@ from bpy.props import *
 
 # Rebrickr imports
 from ..lib.bricksDict import *
+from ..functions.common import *
 
 def deleteUnprotected(context, use_global=False):
     scn = context.scene
@@ -127,7 +128,10 @@ class delete_override(Operator):
         bpy.ops.ed.undo_push(message="Delete")
 
     def execute(self, context):
-        self.runDelete(context)
+        try:
+            self.runDelete(context)
+        except:
+            handle_exception()
         return {'FINISHED'}
 
     def invoke(self, context, event):

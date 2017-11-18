@@ -38,7 +38,6 @@ from bpy.app.handlers import persistent, load_post
 
 # Rebrickr imports
 from ..functions import *
-from ..functions.common import print_exception, showErrorMessage
 # from ..lib.classes.profiler.profiler import profiler
 
 from ..ui.common import set_cursor

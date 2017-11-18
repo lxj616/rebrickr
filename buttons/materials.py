@@ -153,5 +153,4 @@ class RebrickrApplyMaterial(bpy.types.Operator):
             self.runApplyMaterial(context)
         except:
             handle_exception()
-
         return{"FINISHED"}

@@ -909,5 +909,4 @@ class RebrickrBrickify(bpy.types.Operator):
             self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
         except:
             handle_exception()
-
         return{"FINISHED"}

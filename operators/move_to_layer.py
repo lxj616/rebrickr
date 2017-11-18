@@ -38,6 +38,9 @@ Created by Christopher Gearhart
 import bpy
 from bpy.types import Operator
 
+# Rebrickr imports
+from ..functions.common import *
+
 class move_to_layer_override(Operator):
     """Move to Layer"""
     bl_idname = "object.move_to_layer"
@@ -66,7 +69,10 @@ class move_to_layer_override(Operator):
 
 
     def execute(self, context):
-        self.runMove(context)
+        try:
+            self.runMove(context)
+        except:
+            handle_exception()
         return {'FINISHED'}
 
     def invoke(self, context, event):

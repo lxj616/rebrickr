@@ -102,87 +102,89 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
     #     return True
 
     def execute(self, context):
-        scn = context.scene
-        idx = scn.cmlist_index
-
         try:
-            item = scn.cmlist[idx]
-        except IndexError:
-            pass
+            scn = context.scene
+            idx = scn.cmlist_index
 
-        if self.action == 'REMOVE' and len(scn.cmlist) > 0 and scn.cmlist_index >= 0:
-            cm = scn.cmlist[scn.cmlist_index]
-            sn = cm.source_name
-            n = cm.name
-            if not cm.modelCreated and not cm.animated:
-                if len(scn.cmlist) - 1 == scn.cmlist_index:
-                    scn.cmlist_index -= 1
-                scn.cmlist.remove(idx)
-                if scn.cmlist_index == -1 and len(scn.cmlist) > 0:
-                    scn.cmlist_index = 0
-            else:
-                self.report({"WARNING"}, 'Please delete the Brickified model before attempting to remove this item.' % locals())
+            try:
+                item = scn.cmlist[idx]
+            except IndexError:
+                pass
 
-        if self.action == 'ADD':
-            active_object = scn.objects.active
-            # if active object isn't on visible layer, don't set it as default source for new model
-            if active_object != None:
-                objVisible = False
-                for i in range(20):
-                    if active_object.layers[i] and scn.layers[i]:
-                        objVisible = True
-                if not objVisible:
-                    active_object = None
-            # if active object already has a model or isn't on visible layer, don't set it as default source for new model
-            # NOTE: active object may have been removed, so we need to re-check if none
-            if active_object != None:
-                for cm in scn.cmlist:
-                    if cm.source_name == active_object.name:
+            if self.action == 'REMOVE' and len(scn.cmlist) > 0 and scn.cmlist_index >= 0:
+                cm = scn.cmlist[scn.cmlist_index]
+                sn = cm.source_name
+                n = cm.name
+                if not cm.modelCreated and not cm.animated:
+                    if len(scn.cmlist) - 1 == scn.cmlist_index:
+                        scn.cmlist_index -= 1
+                    scn.cmlist.remove(idx)
+                    if scn.cmlist_index == -1 and len(scn.cmlist) > 0:
+                        scn.cmlist_index = 0
+                else:
+                    self.report({"WARNING"}, 'Please delete the Brickified model before attempting to remove this item.' % locals())
+
+            if self.action == 'ADD':
+                active_object = scn.objects.active
+                # if active object isn't on visible layer, don't set it as default source for new model
+                if active_object != None:
+                    objVisible = False
+                    for i in range(20):
+                        if active_object.layers[i] and scn.layers[i]:
+                            objVisible = True
+                    if not objVisible:
                         active_object = None
-                        break
-            item = scn.cmlist.add()
-            last_index = scn.cmlist_index
-            scn.cmlist_index = len(scn.cmlist)-1
-            if active_object and active_object.type == "MESH" and not active_object.name.startswith("Rebrickr_"):
-                item.source_name = active_object.name
-                item.name = active_object.name
-                # set up default brickHeight values
-                source = bpy.data.objects.get(item.source_name)
-                if source is not None:
-                    source_details = bounds(source)
-                    h = max(source_details.x.distance, source_details.y.distance, source_details.z.distance)
-                    # update brick height based on model height
-                    item.brickHeight = h / 20
+                # if active object already has a model or isn't on visible layer, don't set it as default source for new model
+                # NOTE: active object may have been removed, so we need to re-check if none
+                if active_object != None:
+                    for cm in scn.cmlist:
+                        if cm.source_name == active_object.name:
+                            active_object = None
+                            break
+                item = scn.cmlist.add()
+                last_index = scn.cmlist_index
+                scn.cmlist_index = len(scn.cmlist)-1
+                if active_object and active_object.type == "MESH" and not active_object.name.startswith("Rebrickr_"):
+                    item.source_name = active_object.name
+                    item.name = active_object.name
+                    # set up default brickHeight values
+                    source = bpy.data.objects.get(item.source_name)
+                    if source is not None:
+                        source_details = bounds(source)
+                        h = max(source_details.x.distance, source_details.y.distance, source_details.z.distance)
+                        # update brick height based on model height
+                        item.brickHeight = h / 20
 
-            else:
-                item.source_name = ""
-                item.name = "<New Model>"
-            # get all existing IDs
-            existingIDs = []
-            for cm in scn.cmlist:
-                existingIDs.append(cm.id)
-            i = max(existingIDs) + 1
-            # protect against massive item IDs
-            if i > 9999:
-                i = 1
-                while i in existingIDs:
-                    i += 1
-            # set item ID to unique number
-            item.id = i
-            item.idx = len(scn.cmlist)-1
-            item.startFrame = scn.frame_start
-            item.stopFrame = scn.frame_end
+                else:
+                    item.source_name = ""
+                    item.name = "<New Model>"
+                # get all existing IDs
+                existingIDs = []
+                for cm in scn.cmlist:
+                    existingIDs.append(cm.id)
+                i = max(existingIDs) + 1
+                # protect against massive item IDs
+                if i > 9999:
+                    i = 1
+                    while i in existingIDs:
+                        i += 1
+                # set item ID to unique number
+                item.id = i
+                item.idx = len(scn.cmlist)-1
+                item.startFrame = scn.frame_start
+                item.stopFrame = scn.frame_end
 
-        elif self.action == 'DOWN' and idx < len(scn.cmlist) - 1:
-            scn.cmlist.move(scn.cmlist_index, scn.cmlist_index+1)
-            scn.cmlist_index += 1
-            item.idx = scn.cmlist_index
+            elif self.action == 'DOWN' and idx < len(scn.cmlist) - 1:
+                scn.cmlist.move(scn.cmlist_index, scn.cmlist_index+1)
+                scn.cmlist_index += 1
+                item.idx = scn.cmlist_index
 
-        elif self.action == 'UP' and idx >= 1:
-            scn.cmlist.move(scn.cmlist_index, scn.cmlist_index-1)
-            scn.cmlist_index -= 1
-            item.idx = scn.cmlist_index
-
+            elif self.action == 'UP' and idx >= 1:
+                scn.cmlist.move(scn.cmlist_index, scn.cmlist_index-1)
+                scn.cmlist_index -= 1
+                item.idx = scn.cmlist_index
+        except:
+            handle_exception()
         return{"FINISHED"}
 
 
@@ -220,11 +222,14 @@ class Rebrickr_Uilist_copySettingsToOthersExcludeHeight(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        scn = bpy.context.scene
-        cm0 = scn.cmlist[scn.cmlist_index]
-        for cm1 in scn.cmlist:
-            if cm0 != cm1:
-                matchProperties(cm1, cm0)
+        try:
+            scn = bpy.context.scene
+            cm0 = scn.cmlist[scn.cmlist_index]
+            for cm1 in scn.cmlist:
+                if cm0 != cm1:
+                    matchProperties(cm1, cm0)
+        except:
+            handle_exception()
         return{'FINISHED'}
 
 # copy settings from current index to all other indices
@@ -244,11 +249,14 @@ class Rebrickr_Uilist_copySettingsToOthers(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        scn = bpy.context.scene
-        cm0 = scn.cmlist[scn.cmlist_index]
-        for cm1 in scn.cmlist:
-            if cm0 != cm1:
-                matchProperties(cm1, cm0, bh=True)
+        try:
+            scn = bpy.context.scene
+            cm0 = scn.cmlist[scn.cmlist_index]
+            for cm1 in scn.cmlist:
+                if cm0 != cm1:
+                    matchProperties(cm1, cm0, bh=True)
+        except:
+            handle_exception()
         return{'FINISHED'}
 
 # copy settings from current index to memory
@@ -266,9 +274,12 @@ class Rebrickr_Uilist_copySettings(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        scn.Rebrickr_copy_from_id = cm.id
+        try:
+            scn = bpy.context.scene
+            cm = scn.cmlist[scn.cmlist_index]
+            scn.Rebrickr_copy_from_id = cm.id
+        except:
+            handle_exception()
         return{'FINISHED'}
 
 # paste settings from index in memory to current index
@@ -286,12 +297,15 @@ class Rebrickr_Uilist_pasteSettings(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        scn = bpy.context.scene
-        cm0 = scn.cmlist[scn.cmlist_index]
-        for cm1 in scn.cmlist:
-            if cm0 != cm1 and cm1.id == scn.Rebrickr_copy_from_id:
-                matchProperties(cm0, cm1)
-                break
+        try:
+            scn = bpy.context.scene
+            cm0 = scn.cmlist[scn.cmlist_index]
+            for cm1 in scn.cmlist:
+                if cm0 != cm1 and cm1.id == scn.Rebrickr_copy_from_id:
+                    matchProperties(cm0, cm1)
+                    break
+        except:
+            handle_exception()
         return{'FINISHED'}
 
 # set source to active button
@@ -315,11 +329,14 @@ class Rebrickr_Uilist_setSourceToActive(bpy.types.Operator):
         return False
 
     def execute(self, context):
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        active_object = context.scene.objects.active
-        if cm.source_name != active_object.name:
-            cm.source_name = active_object.name
+        try:
+            scn = context.scene
+            cm = scn.cmlist[scn.cmlist_index]
+            active_object = context.scene.objects.active
+            if cm.source_name != active_object.name:
+                cm.source_name = active_object.name
+        except:
+            handle_exception()
 
         return{'FINISHED'}
 
@@ -346,12 +363,14 @@ class Rebrickr_Uilist_selectSource(bpy.types.Operator):
         return False
 
     def execute(self, context):
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
-        obj = bpy.data.objects[n]
-        select(obj, active=obj)
-
+        try:
+            scn = context.scene
+            cm = scn.cmlist[scn.cmlist_index]
+            n = cm.source_name
+            obj = bpy.data.objects[n]
+            select(obj, active=obj)
+        except:
+            handle_exception()
         return{'FINISHED'}
 
 # select button
@@ -374,16 +393,18 @@ class Rebrickr_Uilist_selectAllBricks(bpy.types.Operator):
         return False
 
     def execute(self, context):
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
-        Rebrickr_bricks = "Rebrickr_%(n)s_bricks" % locals()
-        if groupExists(Rebrickr_bricks):
-            objs = list(bpy.data.groups[Rebrickr_bricks].objects)
-            select(active=objs[0])
-            if len(objs) > 0:
-                select(objs)
-
+        try:
+            scn = context.scene
+            cm = scn.cmlist[scn.cmlist_index]
+            n = cm.source_name
+            Rebrickr_bricks = "Rebrickr_%(n)s_bricks" % locals()
+            if groupExists(Rebrickr_bricks):
+                objs = list(bpy.data.groups[Rebrickr_bricks].objects)
+                select(active=objs[0])
+                if len(objs) > 0:
+                    select(objs)
+        except:
+            handle_exception()
         return{'FINISHED'}
 
 def uniquifyName(self, context):

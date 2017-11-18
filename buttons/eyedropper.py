@@ -68,25 +68,29 @@ class EyeDropper(bpy.types.Operator):
 
     def modal(self, context, event):
         """ casts rays through mouse position, sets target_prop on LEFTMOUSE click """
-        scn = context.scene
+        try:
+            scn = context.scene
 
-        if event.type == 'MOUSEMOVE':
-            bpy.context.window.cursor_set("EYEDROPPER")
-            x, y = event.mouse_region_x, event.mouse_region_y
-            cm = scn.cmlist[scn.cmlist_index]
-            self.hover_scene(context, x, y, cm.source_name)
+            if event.type == 'MOUSEMOVE':
+                bpy.context.window.cursor_set("EYEDROPPER")
+                x, y = event.mouse_region_x, event.mouse_region_y
+                cm = scn.cmlist[scn.cmlist_index]
+                self.hover_scene(context, x, y, cm.source_name)
 
-        if event.type == 'LEFTMOUSE':
-            bpy.context.window.cursor_set("DEFAULT")
-            if self.ob is None:
-                self.report({"INFO"}, "No object selected")
-            else:
-                scn.cmlist[scn.cmlist_index][self.target_prop] = self.ob.name
-                redraw_areas("VIEW_3D")
-            context.area.header_text_set()
-            return {"FINISHED"}
+            if event.type == 'LEFTMOUSE':
+                bpy.context.window.cursor_set("DEFAULT")
+                if self.ob is None:
+                    self.report({"INFO"}, "No object selected")
+                else:
+                    scn.cmlist[scn.cmlist_index][self.target_prop] = self.ob.name
+                    redraw_areas("VIEW_3D")
+                context.area.header_text_set()
+                return {"FINISHED"}
 
-        return {"PASS_THROUGH"}
+            return {"PASS_THROUGH"}
+        except:
+            handle_exception()
+            return {"CANCELLED"}
 
     def execute(self, context):
         # run modal

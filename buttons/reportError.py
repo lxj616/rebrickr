@@ -38,19 +38,22 @@ class reportError(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
-        # set up file paths
-        libraryServersPath = os.path.join(getLibraryPath(), "error_log")
-        # write necessary debugging information to text file
-        writeErrorToFile(libraryServersPath, 'Rebrickr_log', props.addonVersion)
-        # open error report in UI with text editor
-        changeContext(context, "TEXT_EDITOR")
         try:
-            bpy.ops.text.open(filepath=os.path.join(libraryServersPath, "Rebrickr_error_report.txt"))
-            bpy.context.space_data.show_word_wrap = True
-            self.report({"INFO"}, "Opened 'Rebrickr_error_report.txt'")
-            bpy.props.needsUpdating = True
+            # set up file paths
+            libraryServersPath = os.path.join(getLibraryPath(), "error_log")
+            # write necessary debugging information to text file
+            writeErrorToFile(libraryServersPath, 'Rebrickr_log', props.addonVersion)
+            # open error report in UI with text editor
+            changeContext(context, "TEXT_EDITOR")
+            try:
+                bpy.ops.text.open(filepath=os.path.join(libraryServersPath, "Rebrickr_error_report.txt"))
+                bpy.context.space_data.show_word_wrap = True
+                self.report({"INFO"}, "Opened 'Rebrickr_error_report.txt'")
+                bpy.props.needsUpdating = True
+            except:
+                self.report({"ERROR"}, "ERROR: Could not open 'Rebrickr_error_report.txt'. If the problem persists, try reinstalling the add-on.")
         except:
-            self.report({"ERROR"}, "ERROR: Could not open 'Rebrickr_error_report.txt'. If the problem persists, try reinstalling the add-on.")
+            self.report({"ERROR"}, "ERROR: Could not generate error report. Please use the 'Report a Bug' button in the Rebrickr Preferences (found in Add-On User Preferences)")
         return{"FINISHED"}
 
 class closeReportError(bpy.types.Operator):
@@ -60,6 +63,9 @@ class closeReportError(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
-        txt = bpy.data.texts['Rebrickr_log']
-        bpy.data.texts.remove(txt, True)
+        try:
+            txt = bpy.data.texts['Rebrickr_log']
+            bpy.data.texts.remove(txt, True)
+        except:
+            handle_exception()
         return{"FINISHED"}

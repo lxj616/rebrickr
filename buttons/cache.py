@@ -29,6 +29,7 @@ props = bpy.props
 
 # Rebrickr imports
 from ..lib.caches import *
+from ..functions.common import *
 
 class clearCache(bpy.types.Operator):
     """Clear cache of brick meshes and matrices (try if you're experiencing slow UI or odd addon behaviors)""" # blender will use this as a tooltip for menu items and buttons.

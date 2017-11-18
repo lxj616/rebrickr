@@ -54,26 +54,28 @@ class MakeClosedMesh(bpy.types.Operator):
     #     return True
 
     def execute(self, context):
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        source = bpy.data.objects.get(cm.source_name)
+        try:
+            scn = bpy.context.scene
+            cm = scn.cmlist[scn.cmlist_index]
+            source = bpy.data.objects.get(cm.source_name)
 
-        # separate source by loose parts
-        select(source, active=source)
-        bpy.ops.mesh.separate(type='LOOSE')
+            # separate source by loose parts
+            select(source, active=source)
+            bpy.ops.mesh.separate(type='LOOSE')
 
-        separatedObjs = bpy.context.selected_objects
+            separatedObjs = bpy.context.selected_objects
 
-        obj = separatedObjs[0]
-        for i in range(1, len(separatedObjs)):
-            bMod = obj.modifiers.new('Rebrickr_Boolean', type='BOOLEAN')
-            bMod.object = separatedObjs[i]
-            bMod.operation = 'UNION'
-            select(obj, active=obj)
-            bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Rebrickr_Boolean')
-            obj = scn.objects.active
-            delete(separatedObjs[i])
+            obj = separatedObjs[0]
+            for i in range(1, len(separatedObjs)):
+                bMod = obj.modifiers.new('Rebrickr_Boolean', type='BOOLEAN')
+                bMod.object = separatedObjs[i]
+                bMod.operation = 'UNION'
+                select(obj, active=obj)
+                bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Rebrickr_Boolean')
+                obj = scn.objects.active
+                delete(separatedObjs[i])
 
-        scn.objects.active.name = cm.source_name
-
+            scn.objects.active.name = cm.source_name
+        except:
+            handle_exception()
         return{"FINISHED"}
