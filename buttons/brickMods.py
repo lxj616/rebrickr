@@ -338,7 +338,10 @@ def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
                listToStr([x,y,z-1])]
     adjBrickVals = []
     for key in adjKeys:
-        adjBrickVals.append(bricksDict[key]["val"])
+        try:
+            adjBrickVals.append(bricksDict[key]["val"])
+        except KeyError:
+            adjKeys.remove(key)
     return adjKeys, adjBrickVals
 
 def setCurBrickVal(bricksDict, loc):

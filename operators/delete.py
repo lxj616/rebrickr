@@ -45,6 +45,7 @@ from ..functions.common import *
 from ..functions.general import *
 from ..buttons.brickMods import getDictKey, getAdjKeysAndBrickVals, runCreateNewBricks2
 from ..buttons.delete import RebrickrDelete
+from ..lib.Brick import Bricks
 
 def deleteUnprotected(context, use_global=False):
     scn = context.scene
@@ -157,6 +158,8 @@ def deleteUnprotected(context, use_global=False):
         bricksDict = bricksDicts[cm_idx]["dict"]
         keysToUpdate = bricksDicts[cm_idx]["keys_to_update"]
         cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
+        Bricks.splitAll(bricksDict, keys=keysToUpdate, cm=cm)
+        cm.buildIsDirty = True
         # draw modified bricks
         if len(keysToUpdate) > 0:
             # delete bricks that didn't get deleted already

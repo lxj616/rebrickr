@@ -34,22 +34,6 @@ from .brick_mesh_generate import *
 from ...functions import *
 
 class Bricks:
-    def __init__(self):
-        self.objects = {}
-
-    def __getitem__(self, string):
-        return self.objects[string]
-
-    # def new(self, name, location=(0,0,0), mesh_data=None):
-    #     self.objects[name] = Brick(location, name, mesh_data)
-    #     return self.objects[name]
-    #
-    def getAllObjs(self):
-        brickObjs = []
-        for o in self.objects.values():
-            brickObjs.append(o.obj)
-        return brickObjs
-
     @staticmethod
     def new_mesh(dimensions, size=[1,1,3], logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_resolution=None, logo_inset=None, undersideDetail="Flat", stud=True, numStudVerts=None):
         """ create unlinked Brick at origin """
@@ -142,6 +126,20 @@ class Bricks:
         return bms
 
     @staticmethod
+    def splitAll(bricksDict, keys=None, cm=None):
+        if cm is None:
+            scn = bpy.context.scene
+            cm = scn.cmlist[scn.cmlist_index]
+        if keys is None:
+            keys = list(bricksDict.keys())
+        zStep = getZStep(cm)
+        for key in keys:
+            # set all bricks as unmerged
+            if bricksDict[key]["draw"]:
+                bricksDict[key]["parent_brick"] = "self"
+                bricksDict[key]["size"] = [1, 1, zStep]
+
+    @staticmethod
     def get_dimensions(height=1, zScale=1, gap_percentage=0.01):
         scale = height/9.6
         brick_dimensions = {}
@@ -165,61 +163,3 @@ class Bricks:
 
         brick_dimensions["logo_offset"] = round((brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"]), 8)
         return brick_dimensions
-#
-# class Brick:
-#
-#     def __init__(self, location=(0,0,0), name="brick", mesh_data=None):
-#         # if mesh_data:
-#         #     self.mesh_data = mesh_data
-#         # else:
-#         #     self.mesh_data = bpy.data.meshes.new(name + "_mesh")
-#         # self.obj = bpy.data.objects.new(name, self.mesh_data)
-#         # self.update_location(location)
-#         # self.update_name(name)
-#         # self.brick_dimensions = 'UNSET'
-#         pass
-#
-#     def update_data(self, mesh_data):
-#         self.obj.data = mesh_data
-#
-#     def update_location(self, location):
-#         self.obj.location = location
-#         self.location = location
-#
-#     def update_name(self, name):
-#         self.obj.name = name
-#         self.name = name
-#
-#     def remove(self):
-#         m = self.obj.data
-#         bpy.data.objects.remove(self.obj, do_unlink=True)
-#         bpy.data.meshes.remove(m, do_unlink=True)
-#
-#     def link_to_scene(self, scene):
-#         bpy.context.scene.objects.link(self.obj)
-#
-#     def link_to_group(self, group):
-#         group.objects.link(self.obj)
-#
-#     def obj_select(self):
-#         self.obj.select = True
-#
-#     def set_height(self, height):
-#         self.height = height
-#         # TODO: actually update brick obj height
-#
-#     @staticmethod
-#     def get_settings(cm):
-#         """ returns dictionary containing brick detail settings """
-#         settings = {}
-#         # settings["underside"] = cm.undersideDetail
-#         settings["logo"] = cm.logoDetail
-#         settings["numStudVerts"] = cm.studVerts
-#         return settings
-#
-#     def get_dimensions(self):
-#         return self.brick_dimensions
-#
-#     def set_dimensions(self, height=1, zScale=1, gap_percentage=0.01):
-#         self.brick_dimensions = Bricks.get_dimensions(height, zScale, gap_percentage)
-#         return self.brick_dimensions

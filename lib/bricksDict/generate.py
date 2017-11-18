@@ -34,7 +34,6 @@ from ...functions.common import *
 from ...functions.general import *
 from ...functions.generate_lattice import generateLattice
 from ...functions.wrappers import *
-from .functions import getZStep
 
 def VectorRound(vec, dec, roundType="ROUND"):
     """ round all vals in Vector 'vec' to 'dec' precision using 'ROUND', 'FLOOR', or 'CEIL' """
@@ -216,11 +215,10 @@ def updateInternal(bricksDict, keys, cm, clearExisting=False):
     # clear extisting internal structure
     if clearExisting:
         zStep = getZStep(cm)
+        # set all bricks as unmerged
+        Bricks.splitAll(bricksDict, keys=keys, cm=cm)
+        # clear internal
         for key in keys:
-            # set all bricks as unmerged
-            if bricksDict[key]["draw"]:
-                bricksDict[key]["parent_brick"] = "self"
-                bricksDict[key]["size"] = [1, 1, zStep]
             if isInternal(bricksDict, key):
                 bricksDict[key]["draw"] = False
     # Draw column supports
@@ -524,8 +522,6 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                     "top_exposed":None,
                     "bot_exposed":None,
                     "type":None}
-
-    updateInternal(bricksDict, keys, cm)
 
     # return list of created Brick objects
     return bricksDict

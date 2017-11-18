@@ -28,8 +28,6 @@ from mathutils import Vector, Euler
 
 # Rebrickr imports
 from .common import *
-# from .makeBricks import *
-from ..lib.Brick import Bricks
 
 def getSafeScn():
     safeScn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
@@ -136,6 +134,13 @@ def strToList(string, item_type=int, split_on=","):
 def strToTuple(string, item_type=int, split_on=","):
     tup = tuple(strToList(string, item_type, split_on))
     return tup
+
+def getZStep(cm):
+    if cm.brickType in ["Bricks", "Custom"]:
+        zStep = 3
+    else:
+        zStep = 1
+    return zStep
 
 def getAction(cm):
     """ returns action """

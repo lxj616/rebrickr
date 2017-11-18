@@ -186,6 +186,8 @@ class RebrickrBrickify(bpy.types.Operator):
                 cm.activeKeyX = 1
                 cm.activeKeyY = 1
                 cm.activeKeyZ = 1
+        else:
+            loadedFromCache = True
         if curFrame is not None:
             group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
         else:
@@ -201,8 +203,8 @@ class RebrickrBrickify(bpy.types.Operator):
                 bD["bot_exposed"] = None
                 if cm.lastShellThickness != cm.shellThickness:
                     bD["draw"] = bD["val"] >= threshold
-        if cm.internalIsDirty and loadedFromCache:
-            updateInternal(bricksDict, list(bricksDict.keys()), cm, clearExisting=True)
+        if not loadedFromCache or cm.internalIsDirty:
+            updateInternal(bricksDict, list(bricksDict.keys()), cm, clearExisting=loadedFromCache)
             cm.buildIsDirty = True
         bricksCreated = makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, createGroup=createGroup)
         if selectCreated:

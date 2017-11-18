@@ -27,13 +27,7 @@ import bpy
 
 # Rebrickr imports
 from ...functions import *
-
-def getZStep(cm):
-    if cm.brickType in ["Bricks", "Custom"]:
-        zStep = 3
-    else:
-        zStep = 1
-    return zStep
+from ..Brick import Bricks
 
 def getDetailsAndBounds(source, skipDimensions=False):
     scn = bpy.context.scene
@@ -49,7 +43,7 @@ def getDetailsAndBounds(source, skipDimensions=False):
         return source_details, dimensions
     else:
         return source_details
-    
+
 def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=None):
     if source is None:
         source = bpy.data.objects.get(cm.source_name)
