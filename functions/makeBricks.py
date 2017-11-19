@@ -292,10 +292,10 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                     lowestRow = loc[2]
 
                 # Set up brick types
-                isBrick = False
+                originalIsBrick = False
                 if cm.brickType == "Bricks and Plates" and (loc[2] - lowestRow) % 3 == cm.offsetBrickLayers:
                     if plateIsBrick(brickD, bricksD, loc, 0, 0):
-                        isBrick = True
+                        originalIsBrick = True
                         brickSizes = [[1,1,3]]
                     else:
                         if timeThrough == 1:
@@ -308,7 +308,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
 
                 # attempt to merge current brick with surrounding bricks, according to available brick types
                 if brickD["size"] is None or cm.buildIsDirty:
-                    brickSize = attemptMerge(cm, bricksD, key, loc, isBrick, brickSizes, bt2, randS1)
+                    brickSize = attemptMerge(cm, bricksD, key, loc, originalIsBrick, brickSizes, bt2, randS1)
                 else:
                     brickSize = brickD["size"]
 

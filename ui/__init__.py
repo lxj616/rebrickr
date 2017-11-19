@@ -560,11 +560,11 @@ class BrickTypesPanel(Panel):
 
             col1 = split.column(align=True)
             row1 = col1.row(align=True)
-            row1.prop(cm, "maxBrickScale1", text="1x")
+            row1.prop(cm, "maxWidth", text="Width")
 
             col2 = split.column(align=True)
             row2 = col2.row(align=True)
-            row2.prop(cm, "maxBrickScale2", text="2x")
+            row2.prop(cm, "maxDepth", text="Depth")
 
             if cm.splitModel:
                 col = layout.column(align=True)

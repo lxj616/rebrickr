@@ -51,8 +51,8 @@ def matchProperties(cmNew, cmOld, bh=False):
     cmNew.distOffsetY = cmOld.distOffsetY
     cmNew.distOffsetZ = cmOld.distOffsetZ
     cmNew.customObjectName = cmOld.customObjectName
-    cmNew.maxBrickScale1 = cmOld.maxBrickScale1
-    cmNew.maxBrickScale2 = cmOld.maxBrickScale2
+    cmNew.maxWidth = cmOld.maxWidth
+    cmNew.maxDepth = cmOld.maxDepth
     cmNew.splitModel = cmOld.splitModel
     cmNew.internalSupports = cmOld.internalSupports
     cmNew.latticeStep = cmOld.latticeStep
@@ -751,16 +751,16 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyMatrix,
         default="")
 
-    maxBrickScale1 = IntProperty(
-        name="Max 1 by x",
-        description="Maximum scale of the 1 by X brick",
+    maxWidth = IntProperty(
+        name="Max Width",
+        description="Maximum brick width",
         update=dirtyBuild,
         step=1,
-        min=1, max=10,
-        default=10)
-    maxBrickScale2 = IntProperty(
-        name="Max 2 by x",
-        description="Maximum scale of the 2 by X brick",
+        min=1, max=2,
+        default=2)
+    maxDepth = IntProperty(
+        name="Max Depth",
+        description="Maximum brick depth",
         update=dirtyBuild,
         step=1,
         min=1, max=10,
