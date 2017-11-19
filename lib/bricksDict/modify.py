@@ -247,35 +247,27 @@ def canBeJoined(bricksD, loc, origIsBrick, brickD, i, j):
     canBeBrick = not origIsBrick or plateIsBrick(brickD, bricksD, loc, i, j)
     return spotAvail and canBeBrick
 
-def updateBrickSizes(cm, bricksD, brickD, loc, origIsBrick, brickSizes, bt2, curL, maxL, idxIter=0):
-    i,j = curL
-    if i < maxL[0] and j < maxL[1]:
-        bCanBeJoined = canBeJoined(bricksD, loc, origIsBrick, brickD, i, j)
-
-        if bCanBeJoined:
-            if origIsBrick:
-                newSize = [i+1, j+1, 3]
+def updateBrickSizes(cm, bricksD, brickD, loc, origIsBrick, brickSizes, bt2, maxL):
+    newMax1 = maxL[1]
+    breakOuter = False
+    for i in range(0, maxL[0]):
+        for j in range(0, maxL[1]):
+            # break case 1
+            if j >= newMax1: break
+            # break case 2
+            elif not canBeJoined(bricksD, loc, origIsBrick, brickD, i, j):
+                if j == 0: breakOuter = True
+                else:      newMax1 = j
+                break
+            # else, append current brick size to brickSizes
             else:
-                newSize = [i+1, j+1, bt2]
-            if newSize not in brickSizes:
-                brickSizes.append(newSize)
-            updateBrickSizes(cm, bricksD, brickD, loc, origIsBrick, brickSizes, bt2, [i+1, j], maxL, idxIter=0)
-            updateBrickSizes(cm, bricksD, brickD, loc, origIsBrick, brickSizes, bt2, [i, j+1], maxL, idxIter=1)
-        elif not bCanBeJoined:
-            # maxL[idxIter] = curL[idxIter]
-            for size in brickSizes:
-                if size[idxIter] > curL[idxIter] and size[idxIter%1] > curL[idxIter%1]:
-                    brickSizes.remove(size)
-                    print(size)
-
-# # order: [x,y]
-# idxIter = 1
-# curL = [0, 1]
-# maxL = [2, 5]
-# # new maxL
-# maxL = [2, 1]
-# # offending size
-# size = [2, 5]
+                if origIsBrick:
+                    newSize = [i+1, j+1, 3]
+                else:
+                    newSize = [i+1, j+1, bt2]
+                if newSize not in brickSizes:
+                    brickSizes.append(newSize)
+        if breakOuter: break
 
 def attemptMerge(cm, bricksD, key, loc, origIsBrick, brickSizes, bt2, randState):
     brickD = bricksD[key]
@@ -283,18 +275,16 @@ def attemptMerge(cm, bricksD, key, loc, origIsBrick, brickSizes, bt2, randState)
     locs = []
 
     if cm.brickType != "Custom":
-        print()
-        # updateBrickSizes(cm, bricksD, brickD, loc, origIsBrick, brickSizes, bt2, [0, 0], [cm.maxWidth, cm.maxDepth])
-        # updateBrickSizes(cm, bricksD, brickD, loc, origIsBrick, brickSizes, bt2, [0, 0], [cm.maxDepth, cm.maxWidth])
+        maxL1 = [cm.maxWidth, cm.maxDepth]
+        maxL2 = [cm.maxDepth, cm.maxWidth]
+        updateBrickSizes(cm, bricksD, brickD, loc, origIsBrick, brickSizes, bt2, maxL1)
+        updateBrickSizes(cm, bricksD, brickD, loc, origIsBrick, brickSizes, bt2, maxL2)
 
-        oldUpdateBrickSizes(cm, bricksD, brickD, loc, origIsBrick, brickSizes, bt2, randState)
+        # oldUpdateBrickSizes(cm, bricksD, brickD, loc, origIsBrick, brickSizes, bt2, randState)
 
+    order = randState.randint(0,2)
     # sort brick types from smallest to largest
-    order = randState.randint(1,2)
-    if cm.brickType == "Bricks and Plates":
-        brickSizes.sort(key=lambda x: (x[2], x[order-1]))
-    else:
-        brickSizes.sort(key=lambda x: x[order-1])
+    brickSizes.sort(key=lambda x: (x[2], x[order], x[(order+1)%2]))
     # grab the biggest brick type and store to bricksD
     brickSize = brickSizes[-1]
     bricksD[key]["size"] = brickSize
@@ -310,6 +300,8 @@ def attemptMerge(cm, bricksD, key, loc, origIsBrick, brickSizes, bt2, randState)
                 # get brick at x,y location
                 k0 = listToStr([x,y,z])
                 curBrick = bricksD[k0]
+                if curBrick["attempted_merge"]:
+                    print("got here...   ", brickSizes, brickSize)
                 curBrick["attempted_merge"] = True
                  # checks that x,y,z refer to original brick
                 if (x + y + z) == startingLoc:
