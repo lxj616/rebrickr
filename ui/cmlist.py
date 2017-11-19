@@ -756,15 +756,15 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         description="Maximum brick width",
         update=dirtyBuild,
         step=1,
-        min=1, max=2,
+        min=1, max=12,
         default=2)
     maxDepth = IntProperty(
         name="Max Depth",
         description="Maximum brick depth",
         update=dirtyBuild,
         step=1,
-        min=1, max=10,
-        default=10)
+        min=1, max=24,
+        default=14)
 
     splitModel = BoolProperty(
         name="Split Model",

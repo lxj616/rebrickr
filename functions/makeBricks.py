@@ -192,15 +192,13 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     cm = scn.cmlist[scn.cmlist_index]
     n = cm.source_name
     z1,z2,z3,z4,z5,z6,z7,z8,z9,z10,z11,z12,z13,z14,z15,z16,z17,z18,z19,z20,z21,z22,z23 = (False,)*23
+    zStep = getZStep(cm)
     if cm.brickType in ["Bricks", "Custom"]:
         testZ = False
-        bt2 = 3
     elif cm.brickType == "Plates":
         testZ = False
-        bt2 = 1
     else:
         testZ = True
-        bt2 = 1
 
     # apply transformation to logo duplicate and get bounds(logo)
     logo_details, logo = prepareLogoAndGetDetails(logo)
@@ -305,11 +303,11 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                         else:
                             brickSizes = [[1,1,1]]
                 else:
-                    brickSizes = [[1,1,bt2]]
+                    brickSizes = [[1,1,zStep]]
 
                 # attempt to merge current brick with surrounding bricks, according to available brick types
                 if brickD["size"] is None or cm.buildIsDirty:
-                    brickSize = attemptMerge(cm, bricksD, key, loc, originalIsBrick, brickSizes, bt2, randS1)
+                    brickSize = attemptMerge(cm, bricksD, key, keys, loc, originalIsBrick, brickSizes, zStep, randS1)
                 else:
                     brickSize = brickD["size"]
 
@@ -523,7 +521,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         bricksCreated.append(allBricksObj)
 
     # reset 'attempted_merge' for all items in bricksD
-    for key0 in keys:
+    for key0 in bricksD:
         bricksD[key0]["attempted_merge"] = False
 
     return bricksCreated

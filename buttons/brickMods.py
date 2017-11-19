@@ -124,17 +124,12 @@ class splitBricks(bpy.types.Operator):
                 # delete the current object
                 delete(obj)
 
-                zStep = getZStep(cm)
                 # set size of active brick's bricksDict entries to 1x1x[lastZSize]
-                zType = bricksDict[dictKey]["size"][2]
-                for x in range(x0, x0 + objSize[0]):
-                    for y in range(y0, y0 + objSize[1]):
-                        for z in range(z0, z0 + objSize[2], zStep):
-                            curKey = listToStr([x,y,z])
-                            bricksDict[curKey]["size"] = [1, 1, zType]
-                            bricksDict[curKey]["parent_brick"] = "self"
-                            # add curKey to simple bricksDict for drawing
-                            bricksDicts[cm.idx]["keys_to_update"].append(curKey)
+                splitKeys = Bricks.split(bricksDict, dictKey, loc=dictLoc, cm=cm)
+                # append new splitKeys to bricksDicts[cm.idx]["keys_to_update"]
+                for k in splitKeys:
+                    if k not in bricksDicts[cm.idx]["keys_to_update"]:
+                        bricksDicts[cm.idx]["keys_to_update"].append(k)
             for cm_idx in bricksDicts.keys():
                 # store bricksDicts to cache
                 cm = scn.cmlist[cm_idx]
@@ -192,60 +187,41 @@ class mergeBricks(bpy.types.Operator):
             # iterate through keys in bricks_to_merge
             for cm_idx in bricks_to_merge.keys():
                 cm = scn.cmlist[cm_idx]
-                # sort bricks in bricks_to_merge[cm_idx] by (x+y) location
-                bricks_to_merge[cm_idx].sort(key=lambda obj: int(obj.name.split("__")[1].split(",")[0]) + int(obj.name.split("__")[1].split(",")[1]))
-                # get bricksDict from cache
+                # initialize vars
                 bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-                keysToUpdate = []
-                # initialize parentObjSize
                 parent_brick = None
+                keysToUpdate = []
+                allSplitKeys = []
+                zStep = getZStep(cm)
+                randState = np.random.RandomState(cm.mergeSeed)
 
                 # iterate through objects in bricks_to_merge[cm_idx]
                 for obj in bricks_to_merge[cm_idx]:
-                    # get dict key details of current obj
+                    # initialize vars
                     dictKey, dictLoc = getDictKey(obj.name)
                     x0,y0,z0 = dictLoc
-                    # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
 
-                    if objSize[0] == 1 or objSize[1] == 1:
-                        if parent_brick is not None:
-                            # NOTE: [0] is x, [1] is y
-                            if (parentObjSize[0] in [1, objSize[0]] and
-                               (x0 == x1 and y0 == y1 + 1)):
+                    # split brick in matrix
+                    splitKeys = Bricks.split(bricksDict, dictKey, cm=cm)
+                    allSplitKeys += splitKeys
+                    # delete the object that was split
+                    delete(obj)
 
-                                bricksDict[dictKey]["parent_brick"] = parent_brick["dictKey"]
-                                parentObjSize[1] += objSize[1]
-                                curBrickD = bricksDict[parent_brick["dictKey"]]
-                                curBrickD["size"][1] = parentObjSize[1]
-                                curBrickD["top_exposed"] = bricksDict[dictKey]["top_exposed"]
-                                curBrickD["bot_exposed"] = bricksDict[dictKey]["bot_exposed"]
-                                curBrickD["type"] = None
-                                delete(obj)
-                            # TODO: change to elif when above is uncommented
-                            if (parentObjSize[1] in [1, objSize[1]] and
-                                 (x0 == x1 + 1 and y0 == y1)):
+                # sort bricks in bricks_to_merge[cm_idx] by (x+y) location
+                allSplitKeys.sort(key=lambda k: strToList(k)[0] + strToList(k)[1])
 
-                                bricksDict[dictKey]["parent_brick"] = parent_brick["dictKey"]
-                                parentObjSize[0] += objSize[0]
-                                curBrickD = bricksDict[parent_brick["dictKey"]]
-                                curBrickD["size"][0] = parentObjSize[0]
-                                curBrickD["top_exposed"] = bricksDict[dictKey]["top_exposed"]
-                                curBrickD["bot_exposed"] = bricksDict[dictKey]["bot_exposed"]
-                                curBrickD["type"] = None
-                                delete(obj)
-                        else:
-                            # store parent_brick object size
-                            parent_brick = {"obj":obj, "dictKey":dictKey, "dictLoc":dictLoc}
-                            parentObjSize = objSize
-                            keysToUpdate.append(dictKey)
-                            delete(obj)
-
-                    # store lastdictLoc
-                    lastdictLoc = dictLoc
-                    for i in range(3):
-                        lastdictLoc[i] += objSize[i] - 1
-                    x1,y1,z1 = lastdictLoc
+                for key in allSplitKeys:
+                    if bricksDict[key]["parent_brick"] in [None, "self"]:
+                        # attempt to merge current brick with other bricks in allSplitKeys, according to available brick types
+                        # TODO: improve originalIsBrick argument (currently hardcoded to False)
+                        loc = strToList(key)
+                        brickSize = attemptMerge(cm, bricksDict, key, allSplitKeys, loc, False, [bricksDict[key]["size"]], zStep, randState, preferLargest=True)
+                        # set exposure of current [merged] brick
+                        topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)
+                        bricksDict[key]["top_exposed"] = topExposed
+                        bricksDict[key]["bot_exposed"] = botExposed
+                        keysToUpdate.append(key)
 
                 # store bricksDict to cache
                 cacheBricksDict("UPDATE_MODEL", cm, bricksDict)

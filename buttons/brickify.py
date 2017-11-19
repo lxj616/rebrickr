@@ -206,8 +206,9 @@ class RebrickrBrickify(bpy.types.Operator):
                     bD["bot_exposed"] = None
                     if cm.lastShellThickness != cm.shellThickness:
                         bD["draw"] = bD["val"] >= threshold
-                # else:
-                #     bD["attempted_merge"] = True
+                else:
+                    # don't merge bricks not in 'keys'
+                    bD["attempted_merge"] = True
         if not loadedFromCache or cm.internalIsDirty:
             updateInternal(bricksDict, keys, cm, clearExisting=loadedFromCache)
             cm.buildIsDirty = True

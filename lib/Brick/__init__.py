@@ -31,7 +31,7 @@ from mathutils import Vector, Matrix
 
 # Rebrickr imports
 from .brick_mesh_generate import *
-from ...functions import *
+from ...functions.general import *
 
 class Bricks:
     @staticmethod
@@ -138,6 +138,29 @@ class Bricks:
             if bricksDict[key]["draw"]:
                 bricksDict[key]["parent_brick"] = "self"
                 bricksDict[key]["size"] = [1, 1, zStep]
+
+    def split(bricksDict, key, loc=None, cm=None):
+        # set up unspecified paramaters
+        if cm is None:
+            scn = bpy.context.scene
+            cm = scn.cmlist[scn.cmlist_index]
+        if loc is None:
+            loc = strToList(key)
+        # initialize vars
+        size = bricksDict[key]["size"]
+        splitKeys = []
+        zStep = getZStep(cm)
+        x,y,z = loc
+        # split brick into individual bricks
+        for x0 in range(x, x + size[0]):
+            for y0 in range(y, y + size[1]):
+                for z0 in range(z, z + size[2], zStep):
+                    curKey = listToStr([x0,y0,z0])
+                    bricksDict[curKey]["size"] = [1, 1, size[2]]
+                    bricksDict[curKey]["parent_brick"] = "self"
+                    # add curKey to list of split keys
+                    splitKeys.append(curKey)
+        return splitKeys
 
     @staticmethod
     def get_dimensions(height=1, zScale=1, gap_percentage=0.01):

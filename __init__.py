@@ -72,6 +72,40 @@ def register():
 
     bpy.types.Scene.Rebrickr_copy_from_id = IntProperty(default=-1)
 
+    # define legal brick sizes
+    bpy.props.Rebrickr_legal_brick_sizes = [
+        [1,1],
+        [1,2],
+        [1,3],
+        [1,4],
+        [1,6],
+        [1,8],
+        [1,10],
+        [1,12],
+        [1,14],
+        [1,16],
+        [2,1],
+        [2,2],
+        [2,3],
+        [2,4],
+        [2,6],
+        [2,8],
+        [2,10],
+        [4,4],
+        [4,6],
+        [4,8],
+        [4,10],
+        [4,12],
+        [4,18],
+        [8,8],
+        [8,16],
+        [10,20],
+        [12,24]]
+    # add reverses of above brick sizes
+    for size in bpy.props.Rebrickr_legal_brick_sizes.copy():
+        if size[::-1] not in bpy.props.Rebrickr_legal_brick_sizes:
+            bpy.props.Rebrickr_legal_brick_sizes.append(size[::-1])
+
     # bpy.types.Scene.Rebrickr_snapping = BoolProperty(
     #     name="Rebrickr Snap",
     #     description="Snap to brick dimensions",
