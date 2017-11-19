@@ -273,14 +273,15 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
         # if second time through this for loop, go through keys left behind if "Bricks and Plates"
         if timeThrough == 2: # second time
             if cm.brickType == "Bricks and Plates":
-                keys = keysLeftBehind
+                keys0 = keysLeftBehind
             else:
                 break
         else: # first time
             keysLeftBehind = []
+            keys0 = keys
 
         # iterate through locations in bricksD from bottom to top
-        for i,key in enumerate(keys):
+        for i,key in enumerate(keys0):
             brickD = bricksD[key]
             if brickD["draw"] and brickD["parent_brick"] in [None, "self"]:
 
