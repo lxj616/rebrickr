@@ -58,8 +58,7 @@ class RebrickrRevertSettings(bpy.types.Operator):
         if scn.cmlist_index == -1:
             return False
         cm = scn.cmlist[scn.cmlist_index]
-        # check that matrix settings have changed
-        if cm.sourceIsDirty or (cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings()):
+        if matrixReallyIsDirty(cm):
             return True
         return False
 
@@ -505,7 +504,7 @@ class drawAdjacent(bpy.types.Operator):
             # if attempting to add brick
             if addBrick:
                 adjBrickD["draw"] = True
-                adjBrickD["val"] = self.bricksDict[dictKey]["val"]
+                setCurBrickVal(self.bricksDict, strToList(adjacent_key))
                 adjBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"]
                 adjBrickD["size"] = [1, 1, objSize[2]]
                 adjBrickD["parent_brick"] = "self"
@@ -523,6 +522,7 @@ class drawAdjacent(bpy.types.Operator):
     def execute(self, context):
         try:
             scn = bpy.context.scene
+            scn.update()
             cm = scn.cmlist[self.cm_idx]
             obj = scn.objects.active
             initial_active_obj_name = obj.name
@@ -560,8 +560,9 @@ class drawAdjacent(bpy.types.Operator):
             # if bricks created on bottom, set top_exposed of original brick to False
             if self.zNeg:
                 self.bricksDict[dictKey]["bot_exposed"] = False
-                keysToMerge.append(dictKey)
-                delete(obj)
+                if not self.zPos:
+                    keysToMerge.append(dictKey)
+                    delete(obj)
 
             # attempt to merge created bricks
             keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm)

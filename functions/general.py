@@ -146,6 +146,10 @@ def revertMatrixSettings(cm=None):
     cm.castDoubleCheckRays = str_to_bool(settings[10])
     cm.brickShell = settings[11]
     cm.calculationAxes = settings[12]
+    cm.matrixIsDirty = False
+
+def matrixReallyIsDirty(cm):
+    return cm.sourceIsDirty or (cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings())
 
 def listToStr(lst):
     assert type(lst) in [list, tuple]

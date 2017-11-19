@@ -268,10 +268,10 @@ def select(objList=[], active=None, deselect=False, only=True, scene=None):
     return True
 
 def delete(objList):
-    if objList is None: return False
     objList = confirmList(objList)
     objs = bpy.data.objects
     for obj in objList:
+        if obj is None: continue
         objs.remove(obj, True)
 
 def changeContext(context, areaType):

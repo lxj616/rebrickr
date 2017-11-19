@@ -42,10 +42,7 @@ def getBricksDict(action, source=None, source_details=None, dimensions=None, R=N
         bricksDict = rebrickr_bfm_cache.get(cm.id)
         if bricksDict is None:
             # get bricksDict from deep cache
-            print("Accessing deep cache")
             bricksDict = json.loads(cm.BFMCache)
-        else:
-            print("Accessing light cache")
         loadedFromCache = True
         # if animated, index into that dict
         if action == "UPDATE_ANIM":

@@ -858,7 +858,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
         # check if matrix is dirty
         if cm.matrixIsDirty:
-            if cm.lastMatrixSettings == getMatrixSettings():
+            if not matrixReallyIsDirty(cm) and getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)[1]:
                 cm.matrixIsDirty = False
 
         if not self.isValid(source, Rebrickr_bricks_gn):

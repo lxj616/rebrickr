@@ -134,6 +134,7 @@ class RebrickrBrickDetailsPanel(Panel):
             return False
         return True
 
+
     def draw(self, context):
         layout = self.layout
         scn = context.scene
