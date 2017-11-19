@@ -764,7 +764,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBuild,
         step=1,
         min=1, max=24,
-        default=14)
+        default=10)
 
     splitModel = BoolProperty(
         name="Split Model",

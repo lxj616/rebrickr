@@ -161,11 +161,41 @@ class mergeBricks(bpy.types.Operator):
             if obj.isBrick:
                 # get cmlist item referred to by object
                 cm = getItemByID(scn.cmlist, obj.cmlist_id)
-                if cm.lastBrickType != "Custom":
+                if cm.lastBrickType != "Custom" and not cm.buildIsDirty:
                     i += 1
                     if i == 2:
                         return True
         return False
+
+    @staticmethod
+    def getSortedKeys(keys):
+        """ sort bricks by (x+y) location for best merge """
+        keys.sort(key=lambda k: strToList(k)[0] + strToList(k)[1])
+        return keys
+
+
+    @staticmethod
+    def mergeBricks(bricksDict, keys, cm):
+        # initialize vars
+        updatedKeys = []
+        zStep = getZStep(cm)
+        randState = np.random.RandomState(cm.mergeSeed)
+
+        keys = mergeBricks.getSortedKeys(keys)
+
+        for key in keys:
+            if bricksDict[key]["parent_brick"] in [None, "self"]:
+                # attempt to merge current brick with other bricks in keys, according to available brick types
+                # TODO: improve originalIsBrick argument (currently hardcoded to False)
+                loc = strToList(key)
+                brickSize = attemptMerge(cm, bricksDict, key, keys, loc, False, [bricksDict[key]["size"]], zStep, randState, preferLargest=True)
+                # bricksDict[key]["size"] = brickSize
+                # set exposure of current [merged] brick
+                topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)
+                bricksDict[key]["top_exposed"] = topExposed
+                bricksDict[key]["bot_exposed"] = botExposed
+                updatedKeys.append(key)
+        return updatedKeys
 
     def execute(self, context):
         try:
@@ -190,10 +220,7 @@ class mergeBricks(bpy.types.Operator):
                 # initialize vars
                 bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
                 parent_brick = None
-                keysToUpdate = []
                 allSplitKeys = []
-                zStep = getZStep(cm)
-                randState = np.random.RandomState(cm.mergeSeed)
 
                 # iterate through objects in bricks_to_merge[cm_idx]
                 for obj in bricks_to_merge[cm_idx]:
@@ -208,20 +235,8 @@ class mergeBricks(bpy.types.Operator):
                     # delete the object that was split
                     delete(obj)
 
-                # sort bricks in bricks_to_merge[cm_idx] by (x+y) location
-                allSplitKeys.sort(key=lambda k: strToList(k)[0] + strToList(k)[1])
-
-                for key in allSplitKeys:
-                    if bricksDict[key]["parent_brick"] in [None, "self"]:
-                        # attempt to merge current brick with other bricks in allSplitKeys, according to available brick types
-                        # TODO: improve originalIsBrick argument (currently hardcoded to False)
-                        loc = strToList(key)
-                        brickSize = attemptMerge(cm, bricksDict, key, allSplitKeys, loc, False, [bricksDict[key]["size"]], zStep, randState, preferLargest=True)
-                        # set exposure of current [merged] brick
-                        topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)
-                        bricksDict[key]["top_exposed"] = topExposed
-                        bricksDict[key]["bot_exposed"] = botExposed
-                        keysToUpdate.append(key)
+                # run self.mergeBricks
+                keysToUpdate = mergeBricks.mergeBricks(bricksDict, allSplitKeys, cm)
 
                 # store bricksDict to cache
                 cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
@@ -459,7 +474,7 @@ class drawAdjacent(bpy.types.Operator):
             self.report({"WARNING"}, "Matrix not available at the following location: %(adjacent_key)s" % locals())
             return adjacent_key, False
 
-    def toggleBrick(self, cm, dkl, dictKey, objSize, side, brickNum, addBrick=True):
+    def toggleBrick(self, cm, dkl, dictKey, objSize, side, brickNum, keysToUpdate, addBrick=True):
         adjacent_key, adjBrickD = self.getBrickD(dkl)
         if not adjBrickD:
             self.setDirBool(side, False)
@@ -497,7 +512,7 @@ class drawAdjacent(bpy.types.Operator):
                 topExposed, botExposed = getBrickExposure(cm, self.bricksDict, adjacent_key)
                 adjBrickD["top_exposed"] = topExposed
                 adjBrickD["bot_exposed"] = botExposed
-                self.keysToUpdate.append(adjacent_key)
+                keysToUpdate.append(adjacent_key)
                 self.adjBricksCreated[side][brickNum] = True
                 return True
             # if attempting to remove brick
@@ -511,7 +526,7 @@ class drawAdjacent(bpy.types.Operator):
             cm = scn.cmlist[self.cm_idx]
             obj = scn.objects.active
             initial_active_obj_name = obj.name
-            self.keysToUpdate = []
+            keysToMerge = []
 
             # get dict key details of current obj
             dictKey, dictLoc = getDictKey(obj.name)
@@ -528,7 +543,7 @@ class drawAdjacent(bpy.types.Operator):
                 if (createAdjBricks[i] or (not createAdjBricks[i] and self.adjBricksCreated[i][0])):
                     # add or remove bricks in all adjacent locations in current direction
                     for j,dkl in enumerate(self.adjDKLs[i]):
-                        self.toggleBrick(cm, dkl, dictKey, objSize, i, j, createAdjBricks[i])
+                        self.toggleBrick(cm, dkl, dictKey, objSize, i, j, keysToMerge, addBrick=createAdjBricks[i])
 
             # recalculate val for each bricksDict key in original brick
             for x in range(x0, x0 + objSize[0]):
@@ -540,17 +555,20 @@ class drawAdjacent(bpy.types.Operator):
             # if bricks created on top, set top_exposed of original brick to False
             if self.zPos:
                 self.bricksDict[dictKey]["top_exposed"] = False
-                self.keysToUpdate.append(dictKey)
+                keysToMerge.append(dictKey)
                 delete(obj)
             # if bricks created on bottom, set top_exposed of original brick to False
             if self.zNeg:
                 self.bricksDict[dictKey]["bot_exposed"] = False
-                self.keysToUpdate.append(dictKey)
+                keysToMerge.append(dictKey)
                 delete(obj)
 
+            # attempt to merge created bricks
+            keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm)
+
             # draw created bricks
-            if len(self.keysToUpdate) > 0:
-                runCreateNewBricks2(cm, self.bricksDict, self.keysToUpdate, selectCreated=False)
+            if len(keysToUpdate) > 0:
+                runCreateNewBricks2(cm, self.bricksDict, keysToUpdate, selectCreated=False)
 
             # store bricksDict to cache
             cacheBricksDict("UPDATE_MODEL", cm, self.bricksDict)
@@ -619,7 +637,7 @@ class changeBrickType(bpy.types.Operator):
         objSize = bricksDict[dictKey]["size"]
 
         if (objSize[2] == 3 and
-           (objSize[0] + objSize[1] in [3,4,5,6,7] or
+           (objSize[0] + objSize[1] in range(3,8) or
            (objSize[0] == 6 and objSize[1] == 2) or
            (objSize[0] == 2 and objSize[1] == 6))):
             items.append(("SLOPE", "Slope", ""))
@@ -708,6 +726,11 @@ class changeBrickType(bpy.types.Operator):
 
             # set type of parent_brick to self.brickType
             self.bricksDict[dictKey]["type"] = self.brickType
+
+            # delete updated brick
+            delete(obj)
+            # draw updated brick
+            runCreateNewBricks2(cm, self.bricksDict, [dictKey], selectCreated=False)
 
             # store bricksDict to cache
             cacheBricksDict("UPDATE_MODEL", cm, self.bricksDict)

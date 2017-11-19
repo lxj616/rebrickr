@@ -74,6 +74,9 @@ class RebrickrBrickModPanel(Panel):
         if not cm.lastSplitModel:
             layout.label("Split model for brick mods")
             return
+        if cm.buildIsDirty:
+            layout.label("Run 'Update Model' for brick mods")
+            return
 
         col1 = layout.column(align=True)
         col1.label("Toggle Exposure:")
