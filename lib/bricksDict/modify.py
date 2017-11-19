@@ -85,7 +85,7 @@ def updateBrickSizes(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep
             if j >= newMax1:
                 break
             # break case 2
-            elif not canBeJoined(bricksD, loc, origIsBrick, key, i, j):
+            elif not canBeJoined(bricksD, loc, origIsBrick, key, i, j) or listToStr([i + loc[0], j + loc[1], loc[2]]) not in keys:
                 if j == 0: breakOuter = True
                 else:      newMax1 = j
                 break
@@ -95,8 +95,7 @@ def updateBrickSizes(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep
                     newSize = [i+1, j+1, 3]
                 else:
                     newSize = [i+1, j+1, zStep]
-                newLoc = [i + loc[0], j + loc[1], loc[2]]
-                if newSize not in brickSizes and listToStr(newLoc) in keys and [newSize[0],newSize[1]] in bpy.props.Rebrickr_legal_brick_sizes:
+                if newSize not in brickSizes and [newSize[0],newSize[1]] in bpy.props.Rebrickr_legal_brick_sizes:
                     brickSizes.append(newSize)
         if breakOuter: break
 
