@@ -47,26 +47,13 @@ class move_to_layer_override(Operator):
     bl_label = "Move to Layer"
     bl_options = {'REGISTER', 'INTERNAL'}
 
-    layers = CollectionProperty()
+    ################################################
+    # Blender Operator methods
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         # return context.active_object is not None
         return True
-
-    def runMove(self, context):
-        scn = context.scene
-        for obj in bpy.context.selected_objects:
-            obj.layers = self.layers
-            if obj.name.startswith("Rebrickr_") and obj.name.index("_bricks_frame_") != -1:
-                for cm in scn.cmlist:
-                    if obj.name[8:obj.name.index("_bricks_frame_")] == cm.source_name:
-                        n = cm.source_name
-                        for curFrame in range(cm.lastStartFrame, cm.lastStopFrame + 1):
-                            bricksCurF = bpy.data.objects.get("Rebrickr_%(n)s_bricks_frame_%(curFrame)s" % locals())
-                            if bricksCurF.name != obj.name:
-                                bricksCurF.layers = self.layers
-
 
     def execute(self, context):
         try:
@@ -86,3 +73,24 @@ class move_to_layer_override(Operator):
             except:
                 handle_exception()
             return {'FINISHED'}
+
+    ###################################################
+    # class variables
+
+    layers = CollectionProperty()
+
+    ################################################
+    # class methods
+
+    def runMove(self, context):
+        scn = context.scene
+        for obj in bpy.context.selected_objects:
+            obj.layers = self.layers
+            if obj.name.startswith("Rebrickr_") and obj.name.index("_bricks_frame_") != -1:
+                for cm in scn.cmlist:
+                    if obj.name[8:obj.name.index("_bricks_frame_")] == cm.source_name:
+                        n = cm.source_name
+                        for curFrame in range(cm.lastStartFrame, cm.lastStopFrame + 1):
+                            bricksCurF = bpy.data.objects.get("Rebrickr_%(n)s_bricks_frame_%(curFrame)s" % locals())
+                            if bricksCurF.name != obj.name:
+                                bricksCurF.layers = self.layers

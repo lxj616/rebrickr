@@ -48,7 +48,7 @@ class RebrickrDelete(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         scn = bpy.context.scene
         if scn.cmlist_index == -1:
@@ -56,7 +56,7 @@ class RebrickrDelete(bpy.types.Operator):
         return True
 
     @classmethod
-    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, preservedFrames=None):
+    def cleanUp(self, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, preservedFrames=None):
         """ externally callable cleanup function for bricks, source, dupes, and parents """
         # set up variables
         scn = bpy.context.scene
@@ -209,7 +209,7 @@ class RebrickrDelete(bpy.types.Operator):
         return source, brickLoc, brickRot, brickScale
 
     @classmethod
-    def runFullDelete(cls, cm=None):
+    def runFullDelete(self, cm=None):
         """ externally callable cleanup function for full delete action (clears everything from memory) """
         scn = bpy.context.scene
         scn.Rebrickr_runningOperation = True

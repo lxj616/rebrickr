@@ -45,7 +45,7 @@ class MakeClosedMesh(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     # @classmethod
-    # def poll(cls, context):
+    # def poll(self, context):
     #     """ ensures operator can execute (if not, returns false) """
     #     addon = 'object_boolean_tools'
     #     is_enabled, is_loaded = check(addon)

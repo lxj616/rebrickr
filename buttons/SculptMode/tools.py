@@ -24,52 +24,25 @@
 
 # Blender imports
 import bpy
-from bpy.props import *
+from bpy.types import Operator
 
 # Rebrickr imports
-from ..functions import *
-from .brickify import *
-from ..lib.bricksDict.functions import getDictKey
-from ..lib.caches import rebrickr_bfm_cache
+from .undo_stack import *
+from .functions import *
+from ..brickify import *
+from ..brickify import *
+from ...lib.bricksDict.functions import getDictKey
+from ...lib.caches import rebrickr_bfm_cache
+from ...functions import *
 
-
-def runCreateNewBricks2(cm, bricksDict, keysToUpdate, selectCreated=True):
-    # get arguments for createNewBricks
-    n = cm.source_name
-    source = bpy.data.objects.get(n + " (DO NOT RENAME)")
-    source_details, dimensions = getDetailsAndBounds(source)
-    Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
-    parent = bpy.data.objects.get(Rebrickr_parent_on)
-    refLogo = RebrickrBrickify.getLogo(cm)
-    action = "UPDATE_MODEL"
-    # actually draw the bricks
-    RebrickrBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, action, bricksDict=bricksDict, keys=keysToUpdate, replaceExistingGroup=False, selectCreated=selectCreated)
-
-def createObjsD(objs):
-    scn = bpy.context.scene
-    # initialize objsD
-    objsD = {}
-    # fill objsD with selected_objects
-    for obj in objs:
-        if obj.isBrick:
-            # get cmlist item referred to by object
-            cm = getItemByID(scn.cmlist, obj.cmlist_id)
-            # add object to objsD
-            if cm.idx not in objsD:
-                objsD[cm.idx] = [obj]
-            else:
-                objsD[cm.idx].append(obj)
-    return objsD
-
-
-class RebrickrRevertSettings(bpy.types.Operator):
+class RebrickrRevertSettings(Operator):
     """Revert Matrix settings to save brick mods"""                             # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "rebrickr.revert_matrix_settings"                               # unique identifier for buttons and menu items to reference.
     bl_label = "Revert Matrix Settings"                                         # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
         scn = bpy.context.scene
         if scn.cmlist_index == -1:
@@ -86,14 +59,17 @@ class RebrickrRevertSettings(bpy.types.Operator):
             handle_exception()
         return{"FINISHED"}
 
-class splitBricks(bpy.types.Operator):
+class splitBricks(Operator):
     """Split selected bricks into 1x1 bricks"""                                 # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "rebrickr.split_bricks"                                         # unique identifier for buttons and menu items to reference.
     bl_label = "Split Brick(s)"                                                 # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
+    ################################################
+    # Blender Operator methods
+
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
         scn = bpy.context.scene
         objs = bpy.context.selected_objects
@@ -106,7 +82,37 @@ class splitBricks(bpy.types.Operator):
                     return True
         return False
 
+    def execute(self, context):
+        self.splitBricks()
+        return{"FINISHED"}
+
+    def invoke(self, context, event):
+        scn = context.scene
+        self.undo_stack.undo_push('split')
+
+        # invoke props popup if conditions met
+        for cm_idx in self.objNamesD.keys():
+            cm = scn.cmlist[cm_idx]
+            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            if cm.brickType == "Bricks and Plates":
+                for obj_name in self.objNamesD[cm_idx]:
+                    dictKey, dictLoc = getDictKey(obj_name)
+                    size = bricksDict[dictKey]["size"]
+                    if size[2] > 1:
+                        if size[0] + size[1] > 2:
+                            return context.window_manager.invoke_props_popup(self, event)
+                        else:
+                            self.vertical = True
+                            self.splitBricks()
+        self.horizontal = True
+        self.splitBricks()
+        return {"FINISHED"}
+
+    ################################################
+    # initialization method
+
     def __init__(self):
+        self.undo_stack = UndoStack.new()
         self.vertical = False
         self.horizontal = False
         selected_objects = bpy.context.selected_objects
@@ -117,6 +123,13 @@ class splitBricks(bpy.types.Operator):
             for obj in objsD[cm_idx]:
                 self.objNamesD[cm_idx].append(obj.name)
 
+    ###################################################
+    # class variables
+
+    # variables
+    objNamesD = {}
+
+    # properties
     vertical = bpy.props.BoolProperty(
         name="Vertical",
         description="Split brick(s) horizontally",
@@ -126,7 +139,8 @@ class splitBricks(bpy.types.Operator):
         description="Split brick(s) vertically",
         default=False)
 
-    objNamesD = {}
+    #############################################
+    # class methods
 
     def splitBricks(self):
         try:
@@ -168,40 +182,19 @@ class splitBricks(bpy.types.Operator):
         except:
             handle_exception()
 
-    def execute(self, context):
-        self.splitBricks()
-        return{"FINISHED"}
+    #############################################
 
-    def invoke(self, context, event):
-        scn = context.scene
-
-        # invoke props popup if conditions met
-        for cm_idx in self.objNamesD.keys():
-            cm = scn.cmlist[cm_idx]
-            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-            if cm.brickType == "Bricks and Plates":
-                for obj_name in self.objNamesD[cm_idx]:
-                    dictKey, dictLoc = getDictKey(obj_name)
-                    size = bricksDict[dictKey]["size"]
-                    if size[2] > 1:
-                        if size[0] + size[1] > 2:
-                            return context.window_manager.invoke_props_popup(self, event)
-                        else:
-                            self.vertical = True
-                            self.splitBricks()
-        self.horizontal = True
-        self.splitBricks()
-        return {"FINISHED"}
-
-
-class mergeBricks(bpy.types.Operator):
+class mergeBricks(Operator):
     """Merge selected bricks"""                                                 # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "rebrickr.merge_bricks"                                         # unique identifier for buttons and menu items to reference.
     bl_label = "Merge Bricks"                                                   # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
+    ################################################
+    # Blender Operator methods
+
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
         scn = bpy.context.scene
         objs = bpy.context.selected_objects
@@ -217,38 +210,9 @@ class mergeBricks(bpy.types.Operator):
                         return True
         return False
 
-    @staticmethod
-    def getSortedKeys(keys):
-        """ sort bricks by (x+y) location for best merge """
-        keys.sort(key=lambda k: (strToList(k)[2], strToList(k)[0] + strToList(k)[1]))
-        return keys
-
-
-    @staticmethod
-    def mergeBricks(bricksDict, keys, cm, mergeVertical=True):
-        # initialize vars
-        updatedKeys = []
-        zStep = getZStep(cm)
-        randState = np.random.RandomState(cm.mergeSeed)
-
-        keys = mergeBricks.getSortedKeys(keys)
-
-        for key in keys:
-            if bricksDict[key]["parent_brick"] in [None, "self"]:
-                # attempt to merge current brick with other bricks in keys, according to available brick types
-                # TODO: improve originalIsBrick argument (currently hardcoded to False)
-                loc = strToList(key)
-                brickSize = attemptMerge(cm, bricksDict, key, keys, loc, False, [bricksDict[key]["size"]], zStep, randState, preferLargest=True, mergeVertical=mergeVertical)
-                # bricksDict[key]["size"] = brickSize
-                # set exposure of current [merged] brick
-                topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)
-                bricksDict[key]["top_exposed"] = topExposed
-                bricksDict[key]["bot_exposed"] = botExposed
-                updatedKeys.append(key)
-        return updatedKeys
-
     def execute(self, context):
         try:
+            self.undo_stack.undo_push('split')
             scn = bpy.context.scene
             selected_objects = bpy.context.selected_objects
 
@@ -288,14 +252,57 @@ class mergeBricks(bpy.types.Operator):
             handle_exception()
         return{"FINISHED"}
 
-class setExposure(bpy.types.Operator):
+    ################################################
+    # initialization method
+
+    def __init__(self):
+        self.undo_stack = UndoStack.new()
+
+    #############################################
+    # class methods
+
+    @staticmethod
+    def getSortedKeys(keys):
+        """ sort bricks by (x+y) location for best merge """
+        keys.sort(key=lambda k: (strToList(k)[2], strToList(k)[0] + strToList(k)[1]))
+        return keys
+
+    @staticmethod
+    def mergeBricks(bricksDict, keys, cm, mergeVertical=True):
+        # initialize vars
+        updatedKeys = []
+        zStep = getZStep(cm)
+        randState = np.random.RandomState(cm.mergeSeed)
+
+        keys = mergeBricks.getSortedKeys(keys)
+
+        for key in keys:
+            if bricksDict[key]["parent_brick"] in [None, "self"]:
+                # attempt to merge current brick with other bricks in keys, according to available brick types
+                # TODO: improve originalIsBrick argument (currently hardcoded to False)
+                loc = strToList(key)
+                brickSize = attemptMerge(cm, bricksDict, key, keys, loc, False, [bricksDict[key]["size"]], zStep, randState, preferLargest=True, mergeVertical=mergeVertical)
+                # bricksDict[key]["size"] = brickSize
+                # set exposure of current [merged] brick
+                topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)
+                bricksDict[key]["top_exposed"] = topExposed
+                bricksDict[key]["bot_exposed"] = botExposed
+                updatedKeys.append(key)
+        return updatedKeys
+
+    #############################################
+
+class setExposure(Operator):
     """Set exposure of bricks"""                                                # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "rebrickr.set_exposure"                                         # unique identifier for buttons and menu items to reference.
     bl_label = "Set Exposure"                                                   # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
+    ################################################
+    # Blender Operator methods
+
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
         scn = bpy.context.scene
         objs = bpy.context.selected_objects
@@ -308,17 +315,9 @@ class setExposure(bpy.types.Operator):
                     return True
         return False
 
-    side = bpy.props.EnumProperty(
-        items=(
-            ("TOP", "Top", ""),
-            ("BOTTOM", "Bottom", ""),
-            ("BOTH", "Both", ""),
-        ),
-        default="TOP"
-    )
-
     def execute(self, context):
         try:
+            self.undo_stack.undo_push('split')
             scn = bpy.context.scene
             selected_objects = bpy.context.selected_objects
             active_obj = scn.objects.active
@@ -368,44 +367,35 @@ class setExposure(bpy.types.Operator):
             handle_exception()
         return {"FINISHED"}
 
+    ################################################
+    # initialization method
 
-def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
-    assert loc is not None or key is not None
-    if loc is not None:
-        x,y,z = loc
-    else:
-        x,y,z = strToList(key)
-    adjKeys = [listToStr([x+1,y,z]),
-               listToStr([x-1,y,z]),
-               listToStr([x,y+1,z]),
-               listToStr([x,y-1,z]),
-               listToStr([x,y,z+1]),
-               listToStr([x,y,z-1])]
-    adjBrickVals = []
-    for key in adjKeys:
-        try:
-            adjBrickVals.append(bricksDict[key]["val"])
-        except KeyError:
-            adjKeys.remove(key)
-    return adjKeys, adjBrickVals
+    def __init__(self):
+        self.undo_stack = UndoStack.new()
 
-def setCurBrickVal(bricksDict, loc):
-    _,adjBrickVals = getAdjKeysAndBrickVals(bricksDict, loc=loc)
-    if 0 in adjBrickVals:
-        newVal = 1
-    else:
-        highestAdjVal = max(adjBrickVals)
-        newVal = highestAdjVal - 0.01
-    bricksDict[listToStr(loc)]["val"] = newVal
+    ###################################################
+    # class variables
 
-class drawAdjacent(bpy.types.Operator):
+    # properties
+    side = bpy.props.EnumProperty(
+        items=(("TOP", "Top", ""),
+               ("BOTTOM", "Bottom", ""),
+               ("BOTH", "Both", ""),),
+        default="TOP")
+
+    #############################################
+
+class drawAdjacent(Operator):
     """Draw brick to one side of active brick"""                                # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "rebrickr.draw_adjacent"                                        # unique identifier for buttons and menu items to reference.
     bl_label = "Draw Adjacent Bricks"                                            # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
+    ################################################
+    # Blender Operator methods
+
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
         scn = bpy.context.scene
         active_obj = scn.objects.active
@@ -417,8 +407,88 @@ class drawAdjacent(bpy.types.Operator):
             return False
         return True
 
+    def execute(self, context):
+        try:
+            scn = bpy.context.scene
+            scn.update()
+            cm = scn.cmlist[scn.cmlist_index]
+            obj = scn.objects.active
+            initial_active_obj_name = obj.name
+            keysToMerge = []
+
+            # get dict key details of current obj
+            dictKey, dictLoc = getDictKey(obj.name)
+            x0,y0,z0 = dictLoc
+            # get size of current brick (e.g. [2, 4, 1])
+            objSize = self.bricksDict[dictKey]["size"]
+
+            # store enabled/disabled values
+            createAdjBricks = [self.xPos, self.xNeg, self.yPos, self.yNeg, self.zPos, self.zNeg]
+
+            zStep = getZStep(cm)
+            decriment = 0
+            # check all 6 directions for action to be executed
+            for i in range(6):
+                # if checking beneath obj in 'Bricks and Plates', check 3 keys below instead of 1 key below
+                if i == 5 and cm.brickType == "Bricks and Plates":
+                    newBrickHeight = self.getNewBrickHeight()
+                    decriment = newBrickHeight - 1
+                    print(decriment)
+                # if action should be executed (value changed in direction prop)
+                if (createAdjBricks[i] or (not createAdjBricks[i] and self.adjBricksCreated[i][0])):
+                    # add or remove bricks in all adjacent locations in current direction
+                    for j,dictLoc in enumerate(self.adjDKLs[i]):
+                        if decriment != 0:
+                            dictLoc = dictLoc.copy()
+                            dictLoc[2] -= decriment
+                        self.toggleBrick(cm, dictLoc, dictKey, objSize, i, j, keysToMerge, addBrick=createAdjBricks[i])
+
+            # recalculate val for each bricksDict key in original brick
+            for x in range(x0, x0 + objSize[0]):
+                for y in range(y0, y0 + objSize[1]):
+                    for z in range(z0, z0 + objSize[2], zStep):
+                        curKeyLoc = [x, y, z]
+                        setCurBrickVal(self.bricksDict, curKeyLoc)
+
+            # if bricks created on top, set top_exposed of original brick to False
+            if self.zPos:
+                self.bricksDict[dictKey]["top_exposed"] = False
+                keysToMerge.append(dictKey)
+                delete(obj)
+            # if bricks created on bottom, set top_exposed of original brick to False
+            if self.zNeg:
+                self.bricksDict[dictKey]["bot_exposed"] = False
+                if not self.zPos:
+                    keysToMerge.append(dictKey)
+                    delete(obj)
+
+            # attempt to merge created bricks
+            keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm, mergeVertical=self.brickType == "BRICK")
+
+            # draw created bricks
+            if len(keysToUpdate) > 0:
+                runCreateNewBricks2(cm, self.bricksDict, keysToUpdate, selectCreated=False)
+
+            # store bricksDict to cache
+            cacheBricksDict("UPDATE_MODEL", cm, self.bricksDict)
+
+            # select original brick
+            orig_obj = bpy.data.objects.get(initial_active_obj_name)
+            if orig_obj is not None: select(orig_obj, active=orig_obj)
+        except:
+            handle_exception()
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        self.undo_stack = UndoStack.new()
+        return context.window_manager.invoke_props_popup(self, event)
+
+    ################################################
+    # initialization method
+
     def __init__(self):
         try:
+            self.undo_stack = UndoStack.new()
             scn = bpy.context.scene
             cm = scn.cmlist[scn.cmlist_index]
             obj = scn.objects.active
@@ -476,6 +546,14 @@ class drawAdjacent(bpy.types.Operator):
         except:
             handle_exception()
 
+    ###################################################
+    # class variables
+
+    # vars
+    bricksDict = {}
+    adjDKLs = []
+
+    # get items for brickType prop
     def get_items1(self, context):
         scn = bpy.context.scene
         obj = scn.objects.active
@@ -507,9 +585,8 @@ class drawAdjacent(bpy.types.Operator):
     xPos = bpy.props.BoolProperty(name="Back   (+X)", default=False)
     xNeg = bpy.props.BoolProperty(name="Front  (-X)", default=False)
 
-    # define hidden class variables
-    bricksDict = {}
-    adjDKLs = []
+    #############################################
+    # class methods
 
     def setDirBool(self, idx, val):
         if idx == 0: self.xPos = val
@@ -625,89 +702,19 @@ class drawAdjacent(bpy.types.Operator):
                 self.report({"INFO"}, "Brick does not exist in the following location: %(adjacent_key)s" % locals())
                 return False
 
-    def execute(self, context):
-        try:
-            scn = bpy.context.scene
-            scn.update()
-            cm = scn.cmlist[scn.cmlist_index]
-            obj = scn.objects.active
-            initial_active_obj_name = obj.name
-            keysToMerge = []
+    #############################################
 
-            # get dict key details of current obj
-            dictKey, dictLoc = getDictKey(obj.name)
-            x0,y0,z0 = dictLoc
-            # get size of current brick (e.g. [2, 4, 1])
-            objSize = self.bricksDict[dictKey]["size"]
-
-            # store enabled/disabled values
-            createAdjBricks = [self.xPos, self.xNeg, self.yPos, self.yNeg, self.zPos, self.zNeg]
-
-            zStep = getZStep(cm)
-            decriment = 0
-            # check all 6 directions for action to be executed
-            for i in range(6):
-                # if checking beneath obj in 'Bricks and Plates', check 3 keys below instead of 1 key below
-                if i == 5 and cm.brickType == "Bricks and Plates":
-                    newBrickHeight = self.getNewBrickHeight()
-                    decriment = newBrickHeight - 1
-                    print(decriment)
-                # if action should be executed (value changed in direction prop)
-                if (createAdjBricks[i] or (not createAdjBricks[i] and self.adjBricksCreated[i][0])):
-                    # add or remove bricks in all adjacent locations in current direction
-                    for j,dictLoc in enumerate(self.adjDKLs[i]):
-                        if decriment != 0:
-                            dictLoc = dictLoc.copy()
-                            dictLoc[2] -= decriment
-                        self.toggleBrick(cm, dictLoc, dictKey, objSize, i, j, keysToMerge, addBrick=createAdjBricks[i])
-
-            # recalculate val for each bricksDict key in original brick
-            for x in range(x0, x0 + objSize[0]):
-                for y in range(y0, y0 + objSize[1]):
-                    for z in range(z0, z0 + objSize[2], zStep):
-                        curKeyLoc = [x, y, z]
-                        setCurBrickVal(self.bricksDict, curKeyLoc)
-
-            # if bricks created on top, set top_exposed of original brick to False
-            if self.zPos:
-                self.bricksDict[dictKey]["top_exposed"] = False
-                keysToMerge.append(dictKey)
-                delete(obj)
-            # if bricks created on bottom, set top_exposed of original brick to False
-            if self.zNeg:
-                self.bricksDict[dictKey]["bot_exposed"] = False
-                if not self.zPos:
-                    keysToMerge.append(dictKey)
-                    delete(obj)
-
-            # attempt to merge created bricks
-            keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm, mergeVertical=self.brickType == "BRICK")
-
-            # draw created bricks
-            if len(keysToUpdate) > 0:
-                runCreateNewBricks2(cm, self.bricksDict, keysToUpdate, selectCreated=False)
-
-            # store bricksDict to cache
-            cacheBricksDict("UPDATE_MODEL", cm, self.bricksDict)
-
-            # select original brick
-            orig_obj = bpy.data.objects.get(initial_active_obj_name)
-            if orig_obj is not None: select(orig_obj, active=orig_obj)
-        except:
-            handle_exception()
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_popup(self, event)
-
-class changeBrickType(bpy.types.Operator):
+class changeBrickType(Operator):
     """change brick type of active brick"""                                     # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "rebrickr.change_brick_type"                                    # unique identifier for buttons and menu items to reference.
     bl_label = "Change Brick Type"                                              # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
+    ################################################
+    # Blender Operator methods
+
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
         scn = bpy.context.scene
         active_obj = scn.objects.active
@@ -723,67 +730,6 @@ class changeBrickType(bpy.types.Operator):
         if cm.lastBrickType == "Custom":
             return False
         return True
-
-    def __init__(self):
-        try:
-            scn = bpy.context.scene
-            obj = scn.objects.active
-            cm = scn.cmlist[scn.cmlist_index]
-            # get cmlist item referred to by object
-            cm = getItemByID(scn.cmlist, obj.cmlist_id)
-            # get bricksDict from cache
-            self.bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-            dictKey, dictLoc = getDictKey(obj.name)
-            self.cm_idx = cm.idx
-            curBrickType = self.bricksDict[dictKey]["type"]
-            if curBrickType is not None:
-                self.brickType = curBrickType
-            else:
-                self.brickType = "STANDARD"
-        except:
-            handle_exception()
-
-    def get_items(self, context):
-        scn = bpy.context.scene
-        obj = scn.objects.active
-        if obj is None: return []
-        cm = scn.cmlist[scn.cmlist_index]
-        items = [("STANDARD", "Standard", "")]
-
-        dictKey, dictLoc = getDictKey(obj.name)
-        bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-        objSize = bricksDict[dictKey]["size"]
-
-        if (objSize[2] == 3 and
-           (objSize[0] + objSize[1] in range(3,8) or
-           (objSize[0] == 6 and objSize[1] == 2) or
-           (objSize[0] == 2 and objSize[1] == 6))):
-            items.append(("SLOPE", "Slope", ""))
-        if (objSize[2] == 3 and
-           (objSize[0] + objSize[1] < 6 and objSize[0] + objSize[1] > 2)):
-            items.append(("SLOPE_INVERTED", "Slope Inverted", ""))
-        if objSize[0] + objSize[1] == 2:
-            if objSize[2] == 3:
-                items.append(("CYLINDER", "Cylinder", ""))
-            if objSize[2] == 1:
-                items.append(("STUD", "Stud", ""))
-        if objSize[2] == 1:
-            items.append(("TILE", "Tile", ""))
-        return items
-
-    brickType = bpy.props.EnumProperty(
-        name="Brick Type",
-        description="Choose what type of brick should be drawn at this location",
-        items=get_items,
-        default=None)
-
-    flipBrick = bpy.props.BoolProperty(
-        name="Flip Brick Orientation",
-        description="Flip the brick about the non-mirrored axis",
-        default=False)
-
-    bricksDict = {}
-    cm_idx = -1
 
     def execute(self, context):
         try:
@@ -857,9 +803,82 @@ class changeBrickType(bpy.types.Operator):
         return {"FINISHED"}
 
     def invoke(self, context, event):
+        self.undo_stack.undo_push('split')
         return context.window_manager.invoke_props_popup(self, event)
 
-class redrawBricks(bpy.types.Operator):
+    ################################################
+    # initialization method
+
+    def __init__(self):
+        try:
+            self.undo_stack = UndoStack.new()
+            scn = bpy.context.scene
+            obj = scn.objects.active
+            cm = scn.cmlist[scn.cmlist_index]
+            # get cmlist item referred to by object
+            cm = getItemByID(scn.cmlist, obj.cmlist_id)
+            # get bricksDict from cache
+            self.bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            dictKey, dictLoc = getDictKey(obj.name)
+            self.cm_idx = cm.idx
+            curBrickType = self.bricksDict[dictKey]["type"]
+            if curBrickType is not None:
+                self.brickType = curBrickType
+            else:
+                self.brickType = "STANDARD"
+        except:
+            handle_exception()
+
+    ###################################################
+    # class variables
+
+    # vars
+    bricksDict = {}
+    cm_idx = -1
+
+    # get items for brickType prop
+    def get_items(self, context):
+        scn = bpy.context.scene
+        obj = scn.objects.active
+        if obj is None: return []
+        cm = scn.cmlist[scn.cmlist_index]
+        items = [("STANDARD", "Standard", "")]
+
+        dictKey, dictLoc = getDictKey(obj.name)
+        bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+        objSize = bricksDict[dictKey]["size"]
+
+        if (objSize[2] == 3 and
+           (objSize[0] + objSize[1] in range(3,8) or
+           (objSize[0] == 6 and objSize[1] == 2) or
+           (objSize[0] == 2 and objSize[1] == 6))):
+            items.append(("SLOPE", "Slope", ""))
+        if (objSize[2] == 3 and
+           (objSize[0] + objSize[1] < 6 and objSize[0] + objSize[1] > 2)):
+            items.append(("SLOPE_INVERTED", "Slope Inverted", ""))
+        if objSize[0] + objSize[1] == 2:
+            if objSize[2] == 3:
+                items.append(("CYLINDER", "Cylinder", ""))
+            if objSize[2] == 1:
+                items.append(("STUD", "Stud", ""))
+        if objSize[2] == 1:
+            items.append(("TILE", "Tile", ""))
+        return items
+
+    # properties
+    brickType = bpy.props.EnumProperty(
+        name="Brick Type",
+        description="Choose what type of brick should be drawn at this location",
+        items=get_items,
+        default=None)
+    flipBrick = bpy.props.BoolProperty(
+        name="Flip Brick Orientation",
+        description="Flip the brick about the non-mirrored axis",
+        default=False)
+
+    #############################################
+
+class redrawBricks(Operator):
     """redraw selected bricks from bricksDict"""                                # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "rebrickr.redraw_bricks"                                        # unique identifier for buttons and menu items to reference.
     bl_label = "Redraw Bricks"                                                  # display name in the interface.
@@ -867,8 +886,11 @@ class redrawBricks(bpy.types.Operator):
 
     # TODO: Add support for redrawing custom objects
 
+    ################################################
+    # Blender Operator methods
+
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
         scn = bpy.context.scene
         objs = bpy.context.selected_objects
@@ -880,6 +902,7 @@ class redrawBricks(bpy.types.Operator):
 
     def execute(self, context):
         try:
+            self.undo_stack.undo_push('split')
             scn = bpy.context.scene
             selected_objects = bpy.context.selected_objects
             active_obj = scn.objects.active
@@ -916,3 +939,11 @@ class redrawBricks(bpy.types.Operator):
         except:
             handle_exception()
         return {"FINISHED"}
+
+    ################################################
+    # initialization method
+
+    def __init__(self):
+        self.undo_stack = UndoStack.new()
+
+    #############################################

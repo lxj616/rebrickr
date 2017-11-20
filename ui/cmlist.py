@@ -93,7 +93,7 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
     )
 
     # @classmethod
-    # def poll(cls, context):
+    # def poll(self, context):
     #     """ ensures operator can execute (if not, returns false) """
     #     scn = context.scene
     #     for cm in scn.cmlist:
@@ -212,7 +212,7 @@ class Rebrickr_Uilist_copySettingsToOthersExcludeHeight(bpy.types.Operator):
     bl_description = "Copies the settings (excluding 'Brick Height' setting) from the current model to all other Brick Models"
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
         if scn.cmlist_index == -1:
@@ -239,7 +239,7 @@ class Rebrickr_Uilist_copySettingsToOthers(bpy.types.Operator):
     bl_description = "Copies the settings from the current model to all other Brick Models"
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
         if scn.cmlist_index == -1:
@@ -266,7 +266,7 @@ class Rebrickr_Uilist_copySettings(bpy.types.Operator):
     bl_description = "Stores the ID of the current model for pasting"
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
         if scn.cmlist_index == -1:
@@ -289,7 +289,7 @@ class Rebrickr_Uilist_pasteSettings(bpy.types.Operator):
     bl_description = "Pastes the settings from stored model ID to the current index"
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
         if scn.cmlist_index == -1:
@@ -315,7 +315,7 @@ class Rebrickr_Uilist_setSourceToActive(bpy.types.Operator):
     bl_description = "Set source to active object in scene"
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
         if scn.cmlist_index == -1:
@@ -347,7 +347,7 @@ class Rebrickr_Uilist_selectSource(bpy.types.Operator):
     bl_description = "Select only source object for model"
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
         if scn.cmlist_index == -1:
@@ -380,7 +380,7 @@ class Rebrickr_Uilist_selectAllBricks(bpy.types.Operator):
     bl_description = "Select only bricks in model"
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
         if scn.cmlist_index == -1:

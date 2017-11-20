@@ -43,7 +43,7 @@ from bpy.props import *
 from ..lib.bricksDict import *
 from ..functions.common import *
 from ..functions.general import *
-from ..buttons.brickMods import getAdjKeysAndBrickVals, runCreateNewBricks2, createObjsD
+from ..buttons.SculptMode.functions import getAdjKeysAndBrickVals, runCreateNewBricks2, createObjsD
 from ..buttons.delete import RebrickrDelete
 from ..lib.Brick import Bricks
 from ..lib.bricksDict.functions import getDictKey
@@ -55,12 +55,47 @@ class delete_override(Operator):
     bl_label = "Delete"
     bl_options = {'REGISTER', 'INTERNAL'}
 
-    use_global = BoolProperty(default=False)
+    ################################################
+    # Blender Operator methods
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         # return context.active_object is not None
         return True
+
+    def execute(self, context):
+        try:
+            self.runDelete(context)
+        except:
+            handle_exception()
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        # Run confirmation popup for delete action
+        confirmation_returned = context.window_manager.invoke_confirm(self, event)
+        if confirmation_returned != {'FINISHED'}:
+            return confirmation_returned
+        else:
+            try:
+                self.runDelete(context)
+            except:
+                handle_exception()
+            return {'FINISHED'}
+
+    ###################################################
+    # class variables
+
+    use_global = BoolProperty(default=False)
+
+    ################################################
+    # class methods
+
+    def runDelete(self, context):
+        protected = self.deleteUnprotected(context, self.use_global)
+        if len(protected) > 0:
+            self.report({"WARNING"}, "Rebrickr is using the following object(s): " + str(protected)[1:-1])
+        # push delete action to undo stack
+        bpy.ops.ed.undo_push(message="Delete")
 
     def deleteUnprotected(self, context, use_global=False):
         scn = context.scene
@@ -194,28 +229,4 @@ class delete_override(Operator):
 
         return protected
 
-    def runDelete(self, context):
-        protected = self.deleteUnprotected(context, self.use_global)
-        if len(protected) > 0:
-            self.report({"WARNING"}, "Rebrickr is using the following object(s): " + str(protected)[1:-1])
-        # push delete action to undo stack
-        bpy.ops.ed.undo_push(message="Delete")
-
-    def execute(self, context):
-        try:
-            self.runDelete(context)
-        except:
-            handle_exception()
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        # Run confirmation popup for delete action
-        confirmation_returned = context.window_manager.invoke_confirm(self, event)
-        if confirmation_returned != {'FINISHED'}:
-            return confirmation_returned
-        else:
-            try:
-                self.runDelete(context)
-            except:
-                handle_exception()
-            return {'FINISHED'}
+    ################################################

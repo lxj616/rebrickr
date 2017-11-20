@@ -220,7 +220,7 @@ class addon_updater_update_target(bpy.types.Operator):
 		)
 
 	@classmethod
-	def poll(cls, context):
+	def poll(self, context):
 		if updater.invalidupdater == True: return False
 		return updater.update_ready != None and len(updater.tags)>0
 
@@ -372,7 +372,7 @@ class addon_updater_restore_backup(bpy.types.Operator):
 	bl_description = "Restore addon from backup"
 
 	@classmethod
-	def poll(cls, context):
+	def poll(self, context):
 		try:
 			return os.path.isdir(os.path.join(updater.stage_path,"backup"))
 		except:
@@ -393,7 +393,7 @@ class addon_updater_ignore(bpy.types.Operator):
 	bl_description = "Ignore update to prevent future popups"
 
 	@classmethod
-	def poll(cls, context):
+	def poll(self, context):
 		if updater.invalidupdater == True:
 			return False
 		elif updater.update_ready == True:
@@ -417,7 +417,7 @@ class addon_updater_end_background(bpy.types.Operator):
 	bl_description = "Stop checking for update in the background"
 
 	# @classmethod
-	# def poll(cls, context):
+	# def poll(self, context):
 	# 	if updater.async_checking == True:
 	# 		return True
 	# 	else:

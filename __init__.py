@@ -41,6 +41,7 @@ from bpy.props import *
 # Rebrickr imports
 from .ui import *
 from .buttons import *
+from .buttons.SculptMode import *
 from .operators import *
 from .lib.preferences import *
 

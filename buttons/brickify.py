@@ -73,7 +73,7 @@ class RebrickrBrickify(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         if context.scene.name == "Rebrickr_storage (DO NOT RENAME)":
             scn = bpy.data.scenes.get(bpy.props.Rebrickr_origScene)
@@ -119,10 +119,10 @@ class RebrickrBrickify(bpy.types.Operator):
         return parent
 
     @classmethod
-    def getLogo(cls, cm):
+    def getLogo(self, cm):
         if cm.brickType != "Custom":
             if cm.logoDetail == "LEGO Logo":
-                refLogo = cls.getLegoLogo(cls)
+                refLogo = self.getLegoLogo(self)
             else:
                 refLogo = bpy.data.objects.get(cm.logoObjectName)
         else:
@@ -174,7 +174,7 @@ class RebrickrBrickify(bpy.types.Operator):
         return group_name
 
     @classmethod
-    def createNewBricks(cls, source, parent, source_details, dimensions, refLogo, action, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False):
+    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, action, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name

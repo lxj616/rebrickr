@@ -19,4 +19,4 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__all__ = ["mode"]
+__all__ = ["mode", "functions", "tools"]#, "ui_windows"]

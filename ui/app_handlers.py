@@ -31,7 +31,7 @@ from mathutils import Vector, Euler
 from ..functions import *
 from ..lib.bricksDict import lightToDeepCache, deepToLightCache, getDictKey
 from ..lib.caches import rebrickr_bfm_cache
-from ..buttons.brickMods import *
+from ..buttons.SculptMode.tools import *
 
 def rebrickrIsActive():
     try:

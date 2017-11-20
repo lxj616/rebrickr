@@ -82,7 +82,7 @@ class RebrickrBevel(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
         try:

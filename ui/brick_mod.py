@@ -81,6 +81,10 @@ class RebrickrBrickModPanel(Panel):
             layout.label("Matrix not cached!")
             return
 
+        col = layout.column(align=True)
+        col.operator("rebrickr.sculpt_mode")
+
+
         col1 = layout.column(align=True)
         col1.label("Toggle Exposure:")
         split = col1.split(align=True, percentage=0.5)

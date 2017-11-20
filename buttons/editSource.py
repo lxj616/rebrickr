@@ -34,7 +34,7 @@ class RebrickrEditSource(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
         if scn.cmlist_index == -1:
@@ -201,7 +201,7 @@ class RebrickrCommitEdits(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
         if scn.name != "Rebrickr_storage (DO NOT RENAME)":

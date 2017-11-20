@@ -44,7 +44,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         scn = bpy.context.scene
         if scn.cmlist_index == -1:
@@ -69,7 +69,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
             self.action = "RANDOM"
 
     @classmethod
-    def applyRandomMaterial(cls, context, bricks):
+    def applyRandomMaterial(self, context, bricks):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         # initialize list of brick materials
