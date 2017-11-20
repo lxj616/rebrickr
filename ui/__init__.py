@@ -347,7 +347,7 @@ class ModelTransformPanel(Panel):
         if bversion() < '002.078.00':
             return False
         cm = scn.cmlist[scn.cmlist_index]
-        if cm.animated or (cm.modelCreated and (cm.lastSplitModel or cm.armature)):
+        if cm.modelCreated or cm.animated:
             return True
         return False
 
@@ -362,6 +362,9 @@ class ModelTransformPanel(Panel):
 
         if cm.armature:
             row.label("Cannot transform Brickified object with armature")
+            return
+        if not cm.lastSplitModel:
+            row.label("Use built-in controls")
             return
 
         row.prop(cm, "applyToSourceObject")
@@ -735,15 +738,19 @@ class DetailingPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        cm = scn.cmlist[scn.cmlist_index]
-        if cm.brickType == "Custom":
-            return False
         return True
 
     def draw(self, context):
         layout = self.layout
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
+
+        if cm.lastBrickType == "Custom":
+            col = layout.column(align=True)
+            col.scale_y = 0.7
+            col.label("Not available for custom")
+            col.label("brick types")
+            return
 
         col = layout.column(align=True)
         row = col.row(align=True)
@@ -846,8 +853,6 @@ class BevelPanel(Panel):
         cm = scn.cmlist[scn.cmlist_index]
         if not cm.modelCreated and not cm.animated:
             return False
-        if cm.lastBrickType == "Custom":
-            return False
         return True
 
     def draw(self, context):
@@ -855,6 +860,13 @@ class BevelPanel(Panel):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
+
+        if cm.lastBrickType == "Custom":
+            col = layout.column(align=True)
+            col.scale_y = 0.7
+            col.label("Not available for custom")
+            col.label("brick types")
+            return
 
         col = layout.column(align=True)
         row = col.row(align=True)
