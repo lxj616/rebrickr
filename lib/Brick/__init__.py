@@ -139,7 +139,7 @@ class Bricks:
                 bricksDict[key]["parent_brick"] = "self"
                 bricksDict[key]["size"] = [1, 1, zStep]
 
-    def split(bricksDict, key, loc=None, cm=None):
+    def split(bricksDict, key, loc=None, cm=None, v=True, h=True):
         # set up unspecified paramaters
         if cm is None:
             scn = bpy.context.scene
@@ -148,15 +148,26 @@ class Bricks:
             loc = strToList(key)
         # initialize vars
         size = bricksDict[key]["size"]
-        splitKeys = []
+        newSize = [1, 1, size[2]]
         zStep = getZStep(cm)
+        if cm.brickType == "Bricks and Plates":
+            if not v:
+                zStep = 3
+            else:
+                newSize[2] = 1
+        if not h:
+            newSize[0] = size[0]
+            newSize[1] = size[1]
+            size[0] = 1
+            size[1] = 1
+        splitKeys = []
         x,y,z = loc
         # split brick into individual bricks
         for x0 in range(x, x + size[0]):
             for y0 in range(y, y + size[1]):
                 for z0 in range(z, z + size[2], zStep):
                     curKey = listToStr([x0,y0,z0])
-                    bricksDict[curKey]["size"] = [1, 1, size[2]]
+                    bricksDict[curKey]["size"] = newSize
                     bricksDict[curKey]["parent_brick"] = "self"
                     # add curKey to list of split keys
                     splitKeys.append(curKey)

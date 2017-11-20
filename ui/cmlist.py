@@ -756,7 +756,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         description="Maximum brick width",
         update=dirtyBuild,
         step=1,
-        min=1, max=12,
+        min=1, max=16,
         default=2)
     maxDepth = IntProperty(
         name="Max Depth",

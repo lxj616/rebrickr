@@ -106,37 +106,55 @@ class splitBricks(bpy.types.Operator):
                     return True
         return False
 
-    def execute(self, context):
+    def __init__(self):
+        self.vertical = False
+        self.horizontal = False
+        selected_objects = bpy.context.selected_objects
+        # initialize objsD (key:cm_idx, val:list of objects)
+        objsD = createObjsD(selected_objects)
+        for cm_idx in objsD.keys():
+            self.objNamesD[cm_idx] = []
+            for obj in objsD[cm_idx]:
+                self.objNamesD[cm_idx].append(obj.name)
+
+    vertical = bpy.props.BoolProperty(
+        name="Vertical",
+        description="Split brick(s) horizontally",
+        default=False)
+    horizontal = bpy.props.BoolProperty(
+        name="Horizontal",
+        description="Split brick(s) vertically",
+        default=False)
+
+    objNamesD = {}
+
+    def splitBricks(self):
         try:
             scn = bpy.context.scene
-            selected_objects = bpy.context.selected_objects
-
-            # initialize objsD (key:cm_idx, val:list of objects)
-            objsD = createObjsD(selected_objects)
-
-            # split all bricks in objsD[cm_idx]
-            for cm_idx in objsD.keys():
+            # split all bricks in objNamesD[cm_idx]
+            for cm_idx in self.objNamesD.keys():
                 cm = scn.cmlist[cm_idx]
                 # get bricksDict from cache
                 bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
                 keysToUpdate = []
 
-                for obj in objsD[cm_idx]:
+                for obj_name in self.objNamesD[cm_idx]:
                     # get dict key details of current obj
-                    dictKey, dictLoc = getDictKey(obj.name)
+                    dictKey, dictLoc = getDictKey(obj_name)
                     x0,y0,z0 = dictLoc
                     # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
+                    zStep = getZStep(cm)
 
                     # skip 1x1 bricks
-                    if objSize[0] + objSize[1] == 2:
+                    if objSize[0] + objSize[1] + (objSize[2] / zStep) == 3:
                         continue
 
                     # delete the current object
-                    delete(obj)
+                    delete(bpy.data.objects.get(obj_name))
 
                     # set size of active brick's bricksDict entries to 1x1x[lastZSize]
-                    splitKeys = Bricks.split(bricksDict, dictKey, loc=dictLoc, cm=cm)
+                    splitKeys = Bricks.split(bricksDict, dictKey, loc=dictLoc, cm=cm, v=self.vertical, h=self.horizontal)
                     # append new splitKeys to keysToUpdate
                     for k in splitKeys:
                         if k not in keysToUpdate:
@@ -149,7 +167,31 @@ class splitBricks(bpy.types.Operator):
                     runCreateNewBricks2(cm, bricksDict, keysToUpdate)
         except:
             handle_exception()
+
+    def execute(self, context):
+        self.splitBricks()
         return{"FINISHED"}
+
+    def invoke(self, context, event):
+        scn = context.scene
+
+        # invoke props popup if conditions met
+        for cm_idx in self.objNamesD.keys():
+            cm = scn.cmlist[cm_idx]
+            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            if cm.brickType == "Bricks and Plates":
+                for obj_name in self.objNamesD[cm_idx]:
+                    dictKey, dictLoc = getDictKey(obj_name)
+                    size = bricksDict[dictKey]["size"]
+                    if size[2] > 1:
+                        if size[0] + size[1] > 2:
+                            return context.window_manager.invoke_props_popup(self, event)
+                        else:
+                            self.vertical = True
+                            self.splitBricks()
+        self.horizontal = True
+        self.splitBricks()
+        return {"FINISHED"}
 
 
 class mergeBricks(bpy.types.Operator):
@@ -178,12 +220,12 @@ class mergeBricks(bpy.types.Operator):
     @staticmethod
     def getSortedKeys(keys):
         """ sort bricks by (x+y) location for best merge """
-        keys.sort(key=lambda k: strToList(k)[0] + strToList(k)[1])
+        keys.sort(key=lambda k: (strToList(k)[2], strToList(k)[0] + strToList(k)[1]))
         return keys
 
 
     @staticmethod
-    def mergeBricks(bricksDict, keys, cm):
+    def mergeBricks(bricksDict, keys, cm, mergeVertical=True):
         # initialize vars
         updatedKeys = []
         zStep = getZStep(cm)
@@ -196,7 +238,7 @@ class mergeBricks(bpy.types.Operator):
                 # attempt to merge current brick with other bricks in keys, according to available brick types
                 # TODO: improve originalIsBrick argument (currently hardcoded to False)
                 loc = strToList(key)
-                brickSize = attemptMerge(cm, bricksDict, key, keys, loc, False, [bricksDict[key]["size"]], zStep, randState, preferLargest=True)
+                brickSize = attemptMerge(cm, bricksDict, key, keys, loc, False, [bricksDict[key]["size"]], zStep, randState, preferLargest=True, mergeVertical=mergeVertical)
                 # bricksDict[key]["size"] = brickSize
                 # set exposure of current [merged] brick
                 topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)
@@ -378,13 +420,11 @@ class drawAdjacent(bpy.types.Operator):
     def __init__(self):
         try:
             scn = bpy.context.scene
+            cm = scn.cmlist[scn.cmlist_index]
             obj = scn.objects.active
 
-            # get cmlist item referred to by object
-            cm = getItemByID(scn.cmlist, obj.cmlist_id)
-            # get bricksDict from cache
+            # initialize self.bricksDict
             self.bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-            self.cm_idx = cm.idx
 
             # initialize direction bools
             self.zPos = False
@@ -394,12 +434,10 @@ class drawAdjacent(bpy.types.Operator):
             self.xPos = False
             self.xNeg = False
 
-            # get dict key details of current obj
+            # initialize vars for self.adjDKLs setup
             dictKey, dictLoc = getDictKey(obj.name)
             x,y,z = dictLoc
-            # get size of current brick (e.g. [2, 4, 1])
             objSize = self.bricksDict[dictKey]["size"]
-
             zStep = getZStep(cm)
             self.adjDKLs = [[],[],[],[],[],[]]
             # set up self.adjDKLs
@@ -421,7 +459,10 @@ class drawAdjacent(bpy.types.Operator):
                     self.adjDKLs[3].append(dkl)
             for x0 in range(x, x + objSize[0]):
                 for y0 in range(y, y + objSize[1]):
-                    dkl = [x0, y0, z + 1]
+                    if cm.brickType == "Bricks and Plates":
+                        dkl = [x0, y0, z + objSize[2]]
+                    else:
+                        dkl = [x0, y0, z + 1]
                     self.adjDKLs[4].append(dkl)
             for x0 in range(x, x + objSize[0]):
                 for y0 in range(y, y + objSize[1]):
@@ -435,7 +476,30 @@ class drawAdjacent(bpy.types.Operator):
         except:
             handle_exception()
 
-    # define direction bools
+    def get_items1(self, context):
+        scn = bpy.context.scene
+        obj = scn.objects.active
+        if obj is None: return []
+        cm = scn.cmlist[scn.cmlist_index]
+        bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+        dictKey,_ = getDictKey(obj.name)
+        # build items
+        if bricksDict[dictKey]["size"][2] == 3:
+            items = [("BRICK", "Brick", "")]
+            if "Plates" in cm.brickType:
+                items.append(("PLATE", "Plate", ""))
+        elif bricksDict[dictKey]["size"][2] == 1:
+            items = [("PLATE", "Plate", "")]
+            if "Bricks" in cm.brickType and "BRICK" not in items:
+                items.append(("BRICK", "Brick", ""))
+        return items
+
+    # define props for popup
+    brickType = bpy.props.EnumProperty(
+        name="Brick Type",
+        description="Type of brick to draw adjacent to current brick",
+        items=get_items1,
+        default=None)
     zPos = bpy.props.BoolProperty(name="Top    (+Z)", default=False)
     zNeg = bpy.props.BoolProperty(name="Bottom (-Z)", default=False)
     yPos = bpy.props.BoolProperty(name="Left   (+Y)", default=False)
@@ -443,8 +507,8 @@ class drawAdjacent(bpy.types.Operator):
     xPos = bpy.props.BoolProperty(name="Back   (+X)", default=False)
     xNeg = bpy.props.BoolProperty(name="Front  (-X)", default=False)
 
+    # define hidden class variables
     bricksDict = {}
-    cm_idx = -1
     adjDKLs = []
 
     def setDirBool(self, idx, val):
@@ -463,10 +527,29 @@ class drawAdjacent(bpy.types.Operator):
             return adjacent_key, brickD
         except:
             self.report({"WARNING"}, "Matrix not available at the following location: %(adjacent_key)s" % locals())
+            print("should print correct report")
             return adjacent_key, False
 
-    def toggleBrick(self, cm, dkl, dictKey, objSize, side, brickNum, keysToUpdate, addBrick=True):
-        adjacent_key, adjBrickD = self.getBrickD(dkl)
+    def getNewBrickHeight(self):
+        if self.brickType == "PLATE":
+            newBrickHeight = 1
+        else:
+            newBrickHeight = 3
+        return newBrickHeight
+
+    def isBrickAlreadyCreated(self, brickNum, side):
+        return not (brickNum == len(self.adjDKLs[side]) - 1 and
+                    not any(self.adjBricksCreated[side])) # evaluates True if all values in this list are False
+
+    def toggleBrick(self, cm, dictLoc, dictKey, objSize, side, brickNum, keysToUpdate, addBrick=True):
+        # if brick height is 3 and 'Bricks and Plates'
+        newBrickHeight = self.getNewBrickHeight()
+        if cm.brickType == "Bricks and Plates" and newBrickHeight == 3:
+            checkTwoMoreAbove = True
+        else:
+            checkTwoMoreAbove = False
+
+        adjacent_key, adjBrickD = self.getBrickD(dictLoc)
         if not adjBrickD:
             self.setDirBool(side, False)
             return False
@@ -476,8 +559,7 @@ class drawAdjacent(bpy.types.Operator):
             # if attempting to add brick
             if addBrick:
                 # reset direction bool if no bricks could be added
-                if (brickNum == len(self.adjDKLs[side]) - 1 and
-                   not any(self.adjBricksCreated[side])): # evaluates True if all values in this list are False
+                if not self.isBrickAlreadyCreated(brickNum, side):
                     self.setDirBool(side, False)
                 self.report({"INFO"}, "Brick already exists in the following location: %(adjacent_key)s" % locals())
                 return False
@@ -495,16 +577,48 @@ class drawAdjacent(bpy.types.Operator):
         else:
             # if attempting to add brick
             if addBrick:
+                if checkTwoMoreAbove:
+                    # verify two more locs available above current
+                    dictLoc0 = dictLoc.copy()
+                    for i in range(1, 3):
+                        dictLoc0[2] += 1
+                        nextKey,nextBrickD = self.getBrickD(dictLoc0)
+                        if not nextBrickD:
+                            self.setDirBool(side, False)
+                        # if brick drawn in next loc and not just rerunning based on new direction selection
+                        elif (nextBrickD["draw"] and
+                              (not self.isBrickAlreadyCreated(brickNum, side) or
+                               self.adjBricksCreated[side][brickNum] != self.brickType)):
+                            self.report({"INFO"}, "Brick already exists in the following location: %(nextKey)s" % locals())
+                            self.setDirBool(side, False)
+                        else:
+                            continue
+                        # reset values at failed location, in case brick was previously drawn there
+                        self.adjBricksCreated[side][brickNum] = False
+                        adjBrickD["draw"] = False
+                        return False
+
                 adjBrickD["draw"] = True
                 setCurBrickVal(self.bricksDict, strToList(adjacent_key))
                 adjBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"]
-                adjBrickD["size"] = [1, 1, objSize[2]]
+                adjBrickD["size"] = [1, 1, newBrickHeight]
                 adjBrickD["parent_brick"] = "self"
                 topExposed, botExposed = getBrickExposure(cm, self.bricksDict, adjacent_key)
                 adjBrickD["top_exposed"] = topExposed
                 adjBrickD["bot_exposed"] = botExposed
                 keysToUpdate.append(adjacent_key)
-                self.adjBricksCreated[side][brickNum] = True
+                self.adjBricksCreated[side][brickNum] = self.brickType
+                if checkTwoMoreAbove:
+                    # update matrix for two locations above adjacent_key
+                    dictLoc0 = dictLoc.copy()
+                    for i in range(1, 3):
+                        dictLoc0[2] += 1
+                        nextKey,nextBrickD = self.getBrickD(dictLoc0)
+                        nextBrickD["draw"] = True
+                        setCurBrickVal(self.bricksDict, strToList(nextKey))
+                        nextBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"]
+                        nextBrickD["parent_brick"] = adjacent_key
+
                 return True
             # if attempting to remove brick
             else:
@@ -515,7 +629,7 @@ class drawAdjacent(bpy.types.Operator):
         try:
             scn = bpy.context.scene
             scn.update()
-            cm = scn.cmlist[self.cm_idx]
+            cm = scn.cmlist[scn.cmlist_index]
             obj = scn.objects.active
             initial_active_obj_name = obj.name
             keysToMerge = []
@@ -530,12 +644,22 @@ class drawAdjacent(bpy.types.Operator):
             createAdjBricks = [self.xPos, self.xNeg, self.yPos, self.yNeg, self.zPos, self.zNeg]
 
             zStep = getZStep(cm)
+            decriment = 0
             # check all 6 directions for action to be executed
             for i in range(6):
+                # if checking beneath obj in 'Bricks and Plates', check 3 keys below instead of 1 key below
+                if i == 5 and cm.brickType == "Bricks and Plates":
+                    newBrickHeight = self.getNewBrickHeight()
+                    decriment = newBrickHeight - 1
+                    print(decriment)
+                # if action should be executed (value changed in direction prop)
                 if (createAdjBricks[i] or (not createAdjBricks[i] and self.adjBricksCreated[i][0])):
                     # add or remove bricks in all adjacent locations in current direction
-                    for j,dkl in enumerate(self.adjDKLs[i]):
-                        self.toggleBrick(cm, dkl, dictKey, objSize, i, j, keysToMerge, addBrick=createAdjBricks[i])
+                    for j,dictLoc in enumerate(self.adjDKLs[i]):
+                        if decriment != 0:
+                            dictLoc = dictLoc.copy()
+                            dictLoc[2] -= decriment
+                        self.toggleBrick(cm, dictLoc, dictKey, objSize, i, j, keysToMerge, addBrick=createAdjBricks[i])
 
             # recalculate val for each bricksDict key in original brick
             for x in range(x0, x0 + objSize[0]):
@@ -557,7 +681,7 @@ class drawAdjacent(bpy.types.Operator):
                     delete(obj)
 
             # attempt to merge created bricks
-            keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm)
+            keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm, mergeVertical=self.brickType == "BRICK")
 
             # draw created bricks
             if len(keysToUpdate) > 0:
@@ -622,6 +746,7 @@ class changeBrickType(bpy.types.Operator):
     def get_items(self, context):
         scn = bpy.context.scene
         obj = scn.objects.active
+        if obj is None: return []
         cm = scn.cmlist[scn.cmlist_index]
         items = [("STANDARD", "Standard", "")]
 

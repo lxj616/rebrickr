@@ -307,7 +307,7 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
                 # attempt to merge current brick with surrounding bricks, according to available brick types
                 if brickD["size"] is None or (cm.buildIsDirty):
                     preferLargest = brickD["val"] > 0 and brickD["val"] < 1
-                    brickSize = attemptMerge(cm, bricksD, key, keys, loc, originalIsBrick, brickSizes, zStep, randS1, preferLargest=preferLargest)
+                    brickSize = attemptMerge(cm, bricksD, key, keys, loc, originalIsBrick, brickSizes, zStep, randS1, preferLargest=preferLargest, mergeVertical=True)
                 else:
                     brickSize = brickD["size"]
 

@@ -452,7 +452,9 @@ class ModelSettingsPanel(Panel):
                         noCustomObj = True
                 else:
                     noCustomObj = True
-            if not noCustomObj:
+            if noCustomObj:
+                col.label("[Custom object not found]")
+            else:
                 split = col.split(align=True, percentage=0.5)
                 col1 = split.column(align=True)
                 col1.label("~Num Bricks:")
