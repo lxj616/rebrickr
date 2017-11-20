@@ -479,7 +479,7 @@ class drawAdjacent(bpy.types.Operator):
     def get_items1(self, context):
         scn = bpy.context.scene
         obj = scn.objects.active
-        if obj is None: return []
+        if obj is None: return [("NULL", "Null", "")]
         cm = scn.cmlist[scn.cmlist_index]
         bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
         dictKey,_ = getDictKey(obj.name)
