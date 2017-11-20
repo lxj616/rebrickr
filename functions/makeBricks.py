@@ -186,7 +186,7 @@ def getClosestMaterial(cm, bricksD, key, brickSize, randState, brick_mats, k):
 
 
 @timed_call('Time Elapsed')
-def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customData=None, customObj_details=None, group_name=None, frameNum=None, cursorStatus=False, keys="ALL", createGroup=True):
+def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customData=None, customObj_details=None, group_name=None, replaceExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL"):
     # set up variables
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -212,17 +212,16 @@ def makeBricks(parent, logo, dimensions, bricksD, split=False, R=None, customDat
     # sort the list by the first character only
     keys.sort(key=lambda x: int(x.split(",")[2]))
 
-    # create group for bricks
-    if group_name is not None:
-        Rebrickr_bricks = group_name
-    else:
-        Rebrickr_bricks = 'Rebrickr_%(n)s_bricks' % locals()
-    if createGroup:
-        if groupExists(Rebrickr_bricks):
-            bpy.data.groups.remove(group=bpy.data.groups[Rebrickr_bricks], do_unlink=True)
-        bGroup = bpy.data.groups.new(Rebrickr_bricks)
-    else:
-        bGroup = bpy.data.groups.get(Rebrickr_bricks)
+    # get brick group
+    if group_name is None: group_name = 'Rebrickr_%(n)s_bricks' % locals()
+    bGroup = bpy.data.groups.get(group_name)
+    # create new group if no existing group found
+    if bGroup is None:
+        bGroup = bpy.data.groups.new(group_name)
+    # else, replace existing group
+    elif replaceExistingGroup:
+        bpy.data.groups.remove(group=bGroup, do_unlink=True)
+        bGroup = bpy.data.groups.new(group_name)
 
 
     tempMesh = bpy.data.meshes.new("tempMesh")

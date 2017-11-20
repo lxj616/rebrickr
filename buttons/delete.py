@@ -105,6 +105,7 @@ class RebrickrDelete(bpy.types.Operator):
                 for mn in source["ignored_mods"]:
                     source.modifiers[mn].show_viewport = True
             source.name = n
+            source.cmlist_id = -1
 
         # clean up 'Rebrickr_[source name]_dupes' group
         if groupExists(Rebrickr_source_dupes_gn) and not skipDupes:

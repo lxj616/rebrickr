@@ -77,6 +77,9 @@ class RebrickrBrickModPanel(Panel):
         if cm.buildIsDirty:
             layout.label("Run 'Update Model' for brick mods")
             return
+        if rebrickr_bfm_cache.get(cm.id) is None and cm.BFMCache == "":
+            layout.label("Matrix not cached!")
+            return
 
         col1 = layout.column(align=True)
         col1.label("Toggle Exposure:")

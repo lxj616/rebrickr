@@ -198,6 +198,26 @@ def handle_selections(scene):
 
 bpy.app.handlers.scene_update_pre.append(handle_selections)
 
+@persistent
+def keep_object_names_unique(scene):
+    scn = bpy.context.scene
+    try:
+        rebrickrRunningOp = scn.Rebrickr_runningOperation
+    except AttributeError:
+        rebrickrRunningOp = False
+    if rebrickrIsActive() and not rebrickrRunningOp:
+        # for object in scene
+        for obj_name in scn.objects.keys():
+            for cm in scn.cmlist:
+                if obj_name == cm.source_name:
+                    # rename object if not part of a model or animation
+                    obj = bpy.data.objects.get(obj_name)
+                    if obj is not None and (cm.modelCreated or cm.animated):
+                        obj.name = "%(obj_name)s.001" % locals()
+
+
+bpy.app.handlers.scene_update_pre.append(keep_object_names_unique)
+
 def find_3dview_space():
     # Find 3D_View window and its scren space
     area = None

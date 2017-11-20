@@ -174,7 +174,7 @@ class RebrickrBrickify(bpy.types.Operator):
         return group_name
 
     @classmethod
-    def createNewBricks(cls, source, parent, source_details, dimensions, refLogo, action, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", createGroup=True, selectCreated=False):
+    def createNewBricks(cls, source, parent, source_details, dimensions, refLogo, action, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
@@ -212,7 +212,7 @@ class RebrickrBrickify(bpy.types.Operator):
         if not loadedFromCache or cm.internalIsDirty:
             updateInternal(bricksDict, keys, cm, clearExisting=loadedFromCache)
             cm.buildIsDirty = True
-        bricksCreated = makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, createGroup=createGroup)
+        bricksCreated = makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys)
         if selectCreated:
             select(None)
             for brick in bricksCreated:
@@ -855,6 +855,7 @@ class RebrickrBrickify(bpy.types.Operator):
         # get source and initialize values
         source = self.getObjectToBrickify()
         source["old_parent"] = ""
+        source.cmlist_id = cm.id
 
         # check if matrix is dirty
         if cm.matrixIsDirty:
@@ -872,6 +873,11 @@ class RebrickrBrickify(bpy.types.Operator):
 
         if self.action in ["CREATE", "ANIMATE"] or cm.sourceIsDirty:
             source.name = cm.source_name + " (DO NOT RENAME)"
+
+        # set cmlist_id for all created objects
+        for obj_name in self.createdObjects:
+            obj = bpy.data.objects.get(obj_name)
+            if obj is not None: obj.cmlist_id = cm.id
 
         # # set final variables
         cm.lastLogoResolution = cm.logoResolution

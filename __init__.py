@@ -172,7 +172,7 @@ def unregister():
     del Scn.cmlist_index
     del Scn.cmlist
     del bpy.props.abs_plastic_materials_for_random
-    bpy.types.VIEW3D_HT_header.remove(Rebrickr_snap_button)
+    # bpy.types.VIEW3D_HT_header.remove(Rebrickr_snap_button)
     # del Scn.Rebrickr_snapping
     del Scn.Rebrickr_copy_from_id
     del Scn.Rebrickr_last_active_object_name

@@ -28,6 +28,7 @@ import bpy
 # Rebrickr imports
 from .generate import *
 from .modify import *
+from .functions import *
 from ..caches import rebrickr_bfm_cache
 from ...functions import *
 
@@ -43,6 +44,9 @@ def getBricksDict(action, source=None, source_details=None, dimensions=None, R=N
         if bricksDict is None:
             # get bricksDict from deep cache
             bricksDict = json.loads(cm.BFMCache)
+        #     print("accessing deep cache")
+        # else:
+        #     print("accessing light cache")
         loadedFromCache = True
         # if animated, index into that dict
         if action == "UPDATE_ANIM":

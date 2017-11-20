@@ -43,144 +43,11 @@ from bpy.props import *
 from ..lib.bricksDict import *
 from ..functions.common import *
 from ..functions.general import *
-from ..buttons.brickMods import getAdjKeysAndBrickVals, runCreateNewBricks2
+from ..buttons.brickMods import getAdjKeysAndBrickVals, runCreateNewBricks2, createObjsD
 from ..buttons.delete import RebrickrDelete
 from ..lib.Brick import Bricks
 from ..lib.bricksDict.functions import getDictKey
 
-def deleteUnprotected(context, use_global=False):
-    scn = context.scene
-    protected = []
-    objs = context.selected_objects
-    bricksDicts = {}
-    for obj in objs:
-        if obj.isBrick:
-            # get cmlist item referred to by object
-            cm = getItemByID(scn.cmlist, obj.cmlist_id)
-            # get bricksDict for current cm
-            if cm.idx not in bricksDicts.keys():
-                # get bricksDict from cache
-                bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
-                bricksDicts[cm.idx] = {"dict":bricksDict, "keys_to_update":[]}
-                keysToUpdate = bricksDicts[cm.idx]["keys_to_update"]
-            else:
-                # get bricksDict from bricksDicts
-                bricksDict = bricksDicts[cm.idx]["dict"]
-
-            # get dict key details of current obj
-            dictKey, dictLoc = getDictKey(obj.name)
-            x0,y0,z0 = dictLoc
-            # get size of current brick (e.g. [2, 4, 1])
-            objSize = bricksDict[dictKey]["size"]
-
-            zStep = getZStep(cm)
-            # for all locations in bricksDict covered by current obj
-            for x in range(x0, x0 + objSize[0]):
-                for y in range(y0, y0 + objSize[1]):
-                    for z in range(z0, z0 + (objSize[2]//zStep)):
-                        curKey = listToStr([x,y,z])
-                        # set 'draw' to false
-                        bricksDict[curKey]["draw"] = False
-                        bricksDict[curKey]["val"] = 0
-                        # make adjustments to adjacent bricks
-                        adjKeys, adjBrickVals = getAdjKeysAndBrickVals(bricksDict, key=curKey)
-                        if min(adjBrickVals) == 0 and cm.autoUpdateExposed and cm.lastSplitModel:
-                            # set adjacent bricks to shell if deleted brick was on shell
-                            for k0 in adjKeys:
-                                if bricksDict[k0]["val"] != 0: # if adjacent brick not outside
-                                    bricksDict[k0]["val"] = 1
-                                    if not bricksDict[k0]["draw"]:
-                                        bricksDict[k0]["draw"] = True
-                                        bricksDict[k0]["size"] = [1,1,zStep]
-                                        bricksDict[k0]["parent_brick"] = "self"
-                                        bricksDict[k0]["mat_name"] = bricksDict[curKey]["mat_name"]
-                                        if k0 not in keysToUpdate:
-                                            # add key to simple bricksDict for drawing
-                                            keysToUpdate.append(k0)
-                            # if top of deleted brick was exposed, top of bricks below are now exposed
-                            if bricksDict[dictKey]["top_exposed"]:
-                                k0 = listToStr([x, y, z - 1])
-                                if bricksDict[k0]["draw"]:
-                                    if bricksDict[k0]["parent_brick"] == "self":
-                                        k1 = k0
-                                    else:
-                                        k1 = bricksDict[k0]["parent_brick"]
-                                    if not bricksDict[k1]["top_exposed"]:
-                                        bricksDict[k1]["top_exposed"] = True
-                                        if k1 not in keysToUpdate:
-                                            # add key to simple bricksDict for drawing
-                                            keysToUpdate.append(k1)
-                            # if bottom of deleted brick was exposed, bottom of bricks above are now exposed
-                            if bricksDict[dictKey]["bot_exposed"]:
-                                k0 = listToStr([x, y, z + 1])
-                                if bricksDict[k0]["draw"]:
-                                    if bricksDict[k0]["parent_brick"] == "self":
-                                        k1 = k0
-                                    else:
-                                        k1 = bricksDict[k0]["parent_brick"]
-                                    if not bricksDict[k1]["bot_exposed"]:
-                                        bricksDict[k1]["bot_exposed"] = True
-                                        if k1 not in keysToUpdate:
-                                            # add key to simple bricksDict for drawing
-                                            keysToUpdate.append(k1)
-
-        if obj.isBrickifiedObject or obj.isBrick:
-            cm = None
-            for cmCur in scn.cmlist:
-                n = cmCur.source_name
-                if obj.isBrickifiedObject:
-                    cm = cmCur
-                    break
-                elif obj.isBrick:
-                    bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks" % locals())
-                    if bGroup is not None and len(bGroup.objects) < 2:
-                        cm = cmCur
-                        break
-            if cm is not None:
-                RebrickrDelete.runFullDelete(cm=cm)
-                scn.objects.active.select = False
-                return protected
-            else:
-                obj_users_scene = len(obj.users_scene)
-                scn.objects.unlink(obj)
-                if use_global or obj_users_scene == 1:
-                    bpy.data.objects.remove(obj, True)
-        elif not obj.protected:
-            obj_users_scene = len(obj.users_scene)
-            scn.objects.unlink(obj)
-            if use_global or obj_users_scene == 1:
-                bpy.data.objects.remove(obj, True)
-        else:
-            print(obj.name +' is protected')
-            protected.append(obj.name)
-
-    for cm_idx in bricksDicts.keys():
-        # store bricksDicts to cache
-        cm = scn.cmlist[cm_idx]
-        bricksDict = bricksDicts[cm_idx]["dict"]
-        keysToUpdate = bricksDicts[cm_idx]["keys_to_update"]
-        lastBuildIsDirty = cm.buildIsDirty
-        if not lastBuildIsDirty: cm.buildIsDirty = True
-        # draw modified bricks
-        if len(keysToUpdate) > 0:
-            # delete bricks that didn't get deleted already
-            newKeysToUpdate = keysToUpdate.copy()
-            for k in keysToUpdate:
-                splitKeys = Bricks.split(bricksDict, k, cm=cm)
-                # append new splitKeys to newKeysToUpdate
-                for k in splitKeys:
-                    if k not in newKeysToUpdate:
-                        newKeysToUpdate.append(k)
-            for k in newKeysToUpdate:
-                brick = bpy.data.objects.get(bricksDict[k]["name"])
-                delete(brick)
-            # create new bricks at all keysToUpdate locations
-            runCreateNewBricks2(cm, bricksDict, newKeysToUpdate)
-        if not lastBuildIsDirty: cm.buildIsDirty = False
-        # cache the resulting bricksDict
-        cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
-
-    return protected
 
 class delete_override(Operator):
     """OK?"""
@@ -195,8 +62,140 @@ class delete_override(Operator):
         # return context.active_object is not None
         return True
 
+    def deleteUnprotected(self, context, use_global=False):
+        scn = context.scene
+        protected = []
+        selected_objects = context.selected_objects
+
+        # initialize objsD (key:cm_idx, val:list of objects)
+        objsD = createObjsD(selected_objects)
+
+        # update matrix
+        for cm_idx in objsD.keys():
+            cm = scn.cmlist[cm_idx]
+            # get bricksDict from cache
+            bricksDict,loadedFromCache = getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)
+            if not loadedFromCache:
+                self.report({"WARNING"}, "Adjacent bricks in '" + cm.name + "' could not be updated (matrix not cached)")
+                continue
+            keysToUpdate = []
+            zStep = getZStep(cm)
+
+            for obj in objsD[cm_idx]:
+                # get dict key details of current obj
+                dictKey, dictLoc = getDictKey(obj.name)
+                x0,y0,z0 = dictLoc
+                # get size of current brick (e.g. [2, 4, 1])
+                objSize = bricksDict[dictKey]["size"]
+
+                # for all locations in bricksDict covered by current obj
+                for x in range(x0, x0 + objSize[0]):
+                    for y in range(y0, y0 + objSize[1]):
+                        for z in range(z0, z0 + (objSize[2]//zStep)):
+                            curKey = listToStr([x,y,z])
+                            # set 'draw' to false
+                            bricksDict[curKey]["draw"] = False
+                            bricksDict[curKey]["val"] = 0
+                            # make adjustments to adjacent bricks
+                            adjKeys, adjBrickVals = getAdjKeysAndBrickVals(bricksDict, key=curKey)
+                            if min(adjBrickVals) == 0 and cm.autoUpdateExposed and cm.lastSplitModel:
+                                # set adjacent bricks to shell if deleted brick was on shell
+                                for k0 in adjKeys:
+                                    if bricksDict[k0]["val"] != 0: # if adjacent brick not outside
+                                        bricksDict[k0]["val"] = 1
+                                        if not bricksDict[k0]["draw"]:
+                                            bricksDict[k0]["draw"] = True
+                                            bricksDict[k0]["size"] = [1,1,zStep]
+                                            bricksDict[k0]["parent_brick"] = "self"
+                                            bricksDict[k0]["mat_name"] = bricksDict[curKey]["mat_name"]
+                                            if k0 not in keysToUpdate:
+                                                # add key to simple bricksDict for drawing
+                                                keysToUpdate.append(k0)
+                                # if top of deleted brick was exposed, top of bricks below are now exposed
+                                if bricksDict[dictKey]["top_exposed"]:
+                                    k0 = listToStr([x, y, z - 1])
+                                    if bricksDict[k0]["draw"]:
+                                        if bricksDict[k0]["parent_brick"] == "self":
+                                            k1 = k0
+                                        else:
+                                            k1 = bricksDict[k0]["parent_brick"]
+                                        if not bricksDict[k1]["top_exposed"]:
+                                            bricksDict[k1]["top_exposed"] = True
+                                            if k1 not in keysToUpdate:
+                                                # add key to simple bricksDict for drawing
+                                                keysToUpdate.append(k1)
+                                # if bottom of deleted brick was exposed, bottom of bricks above are now exposed
+                                if bricksDict[dictKey]["bot_exposed"]:
+                                    k0 = listToStr([x, y, z + 1])
+                                    if bricksDict[k0]["draw"]:
+                                        if bricksDict[k0]["parent_brick"] == "self":
+                                            k1 = k0
+                                        else:
+                                            k1 = bricksDict[k0]["parent_brick"]
+                                        if not bricksDict[k1]["bot_exposed"]:
+                                            bricksDict[k1]["bot_exposed"] = True
+                                            if k1 not in keysToUpdate:
+                                                # add key to simple bricksDict for drawing
+                                                keysToUpdate.append(k1)
+            # dirtyBuild if it wasn't already
+            lastBuildIsDirty = cm.buildIsDirty
+            if not lastBuildIsDirty: cm.buildIsDirty = True
+            # draw modified bricks
+            if len(keysToUpdate) > 0:
+                # delete bricks that didn't get deleted already
+                newKeysToUpdate = keysToUpdate.copy()
+                for k in keysToUpdate:
+                    splitKeys = Bricks.split(bricksDict, k, cm=cm)
+                    # append new splitKeys to newKeysToUpdate
+                    for k in splitKeys:
+                        if k not in newKeysToUpdate:
+                            newKeysToUpdate.append(k)
+                for k in newKeysToUpdate:
+                    brick = bpy.data.objects.get(bricksDict[k]["name"])
+                    delete(brick)
+                # create new bricks at all keysToUpdate locations
+                runCreateNewBricks2(cm, bricksDict, newKeysToUpdate)
+            if not lastBuildIsDirty: cm.buildIsDirty = False
+            # store bricksDict to cache
+            cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
+
+
+        # delete bricks
+        for obj in selected_objects:
+            if obj.isBrickifiedObject or obj.isBrick:
+                cm = None
+                for cmCur in scn.cmlist:
+                    n = cmCur.source_name
+                    if obj.isBrickifiedObject:
+                        cm = cmCur
+                        break
+                    elif obj.isBrick:
+                        bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks" % locals())
+                        if bGroup is not None and len(bGroup.objects) < 2:
+                            cm = cmCur
+                            break
+                if cm is not None:
+                    RebrickrDelete.runFullDelete(cm=cm)
+                    scn.objects.active.select = False
+                    return protected
+                else:
+                    obj_users_scene = len(obj.users_scene)
+                    scn.objects.unlink(obj)
+                    if use_global or obj_users_scene == 1:
+                        bpy.data.objects.remove(obj, True)
+            elif not obj.protected:
+                obj_users_scene = len(obj.users_scene)
+                scn.objects.unlink(obj)
+                if use_global or obj_users_scene == 1:
+                    bpy.data.objects.remove(obj, True)
+            else:
+                print(obj.name +' is protected')
+                protected.append(obj.name)
+
+        return protected
+
     def runDelete(self, context):
-        protected = deleteUnprotected(context, self.use_global)
+        protected = self.deleteUnprotected(context, self.use_global)
         if len(protected) > 0:
             self.report({"WARNING"}, "Rebrickr is using the following object(s): " + str(protected)[1:-1])
         # push delete action to undo stack
