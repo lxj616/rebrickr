@@ -42,7 +42,7 @@ class reportError(bpy.types.Operator):
             # set up file paths
             libraryServersPath = os.path.join(getLibraryPath(), "error_log")
             # write necessary debugging information to text file
-            writeErrorToFile(libraryServersPath, 'Rebrickr_log', props.addonVersion)
+            writeErrorToFile(libraryServersPath, 'Rebrickr_log', bpy.props.rebrickr_module_name)
             # open error report in UI with text editor
             changeContext(context, "TEXT_EDITOR")
             try:

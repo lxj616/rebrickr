@@ -35,30 +35,6 @@ from ...lib.bricksDict.functions import getDictKey
 from ...lib.caches import rebrickr_bfm_cache
 from ...functions import *
 
-class RebrickrRevertSettings(Operator):
-    """Revert Matrix settings to save brick mods"""                             # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.revert_matrix_settings"                               # unique identifier for buttons and menu items to reference.
-    bl_label = "Revert Matrix Settings"                                         # display name in the interface.
-    bl_options = {"REGISTER", "UNDO"}
-
-    @classmethod
-    def poll(self, context):
-        """ ensures operator can execute (if not, returns False) """
-        scn = bpy.context.scene
-        if scn.cmlist_index == -1:
-            return False
-        cm = scn.cmlist[scn.cmlist_index]
-        if matrixReallyIsDirty(cm):
-            return True
-        return False
-
-    def execute(self, context):
-        try:
-            revertMatrixSettings()
-        except:
-            handle_exception()
-        return{"FINISHED"}
-
 class splitBricks(Operator):
     """Split selected bricks into 1x1 bricks"""                                 # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "rebrickr.split_bricks"                                         # unique identifier for buttons and menu items to reference.

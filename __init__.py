@@ -56,6 +56,10 @@ def register():
 
     bpy.props.rebrickr_module_name = __name__
 
+    bpy.props.rebrickr_SculptMode = False
+
+    props.rebrickr_version = str(bl_info["version"])[1:-1]
+
     bpy.types.Object.protected = BoolProperty(name='protected', default=False)
     bpy.types.Object.isBrickifiedObject = BoolProperty(name='Is Brickified Object', default=False)
     bpy.types.Object.isBrick = BoolProperty(name='Is Brick', default=False)
@@ -225,6 +229,8 @@ def unregister():
     del bpy.types.Object.isBrick
     del bpy.types.Object.isBrickifiedObject
     del bpy.types.Object.protected
+    del bpy.props.rebrickr_version
+    del bpy.props.rebrickr_module_name
 
 
     # handle the keymaps

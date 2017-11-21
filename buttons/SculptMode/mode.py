@@ -20,21 +20,13 @@ Created by Christopher Gearhart
 '''
 
 # System imports
-import sys
-import math
-import os
-import time
+# NONE!
 
 # Blender imports
 import bpy
-import bpy
-import bgl
-from mathutils import Matrix
-from bpy.types import Operator, SpaceView3D, bpy_struct
-from bpy.app.handlers import persistent, load_post
+from bpy.types import Operator
 
 # Rebrickr imports
-# from .actions import *
 from .undo_stack import *
 from .ui import *
 from ...functions import *
@@ -61,13 +53,18 @@ class SculptMode(Operator):
             self.cancel(context)
             return{"CANCELLED"}
 
+        tag_redraw_areas() # TODO: don't run tag_redraw here. should be done somewhere in Rebrickr_UI class
+        ret = self.ui.window_manager.modal(context, event)
+        if ret and 'hover' in ret:
+            # self.rfwidget.clear()
+            if self.ui.exit:
+                self.cancel(context)
+                return {'CANCELLED'}
+            return {'PASS_THROUGH'}
+
         # TODO: generalize these event handlers to take keymap into account
         # handle pan/zoom/orient view
         if event.type in ['TRACKPADPAN', 'TRACKPADZOOM']:
-            return {"PASS_THROUGH"}
-        # handle left mouse press
-        if (event.type in ['LEFTMOUSE'] and event.value == 'PRESS' and self.in_context_region(context, event)):
-            print("here")
             return {"PASS_THROUGH"}
         # handle selection
         if event.type in ['RIGHTMOUSE'] and event.value == 'PRESS':
@@ -92,13 +89,13 @@ class SculptMode(Operator):
         return {"RUNNING_MODAL"}
 
     def execute(self, context):
-        self.ui.framework_start(context)
+        self.ui.start()
         # run modal
         context.window_manager.modal_handler_add(self)
         return {"RUNNING_MODAL"}
 
     def cancel(self, context):
-        self.ui.framework_end()
+        self.ui.end()
         pass
 
     ################################################

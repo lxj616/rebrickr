@@ -23,24 +23,20 @@ https://github.com/CGCookie/retopoflow
 '''
 
 # System imports
-import sys
 import math
-import os
 import time
 
 # Blender imports
 import bpy
-import bpy
-import bgl
-from mathutils import Matrix
-from bpy.types import Operator, SpaceView3D, bpy_struct
-from bpy.app.handlers import persistent, load_post
+from bpy.types import SpaceView3D, bpy_struct
 
 # Rebrickr imports
 from ...functions import *
 from ...ui.common import set_cursor
 from .ui_drawing import *
-from .ui_options import retopoflow_version, options, firsttime_message
+from .ui_functions import *
+from .ui_options import options, firsttime_message
+from .tools import *
 
 StructRNA = bpy.types.bpy_struct
 rebrickr_broken = False
@@ -81,7 +77,7 @@ class Rebrickr_UI():
         return {'RUNNING_MODAL'}    # tell Blender to continue running our tool in modal
 
     def modal(self, context, event):
-        return self.framework_start(context, event)
+        return self.start(context, event)
 
     def check(self, context):
         return True
@@ -90,8 +86,18 @@ class Rebrickr_UI():
     # initialization methods
 
     def __init__(self):
-        ''' called once when RFMode plugin is enabled in Blender '''
+        ''' called once when SculptMode is enabled in Blender '''
+        self.functions = UI_Functions()
+
         self.prev_mode = None
+        self.fps_time = time.time()
+        self.frames = 0
+        self.timer = None
+        self.time_to_save = None
+        self.fps = 0
+        self.show_fps = True
+
+        self.exit = False
 
     @staticmethod
     def get_instance():
@@ -111,9 +117,8 @@ class Rebrickr_UI():
     ###############################################
     # start up and shut down methods
 
-    def framework_start(self, context):
-        ''' called every time RFMode is started (invoked, executed, etc) '''
-
+    def start(self):
+        ''' called every time Rebrickr_UI is started (invoked, executed, etc) '''
         # remember current mode and set to object mode so we can control
         # how the target mesh is rendered and so we can push new data
         # into target mesh
@@ -128,65 +133,6 @@ class Rebrickr_UI():
         if self.prev_mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')
 
-        self.area = context.area
-
-        # self.context_start()
-        self.ui_start()
-
-    def framework_end(self):
-        '''
-        finish up stuff, as our tool is leaving modal mode
-        '''
-        err = False
-        try:
-            self.ui_end()
-        except:
-            print_exception()
-            err = True
-        # try:    self.context_end()
-        # except:
-        #     print_exception()
-        #     err = True
-        if err: handle_exception()
-
-        # restore previous mode
-        bpy.ops.object.mode_set(mode=self.prev_mode)
-
-    # def context_start(self):
-    #     # should we generate new target object?
-    #     if not RFContext.has_valid_target():
-    #         print('generating new target')
-    #         tar_name = "RetopoFlow"
-    #         tar_location = bpy.context.scene.cursor_location
-    #         tar_editmesh = bpy.data.meshes.new(tar_name)
-    #         tar_object = bpy.data.objects.new(tar_name, tar_editmesh)
-    #         tar_object.matrix_world = Matrix.Translation(tar_location)  # place new object at scene's cursor location
-    #         tar_object.layers = list(bpy.context.scene.layers)          # set object on visible layers
-    #         #tar_object.show_x_ray = get_settings().use_x_ray
-    #         bpy.context.scene.objects.link(tar_object)
-    #         bpy.context.scene.objects.active = tar_object
-    #         tar_object.select = True
-    #
-    #     tar_object = bpy.context.scene.objects.active
-    #
-    #     # remember selection and unselect all
-    #     self.selected_objects = [o for o in bpy.data.objects if o != tar_object and o.select]
-    #     for o in self.selected_objects: o.select = False
-    #
-    #     tool = self.context_start_tool()
-    #     self.rfctx = RFContext(self, tool)
-    #
-    # def context_start_tool(self): return None
-    #
-    # def context_end(self):
-    #     if hasattr(self, 'rfctx'):
-    #         self.rfctx.end()
-    #         del self.rfctx
-    #
-    #     # restore selection
-    #     for o in self.selected_objects: o.select = True
-
-    def ui_start(self):
         # report something useful to user
         bpy.context.area.header_text_set('Rebrickr Sculpt Mode')
 
@@ -203,11 +149,11 @@ class Rebrickr_UI():
                             'show_only_render': space.show_only_render,
                             'show_manipulator': space.show_manipulator,
                         }
-                        space.show_only_render = True
+                        # space.show_only_render = True
                         space.show_manipulator = False
 
         # initialize windows
-        # self.windows_start()
+        self.windows_start()
 
         # add callback handlers
         self.cb_pr_handle = SpaceView3D.draw_handler_add(self.draw_callback_preview,   (bpy.context, ), 'WINDOW', 'PRE_VIEW')
@@ -255,13 +201,14 @@ class Rebrickr_UI():
             if self.show_toolshelf: bpy.ops.view3d.toolshelf()
             if self.show_properties: bpy.ops.view3d.properties()
 
-        # self.wrap_panels()
+        self.functions.hideIrrelevantObjs()
 
     def toggle_maximize_area(self):
         bpy.ops.screen.screen_full_area(use_hide_panels=False)
         self.maximize_area = not self.maximize_area
 
-    def ui_end(self):
+    def end(self):
+        """ finish up stuff, as our tool is leaving modal mode """
         # if not hasattr(self, 'rfctx'): return
         # restore states of meshes
         # self.rfctx.rftarget.restore_state()
@@ -303,15 +250,23 @@ class Rebrickr_UI():
         if self.maximize_area:
             bpy.ops.screen.screen_full_area(use_hide_panels=False)
 
+        # set cursor back to default
         set_cursor('DEFAULT')
+
+        # remove useful reporting
+        self.area.header_text_set()
 
         # restore space info
         for space,data in self.space_info.items():
             for k,v in data.items(): space.__setattr__(k, v)
 
-        # remove useful reporting
-        self.area.header_text_set()
+        # restore hidden objects
+        self.functions.restoreHiddenObjs()
 
+        # restore previous mode
+        bpy.ops.object.mode_set(mode=self.prev_mode)
+
+        # redraw all areas
         tag_redraw_areas()
 
     def tag_redraw(self):
@@ -387,36 +342,33 @@ class Rebrickr_UI():
             pass
 
 
-        # self.tool_window = self.window_manager.create_window('Tools', {'sticky':7})
-        # self.tool_max = UI_Container(margin=0)
-        # self.tool_min = UI_Container(margin=0, vertical=False)
+        self.tool_window = self.window_manager.create_window('Tools', {'sticky':7})
+        self.tool_max = UI_Container(margin=0)
+        self.tool_min = UI_Container(margin=0, vertical=False)
         # self.tool_selection_max = UI_Options(get_selected_tool, set_selected_tool, vertical=True)
         # self.tool_selection_min = UI_Options(get_selected_tool, set_selected_tool, vertical=False)
-        # tools_options = []
-        # for i,rft_data in enumerate(RFTool.get_tools()):
-        #     ids,rft = rft_data
-        #     self.tool_selection_max.add_option(rft.bl_label, icon=rft.rft_class().get_ui_icon())
-        #     self.tool_selection_min.add_option(rft.bl_label, icon=rft.rft_class().get_ui_icon(), showlabel=False)
-        #     ui_options = rft.rft_class().get_ui_options()
-        #     if ui_options: tools_options.append((rft.bl_label,ui_options))
-        # get_tool_collapsed()
+        tools = [splitBricks, mergeBricks, setExposure, drawAdjacent, changeBrickType]
+        tools_options = []
+        extra = self.tool_max.add(UI_Container())
+        for i,Tool in enumerate(tools):
+            tool_icon = UI_Image('help_32.png')
+            tool_icon.set_size(16, 16)
+            extra.add(UI_Button(Tool.bl_label, Tool, align=0, margin=5, icon=tool_icon))
+        get_tool_collapsed()
         # self.tool_max.add(self.tool_selection_max)
-        #
-        # extra = self.tool_max.add(UI_Container())
-        # #help_icon = UI_Image('help_32.png')
-        # #help_icon.set_size(16, 16)
-        # extra.add(UI_Button('Tool Help', self.toggle_tool_help, align=0, margin=0)) # , icon=help_icon
-        # extra.add(UI_Button('Collapse', lambda: set_tool_collapsed(True), align=0, margin=0))
-        # #extra.add(UI_Checkbox('Collapsed', get_tool_collapsed, set_tool_collapsed))
-        # extra.add(UI_Button('Exit', self.quit, align=0, margin=0))
+
+        extra.add(UI_Button('Tool Help', self.functions.toggle_tool_help, align=0, margin=0))
+        extra.add(UI_Button('Collapse', lambda: set_tool_collapsed(True), align=0, margin=0))
+        #extra.add(UI_Checkbox('Collapsed', get_tool_collapsed, set_tool_collapsed))
+        extra.add(UI_Button('Exit', self.quit, align=0, margin=0))
         # self.tool_min.add(self.tool_selection_min)
-        # self.tool_min.add(UI_Checkbox(None, get_tool_collapsed, set_tool_collapsed))
-        # self.tool_window.add(self.tool_max)
-        # self.tool_window.add(self.tool_min)
+        self.tool_min.add(UI_Checkbox(None, get_tool_collapsed, set_tool_collapsed))
+        self.tool_window.add(self.tool_max)
+        self.tool_window.add(self.tool_min)
 
 
         window_info = self.window_manager.create_window('Info', {'sticky':1, 'visible':True})
-        window_info.add(UI_Label('RetopoFlow %s' % retopoflow_version))
+        window_info.add(UI_Label('Rebrickr %s' % bpy.props.rebrickr_version))
         container = window_info.add(UI_Container(margin=0, vertical=False))
         container.add(UI_Button('Welcome!', show_reporting, align=0))
         container.add(UI_Button('Report Issue', open_github, align=0))
@@ -476,7 +428,7 @@ class Rebrickr_UI():
         # self.window_help.add(UI_Button('Close', self.toggle_tool_help, align=0, bgcolor=(0.5,0.5,0.5,0.4), margin=2), footer=True)
 
     ####################################################################
-    # Draw handler function
+    # Draw handler functions
 
     def draw_callback_preview(self, context):
         if not still_registered(self): return
@@ -524,13 +476,26 @@ class Rebrickr_UI():
 
     def draw_callback_postpixel(self, context):
         if not still_registered(self): return
+        # set frames, fps, fps_time
+        wtime,ctime = self.fps_time,time.time()
+        self.frames += 1
+        if ctime >= wtime + 1:
+            self.fps = self.frames / (ctime - wtime)
+            self.frames = 0
+            self.fps_time = ctime
+
         bgl.glPushAttrib(bgl.GL_ALL_ATTRIB_BITS)    # save OpenGL attributes
         bgl.glPopAttrib()                           # restore OpenGL attributes
-        # run post_poxel for ui windows
-        try:
-            self.window_manager.draw_postpixel()
-        except AttributeError:
-            pass
+
+        # bgl.glEnable(bgl.GL_MULTISAMPLE)
+        # bgl.glEnable(bgl.GL_BLEND)
+        # bgl.glEnable(bgl.GL_POINT_SMOOTH)
+
+        self.window_debug_fps.set_label('fps: %0.2f' % self.fps)
+        self.window_debug_save.set_label('save: %0.0f' % (self.time_to_save or float('inf')))
+
+        self.window_manager.draw_postpixel()
+        self.tag_redraw()
 
     def draw_callback_cover(self, context):
         if not still_registered(self): return
@@ -551,66 +516,44 @@ class Rebrickr_UI():
         bgl.glPopAttrib()
 
     ##################################################################
-    # modal method
+    # other methods
 
-    # def framework_modal(self, context, event):
-    #     '''
-    #     Called by Blender while our tool is running modal.
-    #     This state checks if navigation is occurring.
-    #     This state calls auxiliary wait state to see into which state we transition.
-    #     '''
-    #
-    #     if not still_registered(self):
-    #         # something bad happened, so bail!
-    #         return {'CANCELLED'}
-    #
-    #     if self.exception_quit:
-    #         # something bad happened, so bail!
-    #         self.framework_end()
-    #         return {'CANCELLED'}
-    #
-    #     profiler.printfile()
-    #
-    #     # TODO: can we not redraw only when necessary?
-    #     self.tag_redraw()
-    #     #context.area.tag_redraw()       # force redraw
-    #
-    #     return {'RUNNING_MODAL'}    # tell Blender to continue running our tool in modal
+    def quit(self): self.exit = True
 
 # rfmode_tools = {}
 #
 # @stats_wrapper
 # def setup_tools():
-#     for rft in RFTool:
-#         def classfactory(rft):
-#             rft_name = rft().name()
-#             cls_name = 'RFMode_' + rft_name.replace(' ','_')
-#             id_name = 'cgcookie.rfmode_' + rft_name.replace(' ','_').lower()
+#     for Tool in tools:
+#         def classfactory(Tool):
+#             tool_name = Tool().name()
+#             cls_name = 'Rebrickr_' + tool_name.replace(' ','_')
+#             id_name = 'rebrickr.sculptmode_' + tool_name.replace(' ','_').lower()
 #             print('Creating: ' + cls_name)
-#             def context_start_tool(self): return rft()
+#             def context_start_tool(self): return Tool()
 #             newclass = type(cls_name, (RFMode,),{
 #                 "context_start_tool": context_start_tool,
 #                 'bl_idname': id_name,
-#                 "bl_label": rft_name,
-#                 'bl_description': rft().description(),
-#                 'rf_icon': rft().icon(),
-#                 'rft_class': rft,
+#                 "bl_label": tool_name,
+#                 'bl_description': Tool().description(),
+#                 'rf_icon': Tool().icon(),
+#                 'rft_class': Tool,
 #                 })
-#             rfmode_tools[id_name] = newclass
+#             sculpt_mode_tools[id_name] = newclass
 #             globals()[cls_name] = newclass
-#         classfactory(rft)
+#         classfactory(Tool)
 #
-#     listed,unlisted = [None]*len(RFTool.preferred_tool_order),[]
-#     for ids,rft in rfmode_tools.items():
-#         name = rft.bl_label
-#         if name in RFTool.preferred_tool_order:
-#             idx = RFTool.preferred_tool_order.index(name)
-#             listed[idx] = (ids,rft)
-#         else:
-#             unlisted.append((ids,rft))
-#     # sort unlisted entries by name
-#     unlisted.sort(key=lambda k:k[1].bl_label)
-#     listed = [data for data in listed if data]
-#     RFTool.order = listed + unlisted
+#     # listed,unlisted = [None]*len(RFTool.preferred_tool_order),[]
+#     # for ids,rft in sculpt_mode_tools.items():
+#     #     name = rft.bl_label
+#     #     if name in RFTool.preferred_tool_order:
+#     #         idx = RFTool.preferred_tool_order.index(name)
+#     #         listed[idx] = (ids,rft)
+#     #     else:
+#     #         unlisted.append((ids,rft))
+#     # # sort unlisted entries by name
+#     # unlisted.sort(key=lambda k:k[1].bl_label)
+#     # listed = [data for data in listed if data]
+#     # RFTool.order = listed + unlisted
 #
 # setup_tools()

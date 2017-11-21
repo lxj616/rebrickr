@@ -1,12 +1,11 @@
+import bpy
 import os
 import re
 import json
 import shelve
 
-retopoflow_version = "2.0.0"
-
 firsttime_message = '''
-# Welcome to RetopoFlow {version}!
+# Welcome to Rebrickr {version}!
 
 RetopoFlow is an add-on for Blender that brings together a set of retopology tools within a custom Blender mode to enable you to work more quickly, efficiently, and in a more artist-friendly manner.
 The tools, which are specifically designed for retopology, create a complete workflow in Blender without the need for additional software.
@@ -66,7 +65,7 @@ We thank you for using RetopoFlow, and we look forward to hearing back from you!
 Cheers!
 
 --The RetopoFlow Team
-'''.format(version=retopoflow_version)
+'''.format(version=None)#bpy.props.rebrickr_version)
 
 
 
@@ -210,7 +209,7 @@ class Options:
 
     default_options = {                 # all the default settings for unset or reset
         'profiler':             False,
-        'welcome':              True,
+        'welcome':              False,# True,
         'tools_min':            False,
         'instrument':           False,
         'color theme':          'Green',
