@@ -76,7 +76,6 @@ class UndoStack():
 
     instance = None
     undo_depth = 500    # set in User Preferences?
-    ignore_states = ['select']
 
     ###################################################
     # undo / redo stack operations
@@ -103,14 +102,12 @@ class UndoStack():
     def isUpdating(self): return bpy.props.rebrickr_undoUpdating
 
     def _create_state(self, action):
-        bfm_cache = copy.deepcopy(rebrickr_bfm_cache) if action not in self.ignore_states else None
         return {
             'action':       action,
-            'bfm_cache':    bfm_cache,
+            'bfm_cache':    copy.deepcopy(rebrickr_bfm_cache),
             }
     def _restore_state(self, state):
         global rebrickr_bfm_cache
-        if state['action'] in self.ignore_states: return
         for key in state['bfm_cache'].keys():
             rebrickr_bfm_cache[key] = state['bfm_cache'][key]
 
