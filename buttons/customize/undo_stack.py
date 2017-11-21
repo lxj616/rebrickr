@@ -38,6 +38,7 @@ from bpy.app.handlers import persistent, load_post
 from ...functions import *
 from ...lib.caches import rebrickr_bfm_cache
 
+python_undo_state = {}
 
 class UndoStack():
     bl_category    = "Rebrickr"
@@ -66,17 +67,40 @@ class UndoStack():
         assert hasattr(UndoStack, 'creating'), 'Do not create new UndoStack directly!  Use UndoStack.new()'
         self.undo = []  # undo stack of causing actions, FSM state, tool states, and rftargets
         self.redo = []  # redo stack of causing actions, FSM state, tool states, and rftargets
+        scn = bpy.context.scene
+        for cm in scn.cmlist:
+            cm.blender_undo_state = 0
 
     ###################################################
     # class variables
 
     instance = None
-    undo_depth = 100    # set in User Preferences?
+    undo_depth = 500    # set in User Preferences?
     ignore_states = ['select']
-
 
     ###################################################
     # undo / redo stack operations
+
+    @staticmethod
+    def iterateStates(cm):
+        """ iterate undo states """
+        scn = bpy.context.scene
+        global python_undo_state
+        bpy.props.rebrickr_undoUpdating = True
+        if cm.id not in python_undo_state:
+            python_undo_state[cm.id] = 0
+        python_undo_state[cm.id] += 1
+        cm.blender_undo_state += 1
+        bpy.props.rebrickr_undoUpdating = False
+
+    def matchPythonToBlenderState(self):
+        scn = bpy.context.scene
+        for cm in scn.cmlist:
+            python_undo_state[cm.id] = cm.blender_undo_state
+
+    def getLength(self): return len(self.undo)
+
+    def isUpdating(self): return bpy.props.rebrickr_undoUpdating
 
     def _create_state(self, action):
         bfm_cache = copy.deepcopy(rebrickr_bfm_cache) if action not in self.ignore_states else None
@@ -93,6 +117,8 @@ class UndoStack():
     def undo_push(self, action, repeatable=False):
         # skip pushing to undo if action is repeatable and we are repeating actions
         if repeatable and self.undo and self.undo[-1]['action'] == action: return
+        # skip pushing to undo if rebrickr not initialized
+        if not bpy.props.rebrickr_undoRunning: return
         self.undo.append(self._create_state(action))
         while len(self.undo) > self.undo_depth: self.undo.pop(0)     # limit stack size
         self.redo.clear()
@@ -103,6 +129,11 @@ class UndoStack():
         self.redo.append(self._create_state('undo'))
         self._restore_state(self.undo.pop())
         self.instrument_write('undo')
+        # iterate undo states
+        global python_undo_state
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        python_undo_state[cm.id] -= 1
 
     def undo_cancel(self):
         self._restore_state(self.undo.pop())
@@ -113,6 +144,11 @@ class UndoStack():
         self.undo.append(self._create_state('redo'))
         self._restore_state(self.redo.pop())
         self.instrument_write('redo')
+        # iterate undo states
+        global python_undo_state
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        python_undo_state[cm.id] += 1
 
     def instrument_write(self, action):
         if True: return         # disabled for now...

@@ -32,10 +32,11 @@ props = bpy.props
 # Rebrickr imports
 from .cmlist import *
 from .app_handlers import *
-from .buttons import *
-from .brick_mod import *
+from ..lib.bricksDict import *
 from ..buttons.delete import RebrickrDelete
+from ..buttons.revertSettings import *
 from ..functions import *
+from ..lib.caches import rebrickr_bfm_cache
 
 # updater import
 from .. import addon_updater_ops
@@ -53,6 +54,8 @@ class RebrickrStoragePanel(Panel):
         scn = context.scene
         if scn.name == "Rebrickr_storage (DO NOT RENAME)":
             return True
+        if not bpy.props.rebrickr_undoRunning:
+            return False
         return False
 
     def draw(self, context):
@@ -157,35 +160,38 @@ class BrickModelsPanel(Panel):
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             # first, draw source object text
-            if cm.animated or cm.modelCreated:
-                col = layout.column(align=True)
-                col.label("Source Object: " + cm.source_name)
-            else:
-                col1 = layout.column(align=True)
-                col1.label("Source Object:")
+            source_name = " %(n)s" % locals() if cm.animated or cm.modelCreated else ""
+            col1 = layout.column(align=True)
+            col1.label("Source Object:%(source_name)s" % locals())
+            if not (cm.animated or cm.modelCreated):
                 split = col1.split(align=True, percentage=0.85)
                 col = split.column(align=True)
                 col.prop_search(cm, "source_name", scn, "objects", text='')
                 col = split.column(align=True)
                 col.operator("rebrickr.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'source_name'
                 # col.operator("cmlist.set_to_active", icon="EDIT", text="")
-                col = layout.column(align=True)
+                col1 = layout.column(align=True)
 
+            # initialize obj variable
             if cm.modelCreated or cm.animated:
                 obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
             else:
                 obj = bpy.data.objects.get(cm.source_name)
 
+            # if undo stack not initialized, draw initialize button
+            if not bpy.props.rebrickr_undoRunning:
+                row = col1.row(align=True)
+                row.operator("rebrickr.customize_model", text="Initialize Rebrickr", icon="MODIFIER")
             # if use animation is selected, draw animation options
-            if cm.useAnimation:
+            elif cm.useAnimation:
                 if cm.animated:
-                    row = col.row(align=True)
+                    row = col1.row(align=True)
                     row.operator("rebrickr.delete", text="Delete Brick Animation", icon="CANCEL")
                     col = layout.column(align=True)
                     row = col.row(align=True)
                     row.operator("rebrickr.brickify", text="Update Animation", icon="FILE_REFRESH")
                 else:
-                    row = col.row(align=True)
+                    row = col1.row(align=True)
                     if obj:
                         row.active = obj.type == 'MESH'
                     else:
@@ -194,14 +200,14 @@ class BrickModelsPanel(Panel):
             # if use animation is not selected, draw modeling options
             else:
                 if not cm.animated and not cm.modelCreated:
-                    row = col.row(align=True)
+                    row = col1.row(align=True)
                     if obj:
                         row.active = obj.type == 'MESH'
                     else:
                         row.active = False
                     row.operator("rebrickr.brickify", text="Brickify Object", icon="MOD_REMESH")
                 else:
-                    row = col.row(align=True)
+                    row = col1.row(align=True)
                     row.operator("rebrickr.delete", text="Delete Brickified Model", icon="CANCEL")
                     col1 = layout.column(align=True)
                     split = col1.split(align=True, percentage=0.7)
@@ -211,7 +217,7 @@ class BrickModelsPanel(Panel):
                     col.operator("rebrickr.edit_source", icon="EDIT", text="Edit")
                     if matrixReallyIsDirty(cm):
                         row = col1.row(align=True)
-                        row.label("Brick mods will be lost")
+                        row.label("Customizations will be lost")
                         row = col1.row(align=True)
                         row.operator("rebrickr.revert_matrix_settings", text="Revert Settings", icon="LOOP_BACK")
                     if cm.sourceIsDirty:
@@ -219,16 +225,8 @@ class BrickModelsPanel(Panel):
                         row.label("Source mesh changed; update to reflect changes")
 
 
-            # sub = row.row(align=True)
-            # sub.scale_x = 0.1
-            # sub.operator("cgcookie.eye_dropper", icon='EYEDROPPER').target_prop = 'source_name'
-
             col = layout.column(align=True)
             row = col.row(align=True)
-            # remove 'Rebrickr_[source name]_bricks' group if empty
-            # if groupExists(Rebrickr_bricks) and len(bpy.data.groups[Rebrickr_bricks].objects) == 0:
-            #     RebrickrDelete.cleanUp()
-            #     bpy.data.groups.remove(bpy.data.groups[Rebrickr_bricks], do_unlink=True)
         else:
             layout.operator("cmlist.list_action", icon='ZOOMIN', text="New Brick Model").action = 'ADD'
 
@@ -259,6 +257,8 @@ class AnimationPanel(Panel):
         if scn.cmlist_index == -1:
             return False
         if bversion() < '002.078.00':
+            return False
+        if not bpy.props.rebrickr_undoRunning:
             return False
         cm = scn.cmlist[scn.cmlist_index]
         if cm.modelCreated:
@@ -346,6 +346,8 @@ class ModelTransformPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
+        if not bpy.props.rebrickr_undoRunning:
+            return False
         cm = scn.cmlist[scn.cmlist_index]
         if cm.modelCreated or cm.animated:
             return True
@@ -399,6 +401,8 @@ class ModelSettingsPanel(Panel):
         if scn.cmlist_index == -1:
             return False
         if bversion() < '002.078.00':
+            return False
+        if not bpy.props.rebrickr_undoRunning:
             return False
         return True
 
@@ -519,6 +523,8 @@ class BrickTypesPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
+        if not bpy.props.rebrickr_undoRunning:
+            return False
         return True
 
     def draw(self, context):
@@ -602,6 +608,8 @@ class MaterialsPanel(Panel):
         if scn.cmlist_index == -1:
             return False
         if bversion() < '002.078.00':
+            return False
+        if not bpy.props.rebrickr_undoRunning:
             return False
         return True
 
@@ -740,6 +748,8 @@ class DetailingPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
+        if not bpy.props.rebrickr_undoRunning:
+            return False
         return True
 
     def draw(self, context):
@@ -808,6 +818,8 @@ class SupportsPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
+        if not bpy.props.rebrickr_undoRunning:
+            return False
         return True
 
     def draw(self, context):
@@ -855,6 +867,8 @@ class BevelPanel(Panel):
         cm = scn.cmlist[scn.cmlist_index]
         if not cm.modelCreated and not cm.animated:
             return False
+        if not bpy.props.rebrickr_undoRunning:
+            return False
         return True
 
     def draw(self, context):
@@ -886,6 +900,88 @@ class BevelPanel(Panel):
         except (IndexError, KeyError):
             row.operator("rebrickr.bevel", text="Bevel bricks", icon="MOD_BEVEL")
 
+class CustomizeModel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "Customize Model"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_customize_model"
+    # bl_context     = "objectmode"
+    bl_category    = "Rebrickr"
+    bl_options     = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        if not bpy.props.rebrickr_undoRunning:
+            return False
+        cm = scn.cmlist[scn.cmlist_index]
+        if not (cm.modelCreated or cm.animated):
+            return False
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+
+        if cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings():
+            layout.label("Matrix is dirty!")
+            return
+        if cm.animated:
+            layout.label("Not available for animations")
+            return
+        if not cm.lastSplitModel:
+            layout.label("Split model to customize")
+            return
+        if cm.buildIsDirty:
+            layout.label("Run 'Update Model' to customize")
+            return
+        if rebrickr_bfm_cache.get(cm.id) is None and cm.BFMCache == "":
+            layout.label("Matrix not cached!")
+            return
+        # if not bpy.props.rebrickr_undoRunning:
+        #     layout.operator("rebrickr.customize_model", icon="MODIFIER")
+        #     return
+
+        col1 = layout.column(align=True)
+        col1.label("Toggle Exposure:")
+        split = col1.split(align=True, percentage=0.5)
+        # set top exposed
+        col = split.column(align=True)
+        col.operator("rebrickr.set_exposure", text="Top").side = "TOP"
+        # set bottom exposed
+        col = split.column(align=True)
+        col.operator("rebrickr.set_exposure", text="Bottom").side = "BOTTOM"
+
+        col1 = layout.column(align=True)
+        col1.label("Brick Operations:")
+        split = col1.split(align=True, percentage=0.5)
+        # split brick into 1x1s
+        col = split.column(align=True)
+        col.operator("rebrickr.split_bricks", text="Split")
+        # merge selected bricks
+        col = split.column(align=True)
+        col.operator("rebrickr.merge_bricks", text="Merge")
+        # Add identical brick on +/- x/y/z
+        row = col1.row(align=True)
+        row.operator("rebrickr.draw_adjacent", text="Draw Adjacent Bricks")
+        # change brick type
+        row = col1.row(align=True)
+        row.operator("rebrickr.change_brick_type", text="Change Type")
+        # additional controls
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop(cm, "autoUpdateExposed")
+        row = col.row(align=True)
+        row.operator("rebrickr.redraw_bricks")
+
+
+        # next level:
+        # enter brick sculpt mode
+        # add brick at selected vertex
+
 class AdvancedPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -901,6 +997,8 @@ class AdvancedPanel(Panel):
         if scn.cmlist_index == -1:
             return False
         if bversion() < '002.078.00':
+            return False
+        if not bpy.props.rebrickr_undoRunning:
             return False
         cm = scn.cmlist[scn.cmlist_index]
         return True
@@ -932,3 +1030,95 @@ class AdvancedPanel(Panel):
         row.prop(cm, "useNormals")
         row = col.row(align=True)
         row.prop(cm, "verifyExposure")
+
+class BrickDetailsPanel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "Brick Details"
+    bl_idname      = "VIEW3D_PT_tools_Rebrickr_brick_details"
+    # bl_context     = "objectmode"
+    bl_category    = "Rebrickr"
+    bl_options     = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(self, context):
+        scn = context.scene
+        if scn.cmlist_index == -1:
+            return False
+        if not bpy.props.rebrickr_undoRunning:
+            return False
+        cm = scn.cmlist[scn.cmlist_index]
+        if not (cm.modelCreated or cm.animated):
+            return False
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scn = context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+
+        if cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings():
+            layout.label("Matrix is dirty!")
+            return
+        if rebrickr_bfm_cache.get(cm.id) is None and cm.BFMCache == "":
+            layout.label("Matrix not cached!")
+            return
+
+        col1 = layout.column(align=True)
+        split = col1.split(align=True, percentage=0.33)
+        col = split.column(align=True)
+        col.prop(cm, "activeKeyX", text="x")
+        col = split.column(align=True)
+        col.prop(cm, "activeKeyY", text="y")
+        col = split.column(align=True)
+        col.prop(cm, "activeKeyZ", text="z")
+
+        if cm.animated:
+            bricksDict,_ = getBricksDict("UPDATE_ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current), restrictContext=True)
+        elif cm.modelCreated:
+            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)
+        if bricksDict is None:
+            layout.label("Matrix not available")
+            return
+        aKX = cm.activeKeyX
+        aKY = cm.activeKeyY
+        aKZ = cm.activeKeyZ
+        try:
+            dictKey = listToStr([aKX, aKY, aKZ])
+            brickD = bricksDict[dictKey]
+        except Exception as e:
+            layout.label("No brick details available")
+            if len(bricksDict) == 0:
+                print("Skipped drawing Brick Details")
+            elif str(e)[1:-1] == dictKey:
+                print("Key '" + str(dictKey) + "' not found")
+                # try:
+                #     print("Num Keys:", str(len(bricksDict)))
+                # except:
+                #     pass
+            elif dictKey is None:
+                print("Key not set (entered else)")
+            else:
+                print("Error fetching brickD:", e)
+            return
+
+        col1 = layout.column(align=True)
+        split = col1.split(align=True, percentage=0.35)
+        # hard code keys so that they are in the order I want
+        keys = ["name", "val", "draw", "co", "nearest_face_idx", "mat_name", "parent_brick", "size", "attempted_merge", "top_exposed", "bot_exposed", "type"]
+        # draw keys
+        col = split.column(align=True)
+        col.scale_y = 0.65
+        row = col.row(align=True)
+        row.label("key:")
+        for key in keys:
+            row = col.row(align=True)
+            row.label(key + ":")
+        # draw values
+        col = split.column(align=True)
+        col.scale_y = 0.65
+        row = col.row(align=True)
+        row.label(dictKey)
+        for key in keys:
+            row = col.row(align=True)
+            row.label(str(brickD[key]))

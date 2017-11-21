@@ -169,6 +169,8 @@ class Bricks:
                     curKey = listToStr([x0,y0,z0])
                     bricksDict[curKey]["size"] = newSize
                     bricksDict[curKey]["parent_brick"] = "self"
+                    bricksDict[curKey]["top_exposed"] = bricksDict[key]["top_exposed"]
+                    bricksDict[curKey]["bot_exposed"] = bricksDict[key]["bot_exposed"]
                     # add curKey to list of split keys
                     splitKeys.append(curKey)
         return splitKeys

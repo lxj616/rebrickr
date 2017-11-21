@@ -33,12 +33,13 @@ from mathutils import Matrix, Vector, Euler
 props = bpy.props
 
 # Rebrickr imports
-from ..functions import *
-from ..lib.bricksDict import *
-from ..ui.cmlist import dirtyMatrix
+from .customize.undo_stack import *
 from .materials import RebrickrApplyMaterial
 from .delete import RebrickrDelete
 from .bevel import RebrickrBevel
+from ..lib.bricksDict import *
+from ..ui.cmlist import dirtyMatrix
+from ..functions import *
 
 
 def updateCanRun(type):
@@ -72,6 +73,9 @@ class RebrickrBrickify(bpy.types.Operator):
     bl_label = "Create/Update Brick Model from Source Object"                 # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
+    ################################################
+    # Blender Operator methods
+
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
@@ -89,13 +93,45 @@ class RebrickrBrickify(bpy.types.Operator):
             return False
         return True
 
+    def execute(self, context):
+        try:
+            self.runBrickify(context)
+        except KeyboardInterrupt:
+            if self.action in ["CREATE", "ANIMATE"]:
+                for n in self.createdObjects:
+                    obj = bpy.data.objects.get(n)
+                    if obj is not None:
+                        bpy.data.objects.remove(obj)
+                for n in self.createdGroups:
+                    group = bpy.data.groups.get(n)
+                    if group is not None:
+                        bpy.data.groups.remove(group)
+                if self.sourceOrig is not None:
+                    self.sourceOrig.protected = False
+                    select(self.sourceOrig, active=self.sourceOrig)
+                cm.animated = previously_animated
+                cm.modelCreated = previously_model_created
+            print()
+            self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
+        except:
+            handle_exception()
+        return{"FINISHED"}
+
+    ################################################
+    # initialization method
+
     def __init__(self):
+        self.undo_stack = UndoStack.get_instance()
+        self.undo_stack.undo_push('brickify')
         self.createdObjects = []
         self.createdGroups = []
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         self.action = getAction(cm)
         self.sourceOrig = self.getObjectToBrickify()
+
+    #############################################
+    # class methods
 
     def getObjectToBrickify(self):
         scn = bpy.context.scene
@@ -847,6 +883,7 @@ class RebrickrBrickify(bpy.types.Operator):
         scn = context.scene
         scn.Rebrickr_runningOperation = True
         cm = scn.cmlist[scn.cmlist_index]
+        self.undo_stack.iterateStates(cm)
         n = cm.source_name
         previously_animated = cm.animated
         previously_model_created = cm.modelCreated
@@ -908,26 +945,4 @@ class RebrickrBrickify(bpy.types.Operator):
 
         disableRelationshipLines()
 
-    def execute(self, context):
-        try:
-            self.runBrickify(context)
-        except KeyboardInterrupt:
-            if self.action in ["CREATE", "ANIMATE"]:
-                for n in self.createdObjects:
-                    obj = bpy.data.objects.get(n)
-                    if obj is not None:
-                        bpy.data.objects.remove(obj)
-                for n in self.createdGroups:
-                    group = bpy.data.groups.get(n)
-                    if group is not None:
-                        bpy.data.groups.remove(group)
-                if self.sourceOrig is not None:
-                    self.sourceOrig.protected = False
-                    select(self.sourceOrig, active=self.sourceOrig)
-                cm.animated = previously_animated
-                cm.modelCreated = previously_model_created
-            print()
-            self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
-        except:
-            handle_exception()
-        return{"FINISHED"}
+    #############################################

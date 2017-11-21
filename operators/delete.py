@@ -43,7 +43,8 @@ from bpy.props import *
 from ..lib.bricksDict import *
 from ..functions.common import *
 from ..functions.general import *
-from ..buttons.SculptMode.functions import getAdjKeysAndBrickVals, runCreateNewBricks2, createObjsD
+from ..buttons.customize.functions import getAdjKeysAndBrickVals, runCreateNewBricks2, createObjsD
+from ..buttons.customize.undo_stack import *
 from ..buttons.delete import RebrickrDelete
 from ..lib.Brick import Bricks
 from ..lib.bricksDict.functions import getDictKey
@@ -65,6 +66,7 @@ class delete_override(Operator):
 
     def execute(self, context):
         try:
+            self.undo_stack.undo_push('delete_override')
             self.runDelete(context)
         except:
             handle_exception()
@@ -77,10 +79,20 @@ class delete_override(Operator):
             return confirmation_returned
         else:
             try:
+                self.undo_stack.undo_push('delete_override')
                 self.runDelete(context)
             except:
                 handle_exception()
             return {'FINISHED'}
+
+    ################################################
+    # initialization method
+
+    def __init__(self):
+        self.undo_stack = UndoStack.get_instance()
+        self.iteratedStatesAtLeastOnce = False
+        self.objsToDelete = bpy.context.selected_objects
+        self.warnInitialize = False
 
     ###################################################
     # class variables
@@ -91,7 +103,20 @@ class delete_override(Operator):
     # class methods
 
     def runDelete(self, context):
+        if not bpy.props.rebrickr_undoRunning:
+            # initialize objsD (key:cm_idx, val:list of brick objects)
+            objsD = createObjsD(self.objsToDelete)
+            # remove brick type objects from selection
+            for val in objsD.values():
+                if len(val) > 0:
+                    for obj in val:
+                        self.objsToDelete.remove(obj)
+                    if not self.warnInitialize:
+                        self.report({"WARNING"}, "Please initialize the Rebrickr [shift+i] before attempting to delete bricks")
+                        self.warnInitialize = True
+        # run deleteUnprotected
         protected = self.deleteUnprotected(context, self.use_global)
+        # alert user of protected objects
         if len(protected) > 0:
             self.report({"WARNING"}, "Rebrickr is using the following object(s): " + str(protected)[1:-1])
         # push delete action to undo stack
@@ -100,14 +125,17 @@ class delete_override(Operator):
     def deleteUnprotected(self, context, use_global=False):
         scn = context.scene
         protected = []
-        selected_objects = context.selected_objects
+        objNamesToDelete = []
+        for obj in self.objsToDelete:
+            objNamesToDelete.append(obj.name)
 
-        # initialize objsD (key:cm_idx, val:list of objects)
-        objsD = createObjsD(selected_objects)
+        # initialize objsD (key:cm_idx, val:list of brick objects)
+        objsD = createObjsD(self.objsToDelete)
 
         # update matrix
-        for cm_idx in objsD.keys():
+        for i,cm_idx in enumerate(objsD.keys()):
             cm = scn.cmlist[cm_idx]
+            lastBlenderState = cm.blender_undo_state
             # get bricksDict from cache
             bricksDict,loadedFromCache = getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)
             if not loadedFromCache:
@@ -146,32 +174,30 @@ class delete_override(Operator):
                                             if k0 not in keysToUpdate:
                                                 # add key to simple bricksDict for drawing
                                                 keysToUpdate.append(k0)
-                                # if top of deleted brick was exposed, top of bricks below are now exposed
-                                if bricksDict[dictKey]["top_exposed"]:
-                                    k0 = listToStr([x, y, z - 1])
-                                    if bricksDict[k0]["draw"]:
-                                        if bricksDict[k0]["parent_brick"] == "self":
-                                            k1 = k0
-                                        else:
-                                            k1 = bricksDict[k0]["parent_brick"]
-                                        if not bricksDict[k1]["top_exposed"]:
-                                            bricksDict[k1]["top_exposed"] = True
-                                            if k1 not in keysToUpdate:
-                                                # add key to simple bricksDict for drawing
-                                                keysToUpdate.append(k1)
-                                # if bottom of deleted brick was exposed, bottom of bricks above are now exposed
-                                if bricksDict[dictKey]["bot_exposed"]:
-                                    k0 = listToStr([x, y, z + 1])
-                                    if bricksDict[k0]["draw"]:
-                                        if bricksDict[k0]["parent_brick"] == "self":
-                                            k1 = k0
-                                        else:
-                                            k1 = bricksDict[k0]["parent_brick"]
-                                        if not bricksDict[k1]["bot_exposed"]:
-                                            bricksDict[k1]["bot_exposed"] = True
-                                            if k1 not in keysToUpdate:
-                                                # add key to simple bricksDict for drawing
-                                                keysToUpdate.append(k1)
+                                # top of bricks below are now exposed
+                                k0 = listToStr([x, y, z - 1])
+                                if bricksDict[k0]["draw"]:
+                                    if bricksDict[k0]["parent_brick"] == "self":
+                                        k1 = k0
+                                    else:
+                                        k1 = bricksDict[k0]["parent_brick"]
+                                    if not bricksDict[k1]["top_exposed"]:
+                                        bricksDict[k1]["top_exposed"] = True
+                                        if k1 not in keysToUpdate:
+                                            # add key to simple bricksDict for drawing
+                                            keysToUpdate.append(k1)
+                                # bottom of bricks above are now exposed
+                                k0 = listToStr([x, y, z + 1])
+                                if bricksDict[k0]["draw"]:
+                                    if bricksDict[k0]["parent_brick"] == "self":
+                                        k1 = k0
+                                    else:
+                                        k1 = bricksDict[k0]["parent_brick"]
+                                    if not bricksDict[k1]["bot_exposed"]:
+                                        bricksDict[k1]["bot_exposed"] = True
+                                        if k1 not in keysToUpdate:
+                                            # add key to simple bricksDict for drawing
+                                            keysToUpdate.append(k1)
             # dirtyBuild if it wasn't already
             lastBuildIsDirty = cm.buildIsDirty
             if not lastBuildIsDirty: cm.buildIsDirty = True
@@ -190,13 +216,26 @@ class delete_override(Operator):
                     delete(brick)
                 # create new bricks at all keysToUpdate locations
                 runCreateNewBricks2(cm, bricksDict, newKeysToUpdate)
+                iteratedStates = True
             if not lastBuildIsDirty: cm.buildIsDirty = False
+            # if undo states not iterated above
+            if lastBlenderState == cm.blender_undo_state:
+                # iterate undo states
+                self.undo_stack.iterateStates(cm)
+            self.iteratedStatesAtLeastOnce = True
             # store bricksDict to cache
             cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
 
+        # if nothing was done worth undoing
+        if not self.iteratedStatesAtLeastOnce:
+            # pop pushed value from undo stack
+            self.undo_stack.undo_pop()
+
 
         # delete bricks
-        for obj in selected_objects:
+        for obj_name in objNamesToDelete:
+            obj = bpy.data.objects.get(obj_name)
+            if obj is None: continue
             if obj.isBrickifiedObject or obj.isBrick:
                 cm = None
                 for cmCur in scn.cmlist:

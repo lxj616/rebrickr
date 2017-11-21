@@ -994,6 +994,8 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     matrixIsDirty = BoolProperty(default=True)
     internalIsDirty = BoolProperty(default=True)
 
+    blender_undo_state = IntProperty(default=0)
+
 # -------------------------------------------------------------------
 # register
 # -------------------------------------------------------------------

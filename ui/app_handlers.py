@@ -31,7 +31,7 @@ from mathutils import Vector, Euler
 from ..functions import *
 from ..lib.bricksDict import lightToDeepCache, deepToLightCache, getDictKey
 from ..lib.caches import rebrickr_bfm_cache
-from ..buttons.SculptMode.tools import *
+from ..buttons.customize.tools import *
 
 def rebrickrIsActive():
     try:
@@ -39,6 +39,15 @@ def rebrickrIsActive():
     except AttributeError:
         rebrickrIsActive = False
     return rebrickrIsActive
+
+def rebrickrRunningOp():
+    scn = bpy.context.scene
+    try:
+        rebrickrRunningOp = scn.Rebrickr_runningOperation
+    except AttributeError:
+        rebrickrRunningOp = False
+    return rebrickrRunningOp
+
 
 def getAnimAdjustedFrame(cm, frame):
     if frame < cm.lastStartFrame:
@@ -96,11 +105,7 @@ def isObjVisible(scn, cm):
 @persistent
 def handle_selections(scene):
     scn = bpy.context.scene
-    try:
-        rebrickrRunningOp = scn.Rebrickr_runningOperation
-    except AttributeError:
-        rebrickrRunningOp = False
-    if rebrickrIsActive() and not rebrickrRunningOp:
+    if rebrickrIsActive() and not rebrickrRunningOp():
         # if scn.layers changes and active object is no longer visible, set scn.cmlist_index to -1
         if scn.Rebrickr_last_layers != str(list(scn.layers)):
             scn.Rebrickr_last_layers = str(list(scn.layers))
@@ -201,11 +206,7 @@ bpy.app.handlers.scene_update_pre.append(handle_selections)
 @persistent
 def keep_object_names_unique(scene):
     scn = bpy.context.scene
-    try:
-        rebrickrRunningOp = scn.Rebrickr_runningOperation
-    except AttributeError:
-        rebrickrRunningOp = False
-    if rebrickrIsActive() and not rebrickrRunningOp:
+    if rebrickrIsActive() and not rebrickrRunningOp():
         # for object in scene
         for obj_name in scn.objects.keys():
             for cm in scn.cmlist:

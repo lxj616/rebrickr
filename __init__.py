@@ -41,7 +41,7 @@ from bpy.props import *
 # Rebrickr imports
 from .ui import *
 from .buttons import *
-from .buttons.SculptMode import *
+from .buttons.customize import *
 from .operators import *
 from .lib.preferences import *
 
@@ -56,7 +56,8 @@ def register():
 
     bpy.props.rebrickr_module_name = __name__
 
-    bpy.props.rebrickr_SculptMode = False
+    bpy.props.rebrickr_undoRunning = False
+    bpy.props.rebrickr_undoUpdating = False
 
     props.rebrickr_version = str(bl_info["version"])[1:-1]
 
@@ -196,6 +197,7 @@ def register():
         kmi = km.keymap_items.new("rebrickr.merge_bricks", 'M', 'PRESS', shift=True, alt=True)
         kmi = km.keymap_items.new("rebrickr.set_exposure", 'UP_ARROW', 'PRESS', shift=True, alt=True).properties.side = "TOP"
         kmi = km.keymap_items.new("rebrickr.set_exposure", 'DOWN_ARROW', 'PRESS', shift=True, alt=True).properties.side = "BOTTOM"
+        kmi = km.keymap_items.new("rebrickr.customize_model", 'I', 'PRESS', shift=True)
         addon_keymaps.append(km)
 
     # other things (UI List)
@@ -225,11 +227,12 @@ def unregister():
     del bpy.props.Rebrickr_commitEdits
     del bpy.props.Rebrickr_origScene
     del Scn.Rebrickr_printTimes
-    del bpy.props.rebrickr_module_name
     del bpy.types.Object.isBrick
     del bpy.types.Object.isBrickifiedObject
     del bpy.types.Object.protected
     del bpy.props.rebrickr_version
+    del bpy.props.rebrickr_undoUpdating
+    del bpy.props.rebrickr_undoRunning
     del bpy.props.rebrickr_module_name
 
 

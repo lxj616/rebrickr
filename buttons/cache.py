@@ -28,14 +28,26 @@ import bpy
 props = bpy.props
 
 # Rebrickr imports
+from .customize.undo_stack import *
 from ..lib.caches import *
 from ..functions.common import *
 
 class clearCache(bpy.types.Operator):
-    """Clear brick mesh and matrix cache (Brick Mods will be lost)"""           # blender will use this as a tooltip for menu items and buttons.
+    """Clear brick mesh and matrix cache (Model customizations will be lost)""" # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "rebrickr.clear_cache"                                          # unique identifier for buttons and menu items to reference.
     bl_label = "Clear Cache"                                                    # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(self, context):
+        if not bpy.props.rebrickr_undoRunning:
+            return False
+        return True
+
+
+    def __init__(self):
+        self.undo_stack = UndoStack.get_instance()
+        self.undo_stack.undo_push('clear_cache')
 
     def execute(self, context):
         try:
@@ -45,8 +57,9 @@ class clearCache(bpy.types.Operator):
             for key in rebrickr_bm_cache:
                 rebrickr_bm_cache[key] = None
             for key in rebrickr_bfm_cache:
-                rebrickr_bfm_cache[key] = None
                 cm = getItemByID(scn.cmlist, key)
+                self.undo_stack.iterateStates(cm)
+                rebrickr_bfm_cache[key] = None
                 cm.matrixIsDirty = True
 
             # clear deep matrix caches

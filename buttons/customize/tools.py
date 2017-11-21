@@ -47,6 +47,8 @@ class splitBricks(Operator):
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
+        if not bpy.props.rebrickr_undoRunning:
+            return False
         scn = bpy.context.scene
         objs = bpy.context.selected_objects
         # check that at least 1 selected object is a brick
@@ -64,8 +66,6 @@ class splitBricks(Operator):
 
     def invoke(self, context, event):
         scn = context.scene
-        self.undo_stack.undo_push('split')
-
         # invoke props popup if conditions met
         for cm_idx in self.objNamesD.keys():
             cm = scn.cmlist[cm_idx]
@@ -80,6 +80,7 @@ class splitBricks(Operator):
                         else:
                             self.vertical = True
                             self.splitBricks()
+                            return {"FINISHED"}
         self.horizontal = True
         self.splitBricks()
         return {"FINISHED"}
@@ -89,10 +90,11 @@ class splitBricks(Operator):
 
     def __init__(self):
         self.undo_stack = UndoStack.get_instance()
+        self.orig_undo_stack_length = self.undo_stack.getLength()
         self.vertical = False
         self.horizontal = False
         selected_objects = bpy.context.selected_objects
-        # initialize objsD (key:cm_idx, val:list of objects)
+        # initialize objsD (key:cm_idx, val:list of brick objects)
         objsD = createObjsD(selected_objects)
         for cm_idx in objsD.keys():
             self.objNamesD[cm_idx] = []
@@ -120,10 +122,14 @@ class splitBricks(Operator):
 
     def splitBricks(self):
         try:
+            self.undo_stack.matchPythonToBlenderState()
+            if self.orig_undo_stack_length == self.undo_stack.getLength():
+                self.undo_stack.undo_push('split')
             scn = bpy.context.scene
             # split all bricks in objNamesD[cm_idx]
             for cm_idx in self.objNamesD.keys():
                 cm = scn.cmlist[cm_idx]
+                self.undo_stack.iterateStates(cm)
                 # get bricksDict from cache
                 bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
                 keysToUpdate = []
@@ -188,16 +194,16 @@ class mergeBricks(Operator):
 
     def execute(self, context):
         try:
-            self.undo_stack.undo_push('split')
             scn = bpy.context.scene
             selected_objects = bpy.context.selected_objects
 
-            # initialize objsD (key:cm_idx, val:list of objects)
+            # initialize objsD (key:cm_idx, val:list of brick objects)
             objsD = createObjsD(selected_objects)
 
             # iterate through keys in objsD
             for cm_idx in objsD.keys():
                 cm = scn.cmlist[cm_idx]
+                self.undo_stack.iterateStates(cm)
                 # initialize vars
                 bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
                 parent_brick = None
@@ -233,6 +239,7 @@ class mergeBricks(Operator):
 
     def __init__(self):
         self.undo_stack = UndoStack.get_instance()
+        self.undo_stack.undo_push('merge')
 
     #############################################
     # class methods
@@ -293,7 +300,6 @@ class setExposure(Operator):
 
     def execute(self, context):
         try:
-            self.undo_stack.undo_push('split')
             scn = bpy.context.scene
             selected_objects = bpy.context.selected_objects
             active_obj = scn.objects.active
@@ -302,12 +308,13 @@ class setExposure(Operator):
             else:
                 initial_active_obj_name = ""
 
-            # initialize objsD (key:cm_idx, val:list of objects)
+            # initialize objsD (key:cm_idx, val:list of brick objects)
             objsD = createObjsD(selected_objects)
 
             # iterate through keys in objsD
             for cm_idx in objsD.keys():
                 cm = scn.cmlist[cm_idx]
+                self.undo_stack.iterateStates(cm)
                 # get bricksDict from cache
                 bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
                 keysToUpdate = []
@@ -348,6 +355,7 @@ class setExposure(Operator):
 
     def __init__(self):
         self.undo_stack = UndoStack.get_instance()
+        self.undo_stack.undo_push('exposure')
 
     ###################################################
     # class variables
@@ -385,9 +393,13 @@ class drawAdjacent(Operator):
 
     def execute(self, context):
         try:
+            self.undo_stack.matchPythonToBlenderState()
+            if self.orig_undo_stack_length == self.undo_stack.getLength():
+                self.undo_stack.undo_push('draw_adjacent')
             scn = bpy.context.scene
             scn.update()
             cm = scn.cmlist[scn.cmlist_index]
+            self.undo_stack.iterateStates(cm)
             obj = scn.objects.active
             initial_active_obj_name = obj.name
             keysToMerge = []
@@ -456,7 +468,6 @@ class drawAdjacent(Operator):
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        self.undo_stack = UndoStack.get_instance()
         return context.window_manager.invoke_props_popup(self, event)
 
     ################################################
@@ -465,6 +476,7 @@ class drawAdjacent(Operator):
     def __init__(self):
         try:
             self.undo_stack = UndoStack.get_instance()
+            self.orig_undo_stack_length = self.undo_stack.getLength()
             scn = bpy.context.scene
             cm = scn.cmlist[scn.cmlist_index]
             obj = scn.objects.active
@@ -709,8 +721,12 @@ class changeBrickType(Operator):
 
     def execute(self, context):
         try:
+            self.undo_stack.matchPythonToBlenderState()
+            if self.orig_undo_stack_length == self.undo_stack.getLength():
+                self.undo_stack.undo_push('change_type')
             scn = bpy.context.scene
             cm = scn.cmlist[self.cm_idx]
+            self.undo_stack.iterateStates(cm)
             obj = scn.objects.active
 
             # get dict key details of current obj
@@ -779,7 +795,6 @@ class changeBrickType(Operator):
         return {"FINISHED"}
 
     def invoke(self, context, event):
-        self.undo_stack.undo_push('split')
         return context.window_manager.invoke_props_popup(self, event)
 
     ################################################
@@ -789,6 +804,7 @@ class changeBrickType(Operator):
         try:
             self.undo_stack = UndoStack.get_instance()
             scn = bpy.context.scene
+            self.orig_undo_stack_length = self.undo_stack.getLength()
             obj = scn.objects.active
             cm = scn.cmlist[scn.cmlist_index]
             # get cmlist item referred to by object
@@ -878,7 +894,6 @@ class redrawBricks(Operator):
 
     def execute(self, context):
         try:
-            self.undo_stack.undo_push('split')
             scn = bpy.context.scene
             selected_objects = bpy.context.selected_objects
             active_obj = scn.objects.active
@@ -887,7 +902,7 @@ class redrawBricks(Operator):
             else:
                 initial_active_obj_name = ""
 
-            # initialize objsD (key:cm_idx, val:list of objects)
+            # initialize objsD (key:cm_idx, val:list of brick objects)
             objsD = createObjsD(selected_objects)
 
             # iterate through keys in objsD
@@ -920,6 +935,6 @@ class redrawBricks(Operator):
     # initialization method
 
     def __init__(self):
-        self.undo_stack = UndoStack.get_instance()
+        pass
 
     #############################################
