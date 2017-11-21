@@ -145,7 +145,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
                     for i in range(len(brick.data.materials)-1):
                         brick.data.materials.append(brick.data.materials.pop(0))
 
-        redraw_areas(["VIEW_3D", "PROPERTIES", "NODE_EDITOR"])
+        tag_redraw_areas(["VIEW_3D", "PROPERTIES", "NODE_EDITOR"])
         cm.materialIsDirty = False
 
     def execute(self, context):

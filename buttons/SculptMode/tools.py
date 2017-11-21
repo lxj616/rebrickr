@@ -112,7 +112,7 @@ class splitBricks(Operator):
     # initialization method
 
     def __init__(self):
-        self.undo_stack = UndoStack.new()
+        self.undo_stack = UndoStack.get_instance()
         self.vertical = False
         self.horizontal = False
         selected_objects = bpy.context.selected_objects
@@ -256,7 +256,7 @@ class mergeBricks(Operator):
     # initialization method
 
     def __init__(self):
-        self.undo_stack = UndoStack.new()
+        self.undo_stack = UndoStack.get_instance()
 
     #############################################
     # class methods
@@ -371,7 +371,7 @@ class setExposure(Operator):
     # initialization method
 
     def __init__(self):
-        self.undo_stack = UndoStack.new()
+        self.undo_stack = UndoStack.get_instance()
 
     ###################################################
     # class variables
@@ -480,7 +480,7 @@ class drawAdjacent(Operator):
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        self.undo_stack = UndoStack.new()
+        self.undo_stack = UndoStack.get_instance()
         return context.window_manager.invoke_props_popup(self, event)
 
     ################################################
@@ -488,7 +488,7 @@ class drawAdjacent(Operator):
 
     def __init__(self):
         try:
-            self.undo_stack = UndoStack.new()
+            self.undo_stack = UndoStack.get_instance()
             scn = bpy.context.scene
             cm = scn.cmlist[scn.cmlist_index]
             obj = scn.objects.active
@@ -811,7 +811,7 @@ class changeBrickType(Operator):
 
     def __init__(self):
         try:
-            self.undo_stack = UndoStack.new()
+            self.undo_stack = UndoStack.get_instance()
             scn = bpy.context.scene
             obj = scn.objects.active
             cm = scn.cmlist[scn.cmlist_index]
@@ -944,6 +944,6 @@ class redrawBricks(Operator):
     # initialization method
 
     def __init__(self):
-        self.undo_stack = UndoStack.new()
+        self.undo_stack = UndoStack.get_instance()
 
     #############################################

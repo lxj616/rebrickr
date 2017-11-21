@@ -47,7 +47,7 @@ class UndoStack():
     bl_region_type = 'TOOLS'
 
     @staticmethod
-    def new():
+    def get_instance():
         if UndoStack.instance is None:
             UndoStack.creating = True
             UndoStack.instance = UndoStack()

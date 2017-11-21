@@ -281,7 +281,7 @@ def handle_saving_in_edit_mode(scene):
                     screen.scene = bpy.data.scenes.get(bpy.props.Rebrickr_origScene)
             bpy.props.Rebrickr_commitEdits = False
             bpy.context.window_manager["editingSourceInStorage"] = False
-            redraw_areas("VIEW_3D")
+            tag_redraw_areas("VIEW_3D")
             scn.update()
 
 bpy.app.handlers.save_pre.append(handle_saving_in_edit_mode)

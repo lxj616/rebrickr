@@ -54,7 +54,7 @@ class RebrickrEditSource(bpy.types.Operator):
             # if file was saved while editing source, break modal gracefully
             if not bpy.context.window_manager["editingSourceInStorage"]:
                 bpy.props.Rebrickr_commitEdits = False
-                redraw_areas("VIEW_3D")
+                tag_redraw_areas("VIEW_3D")
                 scn.update()
                 return {"FINISHED"}
             if bpy.props.Rebrickr_commitEdits or source is None or bpy.context.scene.name != "Rebrickr_storage (DO NOT RENAME)" or source.mode != "EDIT" or event.type in {"ESC"} or (event.type in {"TAB"} and event.value == "PRESS"):
@@ -80,7 +80,7 @@ class RebrickrEditSource(bpy.types.Operator):
                         screen.scene = bpy.data.scenes.get(bpy.props.Rebrickr_origScene)
                 bpy.props.Rebrickr_commitEdits = False
                 bpy.context.window_manager["editingSourceInStorage"] = False
-                redraw_areas("VIEW_3D")
+                tag_redraw_areas("VIEW_3D")
                 scn.update()
                 return {"FINISHED"}
         except:

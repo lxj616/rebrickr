@@ -83,7 +83,7 @@ class EyeDropper(bpy.types.Operator):
                     self.report({"INFO"}, "No object selected")
                 else:
                     scn.cmlist[scn.cmlist_index][self.target_prop] = self.ob.name
-                    redraw_areas("VIEW_3D")
+                    tag_redraw_areas("VIEW_3D")
                 context.area.header_text_set()
                 return {"FINISHED"}
 

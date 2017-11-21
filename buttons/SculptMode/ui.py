@@ -37,42 +37,33 @@ from bpy.types import Operator, SpaceView3D, bpy_struct
 from bpy.app.handlers import persistent, load_post
 
 # Rebrickr imports
-# from .actions import *
 from ...functions import *
-# from ..lib.classes.profiler.profiler import profiler
-
 from ...ui.common import set_cursor
+from .ui_drawing import *
+from .ui_options import retopoflow_version, options, firsttime_message
 
-# from .rfcontext import RFContext
-# from .rftool import RFTool
-# from .rf_recover import RFRecover
-
-# from ..common.decorators import stats_report, stats_wrapper
-
-'''
-
-useful reference: https://blender.stackexchange.com/questions/19416/what-do-operator-methods-do-poll-invoke-execute-draw-modal
-
-    For a comprehensive description of operators and their use see: http://www.blender.org/api/blender_python_api_current/bpy.types.Operator.html
-
-    For a quick run-down
-
-    - poll, checked before running the operator, which will never run when poll fails, used to check if an operator can run, menu items will be greyed out and if key bindings should be ignored.
-    - invoke, Think of this as "run by a person". Called by default when accessed from a key binding and menu, this takes the current context - mouse location, used for interactive operations such as dragging & drawing. *
-    - execute This runs the operator, assuming values are set by the caller (else use defaults), this is used for undo/redo, and executing operators from Python.
-    - draw called to draw options, typically in the tool-bar. Without this, options will draw in the order they are defined. This gives you control over the layout.
-    - modal this is used for operators which continuously run, eg: fly mode, knife tool, circle select are all examples of modal operators. Modal operators can handle events which would normally access other operators, they keep running until they return FINISHED.
-    - cancel - called when Blender cancels a modal operator, not used often. Internal cleanup can be done here if needed.
-
-    * - note, button layouts may set the context of operators to invoke or execute. See: http://www.blender.org/api/blender_python_api_current/bpy.types.UILayout.html?highlight=uilayout#bpy.types.UILayout.operator_context
-
-'''
+StructRNA = bpy.types.bpy_struct
+rebrickr_broken = False
+def still_registered(self):
+    global rebrickr_broken
+    if rebrickr_broken: return False
+    def is_registered():
+        if not hasattr(bpy.ops, 'rebrickr'): return False
+        # try:    StructRNA.path_resolve(self, "properties")
+        # except: return False
+        return True
+    if is_registered():
+        return True
+    else:
+        showErrorMessage('Something went wrong. Please try restarting Blender or create an error report with CG Cookie so we can fix it!', wrap=240)
+        rebrickr_broken = True
+        return False
 
 
-class UI_Windows():
+class Rebrickr_UI():
     bl_category    = "Rebrickr"
-    bl_idname      = "rebrickr.ui_windows_mode"
-    bl_label       = "Rebrickr Mode"
+    bl_idname      = "rebrickr.ui"
+    bl_label       = "Rebrickr UI"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'TOOLS'
 
@@ -100,18 +91,16 @@ class UI_Windows():
 
     def __init__(self):
         ''' called once when RFMode plugin is enabled in Blender '''
-        self.exceptions_caught = None
-        self.exception_quit = None
         self.prev_mode = None
 
     @staticmethod
-    def new():
-        if UI_Windows.instance is None:
-            UI_Windows.creating = True
-            UI_Windows.instance = UI_Windows()
-            del UI_Windows.creating
-        UI_Windows.instance.reset()
-        return UI_Windows.instance
+    def get_instance():
+        if Rebrickr_UI.instance is None:
+            Rebrickr_UI.creating = True
+            Rebrickr_UI.instance = Rebrickr_UI()
+            del Rebrickr_UI.creating
+        Rebrickr_UI.instance.reset()
+        return Rebrickr_UI.instance
 
     def reset(self):
         """ runs every time the instance is gotten """
@@ -124,8 +113,6 @@ class UI_Windows():
 
     def framework_start(self, context):
         ''' called every time RFMode is started (invoked, executed, etc) '''
-        self.exceptions_caught = []
-        self.exception_quit = False
 
         # remember current mode and set to object mode so we can control
         # how the target mesh is rendered and so we can push new data
@@ -151,7 +138,8 @@ class UI_Windows():
         finish up stuff, as our tool is leaving modal mode
         '''
         err = False
-        try:    self.ui_end()
+        try:
+            self.ui_end()
         except:
             print_exception()
             err = True
@@ -159,7 +147,7 @@ class UI_Windows():
         # except:
         #     print_exception()
         #     err = True
-        if err: handle_exception(serious=True)
+        if err: handle_exception()
 
         # restore previous mode
         bpy.ops.object.mode_set(mode=self.prev_mode)
@@ -218,6 +206,9 @@ class UI_Windows():
                         space.show_only_render = True
                         space.show_manipulator = False
 
+        # initialize windows
+        # self.windows_start()
+
         # add callback handlers
         self.cb_pr_handle = SpaceView3D.draw_handler_add(self.draw_callback_preview,   (bpy.context, ), 'WINDOW', 'PRE_VIEW')
         self.cb_pv_handle = SpaceView3D.draw_handler_add(self.draw_callback_postview,  (bpy.context, ), 'WINDOW', 'POST_VIEW')
@@ -254,7 +245,7 @@ class UI_Windows():
             for s in self.spaces
             for a in self.areas
             ]
-        self.tag_redraw_all()
+        tag_redraw_areas()
 
         self.maximize_area = False
         self.show_toolshelf = bpy.context.area.regions[1].width > 1
@@ -264,11 +255,11 @@ class UI_Windows():
             if self.show_toolshelf: bpy.ops.view3d.toolshelf()
             if self.show_properties: bpy.ops.view3d.properties()
 
-        self.wrap_panels()
+        # self.wrap_panels()
 
-    # def ui_toggle_maximize_area(self):
-    #     bpy.ops.screen.screen_full_area(use_hide_panels=False)
-    #     self.maximize_area = not self.maximize_area
+    def toggle_maximize_area(self):
+        bpy.ops.screen.screen_full_area(use_hide_panels=False)
+        self.maximize_area = not self.maximize_area
 
     def ui_end(self):
         # if not hasattr(self, 'rfctx'): return
@@ -321,59 +312,174 @@ class UI_Windows():
         # remove useful reporting
         self.area.header_text_set()
 
-        self.tag_redraw_all()
+        tag_redraw_areas()
 
     def tag_redraw(self):
         if bpy.context.area and bpy.context.area.type == 'VIEW_3D': self.area = bpy.context.area
         self.area.tag_redraw()
-        self.area.header_text_set('RetopoFlow Mode')
+        self.area.header_text_set('Rebrickr Sculpt Mode')
 
-    def tag_redraw_all(self):
-        for wm in bpy.data.window_managers:
-            for win in wm.windows:
-                for ar in win.screen.areas:
-                    ar.tag_redraw()
+    def windows_start(self):
+        self.drawing = Drawing.get_instance()
+        self.window_manager = UI_WindowManager()
 
-    def wrap_panels(self):
-        # https://wiki.blender.org/index.php/User%3aIdeasman42/Blender_UI_Shenanigans
-        return
+        def get_selected_tool():
+            # return self.tool.name()
+            return None
+        def set_selected_tool(name):
+            # for ids,rft in RFTool.get_tools():
+            #     if rft.bl_label == name:
+            #         self.set_tool(rft.rft_class())
+            pass
+        def update_tool_collapsed():
+            b = options['tools_min']
+            self.tool_min.visible = b
+            self.tool_max.visible = not b
+        def get_tool_collapsed():
+            update_tool_collapsed()
+            return options['tools_min']
+        def set_tool_collapsed(b):
+            options['tools_min'] = b
+            update_tool_collapsed()
+        def show_reporting():
+            options['welcome'] = True
+            self.window_welcome.visible = options['welcome']
+        def hide_reporting():
+            options['welcome'] = False
+            self.window_welcome.visible = options['welcome']
 
-        classes = ['Panel', 'Menu', 'Header']
-        def draw_override(func_orig, self_real, context):
-            # print("override draw:", self_real)
-            ret = None
-            ret = func_orig(self_real, context)
-            return ret
-        def poll_override(func_orig, cls, context):
-            # print("override poll:", func_orig.__self__)
-            ret = False
-            ret = func_orig(context)
-            return ret
-        for cls_name in classes:
-            cls = getattr(bpy.types, cls_name)
-            for subcls in cls.__subclasses__():
-                if "draw" in subcls.__dict__:  # dont want to get parents draw()
-                    def replace_draw():
-                        # function also serves to hold draw_orig in a local namespace
-                        draw_orig = subcls.draw
-                        def draw(self, context):
-                            return draw_override(draw_orig, self, context)
-                        subcls.draw = draw
-                    replace_draw()
-                if "poll" in subcls.__dict__:  # dont want to get parents poll()
-                    def replace_poll():
-                        # function also serves to hold poll_orig in a local namespace
-                        poll_orig = subcls.poll
-                        def poll(self, context):
-                            return poll_override(poll_orig, cls, context)
-                        subcls.poll = classmethod(poll)
-                    replace_poll()
+        def open_github():
+            bpy.ops.wm.url_open(url="https://github.com/bblanimation/rebrickr/issues")
+
+        def get_theme():
+            options['color theme']
+        def set_theme(v):
+            options['color theme'] = v
+            # self.replace_opts()
+        def reset_options():
+            options.reset()
+            # self.replace_opts()
+        def get_instrument():
+            return options['instrument']
+        def set_instrument(v):
+            options['instrument'] = v
+        def update_profiler_visible():
+            # nonlocal prof_print, prof_reset, prof_disable, prof_enable
+            # v = profiler.debug
+            # prof_print.visible = v
+            # prof_reset.visible = v
+            # prof_disable.visible = v
+            # prof_enable.visible = not v
+            pass
+        def enable_profiler():
+            # profiler.enable()
+            # update_profiler_visible()
+            pass
+        def disable_profiler():
+            # profiler.disable()
+            # update_profiler_visible()
+            pass
+        def get_debug_level():
+            # return self.settings.debug
+            return 1
+        def set_debug_level(v):
+            # self.settings.debug = v
+            pass
+
+
+        # self.tool_window = self.window_manager.create_window('Tools', {'sticky':7})
+        # self.tool_max = UI_Container(margin=0)
+        # self.tool_min = UI_Container(margin=0, vertical=False)
+        # self.tool_selection_max = UI_Options(get_selected_tool, set_selected_tool, vertical=True)
+        # self.tool_selection_min = UI_Options(get_selected_tool, set_selected_tool, vertical=False)
+        # tools_options = []
+        # for i,rft_data in enumerate(RFTool.get_tools()):
+        #     ids,rft = rft_data
+        #     self.tool_selection_max.add_option(rft.bl_label, icon=rft.rft_class().get_ui_icon())
+        #     self.tool_selection_min.add_option(rft.bl_label, icon=rft.rft_class().get_ui_icon(), showlabel=False)
+        #     ui_options = rft.rft_class().get_ui_options()
+        #     if ui_options: tools_options.append((rft.bl_label,ui_options))
+        # get_tool_collapsed()
+        # self.tool_max.add(self.tool_selection_max)
+        #
+        # extra = self.tool_max.add(UI_Container())
+        # #help_icon = UI_Image('help_32.png')
+        # #help_icon.set_size(16, 16)
+        # extra.add(UI_Button('Tool Help', self.toggle_tool_help, align=0, margin=0)) # , icon=help_icon
+        # extra.add(UI_Button('Collapse', lambda: set_tool_collapsed(True), align=0, margin=0))
+        # #extra.add(UI_Checkbox('Collapsed', get_tool_collapsed, set_tool_collapsed))
+        # extra.add(UI_Button('Exit', self.quit, align=0, margin=0))
+        # self.tool_min.add(self.tool_selection_min)
+        # self.tool_min.add(UI_Checkbox(None, get_tool_collapsed, set_tool_collapsed))
+        # self.tool_window.add(self.tool_max)
+        # self.tool_window.add(self.tool_min)
+
+
+        window_info = self.window_manager.create_window('Info', {'sticky':1, 'visible':True})
+        window_info.add(UI_Label('RetopoFlow %s' % retopoflow_version))
+        container = window_info.add(UI_Container(margin=0, vertical=False))
+        container.add(UI_Button('Welcome!', show_reporting, align=0))
+        container.add(UI_Button('Report Issue', open_github, align=0))
+        info_adv = window_info.add(UI_Collapsible('Advanced', collapsed=True))
+
+        fps_save = info_adv.add(UI_Container(vertical=False))
+        self.window_debug_fps = fps_save.add(UI_Label('fps: 0.00'))
+        self.window_debug_save = fps_save.add(UI_Label('save: inf'))
+
+        container_theme = info_adv.add(UI_Container(vertical=False))
+        container_theme.add(UI_Label('Theme:', margin=4))
+        opt_theme = container_theme.add(UI_Options(get_theme, set_theme, vertical=False, margin=0))
+        opt_theme.add_option('Blue', icon=UI_Image('theme_blue.png'), showlabel=False, align=0)
+        opt_theme.add_option('Green', icon=UI_Image('theme_green.png'), showlabel=False, align=0)
+        opt_theme.add_option('Orange', icon=UI_Image('theme_orange.png'), showlabel=False, align=0)
+        opt_theme.set_option(options['color theme'])
+
+        info_adv.add(UI_IntValue('Debug Level', get_debug_level, set_debug_level))
+        info_adv.add(UI_Checkbox('Instrument', get_instrument, set_instrument))
+
+        # info_profiler = info_adv.add(UI_Collapsible('Profiler', collapsed=True, vertical=False))
+        # prof_print = info_profiler.add(UI_Button('Print', profiler.printout, align=0))
+        # prof_reset = info_profiler.add(UI_Button('Reset', profiler.clear, align=0))
+        # prof_disable = info_profiler.add(UI_Button('Disable', disable_profiler, align=0))
+        # prof_enable = info_profiler.add(UI_Button('Enable', enable_profiler, align=0))
+        # update_profiler_visible()
+
+        info_adv.add(UI_Button('Reset Options', reset_options, align=0))
+
+        window_tool_options = self.window_manager.create_window('Options', {'sticky':9})
+
+        dd_general = window_tool_options.add(UI_Collapsible('General', collapsed=False))
+        dd_general.add(UI_Button('Maximize Area', self.toggle_maximize_area, align=0))
+        # dd_general.add(UI_Button('Snap All Verts', self.snap_all_verts, align=0))
+
+        # dd_symmetry = window_tool_options.add(UI_Collapsible('Symmetry', equal=True, vertical=False))
+        # dd_symmetry.add(UI_Checkbox2('x', lambda: self.get_symmetry('x'), lambda v: self.set_symmetry('x',v), options={'spacing':0}))
+        # dd_symmetry.add(UI_Checkbox2('y', lambda: self.get_symmetry('y'), lambda v: self.set_symmetry('y',v), options={'spacing':0}))
+        # dd_symmetry.add(UI_Checkbox2('z', lambda: self.get_symmetry('z'), lambda v: self.set_symmetry('z',v), options={'spacing':0}))
+
+        # for tool_name,tool_options in tools_options:
+        #     # window_tool_options.add(UI_Spacer(height=5))
+        #     ui_options = window_tool_options.add(UI_Collapsible(tool_name))
+        #     for tool_option in tool_options: ui_options.add(tool_option)
+
+        self.window_welcome = self.window_manager.create_window('Welcome!', {'sticky':5, 'visible':options['welcome'], 'movable':False, 'bgcolor':(0.2,0.2,0.2,0.95)})
+        self.window_welcome.add(UI_Rule())
+        self.window_welcome.add(UI_Markdown(firsttime_message))
+        self.window_welcome.add(UI_Rule())
+        self.window_welcome.add(UI_Button('Close', hide_reporting, align=0, bgcolor=(0.5,0.5,0.5,0.4), margin=2), footer=True)
+
+        # self.window_help = self.window_manager.create_window('Tool Help', {'sticky':5, 'visible':False, 'movable':False, 'bgcolor':(0.2,0.2,0.2,0.95)})
+        # self.window_help.add(UI_Rule())
+        # self.ui_helplabel = UI_Markdown('help text here!')
+        # self.window_help.add(self.ui_helplabel)
+        # self.window_help.add(UI_Rule())
+        # self.window_help.add(UI_Button('Close', self.toggle_tool_help, align=0, bgcolor=(0.5,0.5,0.5,0.4), margin=2), footer=True)
 
     ####################################################################
     # Draw handler function
 
     def draw_callback_preview(self, context):
-        # if not still_registered(self): return
+        if not still_registered(self): return
         bgl.glPushAttrib(bgl.GL_ALL_ATTRIB_BITS)    # save OpenGL attributes
         try:    self.draw_preview()
         except: handle_exception()
@@ -412,17 +518,22 @@ class UI_Windows():
         bgl.glPopMatrix()
 
     def draw_callback_postview(self, context):
-        # if not still_registered(self): return
+        if not still_registered(self): return
         bgl.glPushAttrib(bgl.GL_ALL_ATTRIB_BITS)    # save OpenGL attributes
         bgl.glPopAttrib()                           # restore OpenGL attributes
 
     def draw_callback_postpixel(self, context):
-        # if not still_registered(self): return
+        if not still_registered(self): return
         bgl.glPushAttrib(bgl.GL_ALL_ATTRIB_BITS)    # save OpenGL attributes
         bgl.glPopAttrib()                           # restore OpenGL attributes
+        # run post_poxel for ui windows
+        try:
+            self.window_manager.draw_postpixel()
+        except AttributeError:
+            pass
 
     def draw_callback_cover(self, context):
-        # if not still_registered(self): return
+        if not still_registered(self): return
         bgl.glPushAttrib(bgl.GL_ALL_ATTRIB_BITS)
         bgl.glMatrixMode(bgl.GL_PROJECTION)
         bgl.glPushMatrix()
@@ -438,33 +549,6 @@ class UI_Windows():
         bgl.glEnd()
         bgl.glPopMatrix()
         bgl.glPopAttrib()
-
-
-    ####################################################################
-    # exception handling method
-
-    # def handle_exception(self, serious=False):
-    #     #print_exception2()
-    #     errormsg = print_exception()
-    #     # if max number of exceptions occur within threshold of time, abort!
-    #     curtime = time.time()
-    #     self.exceptions_caught += [(errormsg, curtime)]
-    #     # keep exceptions that have occurred within the last 5 seconds
-    #     self.exceptions_caught = [(m,t) for m,t in self.exceptions_caught if curtime-t < 5]
-    #     # if we've seen the same message before (within last 5 seconds), assume
-    #     # that something has gone badly wrong
-    #     c = sum(1 for m,t in self.exceptions_caught if m == errormsg)
-    #     if serious or c > 1:
-    #         self.logger.add('\n'*5)
-    #         self.logger.add('-'*100)
-    #         self.logger.add('Something went wrong. Please start an error report with CG Cookie so we can fix it!')
-    #         self.logger.add('-'*100)
-    #         self.logger.add('\n'*5)
-    #         showErrorMessage('Something went wrong. Please start an error report with CG Cookie so we can fix it!', wrap=240)
-    #         self.exception_quit = True
-    #         self.ui_end()
-    #
-    #     self.fsm_mode = 'main'
 
     ##################################################################
     # modal method
@@ -491,35 +575,8 @@ class UI_Windows():
     #     self.tag_redraw()
     #     #context.area.tag_redraw()       # force redraw
     #
-    #     try:
-    #         ret = self.rfctx.modal(context, event) or {}
-    #     except:
-    #         handle_exception()
-    #         return {'RUNNING_MODAL'}
-    #
-    #     if 'pass' in ret:
-    #         # pass navigation events (mouse,keyboard,etc.) on to region
-    #         return {'PASS_THROUGH'}
-    #
-    #
-    #     if 'confirm' in ret:
-    #         # commit the operator
-    #         # (e.g., create the mesh from internal data structure)
-    #         if 'edit mode' in ret: self.prev_mode = 'EDIT'
-    #         self.rfctx.commit()
-    #         self.framework_end()
-    #         return {'FINISHED'}
-    #
-    #     if 'edit mode' in ret:
-    #         # commit the operator
-    #         # (e.g., create the mesh from internal data structure)
-    #         self.rfctx.commit()
-    #         self.framework_end()
-    #         return {'FINISHED'}
-    #
-    #
     #     return {'RUNNING_MODAL'}    # tell Blender to continue running our tool in modal
-    #
+
 # rfmode_tools = {}
 #
 # @stats_wrapper

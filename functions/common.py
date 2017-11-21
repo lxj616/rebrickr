@@ -122,7 +122,7 @@ def uniquify1(seq):
        keys[e] = 1
    return keys.keys()
 
-def redraw_areas(areaTypes=["ALL"]):
+def tag_redraw_areas(areaTypes=["ALL"]):
     areaTypes = confirmList(areaTypes)
     for area in bpy.context.screen.areas:
         for areaType in areaTypes:

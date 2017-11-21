@@ -36,7 +36,7 @@ from bpy.app.handlers import persistent, load_post
 # Rebrickr imports
 # from .actions import *
 from .undo_stack import *
-from .ui_windows import *
+from .ui import *
 from ...functions import *
 
 
@@ -55,7 +55,6 @@ class SculptMode(Operator):
         return True
 
     def modal(self, context, event):
-
         # quit sculpt mode
         if event.type in {"ESC"} and event.value == "PRESS":
             print("modal quit")
@@ -68,6 +67,7 @@ class SculptMode(Operator):
             return {"PASS_THROUGH"}
         # handle left mouse press
         if (event.type in ['LEFTMOUSE'] and event.value == 'PRESS' and self.in_context_region(context, event)):
+            print("here")
             return {"PASS_THROUGH"}
         # handle selection
         if event.type in ['RIGHTMOUSE'] and event.value == 'PRESS':
@@ -81,27 +81,32 @@ class SculptMode(Operator):
         if self.pressed('redo', event):
             self.undo_stack.redo_pop()
             return {"PASS_THROUGH"}
-        # handle mouse moves
-        if event.type == 'MOUSEMOVE':
+        # handle toggle fullscreen
+        if event.type == 'F' and event.oskey:
+            self.ui.toggle_maximize_area()
+            return {"PASS_THROUGH"}
+        # handle mouse move
+        if event.type in ['MOUSEMOVE']:
             return {"PASS_THROUGH"}
 
         return {"RUNNING_MODAL"}
 
     def execute(self, context):
-        self.ui_windows.framework_start(context)
+        self.ui.framework_start(context)
         # run modal
         context.window_manager.modal_handler_add(self)
         return {"RUNNING_MODAL"}
 
     def cancel(self, context):
-        self.ui_windows.framework_end()
+        self.ui.framework_end()
+        pass
 
     ################################################
     # initialization method
 
     def __init__(self):
-        self.undo_stack = UndoStack.new()
-        self.ui_windows = UI_Windows.new()
+        self.undo_stack = UndoStack.get_instance()
+        self.ui = Rebrickr_UI.get_instance()
 
     ################################################
     # event handling functions

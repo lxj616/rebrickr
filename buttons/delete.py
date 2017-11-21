@@ -296,7 +296,7 @@ class RebrickrDelete(bpy.types.Operator):
         # reset frame (for proper update), update scene and redraw 3D view
         scn.frame_set(origFrame)
         scn.update()
-        redraw_areas("VIEW_3D")
+        tag_redraw_areas("VIEW_3D")
 
     def execute(self, context):
         try:
