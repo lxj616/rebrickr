@@ -204,6 +204,19 @@ def handle_selections(scene):
 bpy.app.handlers.scene_update_pre.append(handle_selections)
 
 @persistent
+def prevent_user_from_viewing_storage_scene(scene):
+    scn = bpy.context.scene
+    if rebrickrIsActive() and not rebrickrRunningOp():
+        if scn.name == "Rebrickr_storage (DO NOT RENAME)":
+            i = 0
+            if bpy.data.scenes[i].name == scn.name:
+                i += 1
+            bpy.context.screen.scene = bpy.data.scenes[i]
+            showErrorMessage("This scene is for Rebrickr internal use only")
+
+bpy.app.handlers.scene_update_pre.append(prevent_user_from_viewing_storage_scene)
+
+@persistent
 def keep_object_names_unique(scene):
     scn = bpy.context.scene
     if rebrickrIsActive() and not rebrickrRunningOp():
@@ -250,42 +263,6 @@ def find_3dview_space():
 #
 #
 # bpy.app.handlers.scene_update_pre.append(handle_snapping)
-
-@persistent
-def handle_saving_in_edit_mode(scene):
-    if rebrickrIsActive():
-        sto_scn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
-        try:
-            editingSourceInfo = bpy.context.window_manager["editingSourceInStorage"]
-        except KeyError:
-            editingSourceInfo = False
-        if editingSourceInfo and bpy.context.scene == sto_scn:
-            scn = bpy.context.scene
-            source = bpy.data.objects.get(editingSourceInfo["source_name"])
-            # if Rebrickr_storage scene is not active, set to active
-            if bpy.context.scene != sto_scn:
-                for screen in bpy.data.screens:
-                    screen.scene = sto_scn
-            # set source to object mode
-            select(source, active=source)
-            bpy.ops.object.mode_set(mode='OBJECT')
-            setOriginToObjOrigin(toObj=source, fromLoc=editingSourceInfo["lastSourceOrigLoc"])
-            # reset source origin to adjusted location
-            if source["before_edit_location"] != -1:
-                source.location = source["before_edit_location"]
-            source.rotation_mode = "XYZ"
-            source.rotation_euler = Euler(tuple(source["previous_rotation"]), "XYZ")
-            source.scale = source["previous_scale"]
-            setOriginToObjOrigin(toObj=source, fromLoc=source["before_origin_set_location"])
-            if bpy.context.scene.name == "Rebrickr_storage (DO NOT RENAME)":
-                for screen in bpy.data.screens:
-                    screen.scene = bpy.data.scenes.get(bpy.props.Rebrickr_origScene)
-            bpy.props.Rebrickr_commitEdits = False
-            bpy.context.window_manager["editingSourceInStorage"] = False
-            tag_redraw_areas("VIEW_3D")
-            scn.update()
-
-bpy.app.handlers.save_pre.append(handle_saving_in_edit_mode)
 
 # clear light cache before file load
 @persistent

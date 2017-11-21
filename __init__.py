@@ -67,8 +67,6 @@ def register():
     bpy.types.Object.cmlist_id = IntProperty(name='Custom Model ID', description="ID of cmlist entry to which this object refers", default=-1)
 
     bpy.types.Scene.Rebrickr_printTimes = BoolProperty(default=False)
-    bpy.props.Rebrickr_origScene = StringProperty(default="")
-    bpy.props.Rebrickr_commitEdits = False
 
     bpy.types.Scene.Rebrickr_runningOperation = BoolProperty(default=False)
     bpy.types.Scene.Rebrickr_last_layers = StringProperty(default="")
@@ -191,7 +189,6 @@ def register():
         km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
         kmi = km.keymap_items.new("rebrickr.brickify", 'L', 'PRESS', alt=True, shift=True)
         kmi = km.keymap_items.new("rebrickr.delete", 'D', 'PRESS', alt=True, shift=True)#, ctrl=True)
-        kmi = km.keymap_items.new("rebrickr.edit_source", 'TAB', 'PRESS', alt=True)#, ctrl=True)
         kmi = km.keymap_items.new("rebrickr.draw_adjacent", 'EQUAL', 'PRESS', shift=True, alt=True)
         kmi = km.keymap_items.new("rebrickr.split_bricks", 'S', 'PRESS', shift=True, alt=True)
         kmi = km.keymap_items.new("rebrickr.merge_bricks", 'M', 'PRESS', shift=True, alt=True)
@@ -224,8 +221,6 @@ def unregister():
     del Scn.Rebrickr_last_cmlist_index
     del Scn.Rebrickr_last_layers
     del Scn.Rebrickr_runningOperation
-    del bpy.props.Rebrickr_commitEdits
-    del bpy.props.Rebrickr_origScene
     del Scn.Rebrickr_printTimes
     del bpy.types.Object.isBrick
     del bpy.types.Object.isBrickifiedObject

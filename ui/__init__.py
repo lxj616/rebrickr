@@ -41,63 +41,6 @@ from ..lib.caches import rebrickr_bfm_cache
 # updater import
 from .. import addon_updater_ops
 
-class RebrickrStoragePanel(Panel):
-    bl_space_type  = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_label       = "Rebrickr Actions"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_storage_actions"
-    # bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
-
-    @classmethod
-    def poll(self, context):
-        scn = context.scene
-        if scn.name == "Rebrickr_storage (DO NOT RENAME)":
-            return True
-        if not bpy.props.rebrickr_undoRunning:
-            return False
-        return False
-
-    def draw(self, context):
-        layout = self.layout
-        scn = context.scene
-
-        try:
-            editingSourceInStorage = bpy.context.window_manager["editingSourceInStorage"]
-        except KeyError:
-            editingSourceInStorage = False
-        if editingSourceInStorage:
-            col = layout.column(align=True)
-            row = col.row(align=True)
-            col.operator("rebrickr.commit_edits", text="Commit Changes", icon="FILE_TICK")
-            col = layout.column(align=True)
-            col.scale_y = 0.7
-            row = col.row(align=True)
-            row.label("Run 'Update Model' after")
-            row = col.row(align=True)
-            row.label("changes are committed.")
-        else:
-            col = layout.column(align=True)
-            col.scale_y = 0.7
-            row = col.row(align=True)
-            row.label("WARNING: Please")
-            row = col.row(align=True)
-            row.label("don't touch anything")
-            row = col.row(align=True)
-            row.label("in this scene!")
-            row = col.row(align=True)
-            row.label("You may break the")
-            row = col.row(align=True)
-            row.label("Rebrickr or cause")
-            row = col.row(align=True)
-            row.label("Blender to crash.")
-            layout.separator()
-            col = layout.column(align=True)
-            row = col.row(align=True)
-            row.label("Return to scene:")
-            row = col.row(align=True)
-            row.template_ID(context.screen, "scene")
-
 class BasicMenu(bpy.types.Menu):
     bl_idname = "Rebrickr_specials_menu"
     bl_label = "Select"
@@ -119,9 +62,6 @@ class BrickModelsPanel(Panel):
 
     @classmethod
     def poll(self, context):
-        scn = context.scene
-        if scn.name == "Rebrickr_storage (DO NOT RENAME)":
-            return False
         return True
 
     def draw(self, context):
@@ -209,19 +149,15 @@ class BrickModelsPanel(Panel):
                 else:
                     row = col1.row(align=True)
                     row.operator("rebrickr.delete", text="Delete Brickified Model", icon="CANCEL")
-                    col1 = layout.column(align=True)
-                    split = col1.split(align=True, percentage=0.7)
-                    col = split.column(align=True)
+                    col = layout.column(align=True)
                     col.operator("rebrickr.brickify", text="Update Model", icon="FILE_REFRESH")
-                    col = split.column(align=True)
-                    col.operator("rebrickr.edit_source", icon="EDIT", text="Edit")
                     if matrixReallyIsDirty(cm):
-                        row = col1.row(align=True)
+                        row = col.row(align=True)
                         row.label("Customizations will be lost")
-                        row = col1.row(align=True)
+                        row = col.row(align=True)
                         row.operator("rebrickr.revert_matrix_settings", text="Revert Settings", icon="LOOP_BACK")
                     if cm.sourceIsDirty:
-                        row = col1.row(align=True)
+                        row = col.row(align=True)
                         row.label("Source mesh changed; update to reflect changes")
 
 

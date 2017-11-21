@@ -79,12 +79,7 @@ class RebrickrBrickify(bpy.types.Operator):
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
-        if context.scene.name == "Rebrickr_storage (DO NOT RENAME)":
-            scn = bpy.data.scenes.get(bpy.props.Rebrickr_origScene)
-            if scn is None:
-                return False
-        else:
-            scn = context.scene
+        scn = bpy.context.scene
         if scn.cmlist_index == -1:
             return False
         cm = scn.cmlist[scn.cmlist_index]
