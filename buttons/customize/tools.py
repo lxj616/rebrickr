@@ -20,7 +20,7 @@
     """
 
 # System imports
-# NONE!
+import copy
 
 # Blender imports
 import bpy
@@ -69,7 +69,7 @@ class splitBricks(Operator):
         # invoke props popup if conditions met
         for cm_idx in self.objNamesD.keys():
             cm = scn.cmlist[cm_idx]
-            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
             if cm.brickType == "Bricks and Plates":
                 for obj_name in self.objNamesD[cm_idx]:
                     dictKey, dictLoc = getDictKey(obj_name)
@@ -89,6 +89,7 @@ class splitBricks(Operator):
     # initialization method
 
     def __init__(self):
+        scn = bpy.context.scene
         self.undo_stack = UndoStack.get_instance()
         self.orig_undo_stack_length = self.undo_stack.getLength()
         self.vertical = False
@@ -100,12 +101,20 @@ class splitBricks(Operator):
             self.objNamesD[cm_idx] = []
             for obj in objsD[cm_idx]:
                 self.objNamesD[cm_idx].append(obj.name)
+        # initialize bricksDicts
+        for cm_idx in objsD.keys():
+            cm = scn.cmlist[cm_idx]
+            # get bricksDict from cache
+            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            # add to bricksDicts
+            self.bricksDicts[cm_idx] = bricksDict
 
     ###################################################
     # class variables
 
     # variables
     objNamesD = {}
+    bricksDicts = {}
 
     # properties
     vertical = bpy.props.BoolProperty(
@@ -130,8 +139,7 @@ class splitBricks(Operator):
             for cm_idx in self.objNamesD.keys():
                 cm = scn.cmlist[cm_idx]
                 self.undo_stack.iterateStates(cm)
-                # get bricksDict from cache
-                bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+                bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
                 keysToUpdate = []
 
                 for obj_name in self.objNamesD[cm_idx]:
@@ -140,21 +148,23 @@ class splitBricks(Operator):
                     x0,y0,z0 = dictLoc
                     # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
+                    print(objSize)
                     zStep = getZStep(cm)
 
                     # skip 1x1 bricks
                     if objSize[0] + objSize[1] + (objSize[2] / zStep) == 3:
                         continue
 
-                    # delete the current object
-                    delete(bpy.data.objects.get(obj_name))
-
                     # set size of active brick's bricksDict entries to 1x1x[lastZSize]
-                    splitKeys = Bricks.split(bricksDict, dictKey, loc=dictLoc, cm=cm, v=self.vertical, h=self.horizontal)
-                    # append new splitKeys to keysToUpdate
-                    for k in splitKeys:
-                        if k not in keysToUpdate:
-                            keysToUpdate.append(k)
+                    if self.vertical or self.horizontal:
+                        # delete the current object
+                        delete(bpy.data.objects.get(obj_name))
+                        # split the bricks in the matrix
+                        splitKeys = Bricks.split(bricksDict, dictKey, loc=dictLoc, cm=cm, v=self.vertical, h=self.horizontal)
+                        # append new splitKeys to keysToUpdate
+                        for k in splitKeys:
+                            if k not in keysToUpdate:
+                                keysToUpdate.append(k)
 
                 # store bricksDict to cache
                 cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
@@ -205,7 +215,7 @@ class mergeBricks(Operator):
                 cm = scn.cmlist[cm_idx]
                 self.undo_stack.iterateStates(cm)
                 # initialize vars
-                bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+                bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
                 parent_brick = None
                 allSplitKeys = []
 
@@ -238,8 +248,24 @@ class mergeBricks(Operator):
     # initialization method
 
     def __init__(self):
+        scn = bpy.context.scene
         self.undo_stack = UndoStack.get_instance()
         self.undo_stack.undo_push('merge')
+        selected_objects = bpy.context.selected_objects
+        objsD = createObjsD(selected_objects)
+        # initialize bricksDicts
+        for cm_idx in objsD.keys():
+            cm = scn.cmlist[cm_idx]
+            # get bricksDict from cache
+            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            # add to bricksDicts
+            self.bricksDicts[cm_idx] = bricksDict
+
+    ###################################################
+    # class variables
+
+    # variables
+    bricksDicts = {}
 
     #############################################
     # class methods
@@ -315,8 +341,7 @@ class setExposure(Operator):
             for cm_idx in objsD.keys():
                 cm = scn.cmlist[cm_idx]
                 self.undo_stack.iterateStates(cm)
-                # get bricksDict from cache
-                bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+                bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
                 keysToUpdate = []
 
                 for obj in objsD[cm_idx]:
@@ -354,11 +379,22 @@ class setExposure(Operator):
     # initialization method
 
     def __init__(self):
+        scn = bpy.context.scene
         self.undo_stack = UndoStack.get_instance()
         self.undo_stack.undo_push('exposure')
+        # initialize bricksDicts
+        for cm_idx in objsD.keys():
+            cm = scn.cmlist[cm_idx]
+            # get bricksDict from cache
+            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            # add to bricksDicts
+            self.bricksDicts[cm_idx] = bricksDict
 
     ###################################################
     # class variables
+
+    # variables
+    bricksDicts = {}
 
     # properties
     side = bpy.props.EnumProperty(
@@ -566,12 +602,12 @@ class drawAdjacent(Operator):
         description="Type of brick to draw adjacent to current brick",
         items=get_items1,
         default=None)
-    zPos = bpy.props.BoolProperty(name="Top    (+Z)", default=False)
-    zNeg = bpy.props.BoolProperty(name="Bottom (-Z)", default=False)
-    yPos = bpy.props.BoolProperty(name="Left   (+Y)", default=False)
-    yNeg = bpy.props.BoolProperty(name="Right  (-Y)", default=False)
-    xPos = bpy.props.BoolProperty(name="Back   (+X)", default=False)
-    xNeg = bpy.props.BoolProperty(name="Front  (-X)", default=False)
+    zPos = bpy.props.BoolProperty(name="+Z (Top)", default=False)
+    zNeg = bpy.props.BoolProperty(name="-Z (Bottom)", default=False)
+    xPos = bpy.props.BoolProperty(name="+X (Front)", default=False)
+    xNeg = bpy.props.BoolProperty(name="-X (Back)", default=False)
+    yPos = bpy.props.BoolProperty(name="+Y (Right)", default=False)
+    yNeg = bpy.props.BoolProperty(name="-Y (Left)", default=False)
 
     #############################################
     # class methods
@@ -606,7 +642,7 @@ class drawAdjacent(Operator):
         return not (brickNum == len(self.adjDKLs[side]) - 1 and
                     not any(self.adjBricksCreated[side])) # evaluates True if all values in this list are False
 
-    def toggleBrick(self, cm, dictLoc, dictKey, objSize, side, brickNum, keysToUpdate, addBrick=True):
+    def toggleBrick(self, cm, dictLoc, dictKey, objSize, side, brickNum, keysToMerge, addBrick=True):
         # if brick height is 3 and 'Bricks and Plates'
         newBrickHeight = self.getNewBrickHeight()
         if cm.brickType == "Bricks and Plates" and newBrickHeight == 3:
@@ -671,7 +707,7 @@ class drawAdjacent(Operator):
                 topExposed, botExposed = getBrickExposure(cm, self.bricksDict, adjacent_key)
                 adjBrickD["top_exposed"] = topExposed
                 adjBrickD["bot_exposed"] = botExposed
-                keysToUpdate.append(adjacent_key)
+                keysToMerge.append(adjacent_key)
                 self.adjBricksCreated[side][brickNum] = self.brickType
                 if checkTwoMoreAbove:
                     # update matrix for two locations above adjacent_key
@@ -683,6 +719,7 @@ class drawAdjacent(Operator):
                         setCurBrickVal(self.bricksDict, strToList(nextKey))
                         nextBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"]
                         nextBrickD["parent_brick"] = adjacent_key
+                        keysToMerge.append(nextKey)
 
                 return True
             # if attempting to remove brick

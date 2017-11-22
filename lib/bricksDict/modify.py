@@ -114,6 +114,7 @@ def updateBrickSizes(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep
                     if newSize not in brickSizes and [newSize[0],newSize[1]] in bpy.props.Rebrickr_legal_brick_sizes[newSize[2]]:
                         brickSizes.append(newSize)
             if breakOuter1: break
+        breakOuter1 = False
         if breakOuter2: break
 
 def attemptMerge(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True):

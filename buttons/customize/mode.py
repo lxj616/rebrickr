@@ -54,8 +54,8 @@ class CustomizeModel(Operator):
         if not self.undo_stack.isUpdating() and not rebrickrRunningOp() and scn.cmlist_index != -1:
             global python_undo_state
             cm = scn.cmlist[scn.cmlist_index]
-            try:    print(python_undo_state[cm.id], cm.blender_undo_state, len(self.undo_stack.undo))
-            except: pass
+            # try:    print(python_undo_state[cm.id], cm.blender_undo_state, len(self.undo_stack.undo))
+            # except: pass
             if cm.id not in python_undo_state:
                 python_undo_state[cm.id] = 0
             # handle undo
