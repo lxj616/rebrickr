@@ -193,12 +193,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
     n = cm.source_name
     z1,z2,z3,z4,z5,z6,z7,z8,z9,z10,z11,z12,z13,z14,z15,z16,z17,z18,z19,z20,z21,z22,z23 = (False,)*23
     zStep = getZStep(cm)
-    if cm.brickType in ["Bricks", "Custom"]:
-        testZ = False
-    elif cm.brickType == "Plates":
-        testZ = False
-    else:
-        testZ = True
+    BandP = cm.brickType == "Bricks and Plates"
 
     # apply transformation to logo duplicate and get bounds(logo)
     logo_details, logo = prepareLogoAndGetDetails(logo)
@@ -254,7 +249,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
     k = 0
 
     mats = []
-    lowestRow = -1
+    lowestLoc = -1
     # set up internal material for this object
     internalMat = bpy.data.materials.get(cm.internalMatName)
     if internalMat is None:
@@ -266,48 +261,27 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
     # initialize supportBrickDs
     supportBrickDs = []
     update_progress("Building", 0.0)
-    for timeThrough in range(1, 3):
-        # if second time through this for loop, go through keys left behind if "Bricks and Plates"
-        if timeThrough == 2: # second time
-            if cm.brickType == "Bricks and Plates":
-                keys0 = keysLeftBehind
-            else:
-                break
-        else: # first time
-            keysLeftBehind = []
-            keys0 = keys
-
+    # set number of times to run through all keys
+    if BandP: numIters = 2
+    else:     numIters = 1
+    for timeThrough in range(numIters):
         # iterate through locations in bricksDict from bottom to top
-        for i,key in enumerate(keys0):
+        for i,key in enumerate(keys):
             brickD = bricksDict[key]
-            if brickD["draw"] and brickD["parent_brick"] in [None, "self"]:
-
-                # get location of brick
+            if brickD["draw"] and brickD["parent_brick"] is None:
+                # initialize vars
                 loc = strToList(key)
+                brickSizes = [[1,1,zStep]]
 
-                # initialize lowestRow (only set for first valid brick's row)
-                if lowestRow == -1:
-                    lowestRow = loc[2]
-
-                # Set up brick types
-                originalIsBrick = False
-                if cm.brickType == "Bricks and Plates" and (loc[2] - lowestRow) % 3 == cm.offsetBrickLayers:
-                    if plateIsBrick(brickD, bricksDict, loc, 0, 0):
-                        originalIsBrick = True
-                        brickSizes = [[1,1,3]]
-                    else:
-                        if timeThrough == 1:
-                            keysLeftBehind.append(key)
-                            continue
-                        else:
-                            brickSizes = [[1,1,1]]
-                else:
-                    brickSizes = [[1,1,zStep]]
+                # for bricks and plates, skip second and third rows on first time through
+                if BandP and timeThrough == 0:
+                    if lowestLoc == -1: lowestLoc = loc[2] # initializes value once
+                    if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 in [1,2]: continue
 
                 # attempt to merge current brick with surrounding bricks, according to available brick types
                 if brickD["size"] is None or (cm.buildIsDirty):
                     preferLargest = brickD["val"] > 0 and brickD["val"] < 1
-                    brickSize = attemptMerge(cm, bricksDict, key, keys, loc, originalIsBrick, brickSizes, zStep, randS1, preferLargest=preferLargest, mergeVertical=True)
+                    brickSize = attemptMerge(cm, bricksDict, key, keys, loc, False, brickSizes, zStep, randS1, preferLargest=preferLargest, mergeVertical=True)
                 else:
                     brickSize = brickD["size"]
 
@@ -371,7 +345,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
                     # create new object with mesh data
                     brick = bpy.data.objects.new(brickD["name"], m)
                     brick.cmlist_id = cm.id
-                    if brickSize[2] == 3 and cm.brickType == "Bricks and Plates":
+                    if brickSize[2] == 3 and BandP:
                         brickLoc = Vector(brickD["co"])
                         brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
                     else:
@@ -425,7 +399,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
                         if cm.randomRot > 0:
                             rotateBack(bm, center, randRot)
                     # transform brick mesh to coordinate on matrix
-                    if brickSize[2] == 3 and cm.brickType == "Bricks and Plates":
+                    if brickSize[2] == 3 and BandP:
                         brickLoc = Vector(brickD["co"])
                         brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
                     else:
@@ -448,7 +422,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
 
                 # print status to terminal
                 if i % denom < 1:
-                    percent = i/len(keys0)
+                    percent = i/len(keys)
                     if percent < 1:
                         update_progress("Building", percent)
                         if cursorStatus:
