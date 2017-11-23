@@ -35,8 +35,8 @@ from .app_handlers import *
 from ..lib.bricksDict import *
 from ..buttons.delete import RebrickrDelete
 from ..buttons.revertSettings import *
+from ..buttons.cache import *
 from ..functions import *
-from ..lib.caches import rebrickr_bfm_cache
 
 # updater import
 from .. import addon_updater_ops
@@ -119,7 +119,7 @@ class BrickModelsPanel(Panel):
                 obj = bpy.data.objects.get(cm.source_name)
 
             # if undo stack not initialized, draw initialize button
-            if not bpy.props.rebrickr_undoRunning:
+            if not bpy.props.rebrickr_initialized:
                 row = col1.row(align=True)
                 row.operator("rebrickr.customize_model", text="Initialize Rebrickr", icon="MODIFIER")
             # if use animation is selected, draw animation options
@@ -156,10 +156,6 @@ class BrickModelsPanel(Panel):
                         row.label("Customizations will be lost")
                         row = col.row(align=True)
                         row.operator("rebrickr.revert_matrix_settings", text="Revert Settings", icon="LOOP_BACK")
-                    if cm.sourceIsDirty:
-                        row = col.row(align=True)
-                        row.label("Source mesh changed; update to reflect changes")
-
 
             col = layout.column(align=True)
             row = col.row(align=True)
@@ -194,7 +190,7 @@ class AnimationPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             return False
         cm = scn.cmlist[scn.cmlist_index]
         if cm.modelCreated:
@@ -282,7 +278,7 @@ class ModelTransformPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             return False
         cm = scn.cmlist[scn.cmlist_index]
         if cm.modelCreated or cm.animated:
@@ -338,7 +334,7 @@ class ModelSettingsPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             return False
         return True
 
@@ -459,7 +455,7 @@ class BrickTypesPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             return False
         return True
 
@@ -502,7 +498,7 @@ class BrickTypesPanel(Panel):
                 row.prop(cm, "offsetBrickLayers")
 
             col = layout.column(align=True)
-            col.label("Max Brick Scales:")
+            col.label("Max Brick Size:")
             split = col.split(align=True, percentage=0.5)
 
             col1 = split.column(align=True)
@@ -545,7 +541,7 @@ class MaterialsPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             return False
         return True
 
@@ -684,7 +680,7 @@ class DetailingPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             return False
         return True
 
@@ -754,7 +750,7 @@ class SupportsPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             return False
         return True
 
@@ -803,7 +799,7 @@ class BevelPanel(Panel):
         cm = scn.cmlist[scn.cmlist_index]
         if not cm.modelCreated and not cm.animated:
             return False
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             return False
         return True
 
@@ -850,7 +846,7 @@ class CustomizeModel(Panel):
         scn = context.scene
         if scn.cmlist_index == -1:
             return False
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             return False
         cm = scn.cmlist[scn.cmlist_index]
         if not (cm.modelCreated or cm.animated):
@@ -874,10 +870,10 @@ class CustomizeModel(Panel):
         if cm.buildIsDirty:
             layout.label("Run 'Update Model' to customize")
             return
-        if rebrickr_bfm_cache.get(cm.id) is None and cm.BFMCache == "":
+        if not Caches.cacheExists(cm):
             layout.label("Matrix not cached!")
             return
-        # if not bpy.props.rebrickr_undoRunning:
+        # if not bpy.props.rebrickr_initialized:
         #     layout.operator("rebrickr.customize_model", icon="MODIFIER")
         #     return
 
@@ -934,7 +930,7 @@ class AdvancedPanel(Panel):
             return False
         if bversion() < '002.078.00':
             return False
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             return False
         cm = scn.cmlist[scn.cmlist_index]
         return True
@@ -981,7 +977,7 @@ class BrickDetailsPanel(Panel):
         scn = context.scene
         if scn.cmlist_index == -1:
             return False
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             return False
         cm = scn.cmlist[scn.cmlist_index]
         if not (cm.modelCreated or cm.animated):
@@ -996,7 +992,7 @@ class BrickDetailsPanel(Panel):
         if cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings():
             layout.label("Matrix is dirty!")
             return
-        if rebrickr_bfm_cache.get(cm.id) is None and cm.BFMCache == "":
+        if not Caches.cacheExists(cm):
             layout.label("Matrix not cached!")
             return
 

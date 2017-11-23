@@ -66,8 +66,17 @@ class delete_override(Operator):
 
     def execute(self, context):
         try:
-            self.undo_stack.undo_push('delete_override')
+            ct = time.time()
+            for obj in self.objsToDelete:
+                if obj.isBrick:
+                    self.undo_stack.undo_push('delete_override')
+                    self.undo_pushed = True
+                    break
+            stopWatch("1", time.time()-ct)
+            ct = time.time()
             self.runDelete(context)
+            stopWatch("2", time.time()-ct)
+            ct = time.time()
         except:
             handle_exception()
         return {'FINISHED'}
@@ -79,7 +88,12 @@ class delete_override(Operator):
             return confirmation_returned
         else:
             try:
-                self.undo_stack.undo_push('delete_override')
+                if bpy.props.rebrickr_initialized:
+                    for obj in self.objsToDelete:
+                        if obj.isBrick:
+                            self.undo_stack.undo_push('delete_override')
+                            self.undo_pushed = True
+                            break
                 self.runDelete(context)
             except:
                 handle_exception()
@@ -93,6 +107,7 @@ class delete_override(Operator):
         self.iteratedStatesAtLeastOnce = False
         self.objsToDelete = bpy.context.selected_objects
         self.warnInitialize = False
+        self.undo_pushed = False
 
     ###################################################
     # class variables
@@ -103,7 +118,7 @@ class delete_override(Operator):
     # class methods
 
     def runDelete(self, context):
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             # initialize objsD (key:cm_idx, val:list of brick objects)
             objsD = createObjsD(self.objsToDelete)
             # remove brick type objects from selection
@@ -226,11 +241,10 @@ class delete_override(Operator):
             # store bricksDict to cache
             cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
 
-        # if nothing was done worth undoing
-        if not self.iteratedStatesAtLeastOnce:
+        # if nothing was done worth undoing but state was pushed
+        if not self.iteratedStatesAtLeastOnce and self.undo_pushed:
             # pop pushed value from undo stack
-            self.undo_stack.undo_pop()
-
+            self.undo_stack.undo_pop_clean()
 
         # delete bricks
         for obj_name in objNamesToDelete:

@@ -32,7 +32,7 @@ from .customize.undo_stack import *
 from ..lib.caches import *
 from ..functions.common import *
 
-class clearCache(bpy.types.Operator):
+class Caches(bpy.types.Operator):
     """Clear brick mesh and matrix cache (Model customizations will be lost)""" # blender will use this as a tooltip for menu items and buttons.
     bl_idname = "rebrickr.clear_cache"                                          # unique identifier for buttons and menu items to reference.
     bl_label = "Clear Cache"                                                    # display name in the interface.
@@ -40,7 +40,7 @@ class clearCache(bpy.types.Operator):
 
     @classmethod
     def poll(self, context):
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             return False
         return True
 
@@ -49,23 +49,32 @@ class clearCache(bpy.types.Operator):
         self.undo_stack = UndoStack.get_instance()
         self.undo_stack.undo_push('clear_cache')
 
+    def clearCaches(self):
+        scn = bpy.context.scene
+
+        # clear light caches
+        for key in rebrickr_bm_cache:
+            rebrickr_bm_cache[key] = None
+        for key in rebrickr_bfm_cache:
+            cm = getItemByID(scn.cmlist, key)
+            rebrickr_bfm_cache[key] = None
+
+        # clear deep matrix caches
+        for cm in scn.cmlist:
+            cm.BFMCache = ""
+
+    @staticmethod
+    def cacheExists(cm=None):
+        if cm is None:
+            scn = bpy.context.scene
+            cm = scn.cmlist[scn.cmlist_index]
+        return not (rebrickr_bfm_cache.get(cm.id) is None and cm.BFMCache == "")
+
     def execute(self, context):
         try:
-            scn = context.scene
-
-            # clear light caches
-            for key in rebrickr_bm_cache:
-                rebrickr_bm_cache[key] = None
-            for key in rebrickr_bfm_cache:
-                cm = getItemByID(scn.cmlist, key)
-                self.undo_stack.iterateStates(cm)
-                rebrickr_bfm_cache[key] = None
-                cm.matrixIsDirty = True
-
-            # clear deep matrix caches
-            for cm in scn.cmlist:
-                cm.BFMCache = ""
-
+            self.clearCaches()
+            self.undo_stack.iterateStates(cm)
+            cm.matrixIsDirty = True
         except:
             handle_exception()
 

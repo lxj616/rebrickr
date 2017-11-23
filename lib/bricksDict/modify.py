@@ -61,22 +61,22 @@ def getNextBrick(bricks, loc, x, y, z=0):
     except KeyError:
         return None
 
-def plateIsBrick(brickD, bricksD, loc, x, y, h=3):
+def plateIsBrick(brickD, bricksDict, loc, x, y, h=3):
     """ check that [h-1] locations above loc are available """
     for i in range(1,h):
-        if not brickAvail(brickD, getNextBrick(bricksD, loc, x, y, i)):
+        if not brickAvail(brickD, getNextBrick(bricksDict, loc, x, y, i)):
             return False
     return True
 
-def canBeJoined(bricksD, loc, origIsBrick, key, i, j, k=0):
-    curBrickD = bricksD[key]
-    nextBrickD = getNextBrick(bricksD, loc, i, j, k)
+def canBeJoined(bricksDict, loc, origIsBrick, key, i, j, k=0):
+    curBrickD = bricksDict[key]
+    nextBrickD = getNextBrick(bricksDict, loc, i, j, k)
     spotAvail = brickAvail(curBrickD, nextBrickD)
-    canBeBrick = not origIsBrick or (k == 0 and plateIsBrick(curBrickD, bricksD, loc, i, j))
+    canBeBrick = not origIsBrick or (k == 0 and plateIsBrick(curBrickD, bricksDict, loc, i, j))
     return spotAvail and canBeBrick
 
-def updateBrickSizes(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep, maxL, mergeVertical=False):
-    """ update 'brickSizes' with available brick sizes surrounding bricksD[key] """
+def updateBrickSizes(cm, bricksDict, key, keys, loc, origIsBrick, brickSizes, zStep, maxL, mergeVertical=False):
+    """ update 'brickSizes' with available brick sizes surrounding bricksDict[key] """
     newMax1 = maxL[1]
     newMax2 = maxL[2]
     breakOuter1 = False
@@ -86,7 +86,7 @@ def updateBrickSizes(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep
             # break case 1
             if j >= newMax1: break
             # break case 2
-            elif not canBeJoined(bricksD, loc, origIsBrick, key, i, j) or listToStr([i + loc[0], j + loc[1], loc[2]]) not in keys:
+            elif not canBeJoined(bricksDict, loc, origIsBrick, key, i, j) or listToStr([i + loc[0], j + loc[1], loc[2]]) not in keys:
                 if j == 0: breakOuter2 = True
                 else:      newMax1 = j
                 break
@@ -97,7 +97,7 @@ def updateBrickSizes(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep
                 # break case 1
                 elif k >= newMax2: break
                 # break case 2
-                elif not canBeJoined(bricksD, loc, origIsBrick, key, i, j, k) or listToStr([i + loc[0], j + loc[1], loc[2] + k]) not in keys:
+                elif not canBeJoined(bricksDict, loc, origIsBrick, key, i, j, k) or listToStr([i + loc[0], j + loc[1], loc[2] + k]) not in keys:
                     if k == 0: breakOuter1 = True
                     else:      newMax2 = k
                     break
@@ -117,12 +117,12 @@ def updateBrickSizes(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep
         breakOuter1 = False
         if breakOuter2: break
 
-def attemptMerge(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True):
-    """ attempt to merge bricksD[key] with adjacent bricks """
+def attemptMerge(cm, bricksDict, key, keys, loc, origIsBrick, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True):
+    """ attempt to merge bricksDict[key] with adjacent bricks """
 
     if cm.brickType != "Custom":
-        updateBrickSizes(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], mergeVertical and cm.brickType == "Bricks and Plates")
-        updateBrickSizes(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], mergeVertical and cm.brickType == "Bricks and Plates")
+        updateBrickSizes(cm, bricksDict, key, keys, loc, origIsBrick, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], mergeVertical and cm.brickType == "Bricks and Plates")
+        updateBrickSizes(cm, bricksDict, key, keys, loc, origIsBrick, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], mergeVertical and cm.brickType == "Bricks and Plates")
 
     order = randState.randint(0,2)
     # sort brick types from smallest to largest
@@ -130,9 +130,9 @@ def attemptMerge(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep, ra
         brickSizes.sort(key=lambda x: (x[2], x[order] + x[(order+1)%2]))
     else:
         brickSizes.sort(key=lambda x: (x[2], x[order], x[(order+1)%2]))
-    # grab the biggest brick type and store to bricksD
+    # grab the biggest brick type and store to bricksDict
     brickSize = brickSizes[-1]
-    bricksD[key]["size"] = brickSize
+    bricksDict[key]["size"] = brickSize
 
     # Iterate through merged bricks to set brick parents
     startingLoc = sum(loc)
@@ -144,7 +144,7 @@ def attemptMerge(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep, ra
                     continue
                 # get brick at x,y location
                 k0 = listToStr([x,y,z])
-                curBrick = bricksD[k0]
+                curBrick = bricksDict[k0]
                 curBrick["attempted_merge"] = True
                  # checks that x,y,z refer to original brick
                 if (x + y + z) == startingLoc:
@@ -156,12 +156,12 @@ def attemptMerge(cm, bricksD, key, keys, loc, origIsBrick, brickSizes, zStep, ra
 
     return brickSize
 
-def checkExposure(bricksD, x, y, z, direction:int=1):
+def checkExposure(bricksDict, x, y, z, direction:int=1):
     isExposed = False
     try:
         valKeysChecked = []
         k0 = listToStr([x,y,z])
-        val = bricksD[k0]["val"]
+        val = bricksDict[k0]["val"]
         if val == 0:
             isExposed = True
         # Check bricks on Z axis [above or below depending on 'direction'] this brick until shell (1) hit. If ouside (0) hit first, [top or bottom depending on 'direction'] is exposed
@@ -172,7 +172,7 @@ def checkExposure(bricksD, x, y, z, direction:int=1):
                 # NOTE: if key does not exist, we will be sent to 'except'
                 k1 = listToStr([x,y,zz])
                 valKeysChecked.append(k1)
-                val = bricksD[valKeysChecked[-1]]["val"]
+                val = bricksDict[valKeysChecked[-1]]["val"]
                 if val == 0:
                     isExposed = True
     except KeyError:
@@ -180,10 +180,10 @@ def checkExposure(bricksD, x, y, z, direction:int=1):
     # if outside (0) hit before shell (1) [above or below depending on 'direction'] exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
     if isExposed and len(valKeysChecked) > 0:
         for k in valKeysChecked:
-            val = bricksD[k]["val"] = 0
+            val = bricksDict[k]["val"] = 0
     return isExposed
 
-def getBrickExposure(cm, bricksD, key, loc=None):
+def getBrickExposure(cm, bricksDict, key, loc=None):
     topExposed = False
     botExposed = False
 
@@ -192,7 +192,7 @@ def getBrickExposure(cm, bricksD, key, loc=None):
         loc = strToList(key)
 
     # get size of brick
-    size = bricksD[key]["size"]
+    size = bricksDict[key]["size"]
 
     # set z-indices
     idxZb = loc[2] - 1
@@ -211,14 +211,14 @@ def getBrickExposure(cm, bricksD, key, loc=None):
                 # get brick at x,y location
                 k0 = listToStr([x,y,z])
                 # try:
-                curBrick = bricksD[k0]
+                curBrick = bricksDict[k0]
                 # except KeyError:
                 #     continue
                 # check if brick top or bottom is exposed
                 if curBrick["val"] == 1 or (cm.brickType == "Bricks and Plates" and size[2] == 3):
-                    returnVal0 = checkExposure(bricksD, x, y, idxZa, 1)
+                    returnVal0 = checkExposure(bricksDict, x, y, idxZa, 1)
                     if returnVal0: topExposed = True
-                    returnVal1 = checkExposure(bricksD, x, y, idxZb, 1) # TODO: test -1 for last argument here
+                    returnVal1 = checkExposure(bricksDict, x, y, idxZb, 1) # TODO: test -1 for last argument here
                     if returnVal1: botExposed = True
 
     return topExposed, botExposed

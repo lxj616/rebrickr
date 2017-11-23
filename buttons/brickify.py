@@ -37,6 +37,7 @@ from .customize.undo_stack import *
 from .materials import RebrickrApplyMaterial
 from .delete import RebrickrDelete
 from .bevel import RebrickrBevel
+from .cache import *
 from ..lib.bricksDict import *
 from ..ui.cmlist import dirtyMatrix
 from ..functions import *
@@ -56,7 +57,7 @@ def updateCanRun(type):
             # set up variables
             n = cm.source_name
             Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.sourceIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and not (cm.materialType == "Random" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
+            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and not (cm.materialType == "Random" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
 
 def importLogo():
     """ import logo object from Rebrickr addon folder """
@@ -404,11 +405,8 @@ class RebrickrBrickify(bpy.types.Operator):
         return True
 
     def transformBricks(self, bGroup, cm, parent, parentLoc, updateParentLoc):
-            # set transformation of objects in brick group
-            if (self.action == "CREATE" and cm.sourceIsDirty):
-                setTransformData(list(bGroup.objects))
             # transfer transformation of parent to object
-            elif cm.lastSplitModel and not cm.splitModel:
+            if cm.lastSplitModel and not cm.splitModel:
                 parent.rotation_mode = "XYZ"
                 for obj in bGroup.objects:
                     obj.location = parent.location
@@ -419,13 +417,10 @@ class RebrickrBrickify(bpy.types.Operator):
                 parent.rotation_euler = Euler((0,0,0), "XYZ")
                 parent.scale = (1,1,1)
             elif not cm.splitModel:
-                setTransformData(list(bGroup.objects), self.sourceOrig)
+                applyTransformData(list(bGroup.objects), self.sourceOrig)
             # set transformation of brick group parent
             elif not cm.lastSplitModel:
-                setTransformData(parent, self.sourceOrig)
-            # in this case, the parent was not removed so the transformations should stay the same
-            elif cm.sourceIsDirty:
-                pass
+                applyTransformData(parent, self.sourceOrig)
             # if not split model, select the bricks object
             obj = bGroup.objects[0]
             if not cm.splitModel:
@@ -581,8 +576,8 @@ class RebrickrBrickify(bpy.types.Operator):
             else:
                 return "FINISHED"
 
-        if (self.action == "ANIMATE" or cm.matrixIsDirty or cm.sourceIsDirty or cm.animIsDirty) and not self.updatedFramesOnly:
-            cm.BFMCache = ""
+        if (self.action == "ANIMATE" or cm.matrixIsDirty or cm.animIsDirty) and not self.updatedFramesOnly:
+            Caches.clearCache()
 
         if cm.splitModel:
             cm.splitModel = False
@@ -710,7 +705,6 @@ class RebrickrBrickify(bpy.types.Operator):
         source = None
         n = cm.source_name
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-        Rebrickr_last_origin_on = "Rebrickr_%(n)s_last_origin" % locals()
         Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
         updateParentLoc = False
 
@@ -731,16 +725,6 @@ class RebrickrBrickify(bpy.types.Operator):
             # get origin location for source
             previous_origin = self.sourceOrig.matrix_world.to_translation().to_tuple()
 
-            # create empty object at source's old origin location and set as child of source
-            m = bpy.data.meshes.new("Rebrickr_%(n)s_last_origin_mesh" % locals())
-            obj = bpy.data.objects.new("Rebrickr_%(n)s_last_origin" % locals(), m)
-            self.createdObjects.append(Rebrickr_last_origin_on)
-            obj.location = previous_origin
-            scn.objects.link(obj)
-            select([obj, self.sourceOrig], active=self.sourceOrig)
-            bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
-            safeUnlink(obj)
-
         # if there are no changes to apply, simply return "FINISHED"
         if self.action in ["UPDATE_MODEL"] and not updateCanRun("MODEL"):
             return{"FINISHED"}
@@ -751,26 +735,16 @@ class RebrickrBrickify(bpy.types.Operator):
 
         # delete old bricks if present
         if self.action in ["UPDATE_MODEL"]:
-            if cm.sourceIsDirty:
-                # alert that parent loc needs updating at the end
-                updateParentLoc = True
-                # delete source/dupes as well if source is dirty, but only delete parent if not cm.splitModel
-                RebrickrDelete.cleanUp("MODEL", skipParents=True)#cm.splitModel)
-            else:
-                # else, skip source
-                RebrickrDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
+            # skip source, dupes, and parents
+            RebrickrDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
         else:
             storeTransformData(None)
 
-        if self.action == "CREATE" or cm.sourceIsDirty:
+        if self.action == "CREATE":
             # create dupes group
             Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
             dGroup = bpy.data.groups.new(Rebrickr_source_dupes_gn)
             self.createdGroups.append(dGroup.name)
-            # set sourceOrig origin to previous origin location
-            lastSourceOrigLoc = self.sourceOrig.matrix_world.to_translation().to_tuple()
-            last_origin_obj = bpy.data.objects.get(Rebrickr_last_origin_on)
-            setOriginToObjOrigin(toObj=self.sourceOrig, fromObj=last_origin_obj)
             # duplicate source and add duplicate to group
             select(self.sourceOrig, active=self.sourceOrig)
             bpy.ops.object.duplicate()
@@ -779,8 +753,6 @@ class RebrickrBrickify(bpy.types.Operator):
             select(source, active=source)
             source.name = self.sourceOrig.name + "_duplicate"
             self.createdObjects.append(source.name)
-            # reset sourceOrig origin to adjusted location
-            setOriginToObjOrigin(toObj=self.sourceOrig, fromLoc=lastSourceOrigLoc)
             # set up source["old_parent"] and remove source parent
             source["frame_parent_cleared"] = -1
             select(source, active=source)
@@ -903,7 +875,7 @@ class RebrickrBrickify(bpy.types.Operator):
             self.brickifyAnimation()
             cm.animIsDirty = False
 
-        if self.action in ["CREATE", "ANIMATE"] or cm.sourceIsDirty:
+        if self.action in ["CREATE", "ANIMATE"]:
             source.name = cm.source_name + " (DO NOT RENAME)"
 
         # set cmlist_id for all created objects
@@ -923,7 +895,6 @@ class RebrickrBrickify(bpy.types.Operator):
         cm.brickMaterialsAreDirty = False
         cm.modelIsDirty = False
         cm.buildIsDirty = False
-        cm.sourceIsDirty = False
         cm.bricksAreDirty = False
         cm.matrixIsDirty = False
         cm.internalIsDirty = False

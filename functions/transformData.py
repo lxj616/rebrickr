@@ -45,37 +45,6 @@ def storeTransformData(obj):
         cm.modelRot = "0,0,0"
         cm.modelScale = "1,1,1"
 
-def setTransformData(objList, source=None, skipLocation=False, skipRotation=False, skipScale=False):
-    """ apply transform data from cm.modelLoc/Rot/Scale to objects in objList """
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
-    objList = confirmList(objList)
-    for obj in objList:
-        l,r,s = getTransformData()
-        if not skipLocation:
-            obj.location = obj.location + Vector(l)
-            if source is not None:
-                n = cm.source_name
-                Rebrickr_last_origin_on = "Rebrickr_%(n)s_last_origin" % locals()
-                last_origin_obj = bpy.data.objects.get(Rebrickr_last_origin_on)
-                if last_origin_obj is not None:
-                    obj.location -= Vector(last_origin_obj.location) - Vector(source["previous_location"])
-                else:
-                    obj.location -= Vector(source.location) - Vector(source["previous_location"])
-        if not skipRotation:
-            obj.rotation_mode = "XYZ"
-            obj.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
-            if source is not None:
-                obj.rotation_euler.rotate(source.rotation_euler.to_matrix().inverted())
-                obj.rotation_euler.rotate(Euler(tuple(source["previous_rotation"]), "XYZ"))
-        if not skipScale:
-            osx,osy,osz = obj.scale
-            obj.scale = (osx * s[0],
-                         osy * s[1],
-                         osz * s[2])
-            if source is not None:
-                obj.scale -= Vector(source.scale) - Vector(source["previous_scale"])
-
 def getTransformData():
     """ return transform data from cm.modelLoc/Rot/Scale """
     scn = bpy.context.scene
@@ -85,36 +54,29 @@ def getTransformData():
     s = tuple(strToList(cm.modelScale, float))
     return l,r,s
 
-def setSourceTransform(source, obj=None, objParent=None, last_origin_obj=None, skipLocation=False):
-    """ set source transform data relative to obj, parent, and/or last_origin_obj """
-    if obj is not None:
-        objLoc = obj.location
+def applyTransformData(objList, source):
+    """ apply transform data from cm.modelLoc/Rot/Scale to objects in objList """
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    objList = confirmList(objList)
+
+    # apply matrix to objs
+    for obj in objList:
+        # LOCATION
+        l,r,s = getTransformData()
+        obj.location = obj.location + Vector(l)
+        # ROTATION
+        # from transform data
         obj.rotation_mode = "XYZ"
-        objRot = obj.rotation_euler
-        objScale = obj.scale
-    else:
-        objLoc = Vector((0,0,0))
-        objRot = Euler((0,0,0), "XYZ")
-        objScale = Vector((1,1,1))
-    if objParent is not None:
-        objParentLoc = objParent.location
-        objParentRot = objParent.rotation_euler
-        objParentScale = objParent.scale
-    else:
-        objParentLoc = Vector((0,0,0))
-        objParentRot = Euler((0,0,0), "XYZ")
-        objParentScale = Vector((1,1,1))
-    if not skipLocation:
-        if last_origin_obj is not None:
-            source.location = objParentLoc + objLoc - (Vector(last_origin_obj.location) - Vector(source["previous_location"]))
-        else:
-            source.location = objParentLoc + objLoc
-    source.rotation_mode = "XYZ"
-    source.rotation_euler.rotate(objRot)
-    source.rotation_euler.rotate(objParentRot)
-    ssx,ssy,ssz = source.scale
-    osx,osy,osz = objScale
-    opsx,opsy,opsz = objParentScale
-    source.scale = (ssx * osx * opsx,
-                    ssy * osy * opsy,
-                    ssz * osz * opsz)
+        obj.rotation_euler.rotate(Euler(r, "XYZ"))
+        # from source
+        obj.rotation_euler.rotate(source.rotation_euler.to_matrix().inverted())
+        obj.rotation_euler.rotate(Euler(tuple(source["previous_rotation"]), "XYZ"))
+        # SCALE
+        # from transform data
+        osx,osy,osz = obj.scale
+        obj.scale = (osx * s[0],
+                     osy * s[1],
+                     osz * s[2])
+        # from source
+        obj.scale -= Vector(source.scale) - Vector(source["previous_scale"])

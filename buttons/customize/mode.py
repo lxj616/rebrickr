@@ -33,7 +33,7 @@ from ...functions import *
 
 
 class CustomizeModel(Operator):
-    """ starts custom undo stack for changes to rebrickr_bfm_cache """
+    """ starts custom undo stack for changes to the BFM cache """
     bl_category    = "Rebrickr"
     bl_idname      = "rebrickr.customize_model"
     bl_label       = "Customize Model"
@@ -45,7 +45,7 @@ class CustomizeModel(Operator):
 
     @classmethod
     def poll(self, context):
-        if bpy.props.rebrickr_undoRunning:
+        if bpy.props.rebrickr_initialized:
             return False
         return True
 
@@ -83,7 +83,7 @@ class CustomizeModel(Operator):
 
     def __init__(self):
         self.undo_stack = UndoStack.get_instance()
-        bpy.props.rebrickr_undoRunning = True
+        bpy.props.rebrickr_initialized = True
         self.report({"INFO"}, "Rebrickr initialized")
         # self.ui = Rebrickr_UI.get_instance()
 

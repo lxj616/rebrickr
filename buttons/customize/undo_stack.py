@@ -115,7 +115,7 @@ class UndoStack():
         # skip pushing to undo if action is repeatable and we are repeating actions
         if repeatable and self.undo and self.undo[-1]['action'] == action: return
         # skip pushing to undo if rebrickr not initialized
-        if not bpy.props.rebrickr_undoRunning: return
+        if not bpy.props.rebrickr_initialized: return
         self.undo.append(self._create_state(action))
         while len(self.undo) > self.undo_depth: self.undo.pop(0)     # limit stack size
         self.redo.clear()
@@ -131,6 +131,10 @@ class UndoStack():
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         python_undo_state[cm.id] -= 1
+
+    def undo_pop_clean(self):
+        if not self.undo: return
+        self.undo.pop()
 
     def undo_cancel(self):
         self._restore_state(self.undo.pop())

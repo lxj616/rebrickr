@@ -38,7 +38,7 @@ def getBricksDict(action, source=None, source_details=None, dimensions=None, R=N
         cm = scn.cmlist[scn.cmlist_index]
     loadedFromCache = False
     # if bricksDict can be pulled from cache
-    if not cm.matrixIsDirty and (cm.BFMCache != "" or rebrickr_bfm_cache.get(cm.id) is not None) and not cm.sourceIsDirty and (action != "UPDATE_ANIM" or not cm.animIsDirty):
+    if not cm.matrixIsDirty and (cm.BFMCache != "" or rebrickr_bfm_cache.get(cm.id) is not None) and (action != "UPDATE_ANIM" or not cm.animIsDirty):
         # try getting bricksDict from light cache
         bricksDict = rebrickr_bfm_cache.get(cm.id)
         if bricksDict is None:

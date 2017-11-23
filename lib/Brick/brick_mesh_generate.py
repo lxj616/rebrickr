@@ -200,7 +200,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
     if cm.brickType != "Bricks":
         dZ = dZ*brickSize[2]
     thickZ = dimensions["thickness"]
-    if detail == "Full Detail" and not (brickSize[0] == 1 or brickSize[1] == 1) and brickSize[2] != 1:
+    if detail == "High Detail" and not (brickSize[0] == 1 or brickSize[1] == 1) and brickSize[2] != 1:
         thickXY = dimensions["thickness"] - dimensions["tick_depth"]
     else:
         thickXY = dimensions["thickness"]
@@ -275,7 +275,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
         ppi = v11
         npi = v12
         # make tick marks inside 2 by x bricks
-        if detail == "Full Detail" and ((brickSize[0] == 2 and brickSize[1] > 1) or (brickSize[1] == 2 and brickSize[0] > 1)) and brickSize[2] != 1:
+        if detail == "High Detail" and ((brickSize[0] == 2 and brickSize[1] > 1) or (brickSize[1] == 2 and brickSize[0] > 1)) and brickSize[2] != 1:
             for xNum in range(brickSize[0]):
                 for yNum in range(brickSize[1]):
                     to_select = []
@@ -443,7 +443,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                 t = (dZ*2)-thickZ
                 makeTube(r, numStudVerts, t, dimensions["tube_thickness"], co=(tubeX, tubeY, tubeZ), wings=True, bme=bme)
                 # add support next to odd tubes
-                if (detail == "High Detail" or detail == "Full Detail") and addSupports and brickSize[2] != 1:
+                if (detail == "Medium Detail" or detail == "High Detail") and addSupports and brickSize[2] != 1:
                     if brickSize[0] > brickSize[1]:
                         if brickSize[0] == 3 or xNum % 2 == 1:
                             # initialize x, y, z
@@ -523,7 +523,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                 # select top verts for exclusion from vert group
                 for v in topVerts:
                     v.select = True
-                if (detail == "High Detail" or detail == "Full Detail") and brickSize[2] != 1:
+                if (detail == "Medium Detail" or detail == "High Detail") and brickSize[2] != 1:
                     if brickSize[1] == 3 or brickSize[1] == 2 or y % 2 == 0 or ((y == 1 or y == brickSize[1]-1) and brickSize[1] == 8):
                         # initialize x, y, z
                         x2 = barX + dX-thickXY
@@ -555,7 +555,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                 for v in topVerts:
                     v.select = True
                 # add supports next to odd bars
-                if (detail == "High Detail" or detail == "Full Detail") and brickSize[2] != 1:
+                if (detail == "Medium Detail" or detail == "High Detail") and brickSize[2] != 1:
                     if brickSize[0] == 3 or brickSize[0] == 2 or x % 2 == 0 or ((x == 1 or x == brickSize[0]-1) and brickSize[0] == 8):
                         # initialize x, y, z
                         x1 = barX + (dimensions["support_width"]/2)

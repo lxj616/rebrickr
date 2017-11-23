@@ -217,7 +217,6 @@ class RebrickrDelete(bpy.types.Operator):
             cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
-        Rebrickr_last_origin_on = "Rebrickr_%(n)s_last_origin" % locals()
         parentOb = None
         origFrame = scn.frame_current
         scn.frame_set(cm.modelCreatedOnFrame)
@@ -252,13 +251,6 @@ class RebrickrDelete(bpy.types.Operator):
             source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
             source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
 
-        # set origin to previous origin location
-        last_origin_obj = bpy.data.objects.get(Rebrickr_last_origin_on)
-        if last_origin_obj is not None:
-            safeLink(last_origin_obj)
-            scn.update()
-            setOriginToObjOrigin(toObj=source, fromObj=last_origin_obj, deleteFromObj=True)
-
         # select source and return open layers to original
         select(source, active=source)
         scn.Rebrickr_runningOperation = False
@@ -286,7 +278,6 @@ class RebrickrDelete(bpy.types.Operator):
         cm.materialIsDirty = True
         cm.modelIsDirty = True
         cm.buildIsDirty = True
-        cm.sourceIsDirty = True
         cm.bricksAreDirty = True
         cm.bevelAdded = False
         cm.activeKeyX = 1

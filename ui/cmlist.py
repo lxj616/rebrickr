@@ -519,11 +519,6 @@ def dirtyBuild(self, context):
     cm = scn.cmlist[scn.cmlist_index]
     cm.buildIsDirty = True
 
-def dirtySource(self, context):
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
-    cm.sourceIsDirty = True
-
 def dirtyBricks(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -618,8 +613,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     hiddenUndersideDetail = EnumProperty(
         name="Hidden Underside Detailing",
         description="Choose the level of detail to include for the underside of hidden bricks",
-        items=[("Full Detail", "Full Detail", "Draw true-to-life details on brick underside"),
-              ("High Detail", "High Detail", "Draw intricate details on brick underside"),
+        items=[("High Detail", "High Detail", "Draw intricate details on brick underside"),
               ("Medium Detail", "Medium Detail", "Draw most details on brick underside"),
               ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
               ("Flat", "Flat", "draw single face on brick underside")],
@@ -628,8 +622,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     exposedUndersideDetail = EnumProperty(
         name="Eposed Underside Detailing",
         description="Choose the level of detail to include for the underside of exposed bricks",
-        items=[("Full Detail", "Full Detail", "Draw true-to-life details on brick underside"),
-              ("High Detail", "High Detail", "Draw intricate details on brick underside"),
+        items=[("High Detail", "High Detail", "Draw intricate details on brick underside"),
               ("Medium Detail", "Medium Detail", "Draw most details on brick underside"),
               ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
               ("Flat", "Flat", "draw single face on brick underside")],
@@ -989,7 +982,6 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     brickMaterialsAreDirty = BoolProperty(default=True)
     modelIsDirty = BoolProperty(default=True)
     buildIsDirty = BoolProperty(default=True)
-    sourceIsDirty = BoolProperty(default=True)
     bricksAreDirty = BoolProperty(default=True)
     matrixIsDirty = BoolProperty(default=True)
     internalIsDirty = BoolProperty(default=True)

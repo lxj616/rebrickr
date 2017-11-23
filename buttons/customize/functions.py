@@ -31,7 +31,6 @@ from ...functions import *
 from ..brickify import *
 from ..brickify import *
 from ...lib.bricksDict.functions import getDictKey
-from ...lib.caches import rebrickr_bfm_cache
 from .undo_stack import *
 
 

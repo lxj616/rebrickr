@@ -56,7 +56,7 @@ def register():
 
     bpy.props.rebrickr_module_name = __name__
 
-    bpy.props.rebrickr_undoRunning = False
+    bpy.props.rebrickr_initialized = False
     bpy.props.rebrickr_undoUpdating = False
 
     props.rebrickr_version = str(bl_info["version"])[1:-1]
@@ -227,7 +227,7 @@ def unregister():
     del bpy.types.Object.protected
     del bpy.props.rebrickr_version
     del bpy.props.rebrickr_undoUpdating
-    del bpy.props.rebrickr_undoRunning
+    del bpy.props.rebrickr_initialized
     del bpy.props.rebrickr_module_name
 
 

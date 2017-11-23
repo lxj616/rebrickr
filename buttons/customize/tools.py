@@ -32,7 +32,6 @@ from .functions import *
 from ..brickify import *
 from ..brickify import *
 from ...lib.bricksDict.functions import getDictKey
-from ...lib.caches import rebrickr_bfm_cache
 from ...functions import *
 
 class splitBricks(Operator):
@@ -47,7 +46,7 @@ class splitBricks(Operator):
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
-        if not bpy.props.rebrickr_undoRunning:
+        if not bpy.props.rebrickr_initialized:
             return False
         scn = bpy.context.scene
         objs = bpy.context.selected_objects
@@ -148,7 +147,6 @@ class splitBricks(Operator):
                     x0,y0,z0 = dictLoc
                     # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
-                    print(objSize)
                     zStep = getZStep(cm)
 
                     # skip 1x1 bricks
@@ -273,7 +271,7 @@ class mergeBricks(Operator):
     @staticmethod
     def getSortedKeys(keys):
         """ sort bricks by (x+y) location for best merge """
-        keys.sort(key=lambda k: (strToList(k)[2], strToList(k)[0] + strToList(k)[1]))
+        keys.sort(key=lambda k: (strToList(k)[0] * strToList(k)[1] * strToList(k)[2]))
         return keys
 
     @staticmethod
@@ -383,6 +381,8 @@ class setExposure(Operator):
         self.undo_stack = UndoStack.get_instance()
         self.undo_stack.undo_push('exposure')
         # initialize bricksDicts
+        selected_objects = bpy.context.selected_objects
+        objsD = createObjsD(selected_objects)
         for cm_idx in objsD.keys():
             cm = scn.cmlist[cm_idx]
             # get bricksDict from cache

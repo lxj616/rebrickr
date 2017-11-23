@@ -149,7 +149,7 @@ def revertMatrixSettings(cm=None):
     cm.matrixIsDirty = False
 
 def matrixReallyIsDirty(cm):
-    return cm.sourceIsDirty or (cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings())
+    return cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings()
 
 def listToStr(lst):
     assert type(lst) in [list, tuple]
