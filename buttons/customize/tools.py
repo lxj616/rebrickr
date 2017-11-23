@@ -876,23 +876,53 @@ class changeBrickType(Operator):
         dictKey, dictLoc = getDictKey(obj.name)
         bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
         objSize = bricksDict[dictKey]["size"]
-
-        if (objSize[2] == 3 and
-           (objSize[0] + objSize[1] in range(3,8) or
-           (objSize[0] == 6 and objSize[1] == 2) or
-           (objSize[0] == 2 and objSize[1] == 6))):
-            items.append(("SLOPE", "Slope", ""))
-        if (objSize[2] == 3 and
-           (objSize[0] + objSize[1] < 6 and objSize[0] + objSize[1] > 2)):
-            items.append(("SLOPE_INVERTED", "Slope Inverted", ""))
-        if objSize[0] + objSize[1] == 2:
-            if objSize[2] == 3:
+        # Bricks
+        if objSize[2] == 3:
+            if ((sum(objSize[:2]) in range(3,8) or
+                (objSize[0] == 2 and objSize[1] == 6) or
+                (objSize[1] == 2 and objSize[0] == 6))):
+                items.append(("SLOPE", "Slope", ""))
+            if sum(objSize[:2]) in range(3,6):
+                items.append(("SLOPE_INVERTED", "Slope Inverted", ""))
+            if sum(objSize[:2]) == 2:
                 items.append(("CYLINDER", "Cylinder", ""))
+                items.append(("CONE", "Cone", ""))
+                items.append(("BRICK_STUD_ON_ONE_SIDE", "Brick Stud on One Side", ""))
+                items.append(("BRICK_INSET_STUD_ON_ONE_SIDE", "Brick Stud on One Side", ""))
+                items.append(("BRICK_STUD_ON_TWO_SIDES", "Brick Stud on Two Sides", ""))
+                items.append(("BRICK_STUD_ON_ALL_SIDES", "Brick Stud on All Sides", ""))
+            if sum(objSize[:2]) == 3:
+                items.append(("TILE_WITH_HANDLE", "Tile with Handle", ""))
+                items.append(("BRICK_PATTERN", "Brick Pattern", ""))
+            if objSize[0] == 2 and objSize[1] == 2:
+                items.append(("DOME", "Dome", ""))
+                items.append(("DOME_INVERTED", "Dome Inverted", ""))
+        # Plates
+        elif objSize[2] == 1:
             if objSize[2] == 1:
                 items.append(("STUD", "Stud", ""))
-        if objSize[2] == 1:
-            items.append(("TILE", "Tile", ""))
+                items.append(("ROUNDED_TILE", "Rounded Tile", ""))
+            if objSize[:2] in bpy.props.Rebrickr_legal_brick_sizes[0.9]:
+                items.append(("TILE", "Tile", ""))
+            if sum(objSize[:2]) == 3:
+                items.append(("TILE_GRILL", "Tile Grill", ""))
+            if objSize[0] == 2 and objSize[1] == 2:
+                items.append(("TILE_ROUNDED", "Tile Rounded", ""))
+                items.append(("PLATE_ROUNDED", "Plate Rounded", ""))
+                items.append(("DOME", "Dome", ""))
+            if ((objSize[0] == 2 and objSize[1] in [3,4]) or
+               (objSize[1] == 2 and objSize[0] in [3,4]) or
+               (objSize[0] == 3 and objSize[1] in [6,8,12]) or
+               (objSize[1] == 3 and objSize[0] in [6,8,12]) or
+               (objSize[0] == 4 and objSize[1] == 4) or
+               (objSize[0] == 6 and objSize[1] == 12) or
+               (objSize[1] == 6 and objSize[0] == 12) or
+               (objSize[0] == 7 and objSize[1] == 12) or
+               (objSize[1] == 7 and objSize[0] == 12)):
+                items.append(("WING", "Wing", ""))
+        # 1x2 brick pattern Brick
         return items
+
 
     # properties
     brickType = bpy.props.EnumProperty(

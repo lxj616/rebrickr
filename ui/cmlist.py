@@ -489,6 +489,15 @@ def updateParentExposure(self, context):
             if parentOb is not None:
                 safeUnlink(parentOb)
 
+def updateModelScale(self, context):
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    if cm.lastSplitModel:
+        _,_,s = getTransformData()
+        parentOb = bpy.data.objects.get(cm.parent_name)
+        if parentOb is not None:
+            parentOb.scale = Vector(s) * cm.transformScale
+
 def dirtyAnim(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -879,6 +888,13 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     modelLoc = StringProperty(default="-1,-1,-1")
     modelRot = StringProperty(default="-1,-1,-1")
     modelScale = StringProperty(default="-1,-1,-1")
+    transformScale = FloatProperty(
+        name="Scale",
+        description="Scale of the brick model",
+        update=updateModelScale,
+        step=1,
+        min=0,
+        default=1.0)
     applyToSourceObject = BoolProperty(
         name="Apply to source",
         description="Apply transformations to source object when Brick Model is deleted",
@@ -964,6 +980,10 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
               ("Z", "Z", "PLACEHOLDER")],
         update=dirtyMatrix,
         default="XY")
+    useLocalOrient = BoolProperty(
+        name="Use Local Orient",
+        description="When bricks are deleted, automatically update bricks that become exposed",
+        default=False)
 
     activeKeyX = IntProperty(default=1)
     activeKeyY = IntProperty(default=1)

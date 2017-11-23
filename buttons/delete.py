@@ -29,6 +29,7 @@ props = bpy.props
 
 # Rebrickr imports
 from ..functions import *
+from .cache import *
 
 def getModelType(self, cm=None):
     """ return 'MODEL' if modelCreated, 'ANIMATION' if animated """
@@ -47,6 +48,9 @@ class RebrickrDelete(bpy.types.Operator):
     bl_label = "Delete Brickified model from Blender"                             # display name in the interface.
     bl_options = {"REGISTER", "UNDO"}
 
+    ################################################
+    # Blender Operator methods
+
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
@@ -55,8 +59,29 @@ class RebrickrDelete(bpy.types.Operator):
             return False
         return True
 
-    @classmethod
-    def cleanUp(self, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, preservedFrames=None):
+    def execute(self, context):
+        try:
+            scn = bpy.context.scene
+            cm = scn.cmlist[scn.cmlist_index]
+            self.undo_stack.iterateStates(cm)
+            self.runFullDelete()
+        except:
+            handle_exception()
+
+        return{"FINISHED"}
+
+    ################################################
+    # initialization method
+
+    def __init__(self):
+        self.undo_stack = UndoStack.get_instance()
+        self.undo_stack.undo_push('brickify')
+
+    #############################################
+    # class methods
+
+    @staticmethod
+    def cleanUp(modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, preservedFrames=None):
         """ externally callable cleanup function for bricks, source, dupes, and parents """
         # set up variables
         scn = bpy.context.scene
@@ -208,8 +233,8 @@ class RebrickrDelete(bpy.types.Operator):
 
         return source, brickLoc, brickRot, brickScale
 
-    @classmethod
-    def runFullDelete(self, cm=None):
+    @staticmethod
+    def runFullDelete(cm=None):
         """ externally callable cleanup function for full delete action (clears everything from memory) """
         scn = bpy.context.scene
         scn.Rebrickr_runningOperation = True
@@ -236,6 +261,10 @@ class RebrickrDelete(bpy.types.Operator):
 
         source, brickLoc, brickRot, brickScale = RebrickrDelete.cleanUp(modelType, cm=cm)
 
+        # select source
+        select(source, active=source)
+
+        # apply transformation to source
         if (modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (modelType == "ANIMATION" and cm.applyToSourceObject):
             l,r,s = getTransformData()
             if modelType == "MODEL":
@@ -247,12 +276,17 @@ class RebrickrDelete(bpy.types.Operator):
                     source.location = Vector(l)
             else:
                 source.location = Vector(l)
-            source.rotation_mode = "XYZ"
-            source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
             source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
+            source.rotation_mode = "XYZ"
+            if cm.useLocalOrient:
+                if brickRot is not None:
+                    source.rotation_euler = brickRot
+                else:
+                    source.rotation_euler = Euler(tuple(r), "XYZ")
+            else:
+                source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
 
-        # select source and return open layers to original
-        select(source, active=source)
+        # return open layers to original
         scn.Rebrickr_runningOperation = False
         scn.layers = lastLayers
 
@@ -264,10 +298,13 @@ class RebrickrDelete(bpy.types.Operator):
             except KeyError:
                 pass
 
+        Caches.clearCaches()
+
         # reset default values for select items in cmlist
         cm.modelLoc = "-1,-1,-1"
         cm.modelRot = "-1,-1,-1"
         cm.modelScale = "-1,-1,-1"
+        cm.transformScale = 1
         cm.modelCreatedOnFrame = -1
         cm.lastSourceMid = "-1,-1,-1"
         cm.lastLogoResolution = 0
@@ -288,11 +325,3 @@ class RebrickrDelete(bpy.types.Operator):
         scn.frame_set(origFrame)
         scn.update()
         tag_redraw_areas("VIEW_3D")
-
-    def execute(self, context):
-        try:
-            self.runFullDelete()
-        except:
-            handle_exception()
-
-        return{"FINISHED"}

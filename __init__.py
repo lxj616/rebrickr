@@ -78,6 +78,20 @@ def register():
 
     # define legal brick sizes (key:height, val:[width,depth])
     bpy.props.Rebrickr_legal_brick_sizes = {
+        # tiles
+        0.9:[[1,1],
+            [1,2],
+            [1,3],
+            [1,4],
+            [1,6],
+            [1,8],
+            [1,],
+            [2,2],
+            [2,4],
+            [3,6],
+            [6,6],
+            [8,16]],
+        # plates
         1: [[1,1],
             [1,2],
             [1,3],
@@ -113,6 +127,7 @@ def register():
             [8,11],
             [8,16],
             [16,16]],
+        # bricks
         3: [[1,1],
             [1,2],
             [1,3],
@@ -140,6 +155,13 @@ def register():
             [8,16],
             [10,20],
             [12,24]]}
+    # add reverses of above brick sizes
+    for heightKey in bpy.props.Rebrickr_legal_brick_sizes:
+        sizes = bpy.props.Rebrickr_legal_brick_sizes[heightKey]
+        for size in sizes:
+            if size[::-1] not in sizes:
+                sizes.append(size[::-1])
+
     # add reverses of above brick sizes
     for heightKey in bpy.props.Rebrickr_legal_brick_sizes:
         sizes = bpy.props.Rebrickr_legal_brick_sizes[heightKey]

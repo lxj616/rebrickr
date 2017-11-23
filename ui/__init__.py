@@ -315,8 +315,9 @@ class ModelTransformPanel(Panel):
             row.column().prop(parent, "rotation_axis_angle", text="Rotation")
         else:
             row.column().prop(parent, "rotation_euler", text="Rotation")
-        row.column().prop(parent, "scale")
+        # row.column().prop(parent, "scale")
         layout.prop(parent, "rotation_mode")
+        layout.prop(cm, "transformScale")
 
 class ModelSettingsPanel(Panel):
     bl_space_type  = "VIEW_3D"
@@ -962,6 +963,11 @@ class AdvancedPanel(Panel):
         row.prop(cm, "useNormals")
         row = col.row(align=True)
         row.prop(cm, "verifyExposure")
+        if not cm.useAnimation and not (cm.modelCreated or cm.animated):
+            row = col.row(align=True)
+            row.label("Model Orientation:")
+            row = col.row(align=True)
+            row.prop(cm, "useLocalOrient", text="Use Source Local")
 
 class BrickDetailsPanel(Panel):
     bl_space_type  = "VIEW_3D"

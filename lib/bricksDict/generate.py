@@ -339,9 +339,18 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
                 # if current location is inside (-1) and adjacent location is out of bounds, current location is shell (1)
-                if ((((z == len(coordMatrix[0][0])-1 or brickFreqMatrix[x][y][z+1] == 0) or (z == 0 or brickFreqMatrix[x][y][z-1] == 0)) and ("z" not in axes)) or# or cm.verifyExposure)) or
-                    (((y == len(coordMatrix[0])-1 or brickFreqMatrix[x][y+1][z] == 0) or (y == 0 or brickFreqMatrix[x][y-1][z] == 0)) and ("y" not in axes)) or# or cm.verifyExposure)) or
-                    (((x == len(coordMatrix)-1 or brickFreqMatrix[x+1][y][z] == 0) or (x == 0 or brickFreqMatrix[x-1][y][z] == 0))) and ("x" not in axes)):# or cm.verifyExposure)):
+                if (("z" not in axes and
+                     (z in [0, len(coordMatrix[0][0])-1] or
+                      brickFreqMatrix[x][y][z+1] == 0 or
+                      brickFreqMatrix[x][y][z-1] == 0)) or
+                    ("y" not in axes and
+                     (y in [0, len(coordMatrix[0])-1] or
+                      brickFreqMatrix[x][y+1][z] == 0 or
+                      brickFreqMatrix[x][y-1][z] == 0)) or
+                    ("x" not in axes and
+                     (x in [0, len(coordMatrix)-1] or
+                      brickFreqMatrix[x+1][y][z] == 0 or
+                      brickFreqMatrix[x-1][y][z] == 0))):
                     if brickFreqMatrix[x][y][z] == -1:
                         brickFreqMatrix[x][y][z] = 1
                         # TODO: set faceIdxMatrix value to nearest shell value using some sort of built in nearest poly to point function
@@ -382,43 +391,18 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 for z in range(len(coordMatrix[0][0])):
                     if brickFreqMatrix[x][y][z] == -1:
                         try:
-                            origVal = brickFreqMatrix[x][y][z]
-                            brickFreqMatrix[x][y][z] = j
-                            missed = False
-                            if j == 0.99:
-                                if brickFreqMatrix[x+1][y][z] == 1:
-                                    setNF(cm.matShellDepth, j, (x+1,y,z), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x-1][y][z] == 1:
-                                    setNF(cm.matShellDepth, j, (x-1,y,z), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x][y+1][z] == 1:
-                                    setNF(cm.matShellDepth, j, (x,y+1,z), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x][y-1][z] == 1:
-                                    setNF(cm.matShellDepth, j, (x,y-1,z), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x][y][z+1] == 1:
-                                    setNF(cm.matShellDepth, j, (x,y,z+1), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x][y][z-1] == 1:
-                                    setNF(cm.matShellDepth, j, (x,y,z-1), (x,y,z), faceIdxMatrix)
-                                else:
-                                    brickFreqMatrix[x][y][z] = origVal
-                                    missed = True
-                            else:
-                                if brickFreqMatrix[x+1][y][z] == round(j + 0.01,2):
-                                    setNF(cm.matShellDepth, j, (x+1,y,z), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x-1][y][z] == round(j + 0.01,2):
-                                    setNF(cm.matShellDepth, j, (x-1,y,z), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x][y+1][z] == round(j + 0.01,2):
-                                    setNF(cm.matShellDepth, j, (x,y+1,z), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x][y-1][z] == round(j + 0.01,2):
-                                    setNF(cm.matShellDepth, j, (x,y-1,z), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x][y][z+1] == round(j + 0.01,2):
-                                    setNF(cm.matShellDepth, j, (x,y,z+1), (x,y,z), faceIdxMatrix)
-                                elif brickFreqMatrix[x][y][z-1] == round(j + 0.01,2):
-                                    setNF(cm.matShellDepth, j, (x,y,z-1), (x,y,z), faceIdxMatrix)
-                                else:
-                                    brickFreqMatrix[x][y][z] = origVal
-                                    missed = True
-                            if not missed:
-                                gotOne = True
+                            idxsToCheck = [(x+1, y, z),
+                                           (x-1, y, z),
+                                           (x, y+1, z),
+                                           (x, y-1, z),
+                                           (x, y, z+1),
+                                           (x, y, z-1)]
+                            for idxs in idxsToCheck:
+                                if brickFreqMatrix[idxs[0]][idxs[1]][idxs[2]] == round(j + 0.01,2):
+                                    brickFreqMatrix[x][y][z] = j
+                                    setNF(cm.matShellDepth, j, idxs, (x,y,z), faceIdxMatrix)
+                                    gotOne = True
+                                    break
                         except Exception as e:
                             print(e)
                             pass

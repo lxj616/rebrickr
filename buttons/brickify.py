@@ -102,9 +102,9 @@ class RebrickrBrickify(bpy.types.Operator):
                     group = bpy.data.groups.get(n)
                     if group is not None:
                         bpy.data.groups.remove(group)
-                if self.sourceOrig is not None:
-                    self.sourceOrig.protected = False
-                    select(self.sourceOrig, active=self.sourceOrig)
+                if self.source is not None:
+                    self.source.protected = False
+                    select(self.source, active=self.source)
                 cm.animated = previously_animated
                 cm.modelCreated = previously_model_created
             print()
@@ -124,76 +124,370 @@ class RebrickrBrickify(bpy.types.Operator):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         self.action = getAction(cm)
-        self.sourceOrig = self.getObjectToBrickify()
+        self.source = self.getObjectToBrickify()
 
     #############################################
     # class methods
 
-    def getObjectToBrickify(self):
+    @timed_call('Total Time Elapsed')
+    def runBrickify(self, context):
+        # set up variables
+        scn = context.scene
+        scn.Rebrickr_runningOperation = True
+        cm = scn.cmlist[scn.cmlist_index]
+        self.undo_stack.iterateStates(cm)
+        n = cm.source_name
+        previously_animated = cm.animated
+        previously_model_created = cm.modelCreated
+        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+
+        # get source and initialize values
+        source = self.getObjectToBrickify()
+        source["old_parent"] = ""
+        source.cmlist_id = cm.id
+
+        # check if matrix is dirty
+        if cm.matrixIsDirty:
+            if not matrixReallyIsDirty(cm) and getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)[1]:
+                cm.matrixIsDirty = False
+
+        if not self.isValid(source, Rebrickr_bricks_gn):
+            return {"CANCELLED"}
+
+        if self.action not in ["ANIMATE", "UPDATE_ANIM"]:
+            self.brickifyModel()
+        else:
+            self.brickifyAnimation()
+            cm.animIsDirty = False
+
+        if self.action in ["CREATE", "ANIMATE"]:
+            source.name = cm.source_name + " (DO NOT RENAME)"
+
+        # set cmlist_id for all created objects
+        for obj_name in self.createdObjects:
+            obj = bpy.data.objects.get(obj_name)
+            if obj is not None: obj.cmlist_id = cm.id
+
+        # # set final variables
+        cm.lastLogoResolution = cm.logoResolution
+        cm.lastLogoDetail = cm.logoDetail
+        cm.lastSplitModel = cm.splitModel
+        cm.lastBrickType = cm.brickType
+        cm.lastMaterialType = cm.materialType
+        cm.lastShellThickness = cm.shellThickness
+        cm.lastMatrixSettings = getMatrixSettings()
+        cm.materialIsDirty = False
+        cm.brickMaterialsAreDirty = False
+        cm.modelIsDirty = False
+        cm.buildIsDirty = False
+        cm.bricksAreDirty = False
+        cm.matrixIsDirty = False
+        cm.internalIsDirty = False
+        scn.Rebrickr_runningOperation = False
+
+        # apply random materials
+        if cm.materialType == "Random":
+            bricks = getBricks()
+            RebrickrApplyMaterial.applyRandomMaterial(context, bricks)
+
+        # unlink source from scene and link to safe scene
+        if source.name in scn.objects.keys():
+            safeUnlink(source, hide=False)
+
+        disableRelationshipLines()
+
+    def brickifyModel(self):
+        """ create brick model """
+        # set up variables
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        if self.action in ["UPDATE_MODEL", "UPDATE_ANIM"]:
-            objToBrickify = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
-        elif self.action in ["CREATE", "ANIMATE"]:
-            objToBrickify = bpy.data.objects.get(cm.source_name)
-            if objToBrickify is None:
-                objToBrickify = bpy.context.active_object
+        origFrame = None
+        source = None
+        n = cm.source_name
+        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+        Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
+
+        # get or create parent group
+        pGroup = bpy.data.groups.get(Rebrickr_parent_on)
+        if pGroup is None:
+            pGroup = bpy.data.groups.new(Rebrickr_parent_on)
+            self.createdGroups.append(pGroup.name)
+
+        if self.action == "CREATE":
+            # set modelCreatedOnFrame
+            cm.modelCreatedOnFrame = scn.frame_current
         else:
-            objToBrickify = bpy.data.objects.get(cm.source_name)
-        return objToBrickify
+            origFrame = scn.frame_current
+            scn.frame_set(cm.modelCreatedOnFrame)
 
-    def getParent(self, Rebrickr_parent_on, loc):
-        m = bpy.data.meshes.new(Rebrickr_parent_on + "_mesh")
-        parent = bpy.data.objects.new(Rebrickr_parent_on, m)
-        parent.location = loc
-        safeScn = getSafeScn()
-        safeScn.objects.link(parent)
-        return parent
+        if self.action == "CREATE":
+            # get origin location for source
+            previous_origin = self.source.matrix_world.to_translation().to_tuple()
 
-    @classmethod
-    def getLogo(self, cm):
-        if cm.brickType != "Custom":
-            if cm.logoDetail == "LEGO Logo":
-                refLogo = self.getLegoLogo(self)
-            else:
-                refLogo = bpy.data.objects.get(cm.logoObjectName)
+        # if there are no changes to apply, simply return "FINISHED"
+        if self.action in ["UPDATE_MODEL"] and not updateCanRun("MODEL"):
+            return{"FINISHED"}
+
+        sto_scn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
+        if sto_scn is not None:
+            sto_scn.update()
+
+        # delete old bricks if present
+        if self.action in ["UPDATE_MODEL"]:
+            # skip source, dupes, and parents
+            RebrickrDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
         else:
-            refLogo = None
-        return refLogo
+            storeTransformData(None)
 
-    def getLegoLogo(self):
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        if self.action == "CREATE":
+            # create dupes group
+            Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
+            dGroup = bpy.data.groups.new(Rebrickr_source_dupes_gn)
+            self.createdGroups.append(dGroup.name)
+            # duplicate source and add duplicate to group
+            select(self.source, active=self.source)
+            bpy.ops.object.duplicate()
+            sourceDup = scn.objects.active
+            dGroup.objects.link(sourceDup)
+            select(sourceDup, active=sourceDup)
+            sourceDup.name = self.source.name + "_duplicate"
+            if cm.useLocalOrient:
+                sourceDup.rotation_mode = "XYZ"
+                sourceDup.rotation_euler = Euler((0,0,0), "XYZ")
+            self.createdObjects.append(sourceDup.name)
+            # set up sourceDup["old_parent"] and remove sourceDup parent
+            sourceDup["frame_parent_cleared"] = -1
+            select(sourceDup, active=sourceDup)
+            if sourceDup.parent is not None:
+                sourceDup["old_parent"] = sourceDup.parent.name
+                sourceDup["frame_parent_cleared"] = scn.frame_current
+                bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+            # apply shape keys if existing
+            shapeKeys = sourceDup.data.shape_keys
+            if shapeKeys is not None and len(shapeKeys.key_blocks) > 0:
+                select(sourceDup, active=sourceDup)
+                bpy.ops.object.shape_key_add(from_mix=True)
+                for i in range(len(shapeKeys.key_blocks)):
+                    sourceDup.shape_key_remove(sourceDup.data.shape_keys.key_blocks[0])
+                # bpy.ops.object.shape_key_remove(all=True)
+            # list modifiers that need to be applied
+            for mod in sourceDup.modifiers:
+                if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"] and mod.show_viewport:
+                    try:
+                        bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
+                    except:
+                        mod.show_viewport = False
+                if mod.type == "ARMATURE":
+                    cm.armature = True
+                else:
+                    cm.armature = False
+
+            # apply transformation data
+            if self.action == "CREATE":
+                self.source["previous_location"] = self.source.location.to_tuple()
+            self.source.rotation_mode = "XYZ"
+            self.source["previous_rotation"] = tuple(self.source.rotation_euler)
+            self.source["previous_scale"] = self.source.scale.to_tuple()
+            select(sourceDup, active=sourceDup)
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            scn.update()
+        else:
+            # get previously created source duplicate
+            sourceDup = bpy.data.objects.get(n + "_duplicate")
+        # if duplicate not created, sourceDup is just original source
+        if sourceDup is None:
+            sourceDup = self.source
+
+        # link sourceDup if it isn't in scene
+        if sourceDup.name not in scn.objects.keys():
+            safeLink(sourceDup)
+            scn.update()
+
+        # get sourceDup_details and dimensions
+        sourceDup_details, dimensions = getDetailsAndBounds(sourceDup)
+
+        if self.action == "CREATE":
+            # set sourceDup model height for display in UI
+            cm.modelHeight = sourceDup_details.z.distance
+
+        # get parent object
+        parent = bpy.data.objects.get(Rebrickr_parent_on)
+        # if parent doesn't exist, get parent with new location
+        parentLoc = (sourceDup_details.x.mid, sourceDup_details.y.mid, sourceDup_details.z.mid)
+        if parent is None:
+            parent = self.getParent(Rebrickr_parent_on, parentLoc)
+            cm.parent_name = parent.name
+            pGroup.objects.link(parent)
+        self.createdObjects.append(parent.name)
+
         # update refLogo
-        if cm.logoDetail == "None":
-            refLogo = None
-        else:
-            decimate = False
-            r = cm.logoResolution
-            refLogoImport = bpy.data.objects.get("Rebrickr_refLogo")
-            if refLogoImport is not None:
-                refLogo = bpy.data.objects.get("Rebrickr_refLogo_%(r)s" % locals())
-                if refLogo is None:
-                    refLogo = bpy.data.objects.new("Rebrickr_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
-                    decimate = True
-            else:
-                # import refLogo and add to group
-                refLogoImport = importLogo()
-                refLogoImport.name = "Rebrickr_refLogo"
-                safeUnlink(refLogoImport)
-                refLogo = bpy.data.objects.new("Rebrickr_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
-                decimate = True
-            # decimate refLogo
-            # TODO: Speed this up, if possible
-            if refLogo is not None and decimate and cm.logoResolution < 1:
-                dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
-                dMod.ratio = cm.logoResolution * 1.6
-                scn.objects.link(refLogo)
-                select(refLogo, active=refLogo)
-                bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
-                safeUnlink(refLogo)
+        refLogo = self.getLogo(cm)
 
-        return refLogo
+        # create new bricks
+        self.runCreateNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, self.action)
+
+        bGroup = bpy.data.groups.get(Rebrickr_bricks_gn) # redefine bGroup since it was removed
+        if bGroup is not None:
+            self.transformBricks(bGroup, cm, parent, self.source, self.action)
+
+        # unlink source duplicate if created
+        if sourceDup != self.source and sourceDup.name in scn.objects.keys():
+            safeUnlink(sourceDup)
+
+        # add bevel if it was previously added
+        if self.action == "UPDATE_MODEL" and cm.bevelAdded:
+            bricks = getBricks()
+            RebrickrBevel.runBevelAction(bricks, cm)
+
+        cm.modelCreated = True
+
+        cm.lastSourceMid = listToStr(parentLoc)
+
+        if origFrame is not None:
+            scn.frame_set(origFrame)
+
+    def brickifyAnimation(self):
+        """ create brick animation """
+        # set up variables
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+        Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
+        Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
+        sceneCurFrame = scn.frame_current
+        objsToSelect = []
+
+        if self.action == "UPDATE_ANIM":
+            safeLink(self.source)
+
+        # if there are no changes to apply, simply return "FINISHED"
+        self.updatedFramesOnly = False
+        if self.action == "UPDATE_ANIM" and not updateCanRun("ANIMATION"):
+            if cm.animIsDirty:
+                self.updatedFramesOnly = True
+            else:
+                return "FINISHED"
+
+        if (self.action == "ANIMATE" or cm.matrixIsDirty or cm.animIsDirty) and not self.updatedFramesOnly:
+            Caches.clearCache()
+
+        if cm.splitModel:
+            cm.splitModel = False
+
+        # delete old bricks if present
+        if self.action == "UPDATE_ANIM":
+            preservedFrames = None
+            if self.updatedFramesOnly:
+                # preserve duplicates, parents, and bricks for frames that haven't changed
+                preservedFrames = [cm.startFrame, cm.stopFrame]
+            RebrickrDelete.cleanUp("ANIMATION", skipDupes=not self.updatedFramesOnly, skipParents=not self.updatedFramesOnly, preservedFrames=preservedFrames)
+            self.source.name = self.source.name + " (DO NOT RENAME)"
+
+        # get or create duplicate and parent groups
+        dGroup = bpy.data.groups.get(Rebrickr_source_dupes_gn)
+        if dGroup is None:
+            dGroup = bpy.data.groups.new(Rebrickr_source_dupes_gn)
+            self.createdGroups.append(dGroup.name)
+        pGroup = bpy.data.groups.get(Rebrickr_parent_on)
+        if pGroup is None:
+            pGroup = bpy.data.groups.new(Rebrickr_parent_on)
+            self.createdGroups.append(pGroup.name)
+
+        # get parent object
+        parent0 = bpy.data.objects.get(Rebrickr_parent_on)
+        if parent0 is None:
+            parent0 = self.getParent(Rebrickr_parent_on, self.source.location.to_tuple())
+            pGroup.objects.link(parent0)
+            cm.parent_name = parent0.name
+        self.createdObjects.append(parent0.name)
+
+        # update refLogo
+        refLogo = self.getLogo(cm)
+
+        # begin drawing status to cursor
+        wm = bpy.context.window_manager
+        wm.progress_begin(0, cm.stopFrame + 1 - cm.startFrame)
+
+        # prepare duplicate objects for animation
+        duplicates = self.getDuplicateObjects(dGroup, cm.source_name, cm.startFrame, cm.stopFrame)
+
+        # iterate through frames of animation and generate Brick Model
+        for curFrame in range(cm.startFrame, cm.stopFrame + 1):
+
+            if self.updatedFramesOnly and cm.lastStartFrame <= curFrame and curFrame <= cm.lastStopFrame:
+                print("skipped frame %(curFrame)s" % locals())
+                continue
+            scn.frame_set(curFrame)
+            # get duplicated source
+            source = duplicates[curFrame]["obj"]
+
+            # get source_details and dimensions
+            source_details, dimensions = getDetailsAndBounds(source)
+
+            if self.action == "ANIMATE":
+                # set source model height for display in UI
+                cm.modelHeight = source_details.z.distance
+
+            # set up parent for this layer
+            # TODO: Remove these from memory in the delete function, or don't use them at all
+            pGroup = bpy.data.groups[Rebrickr_parent_on] # redefine pGroup since it was removed
+            parent = bpy.data.objects.get(Rebrickr_parent_on + "_frame_" + str(curFrame))
+            if parent is None:
+                m = bpy.data.meshes.new(Rebrickr_parent_on + "_frame_" + str(curFrame) + "_mesh")
+                parent = bpy.data.objects.new(Rebrickr_parent_on + "_frame_" + str(curFrame), m)
+                parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
+                parent.parent = parent0
+                pGroup.objects.link(parent)
+                scn.objects.link(parent)
+                scn.update()
+                safeUnlink(parent)
+                self.createdObjects.append(parent)
+
+            # create new bricks
+            try:
+                group_name = self.runCreateNewBricks(source, parent, source_details, dimensions, refLogo, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame)
+                self.createdGroups.append(group_name)
+            except KeyboardInterrupt:
+                self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
+                if curFrame != cm.startFrame:
+                    wm.progress_end()
+                    cm.lastStartFrame = cm.startFrame
+                    cm.lastStopFrame = curFrame
+                    scn.frame_set(sceneCurFrame)
+                    cm.animated = True
+                return
+
+            wm.progress_update(curFrame-cm.startFrame)
+            print("completed frame " + str(curFrame))
+
+        # prepare bricks to be displayed
+        for curFrame in range(cm.startFrame, cm.stopFrame + 1):
+            group_name = "Rebrickr_%(n)s_bricks_frame_%(curFrame)s" % locals()
+            for obj in bpy.data.groups[group_name].objects:
+                if (curFrame == cm.startFrame and sceneCurFrame < cm.startFrame) or curFrame == sceneCurFrame or (curFrame == cm.stopFrame and sceneCurFrame > cm.stopFrame):
+                    objsToSelect = bpy.data.groups[group_name].objects
+                else:
+                    obj.hide = True
+                    obj.hide_render = True
+                # lock location, rotation, and scale of created bricks
+                obj.lock_location = [True, True, True]
+                obj.lock_rotation = [True, True, True]
+                obj.lock_scale    = [True, True, True]
+                # match brick layers to source layers
+                obj.layers = self.source.layers
+
+        for obj in objsToSelect:
+            obj.hide = False
+            obj.hide_render = False
+            select(obj, active=obj)
+
+        wm.progress_end()
+        cm.lastStartFrame = cm.startFrame
+        cm.lastStopFrame = cm.stopFrame
+        scn.frame_set(sceneCurFrame)
+
+        cm.animated = True
 
     def runCreateNewBricks(self, source, parent, source_details, dimensions, refLogo, action, curFrame=None, sceneCurFrame=None):
         group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, action, curFrame=curFrame, sceneCurFrame=sceneCurFrame)
@@ -403,87 +697,143 @@ class RebrickrBrickify(bpy.types.Operator):
 
         return True
 
-    def transformBricks(self, bGroup, cm, parent):
-            # if model was split but isn't now
-            if cm.lastSplitModel and not cm.splitModel:
-                # transfer transformation of parent to object
-                parent.rotation_mode = "XYZ"
-                for obj in bGroup.objects:
-                    obj.location = parent.location
-                    obj.rotation_mode = parent.rotation_mode
-                    obj.rotation_euler = parent.rotation_euler
-                    obj.scale = parent.scale
-                # reset parent transformation
-                parent.location = (0,0,0)
-                parent.rotation_euler = Euler((0,0,0), "XYZ")
-                parent.scale = (1,1,1)
-            # if model is not split
-            elif not cm.splitModel:
-                # apply stored transformation to bricks
-                applyTransformData(list(bGroup.objects))
-            # if model wasn't split but is now
-            elif not cm.lastSplitModel:
-                # apply stored transformation to parent of bricks
-                applyTransformData(parent)
-            obj = bGroup.objects[0]
-            # if not split model
-            if not cm.splitModel:
-                # select the bricks object
-                select(obj, active=obj)
-                # if the model contains armature, lock the location, rotation, and scale
-                if cm.armature:
-                    # lock location, rotation, and scale of created bricks
-                    obj.lock_location = [True, True, True]
-                    obj.lock_rotation = [True, True, True]
-                    obj.lock_scale    = [True, True, True]
+    def transformBricks(self, bGroup, cm, parent, source, action):
+        # if using local orientation and creating model for first time
+        if cm.useLocalOrient and action == "CREATE":
+            # if model was split
+            if cm.splitModel:
+                obj = parent
+            # if model wasn't split
             else:
-                # set active object to obj (keeps original selection)
-                select(None, active=obj)
-            # match brick layers to source layers
-            obj.layers = self.sourceOrig.layers
+                obj = bGroup.objects[0]
+            obj.rotation_mode = "XYZ"
+            obj.rotation_euler = source.rotation_euler
+        # if model was split but isn't now
+        if cm.lastSplitModel and not cm.splitModel:
+            # transfer transformation of parent to object
+            parent.rotation_mode = "XYZ"
+            for obj in bGroup.objects:
+                obj.location = parent.location
+                obj.rotation_mode = parent.rotation_mode
+                obj.rotation_euler.rotate(parent.rotation_euler)
+                obj.scale = parent.scale
+            # reset parent transformation
+            parent.location = (0,0,0)
+            parent.rotation_euler = Euler((0,0,0), "XYZ")
+            cm.transformScale = 1
+            parent.scale = (1,1,1)
+        # if model is not split
+        elif not cm.splitModel:
+            # apply stored transformation to bricks
+            applyTransformData(list(bGroup.objects))
+        # if model wasn't split but is now
+        elif not cm.lastSplitModel:
+            # apply stored transformation to parent of bricks
+            applyTransformData(parent)
+        obj = bGroup.objects[0]
+        # if not split model
+        if not cm.splitModel:
+            # select the bricks object
+            select(obj, active=obj)
+            # if the model contains armature, lock the location, rotation, and scale
+            if cm.armature:
+                # lock location, rotation, and scale of created bricks
+                obj.lock_location = [True, True, True]
+                obj.lock_rotation = [True, True, True]
+                obj.lock_scale    = [True, True, True]
+        else:
+            # set active object to obj (keeps original selection)
+            select(None, active=obj)
+        # match brick layers to source layers
+        obj.layers = self.source.layers
+
+    @classmethod
+    def getLogo(self, cm):
+        if cm.brickType != "Custom":
+            if cm.logoDetail == "LEGO Logo":
+                refLogo = self.getLegoLogo(self)
+            else:
+                refLogo = bpy.data.objects.get(cm.logoObjectName)
+        else:
+            refLogo = None
+        return refLogo
+
+    def getLegoLogo(self):
+        scn = bpy.context.scene
+        cm = scn.cmlist[scn.cmlist_index]
+        # update refLogo
+        if cm.logoDetail == "None":
+            refLogo = None
+        else:
+            decimate = False
+            r = cm.logoResolution
+            refLogoImport = bpy.data.objects.get("Rebrickr_refLogo")
+            if refLogoImport is not None:
+                refLogo = bpy.data.objects.get("Rebrickr_refLogo_%(r)s" % locals())
+                if refLogo is None:
+                    refLogo = bpy.data.objects.new("Rebrickr_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
+                    decimate = True
+            else:
+                # import refLogo and add to group
+                refLogoImport = importLogo()
+                refLogoImport.name = "Rebrickr_refLogo"
+                safeUnlink(refLogoImport)
+                refLogo = bpy.data.objects.new("Rebrickr_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
+                decimate = True
+            # decimate refLogo
+            # TODO: Speed this up, if possible
+            if refLogo is not None and decimate and cm.logoResolution < 1:
+                dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
+                dMod.ratio = cm.logoResolution * 1.6
+                scn.objects.link(refLogo)
+                select(refLogo, active=refLogo)
+                bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
+                safeUnlink(refLogo)
+
+        return refLogo
 
     def getDuplicateObjects(self, dGroup, source_name, startFrame, stopFrame):
-        """ returns list of duplicates from sourceOrig with all traits applied """
+        """ returns list of duplicates from self.source with all traits applied """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
 
         duplicates = {}
 
-        lastObj = self.sourceOrig
+        lastObj = self.source
         for curFrame in range(startFrame, stopFrame + 1):
-            source = None
+            sourceDup = None
             if self.action == "UPDATE_ANIM":
                 # retrieve previously duplicated source
-                source = bpy.data.objects.get("Rebrickr_" + source_name + "_frame_" + str(curFrame))
-            if source is not None:
-                duplicates[curFrame] = {"obj":source, "isReused":True}
+                sourceDup = bpy.data.objects.get("Rebrickr_" + source_name + "_frame_" + str(curFrame))
+            if sourceDup is not None:
+                duplicates[curFrame] = {"obj":sourceDup, "isReused":True}
                 continue
             # duplicate source for current frame
             select(lastObj, active=lastObj)
             bpy.ops.object.duplicate()
-            source = scn.objects.active
-            source.name = "Rebrickr_" + cm.source_name + "_frame_" + str(curFrame)
-            if source.name not in dGroup.objects.keys():
-                dGroup.objects.link(source)
-            duplicates[curFrame] = {"obj":source, "isReused":False}
-            lastObj = source
+            sourceDup = scn.objects.active
+            sourceDup.name = "Rebrickr_" + cm.source_name + "_frame_" + str(curFrame)
+            if sourceDup.name not in dGroup.objects.keys():
+                dGroup.objects.link(sourceDup)
+            duplicates[curFrame] = {"obj":sourceDup, "isReused":False}
+            lastObj = sourceDup
 
         for curFrame in range(startFrame, stopFrame + 1):
             if duplicates[curFrame]["isReused"]:
                 continue
-            source = duplicates[curFrame]["obj"]
-            self.createdObjects.append(source.name)
-            if source.parent is not None:
+            sourceDup = duplicates[curFrame]["obj"]
+            self.createdObjects.append(sourceDup.name)
+            if sourceDup.parent is not None:
                 # apply parent transformation
-                select(source, active=source)
+                select(sourceDup, active=sourceDup)
                 bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
             # apply shape keys if existing
-            shapeKeys = source.data.shape_keys
+            shapeKeys = sourceDup.data.shape_keys
             if shapeKeys is not None and len(shapeKeys.key_blocks) > 0:
-                select(source, active=source)
+                select(sourceDup, active=sourceDup)
                 bpy.ops.object.shape_key_add(from_mix=True)
                 for i in range(len(shapeKeys.key_blocks)):
-                    source.shape_key_remove(source.data.shape_keys.key_blocks[0])
+                    sourceDup.shape_key_remove(sourceDup.data.shape_keys.key_blocks[0])
                 # bpy.ops.object.shape_key_remove(all=True)
             # apply modifiers
             for mod in source.modifiers:
@@ -493,12 +843,12 @@ class RebrickrBrickify(bpy.types.Operator):
                     except:
                         mod.show_viewport = False
 
-        # store lastObj transform data to sourceOrig
-        if lastObj != self.sourceOrig:
-            self.sourceOrig["previous_location"] = lastObj.location.to_tuple()
+        # store lastObj transform data to source
+        if lastObj != self.source:
+            self.source["previous_location"] = lastObj.location.to_tuple()
             lastObj.rotation_mode = "XYZ"
-            self.sourceOrig["previous_rotation"] = tuple(lastObj.rotation_euler)
-            self.sourceOrig["previous_scale"] = lastObj.scale.to_tuple()
+            self.source["previous_rotation"] = tuple(lastObj.rotation_euler)
+            self.source["previous_scale"] = lastObj.scale.to_tuple()
 
             # bake & apply cloth and soft body modifiers
             for mod in lastObj.modifiers:
@@ -514,9 +864,9 @@ class RebrickrBrickify(bpy.types.Operator):
         for curFrame in range(startFrame, stopFrame + 1):
             if duplicates[curFrame]["isReused"]:
                 continue
-            source = duplicates[curFrame]["obj"]
+            sourceDup = duplicates[curFrame]["obj"]
             scn.frame_set(curFrame)
-            select(source, active=source)
+            select(sourceDup, active=sourceDup)
             # apply baked cloth and soft body modifiers
             for mod in lastObj.modifiers:
                 if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
@@ -525,374 +875,38 @@ class RebrickrBrickify(bpy.types.Operator):
                     except:
                         mod.show_viewport = False
             # apply animated transform data
-            source.matrix_world = self.sourceOrig.matrix_world
-            source.animation_data_clear()
+            sourceDup.matrix_world = self.source.matrix_world
+            sourceDup.animation_data_clear()
             scn.update()
-            self.sourceOrig["previous_location"] = source.location.to_tuple()
-            source.rotation_mode = "XYZ"
-            self.sourceOrig["previous_rotation"] = tuple(source.rotation_euler)
-            self.sourceOrig["previous_scale"] = source.scale.to_tuple()
-            select(source, active=source)
+            self.source["previous_location"] = sourceDup.location.to_tuple()
+            sourceDup.rotation_mode = "XYZ"
+            self.source["previous_rotation"] = tuple(sourceDup.rotation_euler)
+            self.source["previous_scale"] = sourceDup.scale.to_tuple()
+            select(sourceDup, active=sourceDup)
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             scn.update()
-            safeUnlink(source)
+            safeUnlink(sourceDup)
         return duplicates
 
-    def brickifyAnimation(self):
-        """ create brick animation """
-        # set up variables
+    def getObjectToBrickify(self):
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
-        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-        Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
-        Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
-        sceneCurFrame = scn.frame_current
-        objsToSelect = []
-
-        if self.action == "UPDATE_ANIM":
-            safeLink(self.sourceOrig)
-
-        # if there are no changes to apply, simply return "FINISHED"
-        self.updatedFramesOnly = False
-        if self.action == "UPDATE_ANIM" and not updateCanRun("ANIMATION"):
-            if cm.animIsDirty:
-                self.updatedFramesOnly = True
-            else:
-                return "FINISHED"
-
-        if (self.action == "ANIMATE" or cm.matrixIsDirty or cm.animIsDirty) and not self.updatedFramesOnly:
-            Caches.clearCache()
-
-        if cm.splitModel:
-            cm.splitModel = False
-
-        # delete old bricks if present
-        if self.action == "UPDATE_ANIM":
-            preservedFrames = None
-            if self.updatedFramesOnly:
-                # preserve duplicates, parents, and bricks for frames that haven't changed
-                preservedFrames = [cm.startFrame, cm.stopFrame]
-            RebrickrDelete.cleanUp("ANIMATION", skipDupes=not self.updatedFramesOnly, skipParents=not self.updatedFramesOnly, preservedFrames=preservedFrames)
-            self.sourceOrig.name = self.sourceOrig.name + " (DO NOT RENAME)"
-
-        # get or create duplicate and parent groups
-        dGroup = bpy.data.groups.get(Rebrickr_source_dupes_gn)
-        if dGroup is None:
-            dGroup = bpy.data.groups.new(Rebrickr_source_dupes_gn)
-            self.createdGroups.append(dGroup.name)
-        pGroup = bpy.data.groups.get(Rebrickr_parent_on)
-        if pGroup is None:
-            pGroup = bpy.data.groups.new(Rebrickr_parent_on)
-            self.createdGroups.append(pGroup.name)
-
-        # get parent object
-        parent0 = bpy.data.objects.get(Rebrickr_parent_on)
-        if parent0 is None:
-            parent0 = self.getParent(Rebrickr_parent_on, self.sourceOrig.location.to_tuple())
-            pGroup.objects.link(parent0)
-            cm.parent_name = parent0.name
-        self.createdObjects.append(parent0.name)
-
-        # update refLogo
-        refLogo = self.getLogo(cm)
-
-        # begin drawing status to cursor
-        wm = bpy.context.window_manager
-        wm.progress_begin(0, cm.stopFrame + 1 - cm.startFrame)
-
-        # prepare duplicate objects for animation
-        duplicates = self.getDuplicateObjects(dGroup, cm.source_name, cm.startFrame, cm.stopFrame)
-
-        # iterate through frames of animation and generate Brick Model
-        for curFrame in range(cm.startFrame, cm.stopFrame + 1):
-
-            if self.updatedFramesOnly and cm.lastStartFrame <= curFrame and curFrame <= cm.lastStopFrame:
-                print("skipped frame %(curFrame)s" % locals())
-                continue
-            scn.frame_set(curFrame)
-            # get duplicated source
-            source = duplicates[curFrame]["obj"]
-
-            # get source_details and dimensions
-            source_details, dimensions = getDetailsAndBounds(source)
-
-            if self.action == "ANIMATE":
-                # set source model height for display in UI
-                cm.modelHeight = source_details.z.distance
-
-            # set up parent for this layer
-            # TODO: Remove these from memory in the delete function, or don't use them at all
-            pGroup = bpy.data.groups[Rebrickr_parent_on] # redefine pGroup since it was removed
-            parent = bpy.data.objects.get(Rebrickr_parent_on + "_frame_" + str(curFrame))
-            if parent is None:
-                m = bpy.data.meshes.new(Rebrickr_parent_on + "_frame_" + str(curFrame) + "_mesh")
-                parent = bpy.data.objects.new(Rebrickr_parent_on + "_frame_" + str(curFrame), m)
-                parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
-                parent.parent = parent0
-                pGroup.objects.link(parent)
-                scn.objects.link(parent)
-                scn.update()
-                safeUnlink(parent)
-                self.createdObjects.append(parent)
-
-            # create new bricks
-            try:
-                group_name = self.runCreateNewBricks(source, parent, source_details, dimensions, refLogo, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame)
-                self.createdGroups.append(group_name)
-            except KeyboardInterrupt:
-                self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
-                if curFrame != cm.startFrame:
-                    wm.progress_end()
-                    cm.lastStartFrame = cm.startFrame
-                    cm.lastStopFrame = curFrame
-                    scn.frame_set(sceneCurFrame)
-                    cm.animated = True
-                return
-
-            wm.progress_update(curFrame-cm.startFrame)
-            print("completed frame " + str(curFrame))
-
-        # prepare bricks to be displayed
-        for curFrame in range(cm.startFrame, cm.stopFrame + 1):
-            group_name = "Rebrickr_%(n)s_bricks_frame_%(curFrame)s" % locals()
-            for obj in bpy.data.groups[group_name].objects:
-                if (curFrame == cm.startFrame and sceneCurFrame < cm.startFrame) or curFrame == sceneCurFrame or (curFrame == cm.stopFrame and sceneCurFrame > cm.stopFrame):
-                    objsToSelect = bpy.data.groups[group_name].objects
-                else:
-                    obj.hide = True
-                    obj.hide_render = True
-                # lock location, rotation, and scale of created bricks
-                obj.lock_location = [True, True, True]
-                obj.lock_rotation = [True, True, True]
-                obj.lock_scale    = [True, True, True]
-                # match brick layers to source layers
-                obj.layers = self.sourceOrig.layers
-
-        for obj in objsToSelect:
-            obj.hide = False
-            obj.hide_render = False
-            select(obj, active=obj)
-
-        wm.progress_end()
-        cm.lastStartFrame = cm.startFrame
-        cm.lastStopFrame = cm.stopFrame
-        scn.frame_set(sceneCurFrame)
-
-        cm.animated = True
-
-    def brickifyModel(self):
-        """ create brick model """
-        # set up variables
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        origFrame = None
-        source = None
-        n = cm.source_name
-        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-        Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
-
-        # get or create parent group
-        pGroup = bpy.data.groups.get(Rebrickr_parent_on)
-        if pGroup is None:
-            pGroup = bpy.data.groups.new(Rebrickr_parent_on)
-            self.createdGroups.append(pGroup.name)
-
-        if self.action == "CREATE":
-            # set modelCreatedOnFrame
-            cm.modelCreatedOnFrame = scn.frame_current
+        if self.action in ["UPDATE_MODEL", "UPDATE_ANIM"]:
+            objToBrickify = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+        elif self.action in ["CREATE", "ANIMATE"]:
+            objToBrickify = bpy.data.objects.get(cm.source_name)
+            if objToBrickify is None:
+                objToBrickify = bpy.context.active_object
         else:
-            origFrame = scn.frame_current
-            scn.frame_set(cm.modelCreatedOnFrame)
+            objToBrickify = bpy.data.objects.get(cm.source_name)
+        return objToBrickify
 
-        if self.action == "CREATE":
-            # get origin location for source
-            previous_origin = self.sourceOrig.matrix_world.to_translation().to_tuple()
-
-        # if there are no changes to apply, simply return "FINISHED"
-        if self.action in ["UPDATE_MODEL"] and not updateCanRun("MODEL"):
-            return{"FINISHED"}
-
-        sto_scn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
-        if sto_scn is not None:
-            sto_scn.update()
-
-        # delete old bricks if present
-        if self.action in ["UPDATE_MODEL"]:
-            # skip source, dupes, and parents
-            RebrickrDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
-        else:
-            storeTransformData(None)
-
-        if self.action == "CREATE":
-            # create dupes group
-            Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
-            dGroup = bpy.data.groups.new(Rebrickr_source_dupes_gn)
-            self.createdGroups.append(dGroup.name)
-            # duplicate source and add duplicate to group
-            select(self.sourceOrig, active=self.sourceOrig)
-            bpy.ops.object.duplicate()
-            source = scn.objects.active
-            dGroup.objects.link(source)
-            select(source, active=source)
-            source.name = self.sourceOrig.name + "_duplicate"
-            self.createdObjects.append(source.name)
-            # set up source["old_parent"] and remove source parent
-            source["frame_parent_cleared"] = -1
-            select(source, active=source)
-            if source.parent is not None:
-                source["old_parent"] = source.parent.name
-                source["frame_parent_cleared"] = scn.frame_current
-                bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
-            # apply shape keys if existing
-            shapeKeys = source.data.shape_keys
-            if shapeKeys is not None and len(shapeKeys.key_blocks) > 0:
-                select(source, active=source)
-                bpy.ops.object.shape_key_add(from_mix=True)
-                for i in range(len(shapeKeys.key_blocks)):
-                    source.shape_key_remove(source.data.shape_keys.key_blocks[0])
-                # bpy.ops.object.shape_key_remove(all=True)
-            # list modifiers that need to be applied
-            for mod in source.modifiers:
-                if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"] and mod.show_viewport:
-                    try:
-                        bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
-                    except:
-                        mod.show_viewport = False
-                if mod.type == "ARMATURE":
-                    cm.armature = True
-                else:
-                    cm.armature = False
-
-            # apply transformation data
-            if self.action == "CREATE":
-                self.sourceOrig["previous_location"] = self.sourceOrig.location.to_tuple()
-            self.sourceOrig.rotation_mode = "XYZ"
-            self.sourceOrig["previous_rotation"] = tuple(self.sourceOrig.rotation_euler)
-            self.sourceOrig["previous_scale"] = self.sourceOrig.scale.to_tuple()
-            select(source, active=source)
-            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-            scn.update()
-        else:
-            # get previously greated source duplicate
-            source = bpy.data.objects.get(n + "_duplicate")
-        # if duplicate not created, source is just original source
-        if source is None:
-            source = self.sourceOrig
-
-        # link source if it isn't in scene
-        if source.name not in scn.objects.keys():
-            safeLink(source)
-            scn.update()
-
-        # get source_details and dimensions
-        source_details, dimensions = getDetailsAndBounds(source)
-
-        if self.action == "CREATE":
-            # set source model height for display in UI
-            cm.modelHeight = source_details.z.distance
-
-        # get parent object
-        parent = bpy.data.objects.get(Rebrickr_parent_on)
-        # if parent doesn't exist, get parent with new location
-        parentLoc = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
-        if parent is None:
-            parent = self.getParent(Rebrickr_parent_on, parentLoc)
-            cm.parent_name = parent.name
-            pGroup.objects.link(parent)
-        self.createdObjects.append(parent.name)
-
-        # update refLogo
-        refLogo = self.getLogo(cm)
-
-        # create new bricks
-        self.runCreateNewBricks(source, parent, source_details, dimensions, refLogo, self.action)
-
-        bGroup = bpy.data.groups.get(Rebrickr_bricks_gn) # redefine bGroup since it was removed
-        if bGroup is not None:
-            self.transformBricks(bGroup, cm, parent)
-
-        # unlink source duplicate if created
-        if source != self.sourceOrig and source.name in scn.objects.keys():
-            safeUnlink(source)
-
-        # add bevel if it was previously added
-        if self.action == "UPDATE_MODEL" and cm.bevelAdded:
-            bricks = getBricks()
-            RebrickrBevel.runBevelAction(bricks, cm)
-
-        cm.modelCreated = True
-
-        cm.lastSourceMid = listToStr(parentLoc)
-
-        if origFrame is not None:
-            scn.frame_set(origFrame)
-
-    @timed_call('Total Time Elapsed')
-    def runBrickify(self, context):
-        # set up variables
-        scn = context.scene
-        scn.Rebrickr_runningOperation = True
-        cm = scn.cmlist[scn.cmlist_index]
-        self.undo_stack.iterateStates(cm)
-        n = cm.source_name
-        previously_animated = cm.animated
-        previously_model_created = cm.modelCreated
-        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-
-        # get source and initialize values
-        source = self.getObjectToBrickify()
-        source["old_parent"] = ""
-        source.cmlist_id = cm.id
-
-        # check if matrix is dirty
-        if cm.matrixIsDirty:
-            if not matrixReallyIsDirty(cm) and getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)[1]:
-                cm.matrixIsDirty = False
-
-        if not self.isValid(source, Rebrickr_bricks_gn):
-            return {"CANCELLED"}
-
-        if self.action not in ["ANIMATE", "UPDATE_ANIM"]:
-            self.brickifyModel()
-        else:
-            self.brickifyAnimation()
-            cm.animIsDirty = False
-
-        if self.action in ["CREATE", "ANIMATE"]:
-            source.name = cm.source_name + " (DO NOT RENAME)"
-
-        # set cmlist_id for all created objects
-        for obj_name in self.createdObjects:
-            obj = bpy.data.objects.get(obj_name)
-            if obj is not None: obj.cmlist_id = cm.id
-
-        # # set final variables
-        cm.lastLogoResolution = cm.logoResolution
-        cm.lastLogoDetail = cm.logoDetail
-        cm.lastSplitModel = cm.splitModel
-        cm.lastBrickType = cm.brickType
-        cm.lastMaterialType = cm.materialType
-        cm.lastShellThickness = cm.shellThickness
-        cm.lastMatrixSettings = getMatrixSettings()
-        cm.materialIsDirty = False
-        cm.brickMaterialsAreDirty = False
-        cm.modelIsDirty = False
-        cm.buildIsDirty = False
-        cm.bricksAreDirty = False
-        cm.matrixIsDirty = False
-        cm.internalIsDirty = False
-        scn.Rebrickr_runningOperation = False
-
-        # apply random materials
-        if cm.materialType == "Random":
-            bricks = getBricks()
-            RebrickrApplyMaterial.applyRandomMaterial(context, bricks)
-
-        # unlink source from scene and link to safe scene
-        if source.name in scn.objects.keys():
-            safeUnlink(source, hide=False)
-
-        disableRelationshipLines()
+    def getParent(self, Rebrickr_parent_on, loc):
+        m = bpy.data.meshes.new(Rebrickr_parent_on + "_mesh")
+        parent = bpy.data.objects.new(Rebrickr_parent_on, m)
+        parent.location = loc
+        safeScn = getSafeScn()
+        safeScn.objects.link(parent)
+        return parent
 
     #############################################

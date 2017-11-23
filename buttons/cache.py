@@ -49,7 +49,8 @@ class Caches(bpy.types.Operator):
         self.undo_stack = UndoStack.get_instance()
         self.undo_stack.undo_push('clear_cache')
 
-    def clearCaches(self):
+    @staticmethod
+    def clearCaches():
         scn = bpy.context.scene
 
         # clear light caches
