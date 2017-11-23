@@ -34,7 +34,7 @@ from ...lib.bricksDict.functions import getDictKey
 from .undo_stack import *
 
 
-def runCreateNewBricks2(cm, bricksDict, keysToUpdate, selectCreated=True):
+def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     # get arguments for createNewBricks
     n = cm.source_name
     source = bpy.data.objects.get(n + " (DO NOT RENAME)")

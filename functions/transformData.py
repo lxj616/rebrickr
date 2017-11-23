@@ -54,29 +54,19 @@ def getTransformData():
     s = tuple(strToList(cm.modelScale, float))
     return l,r,s
 
-def applyTransformData(objList, source):
+def applyTransformData(objList):
     """ apply transform data from cm.modelLoc/Rot/Scale to objects in objList """
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
     objList = confirmList(objList)
-
     # apply matrix to objs
     for obj in objList:
         # LOCATION
         l,r,s = getTransformData()
         obj.location = obj.location + Vector(l)
         # ROTATION
-        # from transform data
         obj.rotation_mode = "XYZ"
         obj.rotation_euler.rotate(Euler(r, "XYZ"))
-        # from source
-        obj.rotation_euler.rotate(source.rotation_euler.to_matrix().inverted())
-        obj.rotation_euler.rotate(Euler(tuple(source["previous_rotation"]), "XYZ"))
         # SCALE
-        # from transform data
         osx,osy,osz = obj.scale
         obj.scale = (osx * s[0],
                      osy * s[1],
                      osz * s[2])
-        # from source
-        obj.scale -= Vector(source.scale) - Vector(source["previous_scale"])

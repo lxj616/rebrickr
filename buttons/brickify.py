@@ -215,7 +215,6 @@ class RebrickrBrickify(bpy.types.Operator):
         if bricksDict is None:
             bricksDict, loadedFromCache = getBricksDict(action, source=source, source_details=source_details, dimensions=dimensions, R=R, updateCursor=updateCursor, curFrame=curFrame)
             if curFrame == sceneCurFrame:
-                # random.choice(list(bricksDict.keys()))
                 cm.activeKeyX = 1
                 cm.activeKeyY = 1
                 cm.activeKeyZ = 1
@@ -404,26 +403,32 @@ class RebrickrBrickify(bpy.types.Operator):
 
         return True
 
-    def transformBricks(self, bGroup, cm, parent, parentLoc, updateParentLoc):
-            # transfer transformation of parent to object
+    def transformBricks(self, bGroup, cm, parent):
+            # if model was split but isn't now
             if cm.lastSplitModel and not cm.splitModel:
+                # transfer transformation of parent to object
                 parent.rotation_mode = "XYZ"
                 for obj in bGroup.objects:
                     obj.location = parent.location
                     obj.rotation_mode = parent.rotation_mode
                     obj.rotation_euler = parent.rotation_euler
                     obj.scale = parent.scale
+                # reset parent transformation
                 parent.location = (0,0,0)
                 parent.rotation_euler = Euler((0,0,0), "XYZ")
                 parent.scale = (1,1,1)
+            # if model is not split
             elif not cm.splitModel:
-                applyTransformData(list(bGroup.objects), self.sourceOrig)
-            # set transformation of brick group parent
+                # apply stored transformation to bricks
+                applyTransformData(list(bGroup.objects))
+            # if model wasn't split but is now
             elif not cm.lastSplitModel:
-                applyTransformData(parent, self.sourceOrig)
-            # if not split model, select the bricks object
+                # apply stored transformation to parent of bricks
+                applyTransformData(parent)
             obj = bGroup.objects[0]
+            # if not split model
             if not cm.splitModel:
+                # select the bricks object
                 select(obj, active=obj)
                 # if the model contains armature, lock the location, rotation, and scale
                 if cm.armature:
@@ -432,30 +437,10 @@ class RebrickrBrickify(bpy.types.Operator):
                     obj.lock_rotation = [True, True, True]
                     obj.lock_scale    = [True, True, True]
             else:
-                select(obj, active=obj, only=False)
-                obj.select = False
+                # set active object to obj (keeps original selection)
+                select(None, active=obj)
             # match brick layers to source layers
             obj.layers = self.sourceOrig.layers
-            # update location of bricks in case source mesh has been edited
-            if updateParentLoc:
-                lastSourceMid = list(map(int, strToList(cm.lastSourceMid, float)))
-                v = Vector(parentLoc) - Vector(lastSourceMid)
-                center_v = Vector((0, 0, 0))
-                v_new = v - center_v
-                if not cm.splitModel:
-                    parent.rotation_mode = "XYZ"
-                    eu1 = parent.rotation_euler
-                    v_new.rotate(eu1)
-                if not cm.lastSplitModel:
-                    bGroup.objects[0].rotation_mode = "XYZ"
-                    eu2 = bGroup.objects[0].rotation_euler
-                    v_new.rotate(eu2)
-                v_new += center_v
-                for brick in bGroup.objects:
-                    if not cm.lastSplitModel:
-                        brick.location += Vector((v_new.x * parent.scale[0] * bGroup.objects[0].scale[0], v_new.y * parent.scale[1] * bGroup.objects[0].scale[1], v_new.z * parent.scale[2] * bGroup.objects[0].scale[2]))
-                    else:
-                        brick.location += Vector((v_new.x * parent.scale[0], v_new.y * parent.scale[1], v_new.z * parent.scale[2]))
 
     def getDuplicateObjects(self, dGroup, source_name, startFrame, stopFrame):
         """ returns list of duplicates from sourceOrig with all traits applied """
@@ -706,7 +691,6 @@ class RebrickrBrickify(bpy.types.Operator):
         n = cm.source_name
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
         Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
-        updateParentLoc = False
 
         # get or create parent group
         pGroup = bpy.data.groups.get(Rebrickr_parent_on)
@@ -826,7 +810,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
         bGroup = bpy.data.groups.get(Rebrickr_bricks_gn) # redefine bGroup since it was removed
         if bGroup is not None:
-            self.transformBricks(bGroup, cm, parent, parentLoc, updateParentLoc)
+            self.transformBricks(bGroup, cm, parent)
 
         # unlink source duplicate if created
         if source != self.sourceOrig and source.name in scn.objects.keys():

@@ -168,7 +168,7 @@ class splitBricks(Operator):
                 cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
                 # draw modified bricks
                 if len(keysToUpdate) > 0:
-                    runCreateNewBricks2(cm, bricksDict, keysToUpdate)
+                    drawUpdatedBricks(cm, bricksDict, keysToUpdate)
         except:
             handle_exception()
 
@@ -237,7 +237,7 @@ class mergeBricks(Operator):
                 cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
                 # draw modified bricks
                 if len(keysToUpdate) > 0:
-                    runCreateNewBricks2(cm, bricksDict, keysToUpdate)
+                    drawUpdatedBricks(cm, bricksDict, keysToUpdate)
         except:
             handle_exception()
         return{"FINISHED"}
@@ -364,7 +364,7 @@ class setExposure(Operator):
                 cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
                 # draw modified bricks
                 if len(keysToUpdate) > 0:
-                    runCreateNewBricks2(cm, bricksDict, keysToUpdate)
+                    drawUpdatedBricks(cm, bricksDict, keysToUpdate)
 
             # select original brick
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
@@ -491,7 +491,7 @@ class drawAdjacent(Operator):
 
             # draw created bricks
             if len(keysToUpdate) > 0:
-                runCreateNewBricks2(cm, self.bricksDict, keysToUpdate, selectCreated=False)
+                drawUpdatedBricks(cm, self.bricksDict, keysToUpdate, selectCreated=False)
 
             # store bricksDict to cache
             cacheBricksDict("UPDATE_MODEL", cm, self.bricksDict)
@@ -823,7 +823,7 @@ class changeBrickType(Operator):
             # delete updated brick
             delete(obj)
             # draw updated brick
-            runCreateNewBricks2(cm, self.bricksDict, [dictKey], selectCreated=False)
+            drawUpdatedBricks(cm, self.bricksDict, [dictKey], selectCreated=False)
 
             # store bricksDict to cache
             cacheBricksDict("UPDATE_MODEL", cm, self.bricksDict)
@@ -959,7 +959,7 @@ class redrawBricks(Operator):
 
                 # draw modified bricks
                 if len(keysToUpdate) > 0:
-                    runCreateNewBricks2(cm, bricksDict, keysToUpdate)
+                    drawUpdatedBricks(cm, bricksDict, keysToUpdate)
 
             # select original brick
             orig_obj = bpy.data.objects.get(initial_active_obj_name)

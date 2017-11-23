@@ -239,7 +239,7 @@ def unhide(objList):
 
 def select(objList=[], active=None, deselect=False, only=True, scene=None):
     """ selects objs in list and deselects the rest """
-    if objList is None:
+    if objList is None and active is None:
         deselectAll()
     objList = confirmList(objList)
     try:

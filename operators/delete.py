@@ -43,7 +43,7 @@ from bpy.props import *
 from ..lib.bricksDict import *
 from ..functions.common import *
 from ..functions.general import *
-from ..buttons.customize.functions import getAdjKeysAndBrickVals, runCreateNewBricks2, createObjsD
+from ..buttons.customize.functions import getAdjKeysAndBrickVals, drawUpdatedBricks, createObjsD
 from ..buttons.customize.undo_stack import *
 from ..buttons.delete import RebrickrDelete
 from ..lib.Brick import Bricks
@@ -230,7 +230,7 @@ class delete_override(Operator):
                     brick = bpy.data.objects.get(bricksDict[k]["name"])
                     delete(brick)
                 # create new bricks at all keysToUpdate locations
-                runCreateNewBricks2(cm, bricksDict, newKeysToUpdate)
+                drawUpdatedBricks(cm, bricksDict, newKeysToUpdate)
                 iteratedStates = True
             if not lastBuildIsDirty: cm.buildIsDirty = False
             # if undo states not iterated above
