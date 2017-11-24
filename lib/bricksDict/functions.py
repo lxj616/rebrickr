@@ -41,11 +41,8 @@ def getDetailsAndBounds(source, skipDimensions=False):
     # get dimensions and bounds
     source_details = bounds(source)
     if not skipDimensions:
-        if cm.brickType == "Plates" or cm.brickType == "Bricks and Plates":
-            zScale = 0.333
-        elif cm.brickType in ["Bricks", "Custom"]:
-            zScale = 1
-        dimensions = Bricks.get_dimensions(cm.brickHeight, zScale, cm.gap)
+        zStep = getZStep(cm)
+        dimensions = Bricks.get_dimensions(cm.brickHeight, zStep/3, cm.gap)
         return source_details, dimensions
     else:
         return source_details

@@ -274,7 +274,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
                 brickSizes = [[1,1,zStep]]
 
                 # for bricks and plates, skip second and third rows on first time through
-                if BandP and timeThrough == 0:
+                if BandP and timeThrough == 0 and cm.alignBricks:
                     if lowestLoc == -1: lowestLoc = loc[2] # initializes value once
                     if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 in [1,2]: continue
 

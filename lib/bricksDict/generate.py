@@ -441,6 +441,20 @@ def getThreshold(cm):
     threshold = 1.01 - (cm.shellThickness / 100)
     return threshold
 
+def createBricksDictEntry(name, val=0, draw=False, co=(0,0,0), nearest_face=None, mat_name=None, parent_brick=None, size=None, attempted_merge=False, top_exposed=None, bot_exposed=None, type=None):
+    return {"name":name,
+            "val":val,
+            "draw":draw,
+            "co":co,
+            "nearest_face":nearest_face,
+            "mat_name":mat_name,
+            "parent_brick":parent_brick,
+            "size":size,
+            "attempted_merge":attempted_merge,
+            "top_exposed":top_exposed,
+            "bot_exposed":bot_exposed,
+            "type":type}
+
 @timed_call('Time Elapsed')
 def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     """ Make bricksDict """
@@ -493,19 +507,15 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                 bKey = listToStr([x,y,z])
                 keys.append(bKey)
                 drawBrick = brickFreqMatrix[x][y][z] >= threshold
-                bricksDict[bKey] = {
-                    "name":'Rebrickr_%(n)s_brick_%(j)s__%(bKey)s' % locals(),
-                    "val":brickFreqMatrix[x][y][z],
-                    "draw":drawBrick,
-                    "co":(co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
-                    "nearest_face_idx":nf,
-                    "mat_name":"", # defined in 'addMaterialsToBricksDict' function
-                    "parent_brick":None,
-                    "size":None,
-                    "attempted_merge":False,
-                    "top_exposed":None,
-                    "bot_exposed":None,
-                    "type":None}
+                bricksDict[bKey] = createBricksDictEntry(
+                    name=         'Rebrickr_%(n)s_brick_%(j)s__%(bKey)s' % locals(),
+                    val=          brickFreqMatrix[x][y][z],
+                    draw=         drawBrick,
+                    co=           (co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
+                    nearest_face= nf,
+                    mat_name=     "", # defined in 'addMaterialsToBricksDict' function
+                )
+    cm.numBricksGenerated = i + 1
 
     # return list of created Brick objects
     return bricksDict

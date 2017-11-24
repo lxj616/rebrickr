@@ -451,6 +451,7 @@ class drawAdjacent(Operator):
 
             zStep = getZStep(cm)
             decriment = 0
+            dimensions = Bricks.get_dimensions(cm.brickHeight, zStep/3, cm.gap)
             # check all 6 directions for action to be executed
             for i in range(6):
                 # if checking beneath obj in 'Bricks and Plates', check 3 keys below instead of 1 key below
@@ -465,7 +466,7 @@ class drawAdjacent(Operator):
                         if decriment != 0:
                             dictLoc = dictLoc.copy()
                             dictLoc[2] -= decriment
-                        self.toggleBrick(cm, dictLoc, dictKey, objSize, i, j, keysToMerge, addBrick=createAdjBricks[i])
+                        self.toggleBrick(cm, dimensions, dictLoc, dictKey, objSize, i, j, keysToMerge, addBrick=createAdjBricks[i])
 
             # recalculate val for each bricksDict key in original brick
             for x in range(x0, x0 + objSize[0]):
@@ -489,12 +490,12 @@ class drawAdjacent(Operator):
             # attempt to merge created bricks
             keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm, mergeVertical=self.brickType == "BRICK")
 
+            # store bricksDict to cache
+            cacheBricksDict("UPDATE_MODEL", cm, self.bricksDict)
+
             # draw created bricks
             if len(keysToUpdate) > 0:
                 drawUpdatedBricks(cm, self.bricksDict, keysToUpdate, selectCreated=False)
-
-            # store bricksDict to cache
-            cacheBricksDict("UPDATE_MODEL", cm, self.bricksDict)
 
             # select original brick
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
@@ -638,11 +639,26 @@ class drawAdjacent(Operator):
             newBrickHeight = 3
         return newBrickHeight
 
+    def getNewCoord(self, dimensions, co, side):
+        if side == 0:
+            co[0] += dimensions["width"]
+        if side == 1:
+            co[0] -= dimensions["width"]
+        if side == 2:
+            co[1] += dimensions["width"]
+        if side == 3:
+            co[1] -= dimensions["width"]
+        if side == 4:
+            co[2] += dimensions["height"]
+        if side == 5:
+            co[2] -= dimensions["height"]
+        return co
+
     def isBrickAlreadyCreated(self, brickNum, side):
         return not (brickNum == len(self.adjDKLs[side]) - 1 and
                     not any(self.adjBricksCreated[side])) # evaluates True if all values in this list are False
 
-    def toggleBrick(self, cm, dictLoc, dictKey, objSize, side, brickNum, keysToMerge, addBrick=True):
+    def toggleBrick(self, cm, dimensions, dictLoc, dictKey, objSize, side, brickNum, keysToMerge, addBrick=True):
         # if brick height is 3 and 'Bricks and Plates'
         newBrickHeight = self.getNewBrickHeight()
         if cm.brickType == "Bricks and Plates" and newBrickHeight == 3:
@@ -651,9 +667,22 @@ class drawAdjacent(Operator):
             checkTwoMoreAbove = False
 
         adjacent_key, adjBrickD = self.getBrickD(dictLoc)
+
+        # if key doesn't exist in bricksDict, create it
         if not adjBrickD:
-            self.setDirBool(side, False)
-            return False
+            print(adjacent_key)
+            n = cm.source_name
+            cm.numBricksGenerated += 1
+            j = cm.numBricksGenerated
+            self.bricksDict[adjacent_key] = createBricksDictEntry(
+                name=         'Rebrickr_%(n)s_brick_%(j)s__%(adjacent_key)s' % locals(),
+                co=           getNewCoord(self.bricksDict[dictKey]["co"], dimensions, side),
+                nearest_face= self.bricksDict[dictKey]["nearest_face"],
+                mat_name=     self.bricksDict[dictKey]["mat_name"],
+            )
+            adjBrickD = self.bricksDict[adjacent_key]
+            # self.setDirBool(side, False)
+            # return False
 
         # if brick exists there
         if adjBrickD["draw"] and not (addBrick and self.adjBricksCreated[side][brickNum]):

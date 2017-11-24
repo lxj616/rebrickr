@@ -368,11 +368,8 @@ class ModelSettingsPanel(Panel):
         if sX != -1 and sY != -1 and sZ != -1:
             noCustomObj = False
             if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
-                if cm.brickType in ["Plates", "Bricks and Plates"]:
-                    zScale = 0.333
-                elif cm.brickType == "Bricks":
-                    zScale = 1
-                dimensions = Bricks.get_dimensions(cm.brickHeight, zScale, cm.gap)
+                zStep = getZStep(cm)
+                dimensions = Bricks.get_dimensions(cm.brickHeight, zStep/3, cm.gap)
                 rX = int(sX/dimensions["width"])
                 rY = int(sY/dimensions["width"])
                 rZ = int(sZ/dimensions["height"])
@@ -496,7 +493,10 @@ class BrickTypesPanel(Panel):
             if cm.brickType == "Bricks and Plates":
                 col = layout.column(align=True)
                 row = col.row(align=True)
-                row.prop(cm, "offsetBrickLayers")
+                row.prop(cm, "alignBricks")
+                if cm.alignBricks:
+                    row = col.row(align=True)
+                    row.prop(cm, "offsetBrickLayers")
 
             col = layout.column(align=True)
             col.label("Max Brick Size:")
@@ -1043,7 +1043,7 @@ class BrickDetailsPanel(Panel):
         col1 = layout.column(align=True)
         split = col1.split(align=True, percentage=0.35)
         # hard code keys so that they are in the order I want
-        keys = ["name", "val", "draw", "co", "nearest_face_idx", "mat_name", "parent_brick", "size", "attempted_merge", "top_exposed", "bot_exposed", "type"]
+        keys = ["name", "val", "draw", "co", "nearest_face", "mat_name", "parent_brick", "size", "attempted_merge", "top_exposed", "bot_exposed", "type"]
         # draw keys
         col = split.column(align=True)
         col.scale_y = 0.65

@@ -29,9 +29,9 @@ import bpy
 from ...functions.general import *
 
 def addMaterialsToBricksDict(bricksDict, source):
-    """ sets all matNames in bricksDict based on nearest_face_idx """
+    """ sets all matNames in bricksDict based on nearest_face """
     for key in bricksDict.keys():
-        nf = bricksDict[key]["nearest_face_idx"]
+        nf = bricksDict[key]["nearest_face"]
         nearestFaceExists = nf is not None
         if bricksDict[key]["draw"] and nearestFaceExists:
             f = source.data.polygons[nf]

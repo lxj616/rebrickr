@@ -708,6 +708,11 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
               ("Custom", "Custom", "Use custom object to build the model")],
         update=dirtyMatrix,
         default="Bricks")
+    alignBricks = BoolProperty(
+        name="Align Bricks Horizontally",
+        description="Keep bricks aligned horizontally, and fill the gaps with plates",
+        update=dirtyBuild,
+        default=False)
     offsetBrickLayers = IntProperty(
         name="Offset Brick Layers",
         description="Offset the layers that will be merged into bricks if possible",
@@ -990,6 +995,8 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     activeKeyZ = IntProperty(default=1)
 
     modelCreatedOnFrame = IntProperty(default=-1)
+
+    numBricksGenerated = IntProperty(default=-1)
 
     modelCreated = BoolProperty(default=False)
     animated = BoolProperty(default=False)
