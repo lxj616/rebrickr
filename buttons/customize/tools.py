@@ -462,11 +462,11 @@ class drawAdjacent(Operator):
                 # if action should be executed (value changed in direction prop)
                 if (createAdjBricks[i] or (not createAdjBricks[i] and self.adjBricksCreated[i][0])):
                     # add or remove bricks in all adjacent locations in current direction
-                    for j,dictLoc in enumerate(self.adjDKLs[i]):
+                    for j,adjDictLoc in enumerate(self.adjDKLs[i]):
                         if decriment != 0:
-                            dictLoc = dictLoc.copy()
-                            dictLoc[2] -= decriment
-                        self.toggleBrick(cm, dimensions, dictLoc, dictKey, objSize, i, j, keysToMerge, addBrick=createAdjBricks[i])
+                            adjDictLoc = adjDictLoc.copy()
+                            adjDictLoc[2] -= decriment
+                        self.toggleBrick(cm, dimensions, adjDictLoc, dictKey, objSize, i, j, keysToMerge, addBrick=createAdjBricks[i])
 
             # recalculate val for each bricksDict key in original brick
             for x in range(x0, x0 + objSize[0]):
@@ -475,20 +475,20 @@ class drawAdjacent(Operator):
                         curKeyLoc = [x, y, z]
                         setCurBrickVal(self.bricksDict, curKeyLoc)
 
+            # attempt to merge created bricks
+            keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm, mergeVertical=self.brickType == "BRICK")
+
             # if bricks created on top, set top_exposed of original brick to False
             if self.zPos:
                 self.bricksDict[dictKey]["top_exposed"] = False
-                keysToMerge.append(dictKey)
+                keysToUpdate.append(dictKey)
                 delete(obj)
             # if bricks created on bottom, set top_exposed of original brick to False
             if self.zNeg:
                 self.bricksDict[dictKey]["bot_exposed"] = False
                 if not self.zPos:
-                    keysToMerge.append(dictKey)
+                    keysToUpdate.append(dictKey)
                     delete(obj)
-
-            # attempt to merge created bricks
-            keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm, mergeVertical=self.brickType == "BRICK")
 
             # store bricksDict to cache
             cacheBricksDict("UPDATE_MODEL", cm, self.bricksDict)
@@ -628,8 +628,6 @@ class drawAdjacent(Operator):
             brickD = self.bricksDict[adjacent_key]
             return adjacent_key, brickD
         except:
-            self.report({"WARNING"}, "Matrix not available at the following location: %(adjacent_key)s" % locals())
-            print("should print correct report")
             return adjacent_key, False
 
     def getNewBrickHeight(self):
@@ -639,7 +637,8 @@ class drawAdjacent(Operator):
             newBrickHeight = 3
         return newBrickHeight
 
-    def getNewCoord(self, dimensions, co, side):
+    def getNewCoord(self, co, dimensions, side):
+        co = list(co)
         if side == 0:
             co[0] += dimensions["width"]
         if side == 1:
@@ -658,7 +657,7 @@ class drawAdjacent(Operator):
         return not (brickNum == len(self.adjDKLs[side]) - 1 and
                     not any(self.adjBricksCreated[side])) # evaluates True if all values in this list are False
 
-    def toggleBrick(self, cm, dimensions, dictLoc, dictKey, objSize, side, brickNum, keysToMerge, addBrick=True):
+    def toggleBrick(self, cm, dimensions, adjDictLoc, dictKey, objSize, side, brickNum, keysToMerge, addBrick=True):
         # if brick height is 3 and 'Bricks and Plates'
         newBrickHeight = self.getNewBrickHeight()
         if cm.brickType == "Bricks and Plates" and newBrickHeight == 3:
@@ -666,21 +665,38 @@ class drawAdjacent(Operator):
         else:
             checkTwoMoreAbove = False
 
-        adjacent_key, adjBrickD = self.getBrickD(dictLoc)
+        adjacent_key, adjBrickD = self.getBrickD(adjDictLoc)
 
         # if key doesn't exist in bricksDict, create it
         if not adjBrickD:
-            print(adjacent_key)
             n = cm.source_name
             cm.numBricksGenerated += 1
             j = cm.numBricksGenerated
+            zStep = getZStep(cm)
+            newDictLoc = adjDictLoc.copy()
+            if side == 0:
+                newDictLoc[0] = newDictLoc[0] - 1
+            elif side == 1:
+                newDictLoc[0] = newDictLoc[0] + 1
+            elif side == 2:
+                newDictLoc[1] = newDictLoc[1] - 1
+            elif side == 3:
+                newDictLoc[1] = newDictLoc[1] + 1
+            elif side == 4:
+                newDictLoc[2] = newDictLoc[2] - 1
+            elif side == 5:
+                newDictLoc[2] = newDictLoc[2] + 1
+            theKey = listToStr(newDictLoc)
+            co = self.bricksDict[theKey]["co"]
+            co = self.getNewCoord(co, dimensions, side)
             self.bricksDict[adjacent_key] = createBricksDictEntry(
                 name=         'Rebrickr_%(n)s_brick_%(j)s__%(adjacent_key)s' % locals(),
-                co=           getNewCoord(self.bricksDict[dictKey]["co"], dimensions, side),
+                co=           co,
                 nearest_face= self.bricksDict[dictKey]["nearest_face"],
                 mat_name=     self.bricksDict[dictKey]["mat_name"],
             )
             adjBrickD = self.bricksDict[adjacent_key]
+            # self.report({"WARNING"}, "Matrix not available at the following location: %(adjacent_key)s" % locals())
             # self.setDirBool(side, False)
             # return False
 
@@ -709,10 +725,10 @@ class drawAdjacent(Operator):
             if addBrick:
                 if checkTwoMoreAbove:
                     # verify two more locs available above current
-                    dictLoc0 = dictLoc.copy()
+                    targetDictLoc0 = targetDictLoc.copy()
                     for i in range(1, 3):
-                        dictLoc0[2] += 1
-                        nextKey,nextBrickD = self.getBrickD(dictLoc0)
+                        targetDictLoc0[2] += 1
+                        nextKey,nextBrickD = self.getBrickD(targetDictLoc0)
                         if not nextBrickD:
                             self.setDirBool(side, False)
                         # if brick drawn in next loc and not just rerunning based on new direction selection
@@ -736,14 +752,15 @@ class drawAdjacent(Operator):
                 topExposed, botExposed = getBrickExposure(cm, self.bricksDict, adjacent_key)
                 adjBrickD["top_exposed"] = topExposed
                 adjBrickD["bot_exposed"] = botExposed
+                print(topExposed, botExposed)
                 keysToMerge.append(adjacent_key)
                 self.adjBricksCreated[side][brickNum] = self.brickType
                 if checkTwoMoreAbove:
                     # update matrix for two locations above adjacent_key
-                    dictLoc0 = dictLoc.copy()
+                    targetDictLoc0 = targetDictLoc.copy()
                     for i in range(1, 3):
-                        dictLoc0[2] += 1
-                        nextKey,nextBrickD = self.getBrickD(dictLoc0)
+                        targetDictLoc0[2] += 1
+                        nextKey,nextBrickD = self.getBrickD(targetDictLoc0)
                         nextBrickD["draw"] = True
                         setCurBrickVal(self.bricksDict, strToList(nextKey))
                         nextBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"]

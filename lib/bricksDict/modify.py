@@ -171,8 +171,8 @@ def checkExposure(bricksDict, x, y, z, direction:int=1):
                 zz += direction
                 # NOTE: if key does not exist, we will be sent to 'except'
                 k1 = listToStr([x,y,zz])
+                val = bricksDict[k1]["val"]
                 valKeysChecked.append(k1)
-                val = bricksDict[valKeysChecked[-1]]["val"]
                 if val == 0:
                     isExposed = True
     except KeyError:
@@ -180,7 +180,7 @@ def checkExposure(bricksDict, x, y, z, direction:int=1):
     # if outside (0) hit before shell (1) [above or below depending on 'direction'] exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
     if isExposed and len(valKeysChecked) > 0:
         for k in valKeysChecked:
-            val = bricksDict[k]["val"] = 0
+            bricksDict[k]["val"] = 0
     return isExposed
 
 def getBrickExposure(cm, bricksDict, key, loc=None):

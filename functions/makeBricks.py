@@ -268,15 +268,19 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
         # iterate through locations in bricksDict from bottom to top
         for i,key in enumerate(keys):
             brickD = bricksDict[key]
-            if brickD["draw"] and brickD["parent_brick"] is None:
+            if brickD["draw"] and brickD["parent_brick"] in [None, "self"]:
                 # initialize vars
                 loc = strToList(key)
                 brickSizes = [[1,1,zStep]]
 
                 # for bricks and plates, skip second and third rows on first time through
-                if BandP and timeThrough == 0 and cm.alignBricks:
-                    if lowestLoc == -1: lowestLoc = loc[2] # initializes value once
-                    if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 in [1,2]: continue
+                if BandP and cm.alignBricks:
+                    if timeThrough == 0: # first time
+                        if lowestLoc == -1: lowestLoc = loc[2] # initializes value once
+                        if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 in [1,2]: continue
+                    else: # second time
+                        if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 == 0: continue
+
 
                 # attempt to merge current brick with surrounding bricks, according to available brick types
                 if brickD["size"] is None or (cm.buildIsDirty):

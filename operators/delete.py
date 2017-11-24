@@ -191,7 +191,7 @@ class delete_override(Operator):
                                                 keysToUpdate.append(k0)
                                 # top of bricks below are now exposed
                                 k0 = listToStr([x, y, z - 1])
-                                if bricksDict[k0]["draw"]:
+                                if k0 in bricksDict and bricksDict[k0]["draw"]:
                                     if bricksDict[k0]["parent_brick"] == "self":
                                         k1 = k0
                                     else:
@@ -203,7 +203,7 @@ class delete_override(Operator):
                                             keysToUpdate.append(k1)
                                 # bottom of bricks above are now exposed
                                 k0 = listToStr([x, y, z + 1])
-                                if bricksDict[k0]["draw"]:
+                                if k0 in bricksDict and bricksDict[k0]["draw"]:
                                     if bricksDict[k0]["parent_brick"] == "self":
                                         k1 = k0
                                     else:

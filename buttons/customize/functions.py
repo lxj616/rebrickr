@@ -75,7 +75,7 @@ def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
                listToStr([x,y,z+1]),
                listToStr([x,y,z-1])]
     adjBrickVals = []
-    for key in adjKeys:
+    for key in adjKeys.copy():
         try:
             adjBrickVals.append(bricksDict[key]["val"])
         except KeyError:
@@ -84,7 +84,7 @@ def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
 
 def setCurBrickVal(bricksDict, loc):
     _,adjBrickVals = getAdjKeysAndBrickVals(bricksDict, loc=loc)
-    if 0 in adjBrickVals:
+    if 0 in adjBrickVals or len(adjBrickVals) == 0 or min(adjBrickVals) == 1:
         newVal = 1
     else:
         highestAdjVal = max(adjBrickVals)

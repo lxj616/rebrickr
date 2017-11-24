@@ -74,6 +74,8 @@ class Caches(bpy.types.Operator):
     def execute(self, context):
         try:
             self.clearCaches()
+            scn = bpy.context.scene
+            cm = scn.cmlist[scn.cmlist_index]
             self.undo_stack.iterateStates(cm)
             cm.matrixIsDirty = True
         except:
