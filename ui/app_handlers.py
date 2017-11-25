@@ -34,19 +34,11 @@ from ..lib.caches import rebrickr_bfm_cache
 from ..buttons.customize.tools import *
 
 def rebrickrIsActive():
-    try:
-        rebrickrIsActive = bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
-    except AttributeError:
-        rebrickrIsActive = False
-    return rebrickrIsActive
+    return hasattr(bpy.props, "rebrickr_module_name") and bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
 
 def rebrickrRunningOp():
     scn = bpy.context.scene
-    try:
-        rebrickrRunningOp = scn.Rebrickr_runningOperation
-    except AttributeError:
-        rebrickrRunningOp = False
-    return rebrickrRunningOp
+    return hasattr(scn, "Rebrickr_runningOperation") and scn.Rebrickr_runningOperation
 
 
 def getAnimAdjustedFrame(cm, frame):

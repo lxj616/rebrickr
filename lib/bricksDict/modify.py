@@ -183,16 +183,23 @@ def checkExposure(bricksDict, x, y, z, direction:int=1):
             bricksDict[k]["val"] = 0
     return isExposed
 
-def getBrickExposure(cm, bricksDict, key, loc=None):
+def getBrickExposure(cm, bricksDict, key=None, loc=None):
+    assert key is not None or loc is not None
+    # initialize vars
     topExposed = False
     botExposed = False
-
+    zStep = getZStep(cm)
+    # initialize parameters unspecified
     if loc is None:
-        # get location of brick
         loc = strToList(key)
+    elif key is None:
+        key = listToStr(loc)
 
-    # get size of brick
+
+    # get size of brick and break conditions
+    if key not in bricksDict: return None, None
     size = bricksDict[key]["size"]
+    if size is None: return None, None
 
     # set z-indices
     idxZb = loc[2] - 1
@@ -201,24 +208,18 @@ def getBrickExposure(cm, bricksDict, key, loc=None):
     else:
         idxZa = loc[2] + 1
 
-    # Iterate through merged bricks to check top and bottom exposure
+    # Iterate through brick locs in size to check top and bottom exposure
     for x in range(loc[0], size[0] + loc[0]):
         for y in range(loc[1], size[1] + loc[1]):
-            for z in range(loc[2], size[2] + loc[2]):
-                # TODO: figure out what this does
-                if cm.brickType in ["Bricks", "Custom"] and z > loc[2]:
-                    continue
+            for z in range(loc[2], size[2] + loc[2], zStep):
                 # get brick at x,y location
                 k0 = listToStr([x,y,z])
-                # try:
                 curBrick = bricksDict[k0]
-                # except KeyError:
-                #     continue
                 # check if brick top or bottom is exposed
                 if curBrick["val"] == 1 or (cm.brickType == "Bricks and Plates" and size[2] == 3):
                     returnVal0 = checkExposure(bricksDict, x, y, idxZa, 1)
                     if returnVal0: topExposed = True
-                    returnVal1 = checkExposure(bricksDict, x, y, idxZb, 1) # TODO: test -1 for last argument here
+                    returnVal1 = checkExposure(bricksDict, x, y, idxZb, 1)
                     if returnVal1: botExposed = True
 
     return topExposed, botExposed

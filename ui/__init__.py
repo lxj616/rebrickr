@@ -555,19 +555,12 @@ class MaterialsPanel(Panel):
         row = col.row(align=True)
         row.prop(cm, "materialType", text="")
 
-        try:
-            brick_materials_installed = scn.isBrickMaterialsInstalled
-        except AttributeError:
-            brick_materials_installed = False
+        brick_materials_installed = hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
 
         if cm.materialType == "Custom":
             col = layout.column(align=True)
             row = col.row(align=True)
             row.prop_search(cm, "materialName", bpy.data, "materials", text="")
-            try:
-                brick_materials_installed = scn.isBrickMaterialsInstalled
-            except AttributeError:
-                brick_materials_installed = False
             if brick_materials_installed:
                 if bpy.context.scene.render.engine != 'CYCLES':
                     row = col.row(align=True)

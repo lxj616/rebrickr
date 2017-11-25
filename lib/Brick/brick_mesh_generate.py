@@ -167,13 +167,13 @@ def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
     for v in vertListB:
         v.select = True
 
-#    # create lower circle faces with square
-#    lastKey = "x-y"
-#    for key in ["xy", "-xy", "-x-y", "x-y"]:
-#        bme.faces.new((vertListBDict[lastKey][1][-1], vertListBDict[key][1][0], vertListBDict[key][0], vertListBDict[lastKey][0]))
-#        for i in range(1, len(vertListBDict[key][1])):
-#            bme.faces.new((vertListBDict[key][1][i-1], vertListBDict[key][1][i], vertListBDict[key][0]))
-#        lastKey = key
+   # # create lower circle faces with square
+   # lastKey = "x-y"
+   # for key in ["xy", "-xy", "-x-y", "x-y"]:
+   #     bme.faces.new((vertListBDict[lastKey][1][-1], vertListBDict[key][1][0], vertListBDict[key][0], vertListBDict[lastKey][0]))
+   #     for i in range(1, len(vertListBDict[key][1])):
+   #         bme.faces.new((vertListBDict[key][1][i-1], vertListBDict[key][1][i], vertListBDict[key][0]))
+   #     lastKey = key
 
     # create faces around edge
     sideFaces = []

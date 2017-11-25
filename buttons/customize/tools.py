@@ -458,7 +458,6 @@ class drawAdjacent(Operator):
                 if i == 5 and cm.brickType == "Bricks and Plates":
                     newBrickHeight = self.getNewBrickHeight()
                     decriment = newBrickHeight - 1
-                    print(decriment)
                 # if action should be executed (value changed in direction prop)
                 if (createAdjBricks[i] or (not createAdjBricks[i] and self.adjBricksCreated[i][0])):
                     # add or remove bricks in all adjacent locations in current direction
@@ -467,6 +466,25 @@ class drawAdjacent(Operator):
                             adjDictLoc = adjDictLoc.copy()
                             adjDictLoc[2] -= decriment
                         self.toggleBrick(cm, dimensions, adjDictLoc, dictKey, objSize, i, j, keysToMerge, addBrick=createAdjBricks[i])
+                    # after ALL bricks toggled, check exposure of bricks above and below new ones
+                    for j,adjDictLoc in enumerate(self.adjDKLs[i]):
+                        # double check exposure of bricks above/below new adjacent brick
+                        if not self.zNeg:
+                            adjDictLoc[2] += decriment + 1
+                            k = listToStr(adjDictLoc)
+                            if k in self.bricksDict and self.bricksDict[k]["parent_brick"] == "self":
+                                topExposed, botExposed = getBrickExposure(cm, self.bricksDict, k, loc=adjDictLoc)
+                                self.bricksDict[k]["top_exposed"] = topExposed
+                                self.bricksDict[k]["bot_exposed"] = botExposed
+                            adjDictLoc[2] -= 1 # reset adjDictLoc in case next conditional met
+                        if not self.zPos:
+                            adjDictLoc[2] -= 1
+                            k = listToStr(adjDictLoc)
+                            if k in self.bricksDict and self.bricksDict[k]["parent_brick"] == "self":
+                                topExposed, botExposed = getBrickExposure(cm, self.bricksDict, k, loc=adjDictLoc)
+                                self.bricksDict[k]["top_exposed"] = topExposed
+                                self.bricksDict[k]["bot_exposed"] = botExposed
+
 
             # recalculate val for each bricksDict key in original brick
             for x in range(x0, x0 + objSize[0]):
@@ -752,7 +770,6 @@ class drawAdjacent(Operator):
                 topExposed, botExposed = getBrickExposure(cm, self.bricksDict, adjacent_key)
                 adjBrickD["top_exposed"] = topExposed
                 adjBrickD["bot_exposed"] = botExposed
-                print(topExposed, botExposed)
                 keysToMerge.append(adjacent_key)
                 self.adjBricksCreated[side][brickNum] = self.brickType
                 if checkTwoMoreAbove:

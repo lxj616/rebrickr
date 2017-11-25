@@ -51,6 +51,29 @@ def VectorRound(vec, dec, roundType="ROUND"):
         lst.append(val)
     return Vector(lst)
 
+def castRays(point, direction, miniDist, roundType="CEILING"):
+    orig = point
+    intersections = 0
+    while True:
+        _,location,normal,index = obj.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
+        if index == -1: break
+        if intersections == 0:
+            firstDirection = direction.dot(normal)
+        # get first and last intersection (used when getting materials of nearest (first or last intersected) face)
+        if (location-point).length <= edgeLen2:
+            if intersections == 0:
+                edgeIntersects = True
+                firstIntersection = {"idx":index, "dist":(location-point).length}
+            lastIntersection = {"idx":index, "dist":edgeLen - (location-point).length}
+        # set nextIntersection
+        if intersections == 1:
+            nextIntersection = location.copy()
+        intersections += 1
+        location = VectorRound(location, 5, roundType=roundType)
+        orig = location + miniDist
+
+    return intersections, firstDirection, firstIntersection, nextIntersection, lastIntersection
+
 def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
     """
     cast ray(s) from point in direction to determine insideness and whether edge intersects obj within edgeLen
@@ -75,7 +98,6 @@ def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
     lastIntersection = None
     edgeIntersects = False
     outsideL = []
-    orig = point
     firstDirection0 = False
     firstDirection1 = False
     edgeLen2 = edgeLen*1.00001
@@ -87,39 +109,14 @@ def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
     else:
         axes = "ZXY"
     # run initial intersection check
-    while True:
-        _,location,normal,index = obj.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
-        if index == -1: break
-        if intersections == 0:
-            firstDirection0 = direction.dot(normal)
-        # get first and last intersection (used when getting materials of nearest (first or last intersected) face)
-        if (location-point).length <= edgeLen2:
-            if intersections == 0:
-                edgeIntersects = True
-                firstIntersection = {"idx":index, "dist":(location-point).length}
-            lastIntersection = {"idx":index, "dist":edgeLen - (location-point).length}
-        # set nextIntersection
-        if intersections == 1:
-            nextIntersection = location.copy()
-        intersections += 1
-        location = VectorRound(location, 5, roundType="CEILING")
-        orig = location + miniDist
+    intersections, firstDirection0, firstIntersection, nextIntersection, lastIntersection = castRays(point, direction, miniDist)
     if cm.insidenessRayCastDir == "High Efficiency" or axes[0] in cm.insidenessRayCastDir:
         outsideL.append(0)
         if intersections%2 == 0 and (not cm.useNormals or firstDirection0 <= 0):
             outsideL[0] = 1
         elif cm.castDoubleCheckRays:
             # double check vert is inside mesh
-            count = 0
-            orig = point
-            while True:
-                _,location,normal,index = obj.ray_cast(orig,-direction)#distance=edgeLen*1.00000000001)
-                if index == -1: break
-                if count == 0:
-                    firstDirection1 = (-direction).dot(normal)
-                count += 1
-                location = VectorRound(location, 5, roundType="FLOOR")
-                orig = location - miniDist
+            count, firstDirection1,_,_,_ = castRays(point, -direction, miniDist, roundType="FLOOR")
             if count%2 == 0 and (not cm.useNormals or firstDirection1 <= 0):
                 outsideL[0] = 1
 
@@ -135,28 +132,12 @@ def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
                 outsideL.append(0)
                 direction = dirs[i][0]
                 miniDist = dirs[i][1]
-                while True:
-                    _,location,normal,i = obj.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
-                    if i == -1: break
-                    if intersections1 == 0:
-                        firstDirection0 = direction.dot(normal)
-                    intersections1 += 1
-                    location = VectorRound(location, 5, roundType="CEILING")
-                    orig = location + miniDist
+                intersections1, firstDirection0,_,_,_ = castRays(point, direction, miniDist)
                 if intersections1%2 == 0 and (not cm.useNormals or firstDirection0 <= 0):
                     outsideL[i] = 1
                 elif cm.castDoubleCheckRays:
                     # double check vert is inside mesh
-                    count = 0
-                    orig = point
-                    while True:
-                        _,location,normal,i = obj.ray_cast(orig,-direction)#distance=edgeLen*1.00000000001)
-                        if i == -1: break
-                        if count == 0:
-                            firstDirection1 = (-direction).dot(normal)
-                        count += 1
-                        location = VectorRound(location, 5, roundType="FLOOR")
-                        orig = location - miniDist
+                    count, firstDirection1,_,_,_ = castRays(point, -direction, -miniDist, roundType="FLOOR")
                     if count%2 == 0 and (not cm.useNormals or firstDirection1 <= 0):
                         outsideL[i] = 1
 
@@ -430,12 +411,6 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
 
     return brickFreqMatrix
 
-def uniquify3DMatrix(matrix):
-    for i in range(len(matrix)):
-        for j in range(len(matrix[i])):
-            matrix[i][j] = uniquify(matrix[i][j], lambda x: (round(x[0], 2), round(x[1], 2), round(x[2], 2)))
-    return matrix
-
 def getThreshold(cm):
     """ returns threshold (draw bricks if val >= threshold) """
     threshold = 1.01 - (cm.shellThickness / 100)
@@ -471,51 +446,42 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     if source.parent is not None:
         offset = Vector(offset)-source.parent.location
         offset = offset.to_tuple()
-    coordMatrix = generateLattice(R, lScale, offset)
-    if cm.brickShell != "Inside Mesh":
-        calculationAxes = cm.calculationAxes
-    else:
-        calculationAxes = "XYZ"
-
-    faceIdxMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
-
-    brickFreqMatrix = getBrickMatrix(source, faceIdxMatrix, coordMatrix, cm.brickShell, axes=calculationAxes, cursorStatus=cursorStatus)
-
     # get coordinate list from intersections of edges with faces
-    threshold = getThreshold(cm)
-
+    coordMatrix = generateLattice(R, lScale, offset)
     if len(coordMatrix) == 0:
         coordMatrix.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
+    # set calculationAxes
+    calculationAxes = cm.calculationAxes if cm.brickShell != "Inside Mesh" else "XYZ"
+    # set up faceIdxMatrix and brickFreqMatrix
+    faceIdxMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
+    brickFreqMatrix = getBrickMatrix(source, faceIdxMatrix, coordMatrix, cm.brickShell, axes=calculationAxes, cursorStatus=cursorStatus)
 
     # create bricks dictionary with brickFreqMatrix values
-    bricks = []
     keys = []
     i = 0
     bricksDict = {}
+    threshold = getThreshold(cm)
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
                 co = coordMatrix[x][y][z]
                 i += 1
-                j = str(i+1)
                 n = cm.source_name
 
                 # get nearest face index and mat name
-                nf = None
-                if type(faceIdxMatrix[x][y][z]) == dict:
-                    nf = faceIdxMatrix[x][y][z]["idx"]
+                nf = faceIdxMatrix[x][y][z]["idx"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 bKey = listToStr([x,y,z])
                 keys.append(bKey)
                 drawBrick = brickFreqMatrix[x][y][z] >= threshold
                 bricksDict[bKey] = createBricksDictEntry(
-                    name=         'Rebrickr_%(n)s_brick_%(j)s__%(bKey)s' % locals(),
+                    name=         'Rebrickr_%(n)s_brick_%(i)s__%(bKey)s' % locals(),
                     val=          brickFreqMatrix[x][y][z],
                     draw=         drawBrick,
                     co=           (co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
                     nearest_face= nf,
                     mat_name=     "", # defined in 'addMaterialsToBricksDict' function
                 )
-    cm.numBricksGenerated = i + 1
+    cm.numBricksGenerated = i
 
     # return list of created Brick objects
     return bricksDict

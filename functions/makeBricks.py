@@ -153,11 +153,13 @@ def getBrickMesh(cm, rand, dimensions, brickSize, undersideDetail, logoToUse, lo
         bm = bms[rand.randint(0,len(bms))]
     return bm
 
-def getClosestMaterial(cm, bricksDict, key, brickSize, randState, brick_mats, k):
+def getMaterial(cm, bricksDict, key, brickSize, randState, brick_mats, k):
     mat = None
     highestVal = 0
     matsL = []
-    if cm.materialType == "Use Source Materials":
+    if cm.materialType == "Custom":
+        mat = bpy.data.materials.get(cm.materialName)
+    elif cm.materialType == "Use Source Materials":
         for x in range(brickSize[0]):
             for y in range(brickSize[1]):
                 loc = strToList(key)
@@ -191,7 +193,6 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     n = cm.source_name
-    z1,z2,z3,z4,z5,z6,z7,z8,z9,z10,z11,z12,z13,z14,z15,z16,z17,z18,z19,z20,z21,z22,z23 = (False,)*23
     zStep = getZStep(cm)
     BandP = cm.brickType == "Bricks and Plates"
 
@@ -199,13 +200,12 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
     logo_details, logo = prepareLogoAndGetDetails(logo)
 
     # get bricksDict dicts in seeded order
-    if keys == "ALL":
-        keys = list(bricksDict.keys())
+    if keys == "ALL": keys = list(bricksDict.keys())
     keys.sort()
     random.seed(cm.mergeSeed)
     random.shuffle(keys)
     # sort the list by the first character only
-    keys.sort(key=lambda x: int(x.split(",")[2]))
+    keys.sort(key=lambda x: strToList(x)[2]))
 
     # get brick group
     if group_name is None: group_name = 'Rebrickr_%(n)s_bricks' % locals()
@@ -219,20 +219,12 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
         bGroup = bpy.data.groups.new(group_name)
 
 
-    tempMesh = bpy.data.meshes.new("tempMesh")
-
-    if not split:
-        allBrickMeshes = []
-
     brick_mats = []
-    try:
-        brick_materials_installed = scn.isBrickMaterialsInstalled
-    except AttributeError:
-        brick_materials_installed = False
+    brick_materials_installed = hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
     if cm.materialType == "Random" and brick_materials_installed:
-        mats = bpy.data.materials.keys()
+        mats0 = bpy.data.materials.keys()
         for color in bpy.props.abs_plastic_materials:
-            if color in mats and color in bpy.props.abs_plastic_materials_for_random:
+            if color in mats0 and color in bpy.props.abs_plastic_materials_for_random:
                 brick_mats.append(color)
 
     # initialize progress bar around cursor
@@ -281,14 +273,12 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
                     else: # second time
                         if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 == 0: continue
 
-
                 # attempt to merge current brick with surrounding bricks, according to available brick types
                 if brickD["size"] is None or (cm.buildIsDirty):
                     preferLargest = brickD["val"] > 0 and brickD["val"] < 1
                     brickSize = attemptMerge(cm, bricksDict, key, keys, loc, False, brickSizes, zStep, randS1, preferLargest=preferLargest, mergeVertical=True)
                 else:
                     brickSize = brickD["size"]
-
                 # check exposure of current [merged] brick
                 if brickD["top_exposed"] is None or brickD["bot_exposed"] is None or cm.buildIsDirty:
                     topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)
@@ -299,138 +289,98 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
                     botExposed = brickD["bot_exposed"]
 
                 # set 'logoToUse'
-                if topExposed:
-                    logoToUse = logo
-                else:
-                    logoToUse = None
+                logoToUse = logo if topExposed else None
                 # set 'useStud'
-                if (topExposed and cm.studDetail != "None") or cm.studDetail == "On All Bricks":
-                    useStud = True
-                else:
-                    useStud = False
+                useStud = (topExposed and cm.studDetail != "None") or cm.studDetail == "On All Bricks"
                 # set 'undersideDetail'
-                if botExposed:
-                    undersideDetail = cm.exposedUndersideDetail
-                else:
-                    undersideDetail = cm.hiddenUndersideDetail
+                undersideDetail = cm.exposedUndersideDetail if botExposed else cm.hiddenUndersideDetail
+                # get brick material
+                mat = getMaterial(cm, bricksDict, key, brickSize, randS2, brick_mats, k)
 
-                # get closest material
-                mat = getClosestMaterial(cm, bricksDict, key, brickSize, randS2, brick_mats, k)
+                ### CREATE BRICK ###
 
                 # add brick with new mesh data at original location
-                if split:
-                    if cm.brickType == "Custom":
-                        bm = bmesh.new()
-                        bm.from_mesh(customData)
-                        addToMeshLoc((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
-                        maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
-                        bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
-                    else:
-                        # get brick mesh
-                        # bm = Bricks.new_mesh(dimensions=dimensions, size=brickSize, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
-                        bm = getBrickMesh(cm, randS4, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.studVerts)
-                    # apply random rotation to BMesh according to parameters
+                if cm.brickType == "Custom":
+                    bm = bmesh.new()
+                    bm.from_mesh(customData)
+                    addToMeshLoc((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
+
+                    maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
+                    bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
+                else:
+                    # get brick mesh
+                    # bm = Bricks.new_mesh(dimensions=dimensions, size=brickSize, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
+                    bm = getBrickMesh(cm, randS4, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.studVerts)
+                # apply random rotation to BMesh according to parameters
+                if cm.randomRot > 0:
+                    d = dimensions["width"]/2
+                    sX = (brickSize[0] * 2) - 1
+                    sY = (brickSize[1] * 2) - 1
+                    center = ( ((d*sX)-d) / 2, ((d*sY)-d) / 2, 0.0 )
+                    randRot = randomizeRot(randS3, center, brickSize, bm)
+                # create new mesh and send bm to it
+                m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
+                bm.to_mesh(m)
+                # apply random location to edit mesh according to parameters
+                if cm.randomLoc > 0:
+                    randomizeLoc(randS3, dimensions["width"], dimensions["height"], mesh=m)
+                if cm.brickType != "Custom":
+                    # undo bm rotation if not custom, since 'bm' points to bmesh used by all other similar bricks
                     if cm.randomRot > 0:
-                        d = dimensions["width"]/2
-                        sX = (brickSize[0] * 2) - 1
-                        sY = (brickSize[1] * 2) - 1
-                        center = ( ((d*sX)-d) / 2, ((d*sY)-d) / 2, 0.0 )
-                        randRot = randomizeRot(randS3, center, brickSize, bm)
-                    # create new mesh and send bm to it
-                    m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
-                    bm.to_mesh(m)
-                    # apply random location to edit mesh according to parameters
-                    if cm.randomLoc > 0:
-                        randomizeLoc(randS3, dimensions["width"], dimensions["height"], mesh=m)
-                    if cm.brickType != "Custom":
-                        # undo bm rotation if not custom, since 'bm' points to bmesh used by all other similar bricks
-                        if cm.randomRot > 0:
-                            rotateBack(bm, center, randRot)
+                        rotateBack(bm, center, randRot)
+                # get brick's location
+                if brickSize[2] == 3 and BandP:
+                    brickLoc = Vector(brickD["co"])
+                    brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
+                else:
+                    brickLoc = Vector(brickD["co"])
+                if split:
                     # create new object with mesh data
                     brick = bpy.data.objects.new(brickD["name"], m)
                     brick.cmlist_id = cm.id
-                    if brickSize[2] == 3 and BandP:
-                        brickLoc = Vector(brickD["co"])
-                        brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
-                    else:
-                        brickLoc = Vector(brickD["co"])
+                    # set brick's location
                     brick.location = brickLoc
-                    if cm.materialType == "Custom":
-                        mat = bpy.data.materials.get(cm.materialName)
-                        if mat is not None:
-                            brick.data.materials.append(mat)
-                    elif mat is not None:
+                    # set brick's material
+                    if mat is not None:
                         brick.data.materials.append(mat)
                     else:
                         brick.data.materials.append(internalMat)
-
+                    # set origins of created bricks
                     if cm.originSet:
                         scn.objects.link(brick)
                         select(brick)
                         bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
                         select(brick, deselect=True)
                         scn.objects.unlink(brick)
-
                     # Add edge split modifier
                     addEdgeSplitMod(brick)
-                else:
-                    if cm.brickType == "Custom":
-                        bm = bmesh.new()
-                        bm.from_mesh(customData)
-                        addToMeshLoc((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
 
-                        maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
-                        bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
-                    else:
-                        # get brick mesh
-                        # bm = Bricks.new_mesh(dimensions=dimensions, size=brickSize, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
-                        bm = getBrickMesh(cm, randS4, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.studVerts)
-                    # apply random rotation to BMesh according to parameters
-                    if cm.randomRot > 0:
-                        d = dimensions["width"]/2
-                        sX = (brickSize[0] * 2) - 1
-                        sY = (brickSize[1] * 2) - 1
-                        center = ( ((d*sX)-d) / 2, ((d*sY)-d) / 2, 0)
-                        randRot = randomizeRot(randS3, center, brickSize, bm)
-                    # create new mesh and send bm to it
-                    tempMesh = bpy.data.meshes.new(brickD["name"])
-                    bm.to_mesh(tempMesh)
-                    # apply random location to edit mesh according to parameters
-                    if cm.randomLoc > 0:
-                        randomizeLoc(randS3, dimensions["width"], dimensions["height"], mesh=tempMesh)
-                    if cm.brickType != "Custom":
-                        # undo bm rotation if not custom, since 'bm' points to bmesh used by all other similar bricks
-                        if cm.randomRot > 0:
-                            rotateBack(bm, center, randRot)
+                else:
                     # transform brick mesh to coordinate on matrix
-                    if brickSize[2] == 3 and BandP:
-                        brickLoc = Vector(brickD["co"])
-                        brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
-                    else:
-                        brickLoc = Vector(brickD["co"])
-                    addToMeshLoc(brickLoc, mesh=tempMesh)
-                    # set up materials for tempMesh
+                    addToMeshLoc(brickLoc, mesh=m)
+                    # keep track of mats already use
                     if mat in mats:
                         matIdx = mats.index(mat)
                     elif mat is not None:
                         mats.append(mat)
                         matIdx = len(mats) - 1
+                    # set material for mesh
                     if mat is not None:
-                        tempMesh.materials.append(mat)
-                        for p in tempMesh.polygons:
+                        m.materials.append(mat)
+                        for p in m.polygons:
                             p.material_index = matIdx
                     else:
-                        for p in tempMesh.polygons:
+                        for p in m.polygons:
                             p.material_index = 0
-                    allBrickMeshes.append(tempMesh)
+                    # append mesh to allBrickMeshes list
+                    allBrickMeshes.append(m)
 
                 # print status to terminal
                 if i % denom < 1:
                     percent = i/len(keys)
                     if percent < 1:
                         update_progress("Building", percent)
-                        if cursorStatus:
-                            wm.progress_update(percent*100)
+                        if cursorStatus: wm.progress_update(percent*100)
 
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO Logo" and logo is not None:
@@ -460,6 +410,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
                     if not v.select:
                         vertList.append(v.index)
                 vg.add(vertList, 1, "ADD")
+                # set up remaining brick info
                 bGroup.objects.link(brick)
                 brick.parent = parent
                 scn.objects.link(brick)
@@ -468,12 +419,8 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
         update_progress("Linking to Scene", 1)
     else:
         m = combineMeshes(allBrickMeshes)
-        if frameNum:
-            frameNum = str(frameNum)
-            fn = "_frame_%(frameNum)s" % locals()
-        else:
-            fn = ""
-        name = 'Rebrickr_%(n)s_bricks_combined%(fn)s' % locals()
+        name = 'Rebrickr_%(n)s_bricks_combined' % locals()
+        if frameNum: name = "%(name)s_frame_%(frameNum)s" % locals()
         allBricksObj = bpy.data.objects.new(name, m)
         allBricksObj.cmlist_id = cm.id
         # create vert group for bevel mod (assuming only logo verts are selected):
@@ -483,6 +430,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
             if not v.select:
                 vertList.append(v.index)
         vg.add(vertList, 1, "ADD")
+        # add edge split modifier
         addEdgeSplitMod(allBricksObj)
         bGroup.objects.link(allBricksObj)
         allBricksObj.parent = parent
@@ -499,7 +447,6 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
         bricksCreated.append(allBricksObj)
 
     # reset 'attempted_merge' for all items in bricksDict
-    for key0 in bricksDict:
-        bricksDict[key0]["attempted_merge"] = False
+    for key0 in bricksDict: bricksDict[key0]["attempted_merge"] = False
 
     return bricksCreated
