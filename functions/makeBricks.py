@@ -58,20 +58,14 @@ def combineMeshes(meshes):
 def addToMeshLoc(co, bm=None, mesh=None):
     """ add 'co' to bm/mesh location """
     assert bm is not None or mesh is not None # one or the other must not be None!
-    if bm is not None:
-        verts = bm.verts
-    else:
-        verts = mesh.vertices
+    verts = bm.verts if bm is not None else mesh.vertices
     for v in verts:
         v.co = (v.co[0] + co[0], v.co[1] + co[1], v.co[2] + co[2])
 
 def randomizeLoc(rand, width, height, bm=None, mesh=None):
     """ translate bm/mesh location by (width,width,height) randomized by cm.randomLoc """
     assert bm is not None or mesh is not None # one or the other must not be None!
-    if bm is not None:
-        verts = bm.verts
-    else:
-        verts = mesh.vertices
+    verts = bm.verts if bm is not None else mesh.vertices
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
 
@@ -97,7 +91,7 @@ def randomizeRot(rand, center, brickSize, bm):
     if max(brickSize) == 0:
         denom = 0.75
     else:
-        denom = brickSize[0]*brickSize[1]
+        denom = brickSize[0] * brickSize[1]
     x=rand.uniform(-0.1963495 * cm.randomRot / denom, 0.1963495 * cm.randomRot / denom)
     y=rand.uniform(-0.1963495 * cm.randomRot / denom, 0.1963495 * cm.randomRot / denom)
     z=rand.uniform(-0.785398 * cm.randomRot / denom, 0.785398 * cm.randomRot / denom)
@@ -141,10 +135,7 @@ def getBrickMesh(cm, rand, dimensions, brickSize, undersideDetail, logoToUse, lo
     bms = rebrickr_bm_cache.get(bm_cache_string)
     # if bmesh in cache
     if bms is not None:
-        if len(bms) > 1:
-            bm = bms[rand.randint(0,len(bms))]
-        else:
-            bm = bms[0]
+        bm = bms[rand.randint(0,len(bms))] if len(bms) > 1 else bms[0]
     # if not found in rebrickr_bm_cache, create new brick mesh(es) and store to cache
     else:
         bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, undersideDetail=undersideDetail, logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
@@ -178,10 +169,7 @@ def getMaterial(cm, bricksDict, key, brickSize, randState, brick_mats, k):
     elif cm.materialType == "Random" and len(brick_mats) > 0:
         randState.seed(cm.randomMatSeed + k)
         k += 1
-        if len(brick_mats) == 1:
-            randIdx = 0
-        else:
-            randIdx = randState.randint(0, len(brick_mats))
+        randIdx = randState.randint(0, len(brick_mats)) if len(brick_mats > 1) else 0
         matName = brick_mats[randIdx]
         mat = bpy.data.materials.get(matName)
     return mat
@@ -255,8 +243,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
     supportBrickDs = []
     update_progress("Building", 0.0)
     # set number of times to run through all keys
-    if BandP: numIters = 2
-    else:     numIters = 1
+    numIters = 2 if BandP else 1
     for timeThrough in range(numIters):
         # iterate through locations in bricksDict from bottom to top
         for i,key in enumerate(keys):
@@ -342,10 +329,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
                     # set brick's location
                     brick.location = brickLoc
                     # set brick's material
-                    if mat is not None:
-                        brick.data.materials.append(mat)
-                    else:
-                        brick.data.materials.append(internalMat)
+                    brick.data.materials.append(mat if mat is not None else internalMat)
                     # set origins of created bricks
                     if cm.originSet:
                         scn.objects.link(brick)

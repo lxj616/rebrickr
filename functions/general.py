@@ -168,11 +168,7 @@ def strToTuple(string, item_type=int, split_on=","):
     return tup
 
 def getZStep(cm):
-    if cm.brickType in ["Bricks", "Custom"]:
-        zStep = 3
-    else:
-        zStep = 1
-    return zStep
+    return 3 if cm.brickType in ["Bricks", "Custom"] else 1
 
 def getAction(cm):
     """ returns action """

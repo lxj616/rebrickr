@@ -88,10 +88,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
                 brick.data.materials.clear(1)
                 # iterate seed and set random index
                 randS0.seed(cm.randomMatSeed + i)
-                if len(brick_mats) == 1:
-                    randIdx = 0
-                else:
-                    randIdx = randS0.randint(0, len(brick_mats))
+                randIdx = randS0.randint(0, len(brick_mats)) if len(brick_mats) > 1 else 0
                 # Assign random material to object
                 mat = bpy.data.materials.get(brick_mats[randIdx])
                 brick.data.materials.append(mat)

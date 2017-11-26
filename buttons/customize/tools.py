@@ -327,10 +327,7 @@ class setExposure(Operator):
             scn = bpy.context.scene
             selected_objects = bpy.context.selected_objects
             active_obj = scn.objects.active
-            if active_obj is not None:
-                initial_active_obj_name = active_obj.name
-            else:
-                initial_active_obj_name = ""
+            initial_active_obj_name = active_obj.name if active_obj is not None else ""
 
             # initialize objsD (key:cm_idx, val:list of brick objects)
             objsD = createObjsD(selected_objects)
@@ -649,10 +646,7 @@ class drawAdjacent(Operator):
             return adjacent_key, False
 
     def getNewBrickHeight(self):
-        if self.brickType == "PLATE":
-            newBrickHeight = 1
-        else:
-            newBrickHeight = 3
+        newBrickHeight = 1 if self.brickType == "PLATE" else 3
         return newBrickHeight
 
     def getNewCoord(self, co, dimensions, side):
@@ -914,10 +908,7 @@ class changeBrickType(Operator):
             dictKey, dictLoc = getDictKey(obj.name)
             self.cm_idx = cm.idx
             curBrickType = self.bricksDict[dictKey]["type"]
-            if curBrickType is not None:
-                self.brickType = curBrickType
-            else:
-                self.brickType = "STANDARD"
+            self.brickType = curBrickType if curBrickType is not None else "STANDARD"
         except:
             handle_exception()
 

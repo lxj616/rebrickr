@@ -113,15 +113,9 @@ def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
         yP = v.co.y > co[1] # true if 'y' is positive
         xP = v.co.x > co[0] # true if 'x' is positive
         if abs(v.co.x - co[0]) < 0.00001:
-            if yP:
-                l = "y+"
-            else:
-                l = "y-"
+            l = "y+" if yP else "y-"
         elif abs(v.co.y - co[1]) < 0.00001:
-            if xP:
-                l = "x+"
-            else:
-                l = "x-"
+            l = "x+" if xP else "x-"
         else:
             if xP and yP:
                 l = "++"
@@ -770,10 +764,7 @@ def newObjFromBmesh(layer, bme, meshName, objName=False):
     # move to appropriate layer
     layerList = []
     for i in range(20):
-        if i == layer-1:
-            layerList.append(True)
-        else:
-            layerList.append(False)
+        layerList.append(i == layer-1)
     bpy.ops.object.move_to_layer(layers=layerList)
     scn.layers = layerList
     bpy.ops.object.select_all(action='TOGGLE')
@@ -859,8 +850,7 @@ def main():
 
     layerList = []
     for i in range(20):
-        if i == layerToOpen-1: layerList.append(True)
-        else: layerList.append(False)
+        layerList.append(i == layerToOpen-1)
     bpy.context.scene.layers = layerList
 
 # main()

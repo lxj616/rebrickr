@@ -83,8 +83,6 @@ def castRays(obj, point, direction, miniDist, roundType="CEILING", edgeLen=0):
         orig = location + miniDist
         origs.append(orig)
 
-    if intersections > 2: print(intersections, origs)
-
     return intersections, firstDirection, firstIntersection, nextIntersection, lastIntersection, edgeIntersects
 
 def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
@@ -252,8 +250,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 percent0 = len(coordMatrix)/denom * (z/(len(coordMatrix[0][0])-1))
                 if percent0 < 100:
                     update_progress("Shell", percent0/100.0)
-                    if cursorStatus:
-                        wm.progress_update(percent0)
+                    if cursorStatus: wm.progress_update(percent0)
             for y in range(len(coordMatrix[0])):
                 for x in range(len(coordMatrix)):
                     if x != 0:
@@ -277,8 +274,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 percent1 = percent0 + (len(coordMatrix[0])/denom * (z/(len(coordMatrix[0][0])-1)))
                 if percent1 < 100:
                     update_progress("Shell", percent1/100.0)
-                    if cursorStatus:
-                        wm.progress_update(percent1)
+                    if cursorStatus: wm.progress_update(percent1)
             for x in range(len(coordMatrix)):
                 for y in range(len(coordMatrix[0])):
                     if y != 0:
@@ -302,8 +298,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 percent2 = percent1 + (len(coordMatrix[0][0])/denom * (x/(len(coordMatrix)-1)))
                 if percent2 < 100:
                     update_progress("Shell", percent2/100.0)
-                    if cursorStatus:
-                        wm.progress_update(percent2)
+                    if cursorStatus: wm.progress_update(percent2)
             for y in range(len(coordMatrix[0])):
                 for z in range(len(coordMatrix[0][0])):
                     if z != 0:
@@ -351,8 +346,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     # print status to terminal
     if not scn.Rebrickr_printTimes:
         update_progress("Shell", 1)
-        if cursorStatus:
-            wm.progress_end()
+        if cursorStatus: wm.progress_end()
 
     # set up brickFreqMatrix values for bricks inside shell
     j = 1

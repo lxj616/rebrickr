@@ -277,10 +277,7 @@ class RebrickrBrickify(bpy.types.Operator):
                         bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
                     except:
                         mod.show_viewport = False
-                if mod.type == "ARMATURE":
-                    cm.armature = True
-                else:
-                    cm.armature = False
+                cm.armature = mod.type == "ARMATURE"
 
             # apply transformation data
             if self.action == "CREATE":
@@ -514,10 +511,7 @@ class RebrickrBrickify(bpy.types.Operator):
                 cm.activeKeyZ = 1
         else:
             loadedFromCache = True
-        if curFrame is not None:
-            group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals()
-        else:
-            group_name = None
+        group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else None
         if keys == "ALL": keys = list(bricksDict.keys())
         # reset all values for certain keys in bricksDict dictionaries
         if cm.buildIsDirty and loadedFromCache:
@@ -682,10 +676,7 @@ class RebrickrBrickify(bpy.types.Operator):
         success = False
         if cm.modelCreated or cm.animated:
             bricks = getBricks()
-            if len(bricks) > 0:
-                obj = bricks[0]
-            else:
-                obj = None
+            obj = bricks[0] if len(bricks) > 0 else None
         else:
             obj = source
         for i in range(20):
@@ -700,12 +691,7 @@ class RebrickrBrickify(bpy.types.Operator):
     def transformBricks(self, bGroup, cm, parent, source, action):
         # if using local orientation and creating model for first time
         if cm.useLocalOrient and action == "CREATE":
-            # if model was split
-            if cm.splitModel:
-                obj = parent
-            # if model wasn't split
-            else:
-                obj = bGroup.objects[0]
+            obj = parent if cm.splitModel else bGroup.objects[0]
             obj.rotation_mode = "XYZ"
             obj.rotation_euler = source.rotation_euler
         # if model was split but isn't now

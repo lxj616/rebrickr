@@ -279,10 +279,7 @@ class RebrickrDelete(bpy.types.Operator):
             source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
             source.rotation_mode = "XYZ"
             if cm.useLocalOrient:
-                if brickRot is not None:
-                    source.rotation_euler = brickRot
-                else:
-                    source.rotation_euler = Euler(tuple(r), "XYZ")
+                source.rotation_euler = brickRot if brickRot is not None else Euler(tuple(r), "XYZ")
             else:
                 source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
 

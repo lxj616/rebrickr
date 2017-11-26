@@ -71,10 +71,7 @@ def getItemByID(collection, id):
         if item.id == id:
             success = True
             break
-    if success:
-        return item
-    else:
-        return None
+    return item if success else None
 
 def str_to_bool(s):
     if s == 'True':

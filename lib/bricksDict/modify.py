@@ -127,7 +127,7 @@ def attemptMerge(cm, bricksDict, key, keys, loc, origIsBrick, brickSizes, zStep,
     order = randState.randint(0,2)
     # sort brick types from smallest to largest
     if preferLargest:
-        brickSizes.sort(key=lambda x: (x[2], x[order] + x[(order+1)%2]))
+        brickSizes.sort(key=lambda x: (x[0] * x[1] * x[2]))
     else:
         brickSizes.sort(key=lambda x: (x[2], x[order], x[(order+1)%2]))
     # grab the biggest brick type and store to bricksDict

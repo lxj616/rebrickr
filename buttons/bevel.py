@@ -111,10 +111,7 @@ class RebrickrBevel(bpy.types.Operator):
             n = cm.source_name
 
             # set bevel action to add or remove
-            if not cm.bevelAdded:
-                action = "ADD"
-            else:
-                action = "REMOVE"
+            action = "REMOVE" if cm.bevelAdded else "ADD"
 
             # auto-set bevel width
             cm.bevelWidth = cm.brickHeight/100
