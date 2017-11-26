@@ -51,28 +51,41 @@ def VectorRound(vec, dec, roundType="ROUND"):
         lst.append(val)
     return Vector(lst)
 
-def castRays(point, direction, miniDist, roundType="CEILING"):
+def castRays(obj, point, direction, miniDist, roundType="CEILING", edgeLen=0):
+    # initialize variables
+    firstDirection = False
+    firstIntersection = None
+    nextIntersection = None
+    lastIntersection = None
+    edgeIntersects = False
+    edgeLen2 = edgeLen*1.00001
     orig = point
     intersections = 0
+    origs = []
+    # cast rays until no more rays to cast
     while True:
         _,location,normal,index = obj.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
         if index == -1: break
         if intersections == 0:
             firstDirection = direction.dot(normal)
-        # get first and last intersection (used when getting materials of nearest (first or last intersected) face)
-        if (location-point).length <= edgeLen2:
-            if intersections == 0:
-                edgeIntersects = True
-                firstIntersection = {"idx":index, "dist":(location-point).length}
-            lastIntersection = {"idx":index, "dist":edgeLen - (location-point).length}
-        # set nextIntersection
-        if intersections == 1:
-            nextIntersection = location.copy()
+        if edgeLen != 0:
+            # get first and last intersection (used when getting materials of nearest (first or last intersected) face)
+            if (location-point).length <= edgeLen2:
+                if intersections == 0:
+                    edgeIntersects = True
+                    firstIntersection = {"idx":index, "dist":(location-point).length}
+                lastIntersection = {"idx":index, "dist":edgeLen - (location-point).length}
+            # set nextIntersection
+            if intersections == 1:
+                nextIntersection = location.copy()
         intersections += 1
         location = VectorRound(location, 5, roundType=roundType)
         orig = location + miniDist
+        origs.append(orig)
 
-    return intersections, firstDirection, firstIntersection, nextIntersection, lastIntersection
+    if intersections > 2: print(intersections, origs)
+
+    return intersections, firstDirection, firstIntersection, nextIntersection, lastIntersection, edgeIntersects
 
 def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
     """
@@ -88,19 +101,11 @@ def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
 
     """
 
+    # initialize variables
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
-    # initialize variables
     intersections = 0
-    intersections1 = 0
-    nextIntersection = None
-    firstIntersection = None
-    lastIntersection = None
-    edgeIntersects = False
     outsideL = []
-    firstDirection0 = False
-    firstDirection1 = False
-    edgeLen2 = edgeLen*1.00001
     # set axis of direction
     if direction[0] > 0:
         axes = "XYZ"
@@ -109,15 +114,15 @@ def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
     else:
         axes = "ZXY"
     # run initial intersection check
-    intersections, firstDirection0, firstIntersection, nextIntersection, lastIntersection = castRays(point, direction, miniDist)
+    intersections, firstDirection, firstIntersection, nextIntersection, lastIntersection, edgeIntersects = castRays(obj, point, direction, miniDist, edgeLen=edgeLen)
     if cm.insidenessRayCastDir == "High Efficiency" or axes[0] in cm.insidenessRayCastDir:
         outsideL.append(0)
-        if intersections%2 == 0 and (not cm.useNormals or firstDirection0 <= 0):
+        if intersections%2 == 0 and not (cm.useNormals and firstDirection > 0):
             outsideL[0] = 1
         elif cm.castDoubleCheckRays:
             # double check vert is inside mesh
-            count, firstDirection1,_,_,_ = castRays(point, -direction, miniDist, roundType="FLOOR")
-            if count%2 == 0 and (not cm.useNormals or firstDirection1 <= 0):
+            count, firstDirection,_,_,_,_ = castRays(obj, point, -direction, -miniDist, roundType="FLOOR")
+            if count%2 == 0 and not (cm.useNormals and firstDirection > 0):
                 outsideL[0] = 1
 
     # run more checks if verifyExposure is True
@@ -132,20 +137,17 @@ def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
                 outsideL.append(0)
                 direction = dirs[i][0]
                 miniDist = dirs[i][1]
-                intersections1, firstDirection0,_,_,_ = castRays(point, direction, miniDist)
-                if intersections1%2 == 0 and (not cm.useNormals or firstDirection0 <= 0):
+                count, firstDirection,_,_,_,_ = castRays(obj, point, direction, miniDist)
+                if count%2 == 0 and not (cm.useNormals and firstDirection > 0):
                     outsideL[i] = 1
                 elif cm.castDoubleCheckRays:
                     # double check vert is inside mesh
-                    count, firstDirection1,_,_,_ = castRays(point, -direction, -miniDist, roundType="FLOOR")
-                    if count%2 == 0 and (not cm.useNormals or firstDirection1 <= 0):
+                    count, firstDirection,_,_,_,_ = castRays(obj, point, -direction, -miniDist, roundType="FLOOR")
+                    if count%2 == 0 and not (cm.useNormals and firstDirection > 0):
                         outsideL[i] = 1
 
     # find average of outsideL and set outside accordingly (<0.5 is False, >=0.5 is True)
-    total = 0
-    for v in outsideL:
-        total += v
-    outside = total/len(outsideL) >= 0.5
+    outside = sum(outsideL)/len(outsideL) >= 0.5
 
     # return helpful information
     return not outside, edgeIntersects, intersections, nextIntersection, firstIntersection, lastIntersection
@@ -243,7 +245,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     ct = time.time()
     breakNextTime = True
     if "x" in axes:
-        miniDist = (coordMatrix[1][0][0] - coordMatrix[0][0][0])*0.00001
+        miniDist = Vector((0.00015, 0.0, 0.0))
         for z in range(len(coordMatrix[0][0])):
             # print status to terminal
             if not scn.Rebrickr_printTimes:
@@ -268,7 +270,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         ct = time.time()
 
     if "y" in axes:
-        miniDist = (coordMatrix[0][1][0] - coordMatrix[0][0][0])*0.00001
+        miniDist = Vector((0.0, 0.00015, 0.0))
         for z in range(len(coordMatrix[0][0])):
             # print status to terminal
             if not scn.Rebrickr_printTimes:
@@ -293,7 +295,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         ct = time.time()
 
     if "z" in axes:
-        miniDist = (coordMatrix[0][0][1] - coordMatrix[0][0][0])*0.00001
+        miniDist = Vector((0.0, 0.0, 0.00015))
         for x in range(len(coordMatrix)):
             # print status to terminal
             if not scn.Rebrickr_printTimes:

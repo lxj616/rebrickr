@@ -315,6 +315,7 @@ class RebrickrDelete(bpy.types.Operator):
         cm.materialIsDirty = True
         cm.modelIsDirty = True
         cm.buildIsDirty = True
+        cm.matrixIsDirty = True
         cm.bricksAreDirty = True
         cm.bevelAdded = False
         cm.activeKeyX = 1

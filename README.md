@@ -13,20 +13,12 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Adjust settings for your desired result
       * Click 'Update Model' to view setting adjustments
   * Future improvements:
-      * Priority 1:
-          * Add UI panel drawn inside Blender like Retopoflow for adding/adjusting/maneuvering bricks
-          * EITHER  Add UI for selecting verts at inside/outside locations and adding bricks there
-          * OR      Add button for recalculating new shell
-          * Add functionality for changing brick type
-          * Try to reduce need to recalculate matrix (maybe keep around lastBrickHeight, lastGap, etc. so it only updates if changed, not just clicked)
-      * Priority 2:
-          * For animation, if last frame's brickFreqMatrix matches current frame's brickFreqMatrix, save time by just keeping that model around for another frame or duplicating it for the next frame or something
-          * Prefer overlapping and staggering over stacking of bricks
-          * New feature: SNOT (studs not on top) functionality
-          * Add support for texture maps transferring to materials
-          * Add support for smoke animations
-          * Add support for rigid bodies
-          * Test "Bricks and Plates" functionality for bugs
-          * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
-  * Known bugs:
-      * When source is dirty (mesh edited to change location of center of mass) for split Brick Model, model shifts to new center of mass after applied a second time.
+      * Add mode for selecting verts at locations next to bricks and adding bricks there
+      * Add functionality for changing brick type
+      * For animation, if last frame's brickFreqMatrix matches current frame's brickFreqMatrix, save time by just keeping that model around for another frame or duplicating it for the next frame or something
+      * Prefer overlapping and staggering over stacking of bricks
+      * New feature: SNOT (studs not on top) functionality
+      * Add support for texture maps transferring to materials
+      * Add support for smoke animations
+      * Add support for rigid bodies
+      * Write override for 'object.move_to_layer' that moves all frames from animation to another layer

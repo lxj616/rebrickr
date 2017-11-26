@@ -205,7 +205,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
     random.seed(cm.mergeSeed)
     random.shuffle(keys)
     # sort the list by the first character only
-    keys.sort(key=lambda x: strToList(x)[2]))
+    keys.sort(key=lambda x: strToList(x)[2])
 
     # get brick group
     if group_name is None: group_name = 'Rebrickr_%(n)s_bricks' % locals()
@@ -241,6 +241,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
     k = 0
 
     mats = []
+    allBrickMeshes = []
     lowestLoc = -1
     # set up internal material for this object
     internalMat = bpy.data.materials.get(cm.internalMatName)
