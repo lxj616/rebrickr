@@ -277,3 +277,16 @@ def handle_storing_to_deep_cache(scene):
     if rebrickrIsActive():
         lightToDeepCache(rebrickr_bfm_cache)
 bpy.app.handlers.save_pre.append(handle_storing_to_deep_cache)
+
+@persistent
+def handle_upconversion(scene):
+    scn = bpy.context.scene
+    if rebrickrIsActive():
+        for cm in scn.cmlist:
+            # convert from v1_0 to v1_1
+            if cm.version[:3] == "1_0":
+                cm.brickWidth = 2 if cm.maxBrickScale2 > 1 else 1
+                cm.brickDepth = cm.maxBrickScale2
+                cm.matrixIsDirty = True
+
+bpy.app.handlers.load_post.append(handle_upconversion)

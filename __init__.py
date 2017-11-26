@@ -59,7 +59,7 @@ def register():
     bpy.props.rebrickr_initialized = False
     bpy.props.rebrickr_undoUpdating = False
 
-    props.rebrickr_version = str(bl_info["version"])[1:-1]
+    bpy.props.rebrickr_version = str(bl_info["version"])[1:-1]
 
     bpy.types.Object.protected = BoolProperty(name='protected', default=False)
     bpy.types.Object.isBrickifiedObject = BoolProperty(name='Is Brickified Object', default=False)

@@ -147,6 +147,7 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
                 if active_object and active_object.type == "MESH" and not active_object.name.startswith("Rebrickr_"):
                     item.source_name = active_object.name
                     item.name = active_object.name
+                    item.version = bpy.props.rebrickr_version
                     # set up default brickHeight values
                     source = bpy.data.objects.get(item.source_name)
                     if source is not None:
@@ -772,6 +773,12 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         step=1,
         min=1, max=24,
         default=10)
+
+    # used to check rebrickr version model was created with
+    version = StringProperty(default="1_0_4")
+    # left over from rebrickr v1.0
+    maxBrickScale1 = IntProperty(default=-1)
+    maxBrickScale2 = IntProperty(default=-1)
 
     splitModel = BoolProperty(
         name="Split Model",

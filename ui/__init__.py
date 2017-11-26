@@ -41,6 +41,19 @@ from ..functions import *
 # updater import
 from .. import addon_updater_ops
 
+def settingsCanBeDrawn():
+    scn = bpy.context.scene
+    if scn.cmlist_index == -1:
+        return False
+    if bversion() < '002.078.00':
+        return False
+    if not bpy.props.rebrickr_initialized:
+        return False
+    cm = scn.cmlist[scn.cmlist_index]
+    if cm.version[:3] == "1_0":
+        return False
+    return True
+
 class BasicMenu(bpy.types.Menu):
     bl_idname = "Rebrickr_specials_menu"
     bl_label = "Select"
@@ -119,7 +132,7 @@ class BrickModelsPanel(Panel):
                 obj = bpy.data.objects.get(cm.source_name)
 
             # if undo stack not initialized, draw initialize button
-            if not bpy.props.rebrickr_initialized:
+            if not bpy.props.rebrickr_initialized and cm.version[:3] != "1_0":
                 row = col1.row(align=True)
                 row.operator("rebrickr.customize_model", text="Initialize Rebrickr", icon="MODIFIER")
             # if use animation is selected, draw animation options
@@ -151,7 +164,15 @@ class BrickModelsPanel(Panel):
                     row.operator("rebrickr.delete", text="Delete Brickified Model", icon="CANCEL")
                     col = layout.column(align=True)
                     col.operator("rebrickr.brickify", text="Update Model", icon="FILE_REFRESH")
-                    if matrixReallyIsDirty(cm):
+                    if cm.version[:3] == "1_0":
+                        col = layout.column(align=True)
+                        col.scale_y = 0.7
+                        col.label("Model was created with")
+                        col.label("Rebrickr v1.0. Please")
+                        col.label("run 'Update Model' so")
+                        col.label("it is compatible with")
+                        col.label("your current version.")
+                    elif matrixReallyIsDirty(cm):
                         row = col.row(align=True)
                         row.label("Customizations will be lost")
                         row = col.row(align=True)
@@ -185,13 +206,9 @@ class AnimationPanel(Panel):
 
     @classmethod
     def poll(self, context):
+        if not settingsCanBeDrawn():
+            return False
         scn = context.scene
-        if scn.cmlist_index == -1:
-            return False
-        if bversion() < '002.078.00':
-            return False
-        if not bpy.props.rebrickr_initialized:
-            return False
         cm = scn.cmlist[scn.cmlist_index]
         if cm.modelCreated:
             return False
@@ -273,13 +290,9 @@ class ModelTransformPanel(Panel):
 
     @classmethod
     def poll(self, context):
+        if not settingsCanBeDrawn():
+            return False
         scn = context.scene
-        if scn.cmlist_index == -1:
-            return False
-        if bversion() < '002.078.00':
-            return False
-        if not bpy.props.rebrickr_initialized:
-            return False
         cm = scn.cmlist[scn.cmlist_index]
         if cm.modelCreated or cm.animated:
             return True
@@ -330,12 +343,7 @@ class ModelSettingsPanel(Panel):
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
-        scn = context.scene
-        if scn.cmlist_index == -1:
-            return False
-        if bversion() < '002.078.00':
-            return False
-        if not bpy.props.rebrickr_initialized:
+        if not settingsCanBeDrawn():
             return False
         return True
 
@@ -448,12 +456,7 @@ class BrickTypesPanel(Panel):
 
     @classmethod
     def poll(self, context):
-        scn = context.scene
-        if scn.cmlist_index == -1:
-            return False
-        if bversion() < '002.078.00':
-            return False
-        if not bpy.props.rebrickr_initialized:
+        if not settingsCanBeDrawn():
             return False
         return True
 
@@ -537,12 +540,7 @@ class MaterialsPanel(Panel):
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
-        scn = context.scene
-        if scn.cmlist_index == -1:
-            return False
-        if bversion() < '002.078.00':
-            return False
-        if not bpy.props.rebrickr_initialized:
+        if not settingsCanBeDrawn():
             return False
         return True
 
@@ -669,12 +667,7 @@ class DetailingPanel(Panel):
 
     @classmethod
     def poll(self, context):
-        scn = context.scene
-        if scn.cmlist_index == -1:
-            return False
-        if bversion() < '002.078.00':
-            return False
-        if not bpy.props.rebrickr_initialized:
+        if not settingsCanBeDrawn():
             return False
         return True
 
@@ -739,12 +732,7 @@ class SupportsPanel(Panel):
 
     @classmethod
     def poll(self, context):
-        scn = context.scene
-        if scn.cmlist_index == -1:
-            return False
-        if bversion() < '002.078.00':
-            return False
-        if not bpy.props.rebrickr_initialized:
+        if not settingsCanBeDrawn():
             return False
         return True
 
@@ -785,11 +773,9 @@ class BevelPanel(Panel):
 
     @classmethod
     def poll(self, context):
+        if not settingsCanBeDrawn():
+            return False
         scn = context.scene
-        if scn.cmlist_index == -1:
-            return False
-        if bversion() < '002.078.00':
-            return False
         cm = scn.cmlist[scn.cmlist_index]
         if not cm.modelCreated and not cm.animated:
             return False
@@ -837,11 +823,9 @@ class CustomizeModel(Panel):
 
     @classmethod
     def poll(self, context):
+        if not settingsCanBeDrawn():
+            return False
         scn = context.scene
-        if scn.cmlist_index == -1:
-            return False
-        if not bpy.props.rebrickr_initialized:
-            return False
         cm = scn.cmlist[scn.cmlist_index]
         if not (cm.modelCreated or cm.animated):
             return False
@@ -914,14 +898,8 @@ class AdvancedPanel(Panel):
 
     @classmethod
     def poll(self, context):
-        scn = context.scene
-        if scn.cmlist_index == -1:
+        if not settingsCanBeDrawn():
             return False
-        if bversion() < '002.078.00':
-            return False
-        if not bpy.props.rebrickr_initialized:
-            return False
-        cm = scn.cmlist[scn.cmlist_index]
         return True
 
     def draw(self, context):
@@ -968,11 +946,9 @@ class BrickDetailsPanel(Panel):
 
     @classmethod
     def poll(self, context):
+        if not settingsCanBeDrawn():
+            return False
         scn = context.scene
-        if scn.cmlist_index == -1:
-            return False
-        if not bpy.props.rebrickr_initialized:
-            return False
         cm = scn.cmlist[scn.cmlist_index]
         if not (cm.modelCreated or cm.animated):
             return False

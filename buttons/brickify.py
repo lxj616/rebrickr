@@ -139,6 +139,7 @@ class RebrickrBrickify(bpy.types.Operator):
         scn = context.scene
         scn.Rebrickr_runningOperation = True
         cm = scn.cmlist[scn.cmlist_index]
+        cm.version = bpy.props.rebrickr_version
         self.undo_stack.iterateStates(cm)
         n = cm.source_name
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
