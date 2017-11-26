@@ -91,6 +91,10 @@ class RebrickrBrickify(bpy.types.Operator):
 
     def execute(self, context):
         try:
+            scn = bpy.context.scene
+            cm = scn.cmlist[scn.cmlist_index]
+            previously_animated = cm.animated
+            previously_model_created = cm.modelCreated
             self.runBrickify(context)
         except KeyboardInterrupt:
             if self.action in ["CREATE", "ANIMATE"]:
@@ -137,8 +141,6 @@ class RebrickrBrickify(bpy.types.Operator):
         cm = scn.cmlist[scn.cmlist_index]
         self.undo_stack.iterateStates(cm)
         n = cm.source_name
-        previously_animated = cm.animated
-        previously_model_created = cm.modelCreated
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
 
         # get source and initialize values
@@ -498,6 +500,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
     @classmethod
     def createNewBricks(self, source, parent, source_details, dimensions, refLogo, action, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False):
+        """ gets/creates bricksDict, runs makeBricks, and caches the final bricksDict """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name

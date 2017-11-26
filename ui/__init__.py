@@ -894,19 +894,14 @@ class CustomizeModel(Panel):
         row = col1.row(align=True)
         row.operator("rebrickr.draw_adjacent", text="Draw Adjacent Bricks")
         # change brick type
-        row = col1.row(align=True)
-        row.operator("rebrickr.change_brick_type", text="Change Type")
+        # row = col1.row(align=True)
+        # row.operator("rebrickr.change_brick_type", text="Change Type")
         # additional controls
         col = layout.column(align=True)
         row = col.row(align=True)
         row.prop(cm, "autoUpdateExposed")
-        row = col.row(align=True)
-        row.operator("rebrickr.redraw_bricks")
-
-
-        # next level:
-        # enter brick sculpt mode
-        # add brick at selected vertex
+        # row = col.row(align=True)
+        # row.operator("rebrickr.redraw_bricks")
 
 class AdvancedPanel(Panel):
     bl_space_type  = "VIEW_3D"

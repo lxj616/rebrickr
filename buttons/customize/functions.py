@@ -35,6 +35,7 @@ from .undo_stack import *
 
 
 def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
+    if len(keysToUpdate) == 0: return
     # get arguments for createNewBricks
     n = cm.source_name
     source = bpy.data.objects.get(n + " (DO NOT RENAME)")

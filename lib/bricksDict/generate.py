@@ -409,8 +409,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
 
 def getThreshold(cm):
     """ returns threshold (draw bricks if val >= threshold) """
-    threshold = 1.01 - (cm.shellThickness / 100)
-    return threshold
+    return 1.01 - (cm.shellThickness / 100)
 
 def createBricksDictEntry(name, val=0, draw=False, co=(0,0,0), nearest_face=None, mat_name=None, parent_brick=None, size=None, attempted_merge=False, top_exposed=None, bot_exposed=None, type=None):
     return {"name":name,
