@@ -370,7 +370,7 @@ class RebrickrBrickify(bpy.types.Operator):
                 return "FINISHED"
 
         if (self.action == "ANIMATE" or cm.matrixIsDirty or cm.animIsDirty) and not self.updatedFramesOnly:
-            Caches.clearCache()
+            Caches.clearCaches()
 
         if cm.splitModel:
             cm.splitModel = False

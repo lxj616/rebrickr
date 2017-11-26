@@ -143,6 +143,14 @@ class BrickModelsPanel(Panel):
                     col = layout.column(align=True)
                     row = col.row(align=True)
                     row.operator("rebrickr.brickify", text="Update Animation", icon="FILE_REFRESH")
+                    if cm.version[:3] == "1_0":
+                        col = layout.column(align=True)
+                        col.scale_y = 0.7
+                        col.label("Model was created with")
+                        col.label("Rebrickr v1.0. Please")
+                        col.label("run 'Update Model' so")
+                        col.label("it is compatible with")
+                        col.label("your current version.")
                 else:
                     row = col1.row(align=True)
                     if obj:
