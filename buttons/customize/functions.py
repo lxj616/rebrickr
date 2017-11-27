@@ -36,6 +36,7 @@ from .undo_stack import *
 
 def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     if len(keysToUpdate) == 0: return
+    print("redrawing...")
     # get arguments for createNewBricks
     n = cm.source_name
     source = bpy.data.objects.get(n + " (DO NOT RENAME)")
@@ -45,7 +46,7 @@ def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     refLogo = RebrickrBrickify.getLogo(cm)
     action = "UPDATE_MODEL"
     # actually draw the bricks
-    RebrickrBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, action, bricksDict=bricksDict, keys=keysToUpdate, replaceExistingGroup=False, selectCreated=selectCreated)
+    RebrickrBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, action, cm=cm, bricksDict=bricksDict, keys=keysToUpdate, replaceExistingGroup=False, selectCreated=selectCreated, printStatus=False)
 
 def createObjsD(objs):
     scn = bpy.context.scene

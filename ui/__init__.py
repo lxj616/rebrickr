@@ -49,9 +49,6 @@ def settingsCanBeDrawn():
         return False
     if not bpy.props.rebrickr_initialized:
         return False
-    cm = scn.cmlist[scn.cmlist_index]
-    if cm.version[:3] == "1_0":
-        return False
     return True
 
 class BasicMenu(bpy.types.Menu):
@@ -132,7 +129,7 @@ class BrickModelsPanel(Panel):
                 obj = bpy.data.objects.get(cm.source_name)
 
             # if undo stack not initialized, draw initialize button
-            if not bpy.props.rebrickr_initialized and cm.version[:3] != "1_0":
+            if not bpy.props.rebrickr_initialized:
                 row = col1.row(align=True)
                 row.operator("rebrickr.customize_model", text="Initialize Rebrickr", icon="MODIFIER")
             # if use animation is selected, draw animation options
@@ -369,9 +366,9 @@ class ModelSettingsPanel(Panel):
                 source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
             if source is not None:
                 source_details = bounds(source)
-                sX = round(source_details.x.distance, 2)
-                sY = round(source_details.y.distance, 2)
-                sZ = round(source_details.z.distance, 2)
+                sX = round(source_details.x.dist, 2)
+                sY = round(source_details.y.dist, 2)
+                sZ = round(source_details.z.dist, 2)
             else:
                 sX = -1
                 sY = -1
@@ -393,10 +390,10 @@ class ModelSettingsPanel(Panel):
                 customObj = bpy.data.objects.get(cm.customObjectName)
                 if customObj is not None and customObj.type == "MESH":
                     custom_details = bounds(customObj)
-                    if custom_details.x.distance != 0 and custom_details.y.distance != 0 and custom_details.z.distance != 0:
-                        multiplier = (cm.brickHeight/custom_details.z.distance)
-                        rX = int(sX/(custom_details.x.distance * multiplier))
-                        rY = int(sY/(custom_details.y.distance * multiplier))
+                    if custom_details.x.dist != 0 and custom_details.y.dist != 0 and custom_details.z.dist != 0:
+                        multiplier = (cm.brickHeight/custom_details.z.dist)
+                        rX = int(sX/(custom_details.x.dist * multiplier))
+                        rY = int(sY/(custom_details.y.dist * multiplier))
                         rZ = int(sZ/cm.brickHeight)
                     else:
                         noCustomObj = True
@@ -835,6 +832,8 @@ class CustomizeModel(Panel):
             return False
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
+        if cm.version[:3] == "1_0":
+            return False
         if not (cm.modelCreated or cm.animated):
             return False
         return True
@@ -958,6 +957,8 @@ class BrickDetailsPanel(Panel):
             return False
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
+        if cm.version[:3] == "1_0":
+            return False
         if not (cm.modelCreated or cm.animated):
             return False
         return True

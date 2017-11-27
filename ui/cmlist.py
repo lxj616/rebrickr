@@ -152,7 +152,7 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
                     source = bpy.data.objects.get(item.source_name)
                     if source is not None:
                         source_details = bounds(source)
-                        h = max(source_details.x.distance, source_details.y.distance, source_details.z.distance)
+                        h = max(source_details.x.dist, source_details.y.dist, source_details.z.dist)
                         # update brick height based on model height
                         item.brickHeight = h / 20
 
@@ -874,7 +874,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
               ("X", "X", "Cast rays along X axis for insideness calculations"),
               ("Y", "Y", "Cast rays along Y axis for insideness calculations"),
               ("Z", "Z", "Cast rays along Z axis for insideness calculations"),
-              ("XYZ", "XYZ", "Cast rays in all axis directions for insideness calculation (uses result consistent for at least 2 of the 3 rays)")],
+              ("XYZ", "XYZ (Best Result)", "Cast rays in all axis directions for insideness calculation (slowest; uses result consistent for at least 2 of the 3 rays)")],
         update=dirtyMatrix,
         default="High Efficiency")
     castDoubleCheckRays = BoolProperty(

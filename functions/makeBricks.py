@@ -176,10 +176,10 @@ def getMaterial(cm, bricksDict, key, brickSize, randState, brick_mats, k):
 
 
 @timed_call('Time Elapsed')
-def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, customData=None, customObj_details=None, group_name=None, replaceExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL"):
+def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=None, customData=None, customObj_details=None, group_name=None, replaceExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True):
     # set up variables
     scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    if cm is None: cm = scn.cmlist[scn.cmlist_index]
     n = cm.source_name
     zStep = getZStep(cm)
     BandP = cm.brickType == "Bricks and Plates"
@@ -241,14 +241,14 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
         mats.append(internalMat)
     # initialize supportBrickDs
     supportBrickDs = []
-    update_progress("Building", 0.0)
+    if printStatus: update_progress("Building", 0.0)
     # set number of times to run through all keys
     numIters = 2 if BandP else 1
     for timeThrough in range(numIters):
         # iterate through locations in bricksDict from bottom to top
         for i,key in enumerate(keys):
             brickD = bricksDict[key]
-            if brickD["draw"] and brickD["parent_brick"] in [None, "self"]:
+            if brickD["draw"] and brickD["parent_brick"] in [None, "self"] and not brickD["attempted_merge"]:
                 # initialize vars
                 loc = strToList(key)
                 brickSizes = [[1,1,zStep]]
@@ -293,8 +293,8 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
                     bm.from_mesh(customData)
                     addToMeshLoc((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
 
-                    maxDist = max(customObj_details.x.distance, customObj_details.y.distance, customObj_details.z.distance)
-                    bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.distance, (R[1]-dimensions["gap"]) / customObj_details.y.distance, (R[2]-dimensions["gap"]) / customObj_details.z.distance)), verts=bm.verts)
+                    maxDist = max(customObj_details.x.dist, customObj_details.y.dist, customObj_details.z.dist)
+                    bmesh.ops.scale(bm, vec=Vector(((R[0]-dimensions["gap"]) / customObj_details.x.dist, (R[1]-dimensions["gap"]) / customObj_details.y.dist, (R[2]-dimensions["gap"]) / customObj_details.z.dist)), verts=bm.verts)
                 else:
                     # get brick mesh
                     # bm = Bricks.new_mesh(dimensions=dimensions, size=brickSize, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
@@ -360,30 +360,32 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
                     # append mesh to allBrickMeshes list
                     allBrickMeshes.append(m)
 
-                # print status to terminal
-                if i % denom < 1:
-                    percent = i/len(keys)
-                    if percent < 1:
-                        update_progress("Building", percent)
-                        if cursorStatus: wm.progress_update(percent*100)
+                if printStatus:
+                    # print status to terminal
+                    if i % denom < 1:
+                        percent = i/len(keys)
+                        if percent < 1:
+                            update_progress("Building", percent)
+                            if cursorStatus: wm.progress_update(percent*100)
 
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO Logo" and logo is not None:
         bpy.data.objects.remove(logo)
 
+    if printStatus:
+        update_progress("Building", 1)
     # end progress bar around cursor
-    update_progress("Building", 1)
-    if cursorStatus:
-        wm.progress_end()
+    if cursorStatus: wm.progress_end()
 
     bricksCreated = []
     # combine meshes, link to scene, and add relevant data to the new Blender MESH object
     if split:
         for i,key in enumerate(keys):
-            # print status to terminal
-            percent = i/len(bricksDict)
-            if percent < 1:
-                update_progress("Linking to Scene", percent)
+            if printStatus:
+                # print status to terminal
+                percent = i/len(bricksDict)
+                if percent < 1:
+                    update_progress("Linking to Scene", percent)
 
             if bricksDict[key]["parent_brick"] == "self" and bricksDict[key]["draw"]:
                 name = bricksDict[key]["name"]
@@ -401,7 +403,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
                 scn.objects.link(brick)
                 brick.isBrick = True
                 bricksCreated.append(brick)
-        update_progress("Linking to Scene", 1)
+        if printStatus: update_progress("Linking to Scene", 1)
     else:
         m = combineMeshes(allBrickMeshes)
         name = 'Rebrickr_%(n)s_bricks_combined' % locals()
@@ -434,4 +436,4 @@ def makeBricks(parent, logo, dimensions, bricksDict, split=False, R=None, custom
     # reset 'attempted_merge' for all items in bricksDict
     for key0 in bricksDict: bricksDict[key0]["attempted_merge"] = False
 
-    return bricksCreated
+    return bricksCreated, bricksDict

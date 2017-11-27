@@ -51,11 +51,11 @@ def generateLattice(R, s, o=(0,0,0)):
     yN = (yS/(2*yR))
     zN = (zS/(2*zR))
     xL = int(round((xS)/xR))+2
-    if xL != 1: xL += 1
+    if xL != 1: xL += 2
     yL = int(round((yS)/yR))+2
-    if yL != 1: yL += 1
+    if yL != 1: yL += 2
     zL = int(round((zS)/zR))+2
-    if zL != 1: zL += 1
+    if zL != 1: zL += 2
     # iterate through x,y,z dimensions and create verts/connect with edges
     for x in range(xL):
         coordList1 = []

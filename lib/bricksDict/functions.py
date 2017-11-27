@@ -57,7 +57,7 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
         scn = bpy.context.scene
         customObj = bpy.data.objects[cm.customObjectName]
         oldLayers = list(scn.layers) # store scene layers for later reset
-        scn.layers = customObj.layers # set scene layers to customObj layers
+        setLayers(scn, customObj.layers)
         select(customObj, active=customObj)
         bpy.ops.object.duplicate()
         customObj0 = scn.objects.active
@@ -66,11 +66,11 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
         customObj_details = bounds(customObj0)
         customData = customObj0.data
         bpy.data.objects.remove(customObj0, True)
-        scale = cm.brickHeight/customObj_details.z.distance
-        R = ((scale * customObj_details.x.distance + dimensions["gap"]) * cm.distOffsetX,
-             (scale * customObj_details.y.distance + dimensions["gap"]) * cm.distOffsetY,
-             (scale * customObj_details.z.distance + dimensions["gap"]) * cm.distOffsetZ)
-        scn.layers = oldLayers
+        scale = cm.brickHeight/customObj_details.z.dist
+        R = (scale * customObj_details.x.dist + dimensions["gap"],
+             scale * customObj_details.y.dist + dimensions["gap"],
+             scale * customObj_details.z.dist + dimensions["gap"])
+        setLayers(scn, oldLayers)
     else:
         customData = None
         customObj_details = None

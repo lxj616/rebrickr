@@ -273,15 +273,16 @@ class RebrickrBrickify(bpy.types.Operator):
                 for i in range(len(shapeKeys.key_blocks)):
                     sourceDup.shape_key_remove(sourceDup.data.shape_keys.key_blocks[0])
                 # bpy.ops.object.shape_key_remove(all=True)
-            # list modifiers that need to be applied
+            # apply modifiers for source duplicate
+            applyModifiers(sourceDup)
+            # set cm.armature
+            foundOne = False
             for mod in sourceDup.modifiers:
-                if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"] and mod.show_viewport:
-                    try:
-                        bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
-                    except:
-                        mod.show_viewport = False
-                cm.armature = mod.type == "ARMATURE"
-
+                if mod.type == "ARMATURE" and mod.show_viewport:
+                    cm.armature = True
+                    foundOne = True
+                    break
+            if not foundOne: cm.armature = False
             # apply transformation data
             if self.action == "CREATE":
                 self.source["previous_location"] = self.source.location.to_tuple()
@@ -308,7 +309,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
         if self.action == "CREATE":
             # set sourceDup model height for display in UI
-            cm.modelHeight = sourceDup_details.z.distance
+            cm.modelHeight = sourceDup_details.z.dist
 
         # get parent object
         parent = bpy.data.objects.get(Rebrickr_parent_on)
@@ -427,7 +428,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
             if self.action == "ANIMATE":
                 # set source model height for display in UI
-                cm.modelHeight = source_details.z.distance
+                cm.modelHeight = source_details.z.dist
 
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
@@ -442,7 +443,7 @@ class RebrickrBrickify(bpy.types.Operator):
                 scn.objects.link(parent)
                 scn.update()
                 safeUnlink(parent)
-                self.createdObjects.append(parent)
+                self.createdObjects.append(parent.name)
 
             # create new bricks
             try:
@@ -491,31 +492,31 @@ class RebrickrBrickify(bpy.types.Operator):
 
     def runCreateNewBricks(self, source, parent, source_details, dimensions, refLogo, action, curFrame=None, sceneCurFrame=None):
         group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, action, curFrame=curFrame, sceneCurFrame=sceneCurFrame)
-        if int(round((source_details.x.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
+        if int(round((source_details.x.dist)/(dimensions["width"]+dimensions["gap"]))) == 0:
             self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
-        if int(round((source_details.y.distance)/(dimensions["width"]+dimensions["gap"]))) == 0:
+        if int(round((source_details.y.dist)/(dimensions["width"]+dimensions["gap"]))) == 0:
             self.report({"WARNING"}, "Model is too small on Y axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
-        if int(round((source_details.z.distance)/(dimensions["height"]+dimensions["gap"]))) == 0:
+        if int(round((source_details.z.dist)/(dimensions["height"]+dimensions["gap"]))) == 0:
             self.report({"WARNING"}, "Model is too small on Z axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
         return group_name
 
     @classmethod
-    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, action, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False):
+    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, action, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False, printStatus=True):
         """ gets/creates bricksDict, runs makeBricks, and caches the final bricksDict """
         scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        if cm is None: cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         _,_,_,R, customData, customObj_details = getArgumentsForBricksDict(cm, source=source, source_details=source_details, dimensions=dimensions)
         updateCursor = action in ["CREATE", "UPDATE_MODEL"] # evaluates to boolean value
         if bricksDict is None:
-            bricksDict, loadedFromCache = getBricksDict(action, source=source, source_details=source_details, dimensions=dimensions, R=R, updateCursor=updateCursor, curFrame=curFrame)
+            R2 = (R[0] * cm.distOffsetX, R[1] * cm.distOffsetY, R[2] * cm.distOffsetZ)
+            bricksDict, loadedFromCache = getBricksDict(action, source=source, source_details=source_details, dimensions=dimensions, R=R2, updateCursor=updateCursor, curFrame=curFrame)
             if curFrame == sceneCurFrame:
                 cm.activeKeyX = 1
                 cm.activeKeyY = 1
                 cm.activeKeyZ = 1
         else:
             loadedFromCache = True
-        group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else None
         if keys == "ALL": keys = list(bricksDict.keys())
         # reset all values for certain keys in bricksDict dictionaries
         if cm.buildIsDirty and loadedFromCache:
@@ -535,7 +536,8 @@ class RebrickrBrickify(bpy.types.Operator):
         if not loadedFromCache or cm.internalIsDirty:
             updateInternal(bricksDict, keys, cm, clearExisting=loadedFromCache)
             cm.buildIsDirty = True
-        bricksCreated = makeBricks(parent, refLogo, dimensions, bricksDict, cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys)
+        group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else None
+        bricksCreated, bricksDict = makeBricks(parent, refLogo, dimensions, bricksDict, cm=cm, split=cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
         if selectCreated:
             select(None)
             for brick in bricksCreated:
@@ -564,11 +566,11 @@ class RebrickrBrickify(bpy.types.Operator):
                 return False
             custom_details = bounds(customObj)
             zeroDistAxes = ""
-            if custom_details.x.distance < 0.00001:
+            if custom_details.x.dist < 0.00001:
                 zeroDistAxes += "X"
-            if custom_details.y.distance < 0.00001:
+            if custom_details.y.dist < 0.00001:
                 zeroDistAxes += "Y"
-            if custom_details.z.distance < 0.00001:
+            if custom_details.z.dist < 0.00001:
                 zeroDistAxes += "Z"
             if zeroDistAxes != "":
                 if len(zeroDistAxes) == 1:
@@ -825,13 +827,6 @@ class RebrickrBrickify(bpy.types.Operator):
                 for i in range(len(shapeKeys.key_blocks)):
                     sourceDup.shape_key_remove(sourceDup.data.shape_keys.key_blocks[0])
                 # bpy.ops.object.shape_key_remove(all=True)
-            # apply modifiers
-            for mod in source.modifiers:
-                if mod.type in ["ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"] and mod.show_viewport:
-                    try:
-                        bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
-                    except:
-                        mod.show_viewport = False
 
         # store lastObj transform data to source
         if lastObj != self.source:
@@ -851,19 +846,21 @@ class RebrickrBrickify(bpy.types.Operator):
                         override = {'scene': scn, 'active_object': lastObj, 'point_cache': mod.point_cache}
                         bpy.ops.ptcache.bake(override, bake=True)
 
+        denom = stopFrame - startFrame
+        if denom != 0: update_progress("Applying Modifiers", 0)
+
         for curFrame in range(startFrame, stopFrame + 1):
+            # print status
+            if denom != 0:
+                percent = (curFrame - startFrame) / (denom + 1)
+                if percent < 1:
+                    update_progress("Applying Modifiers", percent)
             if duplicates[curFrame]["isReused"]:
                 continue
             sourceDup = duplicates[curFrame]["obj"]
             scn.frame_set(curFrame)
-            select(sourceDup, active=sourceDup)
-            # apply baked cloth and soft body modifiers
-            for mod in lastObj.modifiers:
-                if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
-                    try:
-                        bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
-                    except:
-                        mod.show_viewport = False
+            # apply sourceDup modifiers
+            applyModifiers(sourceDup)
             # apply animated transform data
             sourceDup.matrix_world = self.source.matrix_world
             sourceDup.animation_data_clear()
@@ -876,6 +873,7 @@ class RebrickrBrickify(bpy.types.Operator):
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             scn.update()
             safeUnlink(sourceDup)
+        if denom != 0: update_progress("Applying Modifiers", 1)
         return duplicates
 
     def getObjectToBrickify(self):

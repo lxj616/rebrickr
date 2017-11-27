@@ -103,6 +103,7 @@ def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     intersections = 0
+    noMoreChecks = False
     outsideL = []
     # set axis of direction
     if direction[0] > 0:
@@ -436,7 +437,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
         scn.update()
     # get lattice bmesh
     print("\ngenerating blueprint...")
-    lScale = (source_details.x.distance, source_details.y.distance, source_details.z.distance)
+    lScale = (source_details.x.dist, source_details.y.dist, source_details.z.dist)
     offset = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
     if source.parent is not None:
         offset = Vector(offset)-source.parent.location

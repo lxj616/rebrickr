@@ -27,6 +27,7 @@ import os
 import itertools
 import operator
 import traceback
+import subprocess
 from math import *
 
 # Blender imports
@@ -159,6 +160,30 @@ def copyAnimationData(source, target):
 
     for prop in properties:
         setattr(ad2, prop, getattr(ad, prop))
+
+import sys, traceback
+class Suppressor(object):
+    def __enter__(self):
+        self.stdout = sys.stdout
+        sys.stdout = self
+    def __exit__(self, type, value, traceback):
+        sys.stdout = self.stdout
+        if type is not None:
+            # Uncomment next line to do normal exception handling
+            # raise
+            pass
+    def write(self, x): pass
+
+def applyModifiers(obj, only=None):
+    select(obj, active=obj)
+    # apply modifiers
+    for mod in obj.modifiers:
+        # only = ["SUBSURF", "ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"]
+        if (only is None or mod.type in only) and mod.show_viewport:
+            try:
+                with Suppressor(): bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
+            except:
+                mod.show_viewport = False
 
 # code from https://stackoverflow.com/questions/1518522/python-most-common-element-in-a-list
 def most_common(L):

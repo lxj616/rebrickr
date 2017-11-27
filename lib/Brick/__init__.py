@@ -87,7 +87,7 @@ class Bricks:
                     v.co.z -= zOffset
                     v.select = True
                 # scale logo
-                distMax = max(logo_details.x.distance, logo_details.y.distance)
+                distMax = max(logo_details.x.dist, logo_details.y.dist)
                 bmesh.ops.scale(logoBM_ref, vec=Vector((lw/distMax, lw/distMax, lw/distMax)), verts=logoBM_ref.verts)
 
             bms = []
@@ -102,7 +102,7 @@ class Bricks:
                         # transform logo to appropriate position
                         zOffset = dimensions["logo_offset"]
                         if logo_type != "LEGO Logo" and logo_details is not None:
-                            zOffset += ((logo_details.z.distance * (lw/distMax)) / 2) * (1-(logo_inset * 2))
+                            zOffset += ((logo_details.z.dist * (lw/distMax)) / 2) * (1-(logo_inset * 2))
                         xyOffset = dimensions["width"]+dimensions["gap"]
                         for v in logoBM.verts:
                             v.co = ((v.co.x + x*(xyOffset)), (v.co.y + y*(xyOffset)), (v.co.z + zOffset))

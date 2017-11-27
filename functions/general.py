@@ -55,7 +55,25 @@ def safeLink(obj, unhide=False, protect=False):
     except RuntimeError:
         pass
 
+def setLayers(scn, layers):
+    """ set active layers of scn w/o 'dag ZERO' error """
+    assert len(layers) == 20
+    # set active scene for all screens (prevents dag ZERO errors)
+    for screen in bpy.data.screens:
+        screen.scene = scn
+    # set active layers of scn
+    scn.layers = layers
+
 def bounds(obj, local=False):
+    """
+    returns object details with the following subattributes for x (same for y & z):
+
+    .x.max : maximum 'x' value of object
+    .x.min : minimum 'x' value of object
+    .x.mid : midpoint 'x' value of object
+    .x.dist: distance 'x' min to 'x' max
+
+    """
 
     local_coords = obj.bound_box[:]
     om = obj.matrix_world
@@ -74,7 +92,7 @@ def bounds(obj, local=False):
         info.max = max(_list)
         info.min = min(_list)
         info.mid = (info.min + info.max) / 2
-        info.distance = info.max - info.min
+        info.dist = info.max - info.min
         push_axis.append(info)
 
     originals = dict(zip(['x', 'y', 'z'], push_axis))

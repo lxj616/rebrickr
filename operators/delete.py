@@ -66,17 +66,12 @@ class delete_override(Operator):
 
     def execute(self, context):
         try:
-            ct = time.time()
             for obj in self.objsToDelete:
                 if obj.isBrick:
                     self.undo_stack.undo_push('delete_override')
                     self.undo_pushed = True
                     break
-            stopWatch("1", time.time()-ct)
-            ct = time.time()
             self.runDelete(context)
-            stopWatch("2", time.time()-ct)
-            ct = time.time()
         except:
             handle_exception()
         return {'FINISHED'}
