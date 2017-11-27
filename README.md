@@ -23,5 +23,4 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add support for rigid bodies
       * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
   * Known issues:
-      * In snapchat hotdog file, source moves when model created then deleted (origin stays).
-      * In walking man file, source's origin moves when model created then deleted (object stays).
+      * In snapchat hotdog test file, when parents removed and transformation kept, then when model created then deleted, source shrinks
