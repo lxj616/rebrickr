@@ -943,6 +943,7 @@ class AdvancedPanel(Panel):
             row.prop(cm, "useLocalOrient", text="Use Source Local")
 
 class BrickDetailsPanel(Panel):
+    """ for debugging purposes only """
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Brick Details"
@@ -953,6 +954,7 @@ class BrickDetailsPanel(Panel):
 
     @classmethod
     def poll(self, context):
+        # return False
         if not settingsCanBeDrawn():
             return False
         scn = context.scene
