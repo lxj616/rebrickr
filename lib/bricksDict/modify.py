@@ -68,14 +68,13 @@ def plateIsBrick(brickD, bricksDict, loc, x, y, h=3):
             return False
     return True
 
-def canBeJoined(bricksDict, loc, origIsBrick, key, i, j, k=0):
+def canBeJoined(bricksDict, loc, key, i, j, k=0):
     curBrickD = bricksDict[key]
     nextBrickD = getNextBrick(bricksDict, loc, i, j, k)
     spotAvail = brickAvail(curBrickD, nextBrickD)
-    canBeBrick = not origIsBrick or (k == 0 and plateIsBrick(curBrickD, bricksDict, loc, i, j))
-    return spotAvail and canBeBrick
+    return spotAvail
 
-def updateBrickSizes(cm, bricksDict, key, keys, loc, origIsBrick, brickSizes, zStep, maxL, mergeVertical=False):
+def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, mergeVertical=False):
     """ update 'brickSizes' with available brick sizes surrounding bricksDict[key] """
     newMax1 = maxL[1]
     newMax2 = maxL[2]
@@ -86,18 +85,18 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, origIsBrick, brickSizes, zS
             # break case 1
             if j >= newMax1: break
             # break case 2
-            elif not canBeJoined(bricksDict, loc, origIsBrick, key, i, j) or listToStr([i + loc[0], j + loc[1], loc[2]]) not in keys:
+            elif not canBeJoined(bricksDict, loc, key, i, j) or listToStr([i + loc[0], j + loc[1], loc[2]]) not in keys:
                 if j == 0: breakOuter2 = True
                 else:      newMax1 = j
                 break
             # else, check vertically
             for k in range(0, maxL[2], zStep):
                 # if not 'Bricks and Plates', skip second two iters
-                if not mergeVertical and k in [1,2]: continue
+                if not mergeVertical and k > 0: continue
                 # break case 1
                 elif k >= newMax2: break
                 # break case 2
-                elif not canBeJoined(bricksDict, loc, origIsBrick, key, i, j, k) or listToStr([i + loc[0], j + loc[1], loc[2] + k]) not in keys:
+                elif not canBeJoined(bricksDict, loc, key, i, j, k) or listToStr([i + loc[0], j + loc[1], loc[2] + k]) not in keys:
                     if k == 0: breakOuter1 = True
                     else:      newMax2 = k
                     break
@@ -105,9 +104,7 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, origIsBrick, brickSizes, zS
                 elif k == 1: continue
                 # else, append current brick size to brickSizes
                 else:
-                    if origIsBrick:
-                        newSize = [i+1, j+1, 3]
-                    elif mergeVertical:
+                    if mergeVertical:
                         newSize = [i+1, j+1, k+zStep]
                     else:
                         newSize = [i+1, j+1, zStep]
@@ -117,12 +114,16 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, origIsBrick, brickSizes, zS
         breakOuter1 = False
         if breakOuter2: break
 
-def attemptMerge(cm, bricksDict, key, keys, loc, origIsBrick, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True):
+def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True):
     """ attempt to merge bricksDict[key] with adjacent bricks """
 
+    ct = time.time()
+
     if cm.brickType != "Custom":
-        updateBrickSizes(cm, bricksDict, key, keys, loc, origIsBrick, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], mergeVertical and cm.brickType == "Bricks and Plates")
-        updateBrickSizes(cm, bricksDict, key, keys, loc, origIsBrick, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], mergeVertical and cm.brickType == "Bricks and Plates")
+        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], mergeVertical and cm.brickType == "Bricks and Plates")
+        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], mergeVertical and cm.brickType == "Bricks and Plates")
+
+    stopWatch("1", ct-time.time(), precision=5)
 
     order = randState.randint(0,2)
     # sort brick types from smallest to largest

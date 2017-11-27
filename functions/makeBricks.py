@@ -131,6 +131,7 @@ def getBrickMesh(cm, rand, dimensions, brickSize, undersideDetail, logoToUse, lo
     if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
         custom_logo_used = logoToUse is not None and logo_type == "Custom Logo"
         bm_cache_string = json.dumps((cm.brickHeight, brickSize, undersideDetail, cm.logoResolution if logoToUse is not None else None, hash_object(logoToUse) if custom_logo_used else None, logo_scale if custom_logo_used else None, logo_inset if custom_logo_used else None, cm.studVerts if useStud else None))
+
     # check for bmesh in cache
     bms = rebrickr_bm_cache.get(bm_cache_string)
     # if bmesh in cache
@@ -139,9 +140,10 @@ def getBrickMesh(cm, rand, dimensions, brickSize, undersideDetail, logoToUse, lo
     # if not found in rebrickr_bm_cache, create new brick mesh(es) and store to cache
     else:
         bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, undersideDetail=undersideDetail, logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
-        if logoToUse is not None and cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
+        if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
             rebrickr_bm_cache[bm_cache_string] = bms
         bm = bms[rand.randint(0,len(bms))]
+
     return bm
 
 def getMaterial(cm, bricksDict, key, brickSize, randState, brick_mats, k):
@@ -241,6 +243,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
         mats.append(internalMat)
     # initialize supportBrickDs
     supportBrickDs = []
+    bricksCreated = []
     if printStatus: update_progress("Building", 0.0)
     # set number of times to run through all keys
     numIters = 2 if BandP else 1
@@ -249,6 +252,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
         for i,key in enumerate(keys):
             brickD = bricksDict[key]
             if brickD["draw"] and brickD["parent_brick"] in [None, "self"] and not brickD["attempted_merge"]:
+                ct = time.time()
                 # initialize vars
                 loc = strToList(key)
                 brickSizes = [[1,1,zStep]]
@@ -264,9 +268,10 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                 # attempt to merge current brick with surrounding bricks, according to available brick types
                 if brickD["size"] is None or (cm.buildIsDirty):
                     preferLargest = brickD["val"] > 0 and brickD["val"] < 1
-                    brickSize = attemptMerge(cm, bricksDict, key, keys, loc, False, brickSizes, zStep, randS1, preferLargest=preferLargest, mergeVertical=True)
+                    brickSize = attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randS1, preferLargest=preferLargest, mergeVertical=True)
                 else:
                     brickSize = brickD["size"]
+
                 # check exposure of current [merged] brick
                 if brickD["top_exposed"] is None or brickD["bot_exposed"] is None or cm.buildIsDirty:
                     topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)
@@ -330,16 +335,10 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                     brick.location = brickLoc
                     # set brick's material
                     brick.data.materials.append(mat if mat is not None else internalMat)
-                    # set origins of created bricks
-                    if cm.originSet:
-                        scn.objects.link(brick)
-                        select(brick)
-                        bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
-                        select(brick, deselect=True)
-                        scn.objects.unlink(brick)
-                    # Add edge split modifier
+                    # add edge split modifier
                     addEdgeSplitMod(brick)
-
+                    # append to bricksCreated
+                    bricksCreated.append(brick)
                 else:
                     # transform brick mesh to coordinate on matrix
                     addToMeshLoc(brickLoc, mesh=m)
@@ -368,6 +367,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                             update_progress("Building", percent)
                             if cursorStatus: wm.progress_update(percent*100)
 
+
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO Logo" and logo is not None:
         bpy.data.objects.remove(logo)
@@ -377,9 +377,18 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
     # end progress bar around cursor
     if cursorStatus: wm.progress_end()
 
-    bricksCreated = []
     # combine meshes, link to scene, and add relevant data to the new Blender MESH object
     if split:
+        # set origins of created bricks
+        if cm.originSet:
+            for brick in bricksCreated:
+                scn.objects.link(brick)
+            select(bricksCreated)
+            bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+            select(bricksCreated, deselect=True)
+            for brick in bricksCreated:
+                scn.objects.unlink(brick)
+        # iterate through keys
         for i,key in enumerate(keys):
             if printStatus:
                 # print status to terminal
@@ -402,7 +411,6 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                 brick.parent = parent
                 scn.objects.link(brick)
                 brick.isBrick = True
-                bricksCreated.append(brick)
         if printStatus: update_progress("Linking to Scene", 1)
     else:
         m = combineMeshes(allBrickMeshes)
