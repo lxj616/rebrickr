@@ -269,11 +269,10 @@ class RebrickrDelete(bpy.types.Operator):
             l,r,s = getTransformData()
             if modelType == "MODEL":
                 loc = strToTuple(cm.lastSourceMid, float)
-                setOriginToObjOrigin(toObj=source, fromLoc=loc)
                 if brickLoc is not None:
-                    source.location = source.location + brickLoc - source.matrix_world.to_translation()
+                    source.location = source.location + brickLoc - Vector(loc)
                 else:
-                    source.location = Vector(l)
+                    source.location = Vector(l) - Vector(loc)
             else:
                 source.location = Vector(l)
             source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])

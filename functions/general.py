@@ -101,6 +101,7 @@ def bounds(obj, local=False):
     return o_details(**originals)
 
 def setOriginToObjOrigin(toObj, fromObj=None, fromLoc=None, deleteFromObj=False):
+    assert fromObj is not None or fromLoc is not None
     scn = bpy.context.scene
     oldCursorLocation = tuple(scn.cursor_location)
     unlinkToo = False
@@ -108,9 +109,6 @@ def setOriginToObjOrigin(toObj, fromObj=None, fromLoc=None, deleteFromObj=False)
         scn.cursor_location = fromObj.matrix_world.to_translation().to_tuple()
     elif fromLoc is not None:
         scn.cursor_location = fromLoc
-    else:
-        print("ERROR in 'setOriginToObjOrigin': fromObj and fromLoc are both None")
-        return
     select(toObj, active=toObj)
     bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
     scn.cursor_location = oldCursorLocation

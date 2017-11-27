@@ -223,10 +223,6 @@ class RebrickrBrickify(bpy.types.Operator):
             origFrame = scn.frame_current
             scn.frame_set(cm.modelCreatedOnFrame)
 
-        if self.action == "CREATE":
-            # get origin location for source
-            previous_origin = self.source.matrix_world.to_translation().to_tuple()
-
         # if there are no changes to apply, simply return "FINISHED"
         if self.action in ["UPDATE_MODEL"] and not updateCanRun("MODEL"):
             return{"FINISHED"}
