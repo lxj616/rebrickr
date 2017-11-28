@@ -34,6 +34,7 @@ from ...functions.common import *
 from ...functions.general import *
 from ...functions.generate_lattice import generateLattice
 from ...functions.wrappers import *
+from ..Brick import Bricks
 
 def VectorRound(vec, dec, roundType="ROUND"):
     """ round all vals in Vector 'vec' to 'dec' precision using 'ROUND', 'FLOOR', or 'CEIL' """
