@@ -783,6 +783,7 @@ class RebrickrBrickify(bpy.types.Operator):
         """ returns list of duplicates from self.source with all traits applied """
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
+        activeFrame = scn.frame_current
 
         duplicates = {}
 
@@ -805,6 +806,9 @@ class RebrickrBrickify(bpy.types.Operator):
             duplicates[curFrame] = {"obj":sourceDup, "isReused":False}
             lastObj = sourceDup
 
+        denom = stopFrame - startFrame
+        if denom != 0: update_progress("Applying Modifiers", 0)
+
         for curFrame in range(startFrame, stopFrame + 1):
             if duplicates[curFrame]["isReused"]:
                 continue
@@ -822,6 +826,13 @@ class RebrickrBrickify(bpy.types.Operator):
                 for i in range(len(shapeKeys.key_blocks)):
                     sourceDup.shape_key_remove(sourceDup.data.shape_keys.key_blocks[0])
                 # bpy.ops.object.shape_key_remove(all=True)
+            # print status
+            if denom != 0:
+                percent = (curFrame - startFrame) / (denom + 1)
+                if percent < 1:
+                    update_progress("Applying Modifiers", percent)
+            applyModifiers(sourceDup, exclude=["CLOTH", "SOFT_BODY"])
+        if denom != 0: update_progress("Applying Modifiers", 1)
 
         # store lastObj transform data to source
         if lastObj != self.source:
@@ -841,21 +852,13 @@ class RebrickrBrickify(bpy.types.Operator):
                         override = {'scene': scn, 'active_object': lastObj, 'point_cache': mod.point_cache}
                         bpy.ops.ptcache.bake(override, bake=True)
 
-        denom = stopFrame - startFrame
-        if denom != 0: update_progress("Applying Modifiers", 0)
-
         for curFrame in range(startFrame, stopFrame + 1):
-            # print status
-            if denom != 0:
-                percent = (curFrame - startFrame) / (denom + 1)
-                if percent < 1:
-                    update_progress("Applying Modifiers", percent)
             if duplicates[curFrame]["isReused"]:
                 continue
             sourceDup = duplicates[curFrame]["obj"]
             scn.frame_set(curFrame)
             # apply sourceDup modifiers
-            applyModifiers(sourceDup)
+            applyModifiers(sourceDup, only=["CLOTH", "SOFT_BODY"])
             # apply animated transform data
             sourceDup.matrix_world = self.source.matrix_world
             sourceDup.animation_data_clear()
@@ -868,7 +871,6 @@ class RebrickrBrickify(bpy.types.Operator):
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             scn.update()
             safeUnlink(sourceDup)
-        if denom != 0: update_progress("Applying Modifiers", 1)
         return duplicates
 
     def getObjectToBrickify(self):

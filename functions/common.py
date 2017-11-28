@@ -174,12 +174,12 @@ class Suppressor(object):
             pass
     def write(self, x): pass
 
-def applyModifiers(obj, only=None):
+def applyModifiers(obj, only=None, exclude=None):
     select(obj, active=obj)
     # apply modifiers
     for mod in obj.modifiers:
         # only = ["SUBSURF", "ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"]
-        if (only is None or mod.type in only) and mod.show_viewport:
+        if (only is None or mod.type in only) and (exclude is None or mod.type not in exclude) and mod.show_viewport:
             try:
                 with Suppressor(): bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
             except:
