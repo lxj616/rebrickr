@@ -220,7 +220,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                 brick_mats.append(color)
 
     # initialize progress bar around cursor
-    denom = len(keys)/1000
+    old_percent = 0
     if cursorStatus:
         wm = bpy.context.window_manager
         wm.progress_begin(0, 100)
@@ -365,23 +365,30 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
 
                 if printStatus:
                     # print status to terminal
-                    if i % denom < 1:
-                        percent = 1 - (len(keysNotChecked) / len(keys))
-                        if percent < 1:
-                            update_progress("Building", percent)
-                            if cursorStatus: wm.progress_update(percent*100)
-            # remove key from keysNotChecked (for attemptMerge)
-            try:
-                keysNotChecked.remove(key)
-            except:
-                pass
+                    percent = 1 - (len(keysNotChecked) / len(keys))
+                    if percent - old_percent > 0.001 and percent < 1:
+                        update_progress("Building", percent)
+                        if cursorStatus: wm.progress_update(percent*100)
+                        old_percent = percent
+                # remove keys in new brick from keysNotChecked (for attemptMerge)
+                for x1 in range(brickSize[0]):
+                    for y1 in range(brickSize[1]):
+                        for z1 in range(brickSize[2]):
+                            try:
+                                keyChecked = listToStr([loc[0] + x1, loc[1] + y1, loc[2] + z1])
+                                keysNotChecked.remove(keyChecked)
+                            except ValueError:
+                                pass
+            else:
+                # remove ignored key from keysNotChecked (for attemptMerge)
+                try:    keysNotChecked.remove(key)
+                except ValueError: pass
 
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO Logo" and logo is not None:
         bpy.data.objects.remove(logo)
 
-    if printStatus:
-        update_progress("Building", 1)
+    if printStatus: update_progress("Building", 1)
     # end progress bar around cursor
     if cursorStatus: wm.progress_end()
 
@@ -397,12 +404,14 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
             for brick in bricksCreated:
                 scn.objects.unlink(brick)
         # iterate through keys
+        old_percent = 0
         for i,key in enumerate(keys):
             if printStatus:
                 # print status to terminal
                 percent = i/len(bricksDict)
-                if percent < 1:
+                if percent - old_percent > 0.001 and percent < 1:
                     update_progress("Linking to Scene", percent)
+                    old_percent = percent
 
             if bricksDict[key]["parent_brick"] == "self" and bricksDict[key]["draw"]:
                 name = bricksDict[key]["name"]
