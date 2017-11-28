@@ -270,15 +270,7 @@ class RebrickrBrickify(bpy.types.Operator):
                     sourceDup.shape_key_remove(sourceDup.data.shape_keys.key_blocks[0])
                 # bpy.ops.object.shape_key_remove(all=True)
             # apply modifiers for source duplicate
-            applyModifiers(sourceDup)
-            # set cm.armature
-            foundOne = False
-            for mod in sourceDup.modifiers:
-                if mod.type == "ARMATURE" and mod.show_viewport:
-                    cm.armature = True
-                    foundOne = True
-                    break
-            if not foundOne: cm.armature = False
+            cm.armature = applyModifiers(sourceDup)
             # apply transformation data
             if self.action == "CREATE":
                 self.source["previous_location"] = self.source.location.to_tuple()
@@ -456,7 +448,9 @@ class RebrickrBrickify(bpy.types.Operator):
                 return
 
             wm.progress_update(curFrame-cm.startFrame)
+            print('-'*100)
             print("completed frame " + str(curFrame))
+            print('-'*100)
 
         # prepare bricks to be displayed
         for curFrame in range(cm.startFrame, cm.stopFrame + 1):
@@ -860,7 +854,7 @@ class RebrickrBrickify(bpy.types.Operator):
             sourceDup.matrix_world = self.source.matrix_world
             sourceDup.animation_data_clear()
             # apply sourceDup modifiers
-            applyModifiers(sourceDup)
+            cm.armature = applyModifiers(sourceDup)
             scn.update()
             # set source previous transforms
             self.source["previous_location"] = sourceDup.location.to_tuple()

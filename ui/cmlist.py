@@ -493,7 +493,7 @@ def updateParentExposure(self, context):
 def updateModelScale(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
-    if cm.lastSplitModel:
+    if cm.lastSplitModel or cm.animated:
         _,_,s = getTransformData()
         parentOb = bpy.data.objects.get(cm.parent_name)
         if parentOb is not None:
@@ -905,7 +905,6 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         description="Scale of the brick model",
         update=updateModelScale,
         step=1,
-        min=0,
         default=1.0)
     applyToSourceObject = BoolProperty(
         name="Apply to source",

@@ -363,7 +363,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                 if printStatus:
                     # print status to terminal
                     if i % denom < 1:
-                        percent = i/len(keys)
+                        percent = 1 - (len(keysNotChecked) / len(keys))
                         if percent < 1:
                             update_progress("Building", percent)
                             if cursorStatus: wm.progress_update(percent*100)

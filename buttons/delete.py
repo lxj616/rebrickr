@@ -265,7 +265,7 @@ class RebrickrDelete(bpy.types.Operator):
         select(source, active=source)
 
         # apply transformation to source
-        if (modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (modelType == "ANIMATION" and cm.applyToSourceObject):
+        if not cm.armature and ((modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (modelType == "ANIMATION" and cm.applyToSourceObject)):
             l,r,s = getTransformData()
             if modelType == "MODEL":
                 loc = strToTuple(cm.lastSourceMid, float)
@@ -314,10 +314,14 @@ class RebrickrDelete(bpy.types.Operator):
         cm.matrixIsDirty = True
         cm.bricksAreDirty = True
         cm.bevelAdded = False
+        cm.armature = False
+        cm.exposeParent = False
         cm.version = bpy.props.rebrickr_version
         cm.activeKeyX = 1
         cm.activeKeyY = 1
         cm.activeKeyZ = 1
+
+        clearTransformData()
 
         # reset frame (for proper update), update scene and redraw 3D view
         scn.frame_set(origFrame)

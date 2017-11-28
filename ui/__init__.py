@@ -282,7 +282,11 @@ class AnimationPanel(Panel):
                         row.label("Num frames to bake: %(totalFramesToBake)s" % locals())
             if (cm.stopFrame - cm.startFrame > 10 and not cm.animated) or self.appliedMods:
                 col = layout.column(align=True)
+                col.scale_y = 0.7
                 col.label("WARNING: May take a while.")
+                col.separator()
+                col.label("Watch the progress in")
+                col.label("the command line.")
                 col.separator()
 
 class ModelTransformPanel(Panel):
@@ -312,15 +316,8 @@ class ModelTransformPanel(Panel):
         col = layout.column(align=True)
         row = col.row(align=True)
 
-        if cm.armature:
-            row.label("Cannot transform Brickified object with armature")
-            return
-        if not cm.lastSplitModel:
-            row.label("Use built-in controls")
-            return
-
         row.prop(cm, "applyToSourceObject")
-        if cm.animated or (cm.splitModel and cm.modelCreated):
+        if cm.animated or (cm.lastSplitModel and cm.modelCreated):
             row = col.row(align=True)
             row.prop(cm, "exposeParent")
         row = col.row(align=True)

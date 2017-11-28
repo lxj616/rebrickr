@@ -175,6 +175,7 @@ class Suppressor(object):
     def write(self, x): pass
 
 def applyModifiers(obj, only=None, exclude=None, curFrame=None):
+    hasArmature = False
     select(obj, active=obj)
     # apply modifiers
     for mod in obj.modifiers:
@@ -186,6 +187,9 @@ def applyModifiers(obj, only=None, exclude=None, curFrame=None):
                 with Suppressor(): bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)
             except:
                 mod.show_viewport = False
+            if mod.type == "ARMATURE" and not hasArmature and mod.show_viewport:
+                hasArmature = True
+    return hasArmature
 
 # code from https://stackoverflow.com/questions/1518522/python-most-common-element-in-a-list
 def most_common(L):

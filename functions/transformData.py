@@ -54,6 +54,13 @@ def getTransformData():
     s = tuple(strToList(cm.modelScale, float))
     return l,r,s
 
+def clearTransformData():
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    cm.modelLoc = "0,0,0"
+    cm.modelRot = "0,0,0"
+    cm.modelScale = "1,1,1"
+
 def applyTransformData(objList):
     """ apply transform data from cm.modelLoc/Rot/Scale to objects in objList """
     objList = confirmList(objList)
