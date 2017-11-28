@@ -724,10 +724,10 @@ class drawAdjacent(Operator):
             if addBrick:
                 if checkTwoMoreAbove:
                     # verify two more locs available above current
-                    targetDictLoc0 = targetDictLoc.copy()
+                    adjDictLoc0 = adjDictLoc.copy()
                     for i in range(1, 3):
-                        targetDictLoc0[2] += 1
-                        nextKey,nextBrickD = self.getBrickD(targetDictLoc0)
+                        adjDictLoc0[2] += 1
+                        nextKey,nextBrickD = self.getBrickD(adjDictLoc0)
                         if not nextBrickD:
                             self.setDirBool(side, False)
                         # if brick drawn in next loc and not just rerunning based on new direction selection
@@ -755,10 +755,10 @@ class drawAdjacent(Operator):
                 self.adjBricksCreated[side][brickNum] = self.brickType
                 if checkTwoMoreAbove:
                     # update matrix for two locations above adjacent_key
-                    targetDictLoc0 = targetDictLoc.copy()
+                    adjDictLoc0 = adjDictLoc.copy()
                     for i in range(1, 3):
-                        targetDictLoc0[2] += 1
-                        nextKey,nextBrickD = self.getBrickD(targetDictLoc0)
+                        adjDictLoc0[2] += 1
+                        nextKey,nextBrickD = self.getBrickD(adjDictLoc0)
                         nextBrickD["draw"] = True
                         setCurBrickVal(self.bricksDict, strToList(nextKey))
                         nextBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"]

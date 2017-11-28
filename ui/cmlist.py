@@ -543,7 +543,6 @@ def dirtyBricks(self, context):
 #     obj = bpy.data.objects.get(brickD["name"])
 #     if obj is not None:
 #         select(obj, active=obj, only=False)
-#     print("here")
 
 # Create custom property group
 class Rebrickr_CreatedModels(bpy.types.PropertyGroup):

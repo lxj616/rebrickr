@@ -118,10 +118,7 @@ def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, p
     startingLoc = sum(loc)
     for x in range(loc[0], brickSize[0] + loc[0]):
         for y in range(loc[1], brickSize[1] + loc[1]):
-            for z in range(loc[2], brickSize[2] + loc[2]):
-                # TODO: figure out what this does
-                if cm.brickType in ["Bricks", "Custom"] and z > loc[2]:
-                    continue
+            for z in range(loc[2], brickSize[2] + loc[2], zStep):
                 # get brick at x,y location
                 k0 = listToStr([x,y,z])
                 curBrick = bricksDict[k0]
