@@ -73,7 +73,7 @@ def findNearestColorName((R,G,B),Map):
             mincolorname = d
     return mincolorname
 
-def getMaterial(polygon):
+def getMat(polygon):
     materialD = {}
     obj.data.materials[0].alpha = 1
     print("face", polygon.index, "material_index", polygon.material_index)

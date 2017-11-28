@@ -304,9 +304,11 @@ class RebrickrDelete(bpy.types.Operator):
         cm.modelCreatedOnFrame = -1
         cm.lastSourceMid = "-1,-1,-1"
         cm.lastLogoResolution = 0
-        cm.lastLogoDetail = 'None'
+        cm.lastLogoDetail = "None"
         cm.lastSplitModel = False
-        cm.lastMatrixSettings = ""
+        cm.lastBrickType = "None"
+        cm.lastMatrixSettings = "None"
+        cm.lastMaterialType = "None"
         cm.animIsDirty = True
         cm.materialIsDirty = True
         cm.modelIsDirty = True

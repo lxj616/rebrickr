@@ -37,7 +37,7 @@ def addMaterialsToBricksDict(bricksDict, source):
             f = source.data.polygons[nf]
             slot = source.material_slots[f.material_index]
             mat = slot.material
-            matName = mat.name
+            matName = mat.name if mat is not None else ""
             bricksDict[key]["mat_name"] = matName
     return bricksDict
 

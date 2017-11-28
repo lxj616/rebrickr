@@ -678,7 +678,7 @@ class DetailingPanel(Panel):
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
 
-        if cm.lastBrickType == "Custom":
+        if cm.brickType == "Custom":
             col = layout.column(align=True)
             col.scale_y = 0.7
             col.label("Not available for custom")

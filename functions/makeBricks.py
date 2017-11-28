@@ -170,8 +170,10 @@ def getMaterial(cm, bricksDict, key, brickSize, randState, brick_mats, k):
         mat = bpy.data.materials.get(matName)
     elif cm.materialType == "Random" and len(brick_mats) > 0:
         randState.seed(cm.randomMatSeed + k)
-        k += 1
-        randIdx = randState.randint(0, len(brick_mats)) if len(brick_mats > 1) else 0
+        if len(brick_mats) > 1:
+            randIdx = randState.randint(0, len(brick_mats))
+        else:
+            randIdx = 0
         matName = brick_mats[randIdx]
         mat = bpy.data.materials.get(matName)
     return mat
@@ -290,6 +292,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                 undersideDetail = cm.exposedUndersideDetail if botExposed else cm.hiddenUndersideDetail
                 # get brick material
                 mat = getMaterial(cm, bricksDict, key, brickSize, randS2, brick_mats, k)
+                k += 1
 
                 ### CREATE BRICK ###
 
@@ -372,7 +375,6 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                 keysNotChecked.remove(key)
             except:
                 pass
-
 
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO Logo" and logo is not None:

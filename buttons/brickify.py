@@ -188,11 +188,6 @@ class RebrickrBrickify(bpy.types.Operator):
         cm.internalIsDirty = False
         scn.Rebrickr_runningOperation = False
 
-        # apply random materials
-        if cm.materialType == "Random":
-            bricks = getBricks()
-            RebrickrApplyMaterial.applyRandomMaterial(context, bricks)
-
         # unlink source from scene and link to safe scene
         if source.name in scn.objects.keys():
             safeUnlink(source, hide=False)
