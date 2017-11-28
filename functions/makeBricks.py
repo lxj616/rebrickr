@@ -254,7 +254,6 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
         # iterate through locations in bricksDict from bottom to top
         for i,key in enumerate(keys):
             brickD = bricksDict[key]
-            if brickD["draw"]: print(key, not brickD["attempted_merge"])
             if brickD["draw"] and brickD["parent_brick"] in [None, "self"] and not brickD["attempted_merge"]:
                 # initialize vars
                 loc = strToList(key)
@@ -343,7 +342,6 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                     addEdgeSplitMod(brick)
                     # append to bricksCreated
                     bricksCreated.append(brick)
-                    print(brick.name)
                 else:
                     # transform brick mesh to coordinate on matrix
                     addToMeshLoc(brickLoc, mesh=m)
