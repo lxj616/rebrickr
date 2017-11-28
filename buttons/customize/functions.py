@@ -46,7 +46,7 @@ def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     refLogo = RebrickrBrickify.getLogo(cm)
     action = "UPDATE_MODEL"
     # actually draw the bricks
-    RebrickrBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, action, cm=cm, bricksDict=bricksDict, keys=keysToUpdate, replaceExistingGroup=False, selectCreated=selectCreated, printStatus=False)
+    RebrickrBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, action, cm=cm, bricksDict=bricksDict, keys=keysToUpdate, replaceExistingGroup=False, selectCreated=selectCreated, printStatus=False, redraw=True)
 
 def createObjsD(objs):
     scn = bpy.context.scene

@@ -486,7 +486,7 @@ class RebrickrBrickify(bpy.types.Operator):
         return group_name
 
     @classmethod
-    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, action, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False, printStatus=True):
+    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, action, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False, printStatus=True, redraw=False):
         """ gets/creates bricksDict, runs makeBricks, and caches the final bricksDict """
         scn = bpy.context.scene
         if cm is None: cm = scn.cmlist[scn.cmlist_index]
@@ -505,7 +505,7 @@ class RebrickrBrickify(bpy.types.Operator):
         # reset all values for certain keys in bricksDict dictionaries
         if cm.buildIsDirty and loadedFromCache:
             threshold = getThreshold(cm)
-            for kk in bricksDict.keys():
+            for kk in bricksDict:
                 bD = bricksDict[kk]
                 if keys == "ALL" or kk in keys:
                     bD["size"] = None
@@ -517,6 +517,9 @@ class RebrickrBrickify(bpy.types.Operator):
                 else:
                     # don't merge bricks not in 'keys'
                     bD["attempted_merge"] = True
+        elif redraw:
+            for kk in keys:
+                bricksDict[kk]["attempted_merge"] = False
         if not loadedFromCache or cm.internalIsDirty:
             updateInternal(bricksDict, cm, keys, clearExisting=loadedFromCache)
             cm.buildIsDirty = True

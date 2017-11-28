@@ -24,3 +24,5 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
   * Known issues:
       * In snapchat hotdog test file, when parents removed and transformation kept, then when model created then deleted, source shrinks
+      * In bricks mode, bricks don't merge well
+      * In bricks mode, when adding adj bricks to object and then adding adj bricks to brick above, the adj bricks of the first don't get top exposure updated

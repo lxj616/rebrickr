@@ -254,8 +254,8 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
         # iterate through locations in bricksDict from bottom to top
         for i,key in enumerate(keys):
             brickD = bricksDict[key]
+            if brickD["draw"]: print(key, not brickD["attempted_merge"])
             if brickD["draw"] and brickD["parent_brick"] in [None, "self"] and not brickD["attempted_merge"]:
-                ct = time.time()
                 # initialize vars
                 loc = strToList(key)
                 brickSizes = [[1,1,zStep]]
@@ -343,6 +343,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                     addEdgeSplitMod(brick)
                     # append to bricksCreated
                     bricksCreated.append(brick)
+                    print(brick.name)
                 else:
                     # transform brick mesh to coordinate on matrix
                     addToMeshLoc(brickLoc, mesh=m)
@@ -373,7 +374,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                 # remove keys in new brick from keysNotChecked (for attemptMerge)
                 for x1 in range(brickSize[0]):
                     for y1 in range(brickSize[1]):
-                        for z1 in range(brickSize[2]):
+                        for z1 in range(brickSize[2], zStep):
                             try:
                                 keyChecked = listToStr([loc[0] + x1, loc[1] + y1, loc[2] + z1])
                                 keysNotChecked.remove(keyChecked)
