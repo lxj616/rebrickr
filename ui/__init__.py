@@ -951,7 +951,7 @@ class BrickDetailsPanel(Panel):
 
     @classmethod
     def poll(self, context):
-        # return False # for debugging purposes only
+        return False # for debugging purposes only
         if not settingsCanBeDrawn():
             return False
         scn = context.scene
