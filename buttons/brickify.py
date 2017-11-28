@@ -826,13 +826,6 @@ class RebrickrBrickify(bpy.types.Operator):
                 for i in range(len(shapeKeys.key_blocks)):
                     sourceDup.shape_key_remove(sourceDup.data.shape_keys.key_blocks[0])
                 # bpy.ops.object.shape_key_remove(all=True)
-            # print status
-            if denom != 0:
-                percent = (curFrame - startFrame) / (denom + 1)
-                if percent < 1:
-                    update_progress("Applying Modifiers", percent)
-            applyModifiers(sourceDup, exclude=["CLOTH", "SOFT_BODY"])
-        if denom != 0: update_progress("Applying Modifiers", 1)
 
         # store lastObj transform data to source
         if lastObj != self.source:
@@ -853,24 +846,34 @@ class RebrickrBrickify(bpy.types.Operator):
                         bpy.ops.ptcache.bake(override, bake=True)
 
         for curFrame in range(startFrame, stopFrame + 1):
+            # print status
+            if denom != 0:
+                percent = (curFrame - startFrame) / (denom + 1)
+                if percent < 1:
+                    update_progress("Applying Modifiers", percent)
             if duplicates[curFrame]["isReused"]:
                 continue
             sourceDup = duplicates[curFrame]["obj"]
+            # set active frame for applying modifiers
             scn.frame_set(curFrame)
-            # apply sourceDup modifiers
-            applyModifiers(sourceDup, only=["CLOTH", "SOFT_BODY"])
             # apply animated transform data
             sourceDup.matrix_world = self.source.matrix_world
             sourceDup.animation_data_clear()
+            # apply sourceDup modifiers
+            applyModifiers(sourceDup)
             scn.update()
+            # set source previous transforms
             self.source["previous_location"] = sourceDup.location.to_tuple()
             sourceDup.rotation_mode = "XYZ"
             self.source["previous_rotation"] = tuple(sourceDup.rotation_euler)
             self.source["previous_scale"] = sourceDup.scale.to_tuple()
+            # apply transform data
             select(sourceDup, active=sourceDup)
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             scn.update()
+            # unlink source duplicate
             safeUnlink(sourceDup)
+        if denom != 0: update_progress("Applying Modifiers", 1)
         return duplicates
 
     def getObjectToBrickify(self):
