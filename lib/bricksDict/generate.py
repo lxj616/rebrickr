@@ -193,7 +193,8 @@ def isInternal(bricksDict, key):
     val = bricksDict[key]["val"]
     return (val > 0 and val < 1) or val == -1
 
-def updateInternal(bricksDict, keys, cm, clearExisting=False):
+def updateInternal(bricksDict, cm, keys="ALL", clearExisting=False):
+    if keys == "ALL": keys = list(bricksDict.keys())
     # clear extisting internal structure
     if clearExisting:
         zStep = getZStep(cm)
@@ -433,8 +434,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     cm = scn.cmlist[scn.cmlist_index]
     # update source data in case data needs to be refreshed
     source.data.update()
-    for scn in bpy.data.scenes:
-        scn.update()
+    scn.update()
     # get lattice bmesh
     print("\ngenerating blueprint...")
     lScale = (source_details.x.dist, source_details.y.dist, source_details.z.dist)

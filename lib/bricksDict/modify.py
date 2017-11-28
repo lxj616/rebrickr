@@ -41,37 +41,21 @@ def addMaterialsToBricksDict(bricksDict, source):
             bricksDict[key]["mat_name"] = matName
     return bricksDict
 
-def brickAvail(sourceBrick, brick):
+def brickAvail(cm, sourceBrick, brick):
     """ check brick is available to merge """
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
-    n = cm.source_name
-    Rebrickr_internal_mn = "Rebrickr_%(n)s_internal" % locals()
     if brick is not None:
+        n = cm.source_name
+        Rebrickr_internal_mn = "Rebrickr_%(n)s_internal" % locals()
         # This if statement ensures brick is present, brick isn't drawn already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal)
         if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats):
             return True
     return False
 
-def getNextBrick(bricks, loc, x, y, z=0):
-    """ get next brick at loc + (x,y,z) """
-    try:
-        key = listToStr([loc[0] + x, loc[1] + y, loc[2] + z])
-        return bricks[key]
-    except KeyError:
-        return None
-
-def plateIsBrick(brickD, bricksDict, loc, x, y, h=3):
-    """ check that [h-1] locations above loc are available """
-    for i in range(1,h):
-        if not brickAvail(brickD, getNextBrick(bricksDict, loc, x, y, i)):
-            return False
-    return True
-
-def canBeJoined(bricksDict, loc, key, i, j, k=0):
+def canBeJoined(cm, bricksDict, loc, key, i, j, k=0):
     curBrickD = bricksDict[key]
-    nextBrickD = getNextBrick(bricksDict, loc, i, j, k)
-    spotAvail = brickAvail(curBrickD, nextBrickD)
+    key = listToStr([loc[0] + i, loc[1] + j, loc[2] + k])
+    nextBrickD = bricksDict.get(key)
+    spotAvail = brickAvail(cm, curBrickD, nextBrickD)
     return spotAvail
 
 def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, mergeVertical=False):
@@ -85,7 +69,7 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, me
             # break case 1
             if j >= newMax1: break
             # break case 2
-            elif not canBeJoined(bricksDict, loc, key, i, j) or listToStr([i + loc[0], j + loc[1], loc[2]]) not in keys:
+            elif not canBeJoined(cm, bricksDict, loc, key, i, j) or listToStr([i + loc[0], j + loc[1], loc[2]]) not in keys:
                 if j == 0: breakOuter2 = True
                 else:      newMax1 = j
                 break
@@ -96,7 +80,7 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, me
                 # break case 1
                 elif k >= newMax2: break
                 # break case 2
-                elif not canBeJoined(bricksDict, loc, key, i, j, k) or listToStr([i + loc[0], j + loc[1], loc[2] + k]) not in keys:
+                elif not canBeJoined(cm, bricksDict, loc, key, i, j, k) or listToStr([i + loc[0], j + loc[1], loc[2] + k]) not in keys:
                     if k == 0: breakOuter1 = True
                     else:      newMax2 = k
                     break
@@ -104,10 +88,7 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, me
                 elif k == 1: continue
                 # else, append current brick size to brickSizes
                 else:
-                    if mergeVertical:
-                        newSize = [i+1, j+1, k+zStep]
-                    else:
-                        newSize = [i+1, j+1, zStep]
+                    newSize = [i+1, j+1, k+zStep]
                     if newSize not in brickSizes and [newSize[0],newSize[1]] in bpy.props.Rebrickr_legal_brick_sizes[newSize[2]]:
                         brickSizes.append(newSize)
             if breakOuter1: break
@@ -116,21 +97,19 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, me
 
 def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True):
     """ attempt to merge bricksDict[key] with adjacent bricks """
-
-    ct = time.time()
+    assert len(brickSizes) > 0
 
     if cm.brickType != "Custom":
+        # iterate through adjacent locs to find available brick sizes
         updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], mergeVertical and cm.brickType == "Bricks and Plates")
         updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], mergeVertical and cm.brickType == "Bricks and Plates")
+        # sort brick types from smallest to largest
+        order = randState.randint(0,2)
+        if preferLargest:
+            brickSizes.sort(key=lambda x: (x[0] * x[1] * x[2]))
+        else:
+            brickSizes.sort(key=lambda x: (x[2], x[order], x[(order+1)%2]))
 
-    stopWatch("1", ct-time.time(), precision=5)
-
-    order = randState.randint(0,2)
-    # sort brick types from smallest to largest
-    if preferLargest:
-        brickSizes.sort(key=lambda x: (x[0] * x[1] * x[2]))
-    else:
-        brickSizes.sort(key=lambda x: (x[2], x[order], x[(order+1)%2]))
     # grab the biggest brick type and store to bricksDict
     brickSize = brickSizes[-1]
     bricksDict[key]["size"] = brickSize

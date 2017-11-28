@@ -232,18 +232,22 @@ def insertKeyframes(objList, keyframeType, frame, interpolationMode='Default', i
                 kf = fcurve.keyframe_points[idx]
                 kf.interpolation = interpolationMode
 
+def setActiveScn(scn):
+    for screen in bpy.data.screens:
+        screen.scene = scn
 def getLayersList(layerList):
     layerList = confirmList(layerList)
-    newLayersList = [False]*20
+    newLayersList = []
     for i in range(20):
-        if i in layerList:
-            newLayersList[i] = True
+        newLayersList.append(i in layerList)
     return newLayersList
-def setActiveLayers(layerList, scn=None):
-    if not scn:
-        scn = bpy.context.scene
-    newLayersList = getLayersList(layerList)
-    scn.layers = newLayersList
+def setLayers(scn, layers):
+    """ set active layers of scn w/o 'dag ZERO' error """
+    assert len(layers) == 20
+    # set active scene (prevents dag ZERO errors)
+    setActiveScn(scn)
+    # set active layers of scn
+    scn.layers = layers
 
 def deselectAll():
     bpy.ops.object.select_all(action='DESELECT')

@@ -55,15 +55,6 @@ def safeLink(obj, unhide=False, protect=False):
     except RuntimeError:
         pass
 
-def setLayers(scn, layers):
-    """ set active layers of scn w/o 'dag ZERO' error """
-    assert len(layers) == 20
-    # set active scene for all screens (prevents dag ZERO errors)
-    for screen in bpy.data.screens:
-        screen.scene = scn
-    # set active layers of scn
-    scn.layers = layers
-
 def bounds(obj, local=False):
     """
     returns object details with the following subattributes for x (same for y & z):

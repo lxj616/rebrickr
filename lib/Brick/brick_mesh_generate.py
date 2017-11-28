@@ -766,18 +766,19 @@ def newObjFromBmesh(layer, bme, meshName, objName=False):
     for i in range(20):
         layerList.append(i == layer-1)
     bpy.ops.object.move_to_layer(layers=layerList)
-    scn.layers = layerList
+    setLayers(scn, layerList)
     bpy.ops.object.select_all(action='TOGGLE')
     return ob
 
 def deleteExisting():
+    scn = bpy.context.scene
     # delete existing objects
     tmpList = [True]*20
-    bpy.context.scene.layers = tmpList
+    scn.layers = tmpList
     for i in range(2):
         bpy.ops.object.select_all(action='TOGGLE')
         bpy.ops.object.delete()
-    bpy.context.scene.layers = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True]
+    scn.layers = ([False]*19) + [True]
 
 def get_dimensions(height=1, zScale=1, gap_percentage=0.01):
     scale = height/9.6
@@ -851,6 +852,7 @@ def main():
     layerList = []
     for i in range(20):
         layerList.append(i == layerToOpen-1)
-    bpy.context.scene.layers = layerList
+    scn = bpy.context.scene
+    scn.layers = layerList
 
 # main()

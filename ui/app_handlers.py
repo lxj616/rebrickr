@@ -206,7 +206,7 @@ def prevent_user_from_viewing_storage_scene(scene):
             bpy.context.screen.scene = bpy.data.scenes[i]
             showErrorMessage("This scene is for Rebrickr internal use only")
 
-bpy.app.handlers.scene_update_pre.append(prevent_user_from_viewing_storage_scene)
+# bpy.app.handlers.scene_update_pre.append(prevent_user_from_viewing_storage_scene)
 
 @persistent
 def keep_object_names_unique(scene):

@@ -513,13 +513,12 @@ class RebrickrBrickify(bpy.types.Operator):
                 cm.activeKeyZ = 1
         else:
             loadedFromCache = True
-        if keys == "ALL": keys = list(bricksDict.keys())
         # reset all values for certain keys in bricksDict dictionaries
         if cm.buildIsDirty and loadedFromCache:
             threshold = getThreshold(cm)
             for kk in bricksDict.keys():
                 bD = bricksDict[kk]
-                if kk in keys:
+                if keys == "ALL" or kk in keys:
                     bD["size"] = None
                     bD["parent_brick"] = None
                     bD["top_exposed"] = None
@@ -530,7 +529,7 @@ class RebrickrBrickify(bpy.types.Operator):
                     # don't merge bricks not in 'keys'
                     bD["attempted_merge"] = True
         if not loadedFromCache or cm.internalIsDirty:
-            updateInternal(bricksDict, keys, cm, clearExisting=loadedFromCache)
+            updateInternal(bricksDict, cm, keys, clearExisting=loadedFromCache)
             cm.buildIsDirty = True
         group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else None
         bricksCreated, bricksDict = makeBricks(parent, refLogo, dimensions, bricksDict, cm=cm, split=cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)

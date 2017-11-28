@@ -99,7 +99,7 @@ class RebrickrDelete(bpy.types.Operator):
 
         # set layers to source layers temporarily
         curLayers = list(scn.layers)
-        scn.layers = source.layers
+        setLayers(scn, source.layers)
 
         # clean up 'Rebrickr_[source name]' group
         if not skipSource:
@@ -255,7 +255,7 @@ class RebrickrDelete(bpy.types.Operator):
             brick = bpy.data.groups[gn].objects[0]
             source.layers = brick.layers
         # set active layers to source layers
-        scn.layers = source.layers
+        setLayers(scn, source.layers)
 
         modelType = getModelType(cm)
 
@@ -284,7 +284,7 @@ class RebrickrDelete(bpy.types.Operator):
 
         # return open layers to original
         scn.Rebrickr_runningOperation = False
-        scn.layers = lastLayers
+        setLayers(scn, lastLayers)
 
         # delete custom properties from source
         customPropNames = ["ignored_mods", "frame_parent_cleared", "old_parent", "previous_location", "previous_rotation", "previous_scale", "before_edit_location", "before_origin_set_location"]

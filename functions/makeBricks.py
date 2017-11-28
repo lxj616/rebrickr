@@ -110,7 +110,7 @@ def prepareLogoAndGetDetails(logo):
     cm = scn.cmlist[scn.cmlist_index]
     if cm.logoDetail != "LEGO Logo" and logo is not None:
         oldLayers = list(scn.layers)
-        scn.layers = logo.layers
+        setLayers(scn, logo.layers)
         logo.hide = False
         select(logo, active=logo)
         bpy.ops.object.duplicate()
@@ -119,7 +119,7 @@ def prepareLogoAndGetDetails(logo):
             mod.show_viewport = False
         logo.parent = None
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-        scn.layers = oldLayers
+        setLayers(scn, oldLayers)
         logo_details = bounds(logo)
     else:
         logo_details = None
@@ -244,6 +244,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
     # initialize supportBrickDs
     supportBrickDs = []
     bricksCreated = []
+    keysNotChecked = keys.copy()
     if printStatus: update_progress("Building", 0.0)
     # set number of times to run through all keys
     numIters = 2 if BandP else 1
@@ -268,7 +269,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                 # attempt to merge current brick with surrounding bricks, according to available brick types
                 if brickD["size"] is None or (cm.buildIsDirty):
                     preferLargest = brickD["val"] > 0 and brickD["val"] < 1
-                    brickSize = attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randS1, preferLargest=preferLargest, mergeVertical=True)
+                    brickSize = attemptMerge(cm, bricksDict, key, keysNotChecked, loc, brickSizes, zStep, randS1, preferLargest=preferLargest, mergeVertical=True)
                 else:
                     brickSize = brickD["size"]
 
@@ -366,6 +367,11 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                         if percent < 1:
                             update_progress("Building", percent)
                             if cursorStatus: wm.progress_update(percent*100)
+            # remove key from keysNotChecked (for attemptMerge)
+            try:
+                keysNotChecked.remove(key)
+            except:
+                pass
 
 
     # remove duplicate of original logoDetail
