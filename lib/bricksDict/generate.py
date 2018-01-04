@@ -242,22 +242,27 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         wm = bpy.context.window_manager
         wm.progress_begin(0, 100)
 
+    def printMatrixStatus(lastPercent):
+        # print status to terminal
+        if scn.Rebrickr_printTimes:
+            return None
+        percent = len(coordMatrix)/denom * (z/(len(coordMatrix[0][0])-1))
+        if percent < 100:
+            update_progress("Shell", percent/100.0)
+            if cursorStatus: wm.progress_update(percent)
+        return percent
+
+
     axes = axes.lower()
     ct = time.time()
-    breakNextTime = True
     if "x" in axes:
         miniDist = Vector((0.00015, 0.0, 0.0))
         for z in range(len(coordMatrix[0][0])):
-            # print status to terminal
-            if not scn.Rebrickr_printTimes:
-                percent0 = len(coordMatrix)/denom * (z/(len(coordMatrix[0][0])-1))
-                if percent0 < 100:
-                    update_progress("Shell", percent0/100.0)
-                    if cursorStatus: wm.progress_update(percent0)
+            percent0 = printMatrixStatus(0)
             for y in range(len(coordMatrix[0])):
                 for x in range(len(coordMatrix)):
                     if x != 0:
-                        if not breakNextTime and nextIntersection and nextIntersection[0] < coordMatrix[x][y][z][0]:
+                        if nextIntersection and nextIntersection[0] < coordMatrix[x][y][z][0]:
                             continue
                     intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z, miniDist)
                     if intersections == 0:
@@ -272,16 +277,11 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     if "y" in axes:
         miniDist = Vector((0.0, 0.00015, 0.0))
         for z in range(len(coordMatrix[0][0])):
-            # print status to terminal
-            if not scn.Rebrickr_printTimes:
-                percent1 = percent0 + (len(coordMatrix[0])/denom * (z/(len(coordMatrix[0][0])-1)))
-                if percent1 < 100:
-                    update_progress("Shell", percent1/100.0)
-                    if cursorStatus: wm.progress_update(percent1)
+            percent1 = printMatrixStatus(percent0)
             for x in range(len(coordMatrix)):
                 for y in range(len(coordMatrix[0])):
                     if y != 0:
-                        if not breakNextTime and nextIntersection and nextIntersection[1] < coordMatrix[x][y][z][1]:
+                        if nextIntersection and nextIntersection[1] < coordMatrix[x][y][z][1]:
                             continue
                     intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z, miniDist)
                     if intersections == 0:
@@ -296,16 +296,11 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     if "z" in axes:
         miniDist = Vector((0.0, 0.0, 0.00015))
         for x in range(len(coordMatrix)):
-            # print status to terminal
-            if not scn.Rebrickr_printTimes:
-                percent2 = percent1 + (len(coordMatrix[0][0])/denom * (x/(len(coordMatrix)-1)))
-                if percent2 < 100:
-                    update_progress("Shell", percent2/100.0)
-                    if cursorStatus: wm.progress_update(percent2)
+            percent2 = printMatrixStatus(percent1)
             for y in range(len(coordMatrix[0])):
                 for z in range(len(coordMatrix[0][0])):
                     if z != 0:
-                        if not breakNextTime and nextIntersection and nextIntersection[2] < coordMatrix[x][y][z][2]:
+                        if nextIntersection and nextIntersection[2] < coordMatrix[x][y][z][2]:
                             continue
                     intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
                     if intersections == 0:
@@ -331,7 +326,8 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                     ("x" not in axes and
                      (x in [0, len(coordMatrix)-1] or
                       brickFreqMatrix[x+1][y][z] == 0 or
-                      brickFreqMatrix[x-1][y][z] == 0))):
+                      brickFreqMatrix[x-1][y][z] == 0))
+                   ):
                     if brickFreqMatrix[x][y][z] == -1:
                         brickFreqMatrix[x][y][z] = 1
                         # TODO: set faceIdxMatrix value to nearest shell value using some sort of built in nearest poly to point function

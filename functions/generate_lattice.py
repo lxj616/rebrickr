@@ -40,15 +40,11 @@ def generateLattice(R, s, o=(0, 0, 0)):
     """ returns matrix with lattice vert coords given R, s, and o """
     # bme = bmesh.new()
 
-    o = (o[0] - (o[0] % R[0]), o[1] - (o[1] % R[1]), o[2] - (o[2] % R[2]))
     # initialize variables
     coordMatrix = []
-    xR = R[0]
-    yR = R[1]
-    zR = R[2]
-    xS = s[0]
-    yS = s[1]
-    zS = s[2]
+    xR, yR, zR = R
+    xS, yS, zS = s
+    o = (o[0] - (o[0] % xR), o[1] - (o[1] % yR), o[2] - (o[2] % zR))
     xN = (xS/(2*xR))
     yN = (yS/(2*yR))
     zN = (zS/(2*zR))

@@ -33,51 +33,67 @@ from ..functions import *
 from ..buttons.bevel import *
 
 
-def matchProperties(cmNew, cmOld, bh=False):
+def matchProperties(cmTo, cmFrom, bh=False):
+    # list properties to match
+    cm_attrs = ["shellThickness",
+                "studDetail",
+                "logoDetail",
+                "logoResolution",
+                "logoObjectName",
+                "logoScale",
+                "logoInset",
+                "hiddenUndersideDetail",
+                "exposedUndersideDetail",
+                "studVerts",
+                "gap",
+                "mergeSeed",
+                "randomLoc",
+                "randomRot",
+                "brickType",
+                "alignBricks",
+                "offsetBrickLayers",
+                "originSet",
+                "distOffsetX",
+                "distOffsetY",
+                "distOffsetZ",
+                "customObjectName",
+                "maxWidth",
+                "maxDepth",
+                "splitModel",
+                "internalSupports",
+                "matShellDepth",
+                "latticeStep",
+                "alternateXY",
+                "colThickness",
+                "colStep",
+                "materialType",
+                "materialName",
+                "internalMatName",
+                "matShellDepth",
+                "mergeInconsistentMats",
+                "randomMatSeed",
+                "useNormals",
+                "verifyExposure",
+                "insidenessRayCastDir",
+                "castDoubleCheckRays",
+                "startFrame",
+                "stopFrame",
+                "useAnimation",
+                "autoUpdateExposed",
+                "brickShell",
+                "calculationAxes",
+                "useLocalOrient"]
+    # more properties to match if condition is true
     if bh:
-        cmNew.brickHeight = cmOld.brickHeight
-    cmNew.shellThickness = cmOld.shellThickness
-    cmNew.studDetail = cmOld.studDetail
-    cmNew.logoDetail = cmOld.logoDetail
-    cmNew.logoResolution = cmOld.logoResolution
-    cmNew.hiddenUndersideDetail = cmOld.hiddenUndersideDetail
-    cmNew.exposedUndersideDetail = cmOld.exposedUndersideDetail
-    cmNew.studVerts = cmOld.studVerts
-    cmNew.gap = cmOld.gap
-    cmNew.mergeSeed = cmOld.mergeSeed
-    cmNew.randomRot = cmOld.randomRot
-    cmNew.randomLoc = cmOld.randomLoc
-    cmNew.originSet = cmOld.originSet
-    cmNew.distOffsetX = cmOld.distOffsetX
-    cmNew.distOffsetY = cmOld.distOffsetY
-    cmNew.distOffsetZ = cmOld.distOffsetZ
-    cmNew.customObjectName = cmOld.customObjectName
-    cmNew.maxWidth = cmOld.maxWidth
-    cmNew.maxDepth = cmOld.maxDepth
-    cmNew.splitModel = cmOld.splitModel
-    cmNew.internalSupports = cmOld.internalSupports
-    cmNew.latticeStep = cmOld.latticeStep
-    cmNew.alternateXY = cmOld.alternateXY
-    cmNew.colThickness = cmOld.colThickness
-    cmNew.colStep = cmOld.colStep
-    cmNew.materialType = cmOld.materialType
-    cmNew.materialName = cmOld.materialName
-    cmNew.internalMatName = cmOld.internalMatName
-    cmNew.matShellDepth = cmOld.matShellDepth
-    cmNew.mergeInconsistentMats = cmOld.mergeInconsistentMats
-    cmNew.randomMatSeed = cmOld.randomMatSeed
-    cmNew.useNormals = cmOld.useNormals
-    cmNew.verifyExposure = cmOld.verifyExposure
-    cmNew.applyToSourceObject = cmOld.applyToSourceObject
-    if cmNew.bevelAdded and cmOld.bevelAdded:
-        cmNew.bevelWidth = cmOld.bevelWidth
-        cmNew.bevelSegments = cmOld.bevelSegments
-        cmNew.bevelProfile = cmOld.bevelProfile
-    cmNew.useAnimation = cmOld.useAnimation
-    cmNew.startFrame = cmOld.startFrame
-    cmNew.stopFrame = cmOld.stopFrame
-    cmNew.calculationAxes = cmOld.calculationAxes
-    cmNew.brickShell = cmOld.brickShell
+        cm_attrs.append("brickHeight")
+    if cmFrom.bevelAdded and cmTo.bevelAdded:
+        cm_attrs.append("bevelWidth")
+        cm_attrs.append("bevelSegments")
+        cm_attrs.append("bevelProfile")
+    # match properties from 'cmFrom' to 'cmTo'
+    for attr in cm_attrs:
+        oldVal = getattr(cmFrom, attr)
+        setattr(cmTo, attr, oldVal)
 
 
 # ui list item actions
