@@ -1,3 +1,5 @@
+""" Code taken from https://github.com/CGCookie/blender-addon-updater """
+
 # ##### BEGIN GPL LICENSE BLOCK #####
 #
 #  This program is free software; you can redistribute it and/or
@@ -30,7 +32,7 @@ except Exception as e:
 		def __init__(self):
 			self.addon = None
 			self.verbose = False
-			self.invalidupdater = True # used to distinguish bad install
+			self.invalidupdater = True  # used to distinguish bad install
 			self.error = None
 			self.error_msg = None
 			self.async_checking = None

@@ -32,9 +32,9 @@ from ..functions import *
 
 
 class reportError(bpy.types.Operator):
-    """Report a bug via an automatically generated issue ticket"""              # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.report_error"                                            # unique identifier for buttons and menu items to reference.
-    bl_label = "Report Error"                                                   # display name in the interface.
+    """Report a bug via an automatically generated issue ticket"""
+    bl_idname = "rebrickr.report_error"
+    bl_label = "Report Error"
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
@@ -56,10 +56,11 @@ class reportError(bpy.types.Operator):
             self.report({"ERROR"}, "ERROR: Could not generate error report. Please use the 'Report a Bug' button in the Rebrickr Preferences (found in Add-On User Preferences)")
         return{"FINISHED"}
 
+
 class closeReportError(bpy.types.Operator):
-    """Deletes error report from blender's memory (still exists in file system)"""    # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.close_report_error"                                            # unique identifier for buttons and menu items to reference.
-    bl_label = "Close Report Error"                                                   # display name in the interface.
+    """Deletes error report from blender's memory (still exists in file system)"""
+    bl_idname = "rebrickr.close_report_error"
+    bl_label = "Close Report Error"
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
     def execute(self, context):

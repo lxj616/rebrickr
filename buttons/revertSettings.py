@@ -30,10 +30,11 @@ from bpy.types import Operator
 # Rebrickr imports
 from ..functions import *
 
+
 class RebrickrRevertSettings(Operator):
-    """Revert Matrix settings to save model customizations"""                   # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.revert_matrix_settings"                               # unique identifier for buttons and menu items to reference.
-    bl_label = "Revert Matrix Settings"                                         # display name in the interface.
+    """Revert Matrix settings to save model customizations"""
+    bl_idname = "rebrickr.revert_matrix_settings"
+    bl_label = "Revert Matrix Settings"
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod

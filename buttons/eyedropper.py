@@ -27,14 +27,15 @@ from bpy.props import StringProperty
 # Rebrickr imports
 from ..functions import *
 
+
 class EyeDropper(bpy.types.Operator):
     '''Use Eyedropper To pick object from scene'''
-    bl_idname = "rebrickr.eye_dropper"                                            # unique identifier for buttons and menu items to reference
-    bl_label = "Eye Dropper"                                                    # display name in the interface
+    bl_idname = "rebrickr.eye_dropper"
+    bl_label = "Eye Dropper"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
 
-    target_prop = StringProperty(default = '')
+    target_prop = StringProperty(default='')
 
     def __init__(self):
         FSM = {}
@@ -46,7 +47,7 @@ class EyeDropper(bpy.types.Operator):
         self.ob = None
 
     # from CG Cookie's retopoflow plugin
-    def hover_scene(self,context,x,y,source_name):
+    def hover_scene(self, context, x, y, source_name):
         """ casts ray through point x,y and sets self.ob if obj intersected """
         scn = context.scene
         region = context.region

@@ -32,6 +32,7 @@ props = bpy.props
 from ..functions import *
 from ..buttons.bevel import *
 
+
 def matchProperties(cmNew, cmOld, bh=False):
     if bh:
         cmNew.brickHeight = cmOld.brickHeight
@@ -77,6 +78,7 @@ def matchProperties(cmNew, cmOld, bh=False):
     cmNew.stopFrame = cmOld.stopFrame
     cmNew.calculationAxes = cmOld.calculationAxes
     cmNew.brickShell = cmOld.brickShell
+
 
 # ui list item actions
 class Rebrickr_Uilist_actions(bpy.types.Operator):
@@ -127,7 +129,7 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
             if self.action == 'ADD':
                 active_object = scn.objects.active
                 # if active object isn't on visible layer, don't set it as default source for new model
-                if active_object != None:
+                if active_object is not None:
                     objVisible = False
                     for i in range(20):
                         if active_object.layers[i] and scn.layers[i]:
@@ -136,7 +138,7 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
                         active_object = None
                 # if active object already has a model or isn't on visible layer, don't set it as default source for new model
                 # NOTE: active object may have been removed, so we need to re-check if none
-                if active_object != None:
+                if active_object is not None:
                     for cm in scn.cmlist:
                         if cm.source_name == active_object.name:
                             active_object = None
@@ -206,6 +208,7 @@ class Rebrickr_UL_items(UIList):
     def invoke(self, context, event):
         pass
 
+
 # copy settings from current index to all other indices (exclude height)
 class Rebrickr_Uilist_copySettingsToOthersExcludeHeight(bpy.types.Operator):
     bl_idname = "cmlist.copy_to_others_exclude_height"
@@ -232,6 +235,7 @@ class Rebrickr_Uilist_copySettingsToOthersExcludeHeight(bpy.types.Operator):
         except:
             handle_exception()
         return{'FINISHED'}
+
 
 # copy settings from current index to all other indices
 class Rebrickr_Uilist_copySettingsToOthers(bpy.types.Operator):
@@ -260,6 +264,7 @@ class Rebrickr_Uilist_copySettingsToOthers(bpy.types.Operator):
             handle_exception()
         return{'FINISHED'}
 
+
 # copy settings from current index to memory
 class Rebrickr_Uilist_copySettings(bpy.types.Operator):
     bl_idname = "cmlist.copy_settings"
@@ -282,6 +287,7 @@ class Rebrickr_Uilist_copySettings(bpy.types.Operator):
         except:
             handle_exception()
         return{'FINISHED'}
+
 
 # paste settings from index in memory to current index
 class Rebrickr_Uilist_pasteSettings(bpy.types.Operator):
@@ -309,6 +315,7 @@ class Rebrickr_Uilist_pasteSettings(bpy.types.Operator):
             handle_exception()
         return{'FINISHED'}
 
+
 # set source to active button
 class Rebrickr_Uilist_setSourceToActive(bpy.types.Operator):
     bl_idname = "cmlist.set_to_active"
@@ -322,7 +329,7 @@ class Rebrickr_Uilist_setSourceToActive(bpy.types.Operator):
         if scn.cmlist_index == -1:
             return False
         active_obj = context.scene.objects.active
-        if active_obj == None:
+        if active_obj is None:
             return False
         for i in range(20):
             if scn.layers[i] and active_obj.layers[i]:
@@ -340,6 +347,7 @@ class Rebrickr_Uilist_setSourceToActive(bpy.types.Operator):
             handle_exception()
 
         return{'FINISHED'}
+
 
 # select button
 class Rebrickr_Uilist_selectSource(bpy.types.Operator):
@@ -373,6 +381,7 @@ class Rebrickr_Uilist_selectSource(bpy.types.Operator):
         except:
             handle_exception()
         return{'FINISHED'}
+
 
 # select button
 class Rebrickr_Uilist_selectAllBricks(bpy.types.Operator):
@@ -408,6 +417,7 @@ class Rebrickr_Uilist_selectAllBricks(bpy.types.Operator):
             handle_exception()
         return{'FINISHED'}
 
+
 def uniquifyName(self, context):
     """ if Brick Model exists with name, add '.###' to the end """
     scn = context.scene
@@ -425,6 +435,7 @@ def uniquifyName(self, context):
     if cm.name != name:
         cm.name = name
 
+
 # def updateMeshObjectName(self, context, n):
 #     obj = bpy.data.objects.get(n)
 #     if obj is None:
@@ -440,18 +451,20 @@ def uniquifyName(self, context):
 #     cm = scn.cmlist[scn.cmlist_index]
 #     updateMeshObjectName(self, context, cm.customObjectName)
 #
+
 def setNameIfEmpty(self, context):
     scn = context.scene
     last_cmlist_index = scn.cmlist_index
     cm0 = scn.cmlist[last_cmlist_index]
     # verify model doesn't exist with that name
     if cm0.source_name != "":
-        for i,cm1 in enumerate(scn.cmlist):
+        for i, cm1 in enumerate(scn.cmlist):
             if cm1 != cm0 and cm1.source_name == cm0.source_name:
                 cm0.source_name = ""
                 scn.cmlist_index = i
     # if scn.cmlist_index == last_cmlist_index:
     #     updateMeshObjectName(self, context, cm0.source_name)
+
 
 def updateBevel(self, context):
     # get bricks to bevel
@@ -469,12 +482,14 @@ def updateBevel(self, context):
         print(e)
         pass
 
+
 def updateStartAndStopFrames(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     if cm.useAnimation:
         cm.startFrame = scn.frame_start
         cm.stopFrame = scn.frame_end
+
 
 def updateParentExposure(self, context):
     scn = bpy.context.scene
@@ -490,49 +505,58 @@ def updateParentExposure(self, context):
             if parentOb is not None:
                 safeUnlink(parentOb)
 
+
 def updateModelScale(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     if cm.lastSplitModel or cm.animated:
-        _,_,s = getTransformData()
+        _, _, s = getTransformData()
         parentOb = bpy.data.objects.get(cm.parent_name)
         if parentOb is not None:
             parentOb.scale = Vector(s) * cm.transformScale
+
 
 def dirtyAnim(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     cm.animIsDirty = True
 
+
 def dirtyMaterial(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     cm.materialIsDirty = True
+
 
 def dirtyModel(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     cm.modelIsDirty = True
 
+
 def dirtyMatrix(self=None, context=None):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     cm.matrixIsDirty = True
+
 
 def dirtyInternal(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     cm.internalIsDirty = True
 
+
 def dirtyBuild(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     cm.buildIsDirty = True
 
+
 def dirtyBricks(self, context):
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
     cm.bricksAreDirty = True
+
 
 # def updateActiveObject(self, context):
 #     scn = bpy.context.scene
@@ -543,6 +567,7 @@ def dirtyBricks(self, context):
 #     obj = bpy.data.objects.get(brickD["name"])
 #     if obj is not None:
 #         select(obj, active=obj, only=False)
+
 
 # Create custom property group
 class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
@@ -573,8 +598,8 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Stud Detailing",
         description="Choose where to draw the studs",
         items=[("On All Bricks", "On All Bricks", "Include Brick Logo only on bricks with studs exposed"),
-              ("On Exposed Bricks", "On Exposed Bricks", "Include Brick Logo only on bricks with studs exposed"),
-              ("None", "None", "Don't include Brick Logo on bricks")],
+               ("On Exposed Bricks", "On Exposed Bricks", "Include Brick Logo only on bricks with studs exposed"),
+               ("None", "None", "Don't include Brick Logo on bricks")],
         update=dirtyBricks,
         default="On Exposed Bricks")
 
@@ -582,8 +607,8 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Logo Detailing",
         description="Choose where to draw the logo",
         items=[("Custom Logo", "Custom Logo", "Choose a mesh object to use as the brick stud logo"),
-              ("LEGO Logo", "LEGO Logo", "Include a LEGO logo on each stud"),
-              ("None", "None", "Don't include Brick Logo on bricks")],
+               ("LEGO Logo", "LEGO Logo", "Include a LEGO logo on each stud"),
+               ("None", "None", "Don't include Brick Logo on bricks")],
         update=dirtyBricks,
         default="None")
 
@@ -618,23 +643,22 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         min=0.0, max=1.0,
         default=0.02)
 
-
     hiddenUndersideDetail = EnumProperty(
         name="Hidden Underside Detailing",
         description="Choose the level of detail to include for the underside of hidden bricks",
         items=[("High Detail", "High Detail", "Draw intricate details on brick underside"),
-              ("Medium Detail", "Medium Detail", "Draw most details on brick underside"),
-              ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
-              ("Flat", "Flat", "draw single face on brick underside")],
+               ("Medium Detail", "Medium Detail", "Draw most details on brick underside"),
+               ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
+               ("Flat", "Flat", "draw single face on brick underside")],
         update=dirtyBricks,
         default="Flat")
     exposedUndersideDetail = EnumProperty(
         name="Eposed Underside Detailing",
         description="Choose the level of detail to include for the underside of exposed bricks",
         items=[("High Detail", "High Detail", "Draw intricate details on brick underside"),
-              ("Medium Detail", "Medium Detail", "Draw most details on brick underside"),
-              ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
-              ("Flat", "Flat", "draw single face on brick underside")],
+               ("Medium Detail", "Medium Detail", "Draw most details on brick underside"),
+               ("Low Detail", "Low Detail", "Draw minimal details on brick underside"),
+               ("Flat", "Flat", "draw single face on brick underside")],
         update=dirtyBricks,
         default="Flat")
 
@@ -703,9 +727,9 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Brick Type",
         description="Type of brick used to build the model",
         items=[("Plates", "Plates", "Use plates to build the model"),
-              ("Bricks", "Bricks", "Use bricks to build the model"),
-              ("Bricks and Plates", "Bricks and Plates", "Use bricks and plates to build the model"),
-              ("Custom", "Custom", "Use custom object to build the model")],
+               ("Bricks", "Bricks", "Use bricks to build the model"),
+               ("Bricks and Plates", "Bricks and Plates", "Use bricks and plates to build the model"),
+               ("Custom", "Custom", "Use custom object to build the model")],
         update=dirtyMatrix,
         default="Bricks")
     alignBricks = BoolProperty(
@@ -789,8 +813,8 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Internal Supports",
         description="Choose what type of brick support structure to use inside your model",
         items=[("None", "None", "No internal supports"),
-              ("Lattice", "Lattice", "Use latice inside model"),
-              ("Columns", "Columns", "Use columns inside model")],
+               ("Lattice", "Lattice", "Use latice inside model"),
+               ("Columns", "Columns", "Use columns inside model")],
         update=dirtyInternal,
         default="None")
     latticeStep = IntProperty(
@@ -823,9 +847,9 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Material Type",
         description="Choose what materials will be applied to model",
         items=[("None", "None", "No material applied to bricks"),
-              ("Random", "Random", "Apply a random material from Brick materials to each generated brick"),
-              ("Custom", "Custom", "Choose a custom material to apply to all generated bricks"),
-              ("Use Source Materials", "Use Source Materials", "Apply material based on closest intersecting face")],
+               ("Random", "Random", "Apply a random material from Brick materials to each generated brick"),
+               ("Custom", "Custom", "Choose a custom material to apply to all generated bricks"),
+               ("Use Source Materials", "Use Source Materials", "Apply material based on closest intersecting face")],
         update=dirtyMaterial,
         default="Use Source Materials")
     materialName = StringProperty(
@@ -870,10 +894,10 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Insideness Ray Cast Direction",
         description="Choose which axis/axes to cast rays for calculation of insideness",
         items=[("High Efficiency", "High Efficiency", "Reuses single ray casted in brickFreqMatrix calculations"),
-              ("X", "X", "Cast rays along X axis for insideness calculations"),
-              ("Y", "Y", "Cast rays along Y axis for insideness calculations"),
-              ("Z", "Z", "Cast rays along Z axis for insideness calculations"),
-              ("XYZ", "XYZ (Best Result)", "Cast rays in all axis directions for insideness calculation (slowest; uses result consistent for at least 2 of the 3 rays)")],
+               ("X", "X", "Cast rays along X axis for insideness calculations"),
+               ("Y", "Y", "Cast rays along Y axis for insideness calculations"),
+               ("Z", "Z", "Cast rays along Z axis for insideness calculations"),
+               ("XYZ", "XYZ (Best Result)", "Cast rays in all axis directions for insideness calculation (slowest; uses result consistent for at least 2 of the 3 rays)")],
         update=dirtyMatrix,
         default="High Efficiency")
     castDoubleCheckRays = BoolProperty(
@@ -974,20 +998,20 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Brick Shell",
         description="Choose whether the shell of the model will be inside or outside source mesh",
         items=[("Inside Mesh", "Inside Mesh (recommended)", "Draw brick shell inside source mesh (Recommended)"),
-              ("Outside Mesh", "Outside Mesh", "Draw brick shell outside source mesh"),
-              ("Inside and Outside", "Inside and Outside", "Draw brick shell inside and outside source mesh (two layers)")],
+               ("Outside Mesh", "Outside Mesh", "Draw brick shell outside source mesh"),
+               ("Inside and Outside", "Inside and Outside", "Draw brick shell inside and outside source mesh (two layers)")],
         update=dirtyMatrix,
         default="Inside Mesh")
     calculationAxes = EnumProperty(
         name="Expanded Axes",
         description="The brick shell will be drawn on the outside in these directions",
         items=[("XYZ", "XYZ", "PLACEHOLDER"),
-              ("XY", "XY", "PLACEHOLDER"),
-              ("YZ", "YZ", "PLACEHOLDER"),
-              ("XZ", "XZ", "PLACEHOLDER"),
-              ("X", "X", "PLACEHOLDER"),
-              ("Y", "Y", "PLACEHOLDER"),
-              ("Z", "Z", "PLACEHOLDER")],
+               ("XY", "XY", "PLACEHOLDER"),
+               ("YZ", "YZ", "PLACEHOLDER"),
+               ("XZ", "XZ", "PLACEHOLDER"),
+               ("X", "X", "PLACEHOLDER"),
+               ("Y", "Y", "PLACEHOLDER"),
+               ("Z", "Z", "PLACEHOLDER")],
         update=dirtyMatrix,
         default="XY")
     useLocalOrient = BoolProperty(
@@ -1008,6 +1032,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     materialApplied = BoolProperty(default=False)
     armature = BoolProperty(default=False)
     bevelAdded = BoolProperty(default=False)
+    customized = BoolProperty(default=True)
 
     animIsDirty = BoolProperty(default=True)
     materialIsDirty = BoolProperty(default=True)
@@ -1020,19 +1045,23 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
 
     blender_undo_state = IntProperty(default=0)
 
+
 # -------------------------------------------------------------------
 # register
 # -------------------------------------------------------------------
+
 
 def register():
     bpy.utils.register_module(__name__)
     bpy.types.Scene.createdModelsCollection = CollectionProperty(type=Rebrickr_CreatedModels)
     bpy.types.Scene.cmlist_index = IntProperty()
 
+
 def unregister():
     bpy.utils.unregister_module(__name__)
     del bpy.types.Scene.createdModelsCollection
     del bpy.types.Scene.cmlist_index
+
 
 if __name__ == "__main__":
     register()

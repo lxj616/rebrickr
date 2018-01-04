@@ -31,6 +31,7 @@ props = bpy.props
 from ..functions import *
 from .cache import *
 
+
 def getModelType(self, cm=None):
     """ return 'MODEL' if modelCreated, 'ANIMATION' if animated """
     scn = bpy.context.scene
@@ -42,10 +43,11 @@ def getModelType(self, cm=None):
         modelType = "MODEL"
     return modelType
 
+
 class RebrickrDelete(bpy.types.Operator):
-    """ Delete Brickified model """                                               # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.delete"                                         # unique identifier for buttons and menu items to reference.
-    bl_label = "Delete Brickified model from Blender"                             # display name in the interface.
+    """ Delete Brickified model """
+    bl_idname = "rebrickr.delete"
+    bl_label = "Delete Brickified model from Blender"
     bl_options = {"REGISTER", "UNDO"}
 
     ################################################
@@ -99,12 +101,12 @@ class RebrickrDelete(bpy.types.Operator):
 
         # set layers to source layers temporarily
         curLayers = list(scn.layers)
-        setLayers(scn, source.layers)
+        setLayers(scn, [True]*20)
 
         # clean up 'Rebrickr_[source name]' group
         if not skipSource:
             # link source to scene
-            if not source in list(scn.objects):
+            if source not in list(scn.objects):
                 safeLink(source)
             # set source layers to brick layers
             if modelType == "MODEL":
@@ -197,12 +199,14 @@ class RebrickrDelete(bpy.types.Operator):
                 if not cm.lastSplitModel:
                     if len(bricks) > 0:
                         storeTransformData(bricks[0])
+                last_percent = 0
                 # remove objects
-                for i,obj in enumerate(bricks):
+                for i, obj in enumerate(bricks):
                     percent = i/len(bricks)
-                    if percent < 1:
+                    if percent - last_percent > 0.001 and percent < 1:
                         update_progress("Deleting", percent)
                         wm.progress_update(percent*100)
+                        last_percent
                     m = obj.data
                     bpy.data.objects.remove(obj, True)
                     bpy.data.meshes.remove(m, True)
@@ -266,7 +270,7 @@ class RebrickrDelete(bpy.types.Operator):
 
         # apply transformation to source
         if not cm.armature and ((modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (modelType == "ANIMATION" and cm.applyToSourceObject)):
-            l,r,s = getTransformData()
+            l, r, s = getTransformData()
             if modelType == "MODEL":
                 loc = strToTuple(cm.lastSourceMid, float)
                 if brickLoc is not None:
@@ -315,7 +319,6 @@ class RebrickrDelete(bpy.types.Operator):
         cm.buildIsDirty = True
         cm.matrixIsDirty = True
         cm.bricksAreDirty = True
-        cm.bevelAdded = False
         cm.armature = False
         cm.exposeParent = False
         cm.version = bpy.props.rebrickr_version

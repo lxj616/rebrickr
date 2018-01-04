@@ -39,9 +39,9 @@ from ..functions import *
 
 
 class MakeClosedMesh(bpy.types.Operator):
-    """Make source into single closed mesh (may take a while)"""                # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.make_closed_mesh"                                        # unique identifier for buttons and menu items to reference.
-    bl_label = "Make Closed Mesh"                                               # display name in the interface.
+    """Make source into single closed mesh (may take a while)"""
+    bl_idname = "rebrickr.make_closed_mesh"
+    bl_label = "Make Closed Mesh"
     bl_options = {"REGISTER", "UNDO"}
 
     # @classmethod

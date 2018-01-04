@@ -34,10 +34,11 @@ from ..brickify import *
 from ...lib.bricksDict.functions import getDictKey
 from ...functions import *
 
+
 class splitBricks(Operator):
-    """Split selected bricks into 1x1 bricks"""                                 # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.split_bricks"                                         # unique identifier for buttons and menu items to reference.
-    bl_label = "Split Brick(s)"                                                 # display name in the interface.
+    """Split selected bricks into 1x1 bricks"""
+    bl_idname = "rebrickr.split_bricks"
+    bl_label = "Split Brick(s)"
     bl_options = {"REGISTER", "UNDO"}
 
     ################################################
@@ -104,7 +105,7 @@ class splitBricks(Operator):
         for cm_idx in objsD.keys():
             cm = scn.cmlist[cm_idx]
             # get bricksDict from cache
-            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            bricksDict, _ = getBricksDict("UPDATE_MODEL", cm=cm)
             # add to bricksDicts
             self.bricksDicts[cm_idx] = bricksDict
 
@@ -144,7 +145,7 @@ class splitBricks(Operator):
                 for obj_name in self.objNamesD[cm_idx]:
                     # get dict key details of current obj
                     dictKey, dictLoc = getDictKey(obj_name)
-                    x0,y0,z0 = dictLoc
+                    x0, y0, z0 = dictLoc
                     # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
                     zStep = getZStep(cm)
@@ -166,15 +167,19 @@ class splitBricks(Operator):
 
                 # draw modified bricks
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate)
+
+                # model is now customized
+                cm.customized = True
         except:
             handle_exception()
 
     #############################################
 
+
 class mergeBricks(Operator):
-    """Merge selected bricks"""                                                 # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.merge_bricks"                                         # unique identifier for buttons and menu items to reference.
-    bl_label = "Merge Bricks"                                                   # display name in the interface.
+    """Merge selected bricks"""
+    bl_idname = "rebrickr.merge_bricks"
+    bl_label = "Merge Bricks"
     bl_options = {"REGISTER", "UNDO"}
 
     ################################################
@@ -218,7 +223,7 @@ class mergeBricks(Operator):
                 for obj in objsD[cm_idx]:
                     # initialize vars
                     dictKey, dictLoc = getDictKey(obj.name)
-                    x0,y0,z0 = dictLoc
+                    x0, y0, z0 = dictLoc
                     objSize = bricksDict[dictKey]["size"]
 
                     # split brick in matrix
@@ -232,6 +237,9 @@ class mergeBricks(Operator):
 
                 # draw modified bricks
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate)
+
+                # model is now customized
+                cm.customized = True
         except:
             handle_exception()
         return{"FINISHED"}
@@ -249,7 +257,7 @@ class mergeBricks(Operator):
         for cm_idx in objsD.keys():
             cm = scn.cmlist[cm_idx]
             # get bricksDict from cache
-            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            bricksDict, _ = getBricksDict("UPDATE_MODEL", cm=cm)
             # add to bricksDicts
             self.bricksDicts[cm_idx] = bricksDict
 
@@ -293,10 +301,11 @@ class mergeBricks(Operator):
 
     #############################################
 
+
 class setExposure(Operator):
-    """Set exposure of bricks"""                                                # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.set_exposure"                                         # unique identifier for buttons and menu items to reference.
-    bl_label = "Set Exposure"                                                   # display name in the interface.
+    """Set exposure of bricks"""
+    bl_idname = "rebrickr.set_exposure"
+    bl_label = "Set Exposure"
     bl_options = {"REGISTER", "UNDO"}
 
     ################################################
@@ -354,9 +363,12 @@ class setExposure(Operator):
                 # draw modified bricks
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate)
 
+                # model is now customized
+                cm.customized = True
             # select original brick
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
-            if orig_obj is not None: select(orig_obj, active=orig_obj, only=False)
+            if orig_obj is not None:
+                select(orig_obj, active=orig_obj, only=False)
         except:
             handle_exception()
         return {"FINISHED"}
@@ -374,7 +386,7 @@ class setExposure(Operator):
         for cm_idx in objsD.keys():
             cm = scn.cmlist[cm_idx]
             # get bricksDict from cache
-            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            bricksDict, _ = getBricksDict("UPDATE_MODEL", cm=cm)
             # add to bricksDicts
             self.bricksDicts[cm_idx] = bricksDict
 
@@ -394,9 +406,9 @@ class setExposure(Operator):
     #############################################
 
 class drawAdjacent(Operator):
-    """Draw brick to one side of active brick"""                                # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.draw_adjacent"                                        # unique identifier for buttons and menu items to reference.
-    bl_label = "Draw Adjacent Bricks"                                            # display name in the interface.
+    """Draw brick to one side of active brick"""
+    bl_idname = "rebrickr.draw_adjacent"
+    bl_label = "Draw Adjacent Bricks"
     bl_options = {"REGISTER", "UNDO"}
 
     ################################################
@@ -417,9 +429,18 @@ class drawAdjacent(Operator):
 
     def execute(self, context):
         try:
+            # if no sides were and are selected, don't execute (i.e. if only brick type changed)
+            shouldRun = False
+            for i in range(6):
+                if createAdjBricks[i] or self.adjBricksCreated[i][0]:
+                    shouldRun = True
+            if not shouldRun:
+                return {"CANCELLED"}
+            # push to undo stack
             self.undo_stack.matchPythonToBlenderState()
             if self.orig_undo_stack_length == self.undo_stack.getLength():
                 self.undo_stack.undo_push('draw_adjacent')
+            # initialize variables
             scn = bpy.context.scene
             scn.update()
             cm = scn.cmlist[scn.cmlist_index]
@@ -502,6 +523,9 @@ class drawAdjacent(Operator):
             # select original brick
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
             if orig_obj is not None: select(orig_obj, active=orig_obj)
+
+            # model is now customized
+            cm.customized = True
         except:
             handle_exception()
         return {'FINISHED'}
@@ -774,9 +798,9 @@ class drawAdjacent(Operator):
     #############################################
 
 class changeBrickType(Operator):
-    """change brick type of active brick"""                                     # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.change_brick_type"                                    # unique identifier for buttons and menu items to reference.
-    bl_label = "Change Brick Type"                                              # display name in the interface.
+    """change brick type of active brick"""
+    bl_idname = "rebrickr.change_brick_type"
+    bl_label = "Change Brick Type"
     bl_options = {"REGISTER", "UNDO"}
 
     ################################################
@@ -868,6 +892,8 @@ class changeBrickType(Operator):
             delete(obj)
             # draw updated brick
             drawUpdatedBricks(cm, self.bricksDict, [dictKey], selectCreated=False)
+            # model is now customized
+            cm.customized = True
         except:
             handle_exception()
         return {"FINISHED"}
@@ -976,9 +1002,9 @@ class changeBrickType(Operator):
     #############################################
 
 class redrawBricks(Operator):
-    """redraw selected bricks from bricksDict"""                                # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.redraw_bricks"                                        # unique identifier for buttons and menu items to reference.
-    bl_label = "Redraw Bricks"                                                  # display name in the interface.
+    """redraw selected bricks from bricksDict"""
+    bl_idname = "rebrickr.redraw_bricks"
+    bl_label = "Redraw Bricks"
     bl_options = {"REGISTER", "UNDO"}
 
     # TODO: Add support for redrawing custom objects

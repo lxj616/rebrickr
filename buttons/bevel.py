@@ -33,6 +33,7 @@ props = bpy.props
 # Rebrickr imports
 from ..functions import *
 
+
 def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limitMethod='NONE', angleLimit=0.523599, vertexGroup=None, offsetType='OFFSET'):
     """ create bevel modifier for 'obj' with given parameters """
     dMod = obj.modifiers.get(obj.name + '_bevel')
@@ -56,6 +57,7 @@ def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limit
     dMod.angle_limit = angleLimit
     dMod.offset_type = offsetType
 
+
 def createBevelMods(objs):
     """ runs 'createBevelMod' on objects in 'objs' """
     objs = confirmList(objs)
@@ -69,16 +71,18 @@ def createBevelMods(objs):
         vGroupName = obj.name + "_bevel"
         createBevelMod(obj=obj, width=cm.bevelWidth, segments=segments, profile=profile, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
 
+
 def removeBevelMods(objs):
     """ removes bevel modifier 'obj.name + "_bevel"' for objects in 'objs' """
     objs = confirmList(objs)
     for obj in objs:
         obj.modifiers.remove(obj.modifiers[obj.name + "_bevel"])
 
+
 class RebrickrBevel(bpy.types.Operator):
-    """Execute bevel modifier to all bricks with above settings"""              # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.bevel"                                          # unique identifier for buttons and menu items to reference.
-    bl_label = "Bevel Bricks"                                                   # display name in the interface.
+    """Execute bevel modifier to all bricks with above settings"""
+    bl_idname = "rebrickr.bevel"
+    bl_label = "Bevel Bricks"
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod

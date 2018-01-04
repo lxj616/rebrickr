@@ -34,9 +34,9 @@ from ...functions import *
 
 class CustomizeModel(Operator):
     """ starts custom undo stack for changes to the BFM cache """
-    bl_category    = "Rebrickr"
-    bl_idname      = "rebrickr.customize_model"
-    bl_label       = "Customize Model"
+    bl_category = "Rebrickr"
+    bl_idname = "rebrickr.customize_model"
+    bl_label = "Customize Model"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'TOOLS'
 

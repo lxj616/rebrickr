@@ -32,10 +32,11 @@ from .customize.undo_stack import *
 from ..lib.caches import *
 from ..functions.common import *
 
+
 class Caches(bpy.types.Operator):
-    """Clear brick mesh and matrix cache (Model customizations will be lost)""" # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.clear_cache"                                          # unique identifier for buttons and menu items to reference.
-    bl_label = "Clear Cache"                                                    # display name in the interface.
+    """Clear brick mesh and matrix cache (Model customizations will be lost)"""
+    bl_idname = "rebrickr.clear_cache"
+    bl_label = "Clear Cache"
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
@@ -43,7 +44,6 @@ class Caches(bpy.types.Operator):
         if not bpy.props.rebrickr_initialized:
             return False
         return True
-
 
     def __init__(self):
         self.undo_stack = UndoStack.get_instance()

@@ -33,8 +33,10 @@ from ..lib.bricksDict import lightToDeepCache, deepToLightCache, getDictKey
 from ..lib.caches import rebrickr_bfm_cache
 from ..buttons.customize.tools import *
 
+
 def rebrickrIsActive():
     return hasattr(bpy.props, "rebrickr_module_name") and bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
+
 
 def rebrickrRunningOp():
     scn = bpy.context.scene
@@ -50,11 +52,12 @@ def getAnimAdjustedFrame(cm, frame):
         curFrame = frame
     return curFrame
 
+
 @persistent
 def handle_animation(scene):
     scn = scene
     if rebrickrIsActive():
-        for i,cm in enumerate(scn.cmlist):
+        for i, cm in enumerate(scn.cmlist):
             if cm.animated:
                 n = cm.source_name
                 for cf in range(cm.lastStartFrame, cm.lastStopFrame + 1):
@@ -73,7 +76,9 @@ def handle_animation(scene):
                             elif brick.select:
                                 brick.select = False
 
+
 bpy.app.handlers.frame_change_pre.append(handle_animation)
+
 
 def isObjVisible(scn, cm):
     scn = bpy.context.scene
@@ -94,6 +99,7 @@ def isObjVisible(scn, cm):
                 objVisible = True
     return objVisible, obj
 
+
 @persistent
 def handle_selections(scene):
     scn = bpy.context.scene
@@ -104,12 +110,12 @@ def handle_selections(scene):
             curObjVisible = False
             if scn.cmlist_index != -1:
                 cm0 = scn.cmlist[scn.cmlist_index]
-                curObjVisible,_ = isObjVisible(scn, cm0)
+                curObjVisible, _ = isObjVisible(scn, cm0)
             if not curObjVisible or scn.cmlist_index == -1:
                 setIndex = False
-                for i,cm in enumerate(scn.cmlist):
+                for i, cm in enumerate(scn.cmlist):
                     if i != scn.cmlist_index:
-                        nextObjVisible,obj = isObjVisible(scn, cm)
+                        nextObjVisible, obj = isObjVisible(scn, cm)
                         if nextObjVisible and bpy.context.active_object == obj:
                             scn.cmlist_index = i
                             setIndex = True
@@ -151,7 +157,7 @@ def handle_selections(scene):
                         select(None)
                         break
         # open Brick Model settings for active object if active object changes
-        elif scn.objects.active and scn.Rebrickr_last_active_object_name != scn.objects.active.name and len(scn.cmlist) > 0 and ( scn.cmlist_index == -1 or scn.cmlist[scn.cmlist_index].source_name != "") and scn.objects.active.type == "MESH":
+        elif scn.objects.active and scn.Rebrickr_last_active_object_name != scn.objects.active.name and len(scn.cmlist) > 0 and (scn.cmlist_index == -1 or scn.cmlist[scn.cmlist_index].source_name != "") and scn.objects.active.type == "MESH":
             scn.Rebrickr_last_active_object_name = scn.objects.active.name
             beginningString = "Rebrickr_"
             if scn.objects.active.name.startswith(beginningString):
@@ -175,8 +181,8 @@ def handle_selections(scene):
                     active_obj = scn.objects.active
                     if active_obj.isBrick:
                         # adjust scn.active_brick_detail based on active brick
-                        _,dictLoc = getDictKey(active_obj.name)
-                        x0,y0,z0 = dictLoc
+                        _, dictLoc = getDictKey(active_obj.name)
+                        x0, y0, z0 = dictLoc
                         cm.activeKeyX = x0
                         cm.activeKeyY = y0
                         cm.activeKeyZ = z0
@@ -193,7 +199,9 @@ def handle_selections(scene):
                 cm.objEdges = len(obj.data.edges)
                 cm.isWaterTight = cm.objVerts + cm.objPolys - cm.objEdges == 2
 
+
 bpy.app.handlers.scene_update_pre.append(handle_selections)
+
 
 @persistent
 def prevent_user_from_viewing_storage_scene(scene):
@@ -206,7 +214,9 @@ def prevent_user_from_viewing_storage_scene(scene):
             bpy.context.screen.scene = bpy.data.scenes[i]
             showErrorMessage("This scene is for Rebrickr internal use only")
 
-# bpy.app.handlers.scene_update_pre.append(prevent_user_from_viewing_storage_scene)
+
+bpy.app.handlers.scene_update_pre.append(prevent_user_from_viewing_storage_scene)
+
 
 @persistent
 def keep_object_names_unique(scene):
@@ -223,6 +233,7 @@ def keep_object_names_unique(scene):
 
 
 bpy.app.handlers.scene_update_pre.append(keep_object_names_unique)
+
 
 def find_3dview_space():
     # Find 3D_View window and its scren space
@@ -256,27 +267,37 @@ def find_3dview_space():
 #
 # bpy.app.handlers.scene_update_pre.append(handle_snapping)
 
+
 # clear light cache before file load
 @persistent
 def clear_bfm_cache(dummy):
     if rebrickrIsActive():
         for key in rebrickr_bfm_cache.keys():
             rebrickr_bfm_cache[key] = None
+
+
 bpy.app.handlers.load_pre.append(clear_bfm_cache)
+
 
 # pull dicts from deep cache to light cache on load
 @persistent
 def handle_loading_to_light_cache(dummy):
     if rebrickrIsActive():
         deepToLightCache(rebrickr_bfm_cache)
+
+
 bpy.app.handlers.load_post.append(handle_loading_to_light_cache)
+
 
 # push dicts from light cache to deep cache on save
 @persistent
 def handle_storing_to_deep_cache(scene):
     if rebrickrIsActive():
         lightToDeepCache(rebrickr_bfm_cache)
+
+
 bpy.app.handlers.save_pre.append(handle_storing_to_deep_cache)
+
 
 @persistent
 def handle_upconversion(scene):
@@ -288,5 +309,6 @@ def handle_upconversion(scene):
                 cm.brickWidth = 2 if cm.maxBrickScale2 > 1 else 1
                 cm.brickDepth = cm.maxBrickScale2
                 cm.matrixIsDirty = True
+
 
 bpy.app.handlers.load_post.append(handle_upconversion)

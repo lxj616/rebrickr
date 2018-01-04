@@ -29,12 +29,14 @@ from mathutils import Vector
 # Rebrickr imports
 from .common import drawBMesh
 
+
 def tupleAdd(p1, p2):
     """ returns linear sum of two given tuples """
     return tuple(x+y for x,y in zip(p1, p2))
 
+
 # R = resolution tuple, s = 3D scale tuple, o = offset lattice center from origin
-def generateLattice(R, s, o=(0,0,0)):
+def generateLattice(R, s, o=(0, 0, 0)):
     """ returns matrix with lattice vert coords given R, s, and o """
     # bme = bmesh.new()
 
@@ -51,11 +53,14 @@ def generateLattice(R, s, o=(0,0,0)):
     yN = (yS/(2*yR))
     zN = (zS/(2*zR))
     xL = int(round((xS)/xR))+2
-    if xL != 1: xL += 2
     yL = int(round((yS)/yR))+2
-    if yL != 1: yL += 2
     zL = int(round((zS)/zR))+2
-    if zL != 1: zL += 2
+    if yL != 1:
+        yL += 2
+    if xL != 1:
+        xL += 2
+    if zL != 1:
+        zL += 2
     # iterate through x,y,z dimensions and create verts/connect with edges
     for x in range(xL):
         coordList1 = []

@@ -40,10 +40,11 @@ from ...lib.caches import rebrickr_bfm_cache
 
 python_undo_state = {}
 
+
 class UndoStack():
-    bl_category    = "Rebrickr"
-    bl_idname      = "rebrickr.undo_stack"
-    bl_label       = "Undo Stack"
+    bl_category = "Rebrickr"
+    bl_idname = "rebrickr.undo_stack"
+    bl_label = "Undo Stack"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'TOOLS'
 
@@ -106,6 +107,7 @@ class UndoStack():
             'action':       action,
             'bfm_cache':    copy.deepcopy(rebrickr_bfm_cache),
             }
+
     def _restore_state(self, state):
         global rebrickr_bfm_cache
         for key in state['bfm_cache'].keys():
@@ -113,16 +115,20 @@ class UndoStack():
 
     def undo_push(self, action, repeatable=False):
         # skip pushing to undo if action is repeatable and we are repeating actions
-        if repeatable and self.undo and self.undo[-1]['action'] == action: return
+        if repeatable and self.undo and self.undo[-1]['action'] == action:
+            return
         # skip pushing to undo if rebrickr not initialized
-        if not bpy.props.rebrickr_initialized: return
+        if not bpy.props.rebrickr_initialized:
+            return
         self.undo.append(self._create_state(action))
-        while len(self.undo) > self.undo_depth: self.undo.pop(0)     # limit stack size
+        while len(self.undo) > self.undo_depth:
+            self.undo.pop(0)  # limit stack size
         self.redo.clear()
         self.instrument_write(action)
 
     def undo_pop(self):
-        if not self.undo: return
+        if not self.undo:
+            return
         self.redo.append(self._create_state('undo'))
         self._restore_state(self.undo.pop())
         self.instrument_write('undo')
@@ -133,7 +139,8 @@ class UndoStack():
         python_undo_state[cm.id] -= 1
 
     def undo_pop_clean(self):
-        if not self.undo: return
+        if not self.undo:
+            return
         self.undo.pop()
 
     def undo_cancel(self):
@@ -141,7 +148,8 @@ class UndoStack():
         self.instrument_write('cancel (undo)')
 
     def redo_pop(self):
-        if not self.redo: return
+        if not self.redo:
+            return
         self.undo.append(self._create_state('redo'))
         self._restore_state(self.redo.pop())
         self.instrument_write('redo')
@@ -152,15 +160,16 @@ class UndoStack():
         python_undo_state[cm.id] += 1
 
     def instrument_write(self, action):
-        if True: return         # disabled for now...
-
+        if True:
+            return # disabled for now...
         tb_name = 'RetopoFlow_instrumentation'
-        if tb_name not in bpy.data.texts: bpy.data.texts.new(tb_name)
+        if tb_name not in bpy.data.texts:
+            bpy.data.texts.new(tb_name)
         tb = bpy.data.texts[tb_name]
 
         target_json = self.rftarget.to_json()
         data = {'action': action, 'target': target_json}
-        data_str = json.dumps(data, separators=[',',':'])
+        data_str = json.dumps(data, separators=[',', ':'])
 
         # write data to end of textblock
         tb.write('')        # position cursor to end

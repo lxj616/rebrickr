@@ -28,6 +28,7 @@ import bpy
 # Rebrickr imports
 # NONE!
 
+
 def set_cursor(cursor):
     # DEFAULT, NONE, WAIT, CROSSHAIR, MOVE_X, MOVE_Y, KNIFE, TEXT,
     # PAINT_BRUSH, HAND, SCROLL_X, SCROLL_Y, SCROLL_XY, EYEDROPPER

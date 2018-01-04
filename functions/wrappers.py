@@ -28,6 +28,7 @@ import bpy
 # Rebrickr imports
 from ..functions.common import stopWatch
 
+
 # https://github.com/CGCookie/retopoflow
 def timed_call(label, precision=2):
     def wrapper(fn):
@@ -42,6 +43,7 @@ def timed_call(label, precision=2):
         return wrapped
     return wrapper
 
+
 # https://github.com/CGCookie/retopoflow
 def blender_version(op, ver):
     def nop(*args, **kwargs): pass
@@ -50,7 +52,7 @@ def blender_version(op, ver):
 
     major,minor,rev = bpy.app.version
     blenderver = '%d.%02d' % (major,minor)
-    #dprint('%s %s %s' % (ver, op, blenderver))
+    # dprint('%s %s %s' % (ver, op, blenderver))
     if   op == '<':  retfn = (blenderver < ver)
     elif op == '<=': retfn = (blenderver <= ver)
     elif op == '==': retfn = (blenderver == ver)

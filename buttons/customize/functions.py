@@ -48,6 +48,7 @@ def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     # actually draw the bricks
     RebrickrBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, action, cm=cm, bricksDict=bricksDict, keys=keysToUpdate, replaceExistingGroup=False, selectCreated=selectCreated, printStatus=False, redraw=True)
 
+
 def createObjsD(objs):
     scn = bpy.context.scene
     # initialize objsD
@@ -64,18 +65,19 @@ def createObjsD(objs):
                 objsD[cm.idx].append(obj)
     return objsD
 
+
 def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
     assert loc is not None or key is not None
     if loc is not None:
-        x,y,z = loc
+        x, y, z = loc
     else:
-        x,y,z = strToList(key)
-    adjKeys = [listToStr([x+1,y,z]),
-               listToStr([x-1,y,z]),
-               listToStr([x,y+1,z]),
-               listToStr([x,y-1,z]),
-               listToStr([x,y,z+1]),
-               listToStr([x,y,z-1])]
+        x, y, z = strToList(key)
+    adjKeys = [listToStr([x+1, y, z]),
+               listToStr([x-1, y, z]),
+               listToStr([x, y+1, z]),
+               listToStr([x, y-1, z]),
+               listToStr([x, y, z+1]),
+               listToStr([x, y, z-1])]
     adjBrickVals = []
     for key in adjKeys.copy():
         try:
@@ -84,8 +86,9 @@ def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
             adjKeys.remove(key)
     return adjKeys, adjBrickVals
 
+
 def setCurBrickVal(bricksDict, loc):
-    _,adjBrickVals = getAdjKeysAndBrickVals(bricksDict, loc=loc)
+    _, adjBrickVals = getAdjKeysAndBrickVals(bricksDict, loc=loc)
     if 0 in adjBrickVals or len(adjBrickVals) == 0 or min(adjBrickVals) == 1:
         newVal = 1
     else:

@@ -22,6 +22,7 @@ Created by Christopher Gearhart
 # System imports
 import bpy
 
+
 def getColors():
     if not hasattr(getColors, 'colors'):
         colors = {}
@@ -52,26 +53,31 @@ def getColors():
         getColors.colors = colors
     return getColors.colors
 
+
 def rgbFromStr(s):
     # s starts with a #.
-    r, g, b = int(s[1:3],16), int(s[3:5], 16),int(s[5:7], 16)
+    r, g, b = int(s[1:3], 16), int(s[3:5], 16), int(s[5:7], 16)
     return r, g, b
 
-def findNearestWebColorName((R,G,B)):
-    return ColorNames.findNearestColorName((R,G,B),ColorNames.WebColorMap)
 
-def findNearestImageMagickColorName((R,G,B)):
-    return ColorNames.findNearestColorName((R,G,B),ColorNames.ImageMagickColorMap)
+def findNearestWebColorName((R, G, B)):
+    return ColorNames.findNearestColorName((R, G, B), ColorNames.WebColorMap)
 
-def findNearestColorName((R,G,B),Map):
+
+def findNearestImageMagickColorName((R, G, B)):
+    return ColorNames.findNearestColorName((R, G, B), ColorNames.ImageMagickColorMap)
+
+
+def findNearestColorName((R, G, B), Map):
     mindiff = None
     for d in Map:
         r, g, b = ColorNames.rgbFromStr(Map[d])
-        diff = abs(R -r)*256 + abs(G-g)* 256 + abs(B- b)* 256
+        diff = (abs(R - r) + abs(G - g) + abs(B - b)) * 256
         if mindiff is None or diff < mindiff:
             mindiff = diff
             mincolorname = d
     return mincolorname
+
 
 def getMat(polygon):
     materialD = {}
@@ -90,11 +96,12 @@ def getMat(polygon):
     else:
         return None
 
+
 # ALTERNATE METHOD BELOW:
 def distance(c1, c2):
-    (r1,g1,b1) = c1
-    (r2,g2,b2) = c2
-    return math.sqrt((r1 - r2)**2 + (g1 - g2) ** 2 + (b1 - b2) **2)
+    (r1, g1, b1) = c1
+    (r2, g2, b2) = c2
+    return math.sqrt(((r1 - r2) + (g1 - g2) + (b1 - b2))**2)
 
 colorsDict = getColors()
 colors = list(colorsDict.keys())

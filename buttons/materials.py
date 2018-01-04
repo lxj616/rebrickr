@@ -38,9 +38,9 @@ from .delete import RebrickrDelete
 
 
 class RebrickrApplyMaterial(bpy.types.Operator):
-    """Apply specified material to all bricks """                        # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "rebrickr.apply_material"                                 # unique identifier for buttons and menu items to reference.
-    bl_label = "Apply Material"                                         # display name in the interface.
+    """Apply specified material to all bricks """
+    bl_idname = "rebrickr.apply_material"
+    bl_label = "Apply Material"
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
@@ -80,7 +80,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
                 brick_mats.append(color)
         randS0 = np.random.RandomState(0)
         # if model is split, apply a random material to each brick
-        for i,brick in enumerate(bricks):
+        for i, brick in enumerate(bricks):
             lastMatSlots = list(brick.material_slots.keys())
 
             if (cm.lastSplitModel or len(lastMatSlots) == 0) and len(brick_mats) > 0:

@@ -30,11 +30,14 @@ from mathutils import Vector, Euler
 # Rebrickr imports
 from .common import *
 
+
 def getSafeScn():
     safeScn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
     if safeScn == None:
         safeScn = bpy.data.scenes.new("Rebrickr_storage (DO NOT RENAME)")
     return safeScn
+
+
 def safeUnlink(obj, hide=True, protect=True):
     scn = bpy.context.scene
     safeScn = getSafeScn()
@@ -43,6 +46,8 @@ def safeUnlink(obj, hide=True, protect=True):
     obj.protected = protect
     if hide:
         obj.hide = True
+
+
 def safeLink(obj, unhide=False, protect=False):
     scn = bpy.context.scene
     safeScn = getSafeScn()
@@ -54,6 +59,7 @@ def safeLink(obj, unhide=False, protect=False):
         safeScn.objects.unlink(obj)
     except RuntimeError:
         pass
+
 
 def bounds(obj, local=False):
     """
@@ -91,6 +97,7 @@ def bounds(obj, local=False):
     o_details = collections.namedtuple('object_details', 'x y z')
     return o_details(**originals)
 
+
 def setOriginToObjOrigin(toObj, fromObj=None, fromLoc=None, deleteFromObj=False):
     assert fromObj is not None or fromLoc is not None
     scn = bpy.context.scene
@@ -108,6 +115,7 @@ def setOriginToObjOrigin(toObj, fromObj=None, fromLoc=None, deleteFromObj=False)
             m = fromObj.data
             bpy.data.objects.remove(fromObj, True)
             bpy.data.meshes.remove(m)
+
 
 def getBricks(cm=None):
     """ get bricks in 'cm' model """
@@ -129,11 +137,13 @@ def getBricks(cm=None):
                 bricks += list(bGroup.objects)
     return bricks
 
+
 def getMatrixSettings(cm=None):
     if cm is None:
         scn = bpy.context.scene
         cm = scn.cmlist[scn.cmlist_index]
     return listToStr([cm.brickHeight, cm.gap, cm.brickType, cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ, cm.customObjectName, cm.useNormals, cm.verifyExposure, cm.insidenessRayCastDir, cm.castDoubleCheckRays, cm.brickShell, cm.calculationAxes])
+
 
 def revertMatrixSettings(cm=None):
     if cm is None:
@@ -155,8 +165,10 @@ def revertMatrixSettings(cm=None):
     cm.calculationAxes = settings[12]
     cm.matrixIsDirty = False
 
+
 def matrixReallyIsDirty(cm):
     return cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings()
+
 
 def listToStr(lst):
     assert type(lst) in [list, tuple]
@@ -165,17 +177,23 @@ def listToStr(lst):
         item = lst[i]
         string = "%(string)s,%(item)s" % locals()
     return string
+
+
 def strToList(string, item_type=int, split_on=","):
     lst = string.split(split_on)
     assert type(string) is str and type(split_on) is str
     lst = list(map(item_type, lst))
     return lst
+
+
 def strToTuple(string, item_type=int, split_on=","):
     tup = tuple(strToList(string, item_type, split_on))
     return tup
 
+
 def getZStep(cm):
     return 3 if cm.brickType in ["Bricks", "Custom"] else 1
+
 
 def getAction(cm):
     """ returns action """

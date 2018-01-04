@@ -41,30 +41,34 @@ from .wrappers import *
 from .general import bounds
 from ..lib.caches import rebrickr_bm_cache
 
+
 def addEdgeSplitMod(obj):
     """ Add edge split modifier """
     eMod = obj.modifiers.new('Edge Split', 'EDGE_SPLIT')
+
 
 def combineMeshes(meshes):
     """ return combined mesh from 'meshes' """
     bm = bmesh.new()
     # add meshes to bmesh
     for m in meshes:
-        bm.from_mesh( m )
-    finalMesh = bpy.data.meshes.new( "newMesh" )
-    bm.to_mesh( finalMesh )
+        bm.from_mesh(m)
+    finalMesh = bpy.data.meshes.new("newMesh")
+    bm.to_mesh(finalMesh)
     return finalMesh
+
 
 def addToMeshLoc(co, bm=None, mesh=None):
     """ add 'co' to bm/mesh location """
-    assert bm is not None or mesh is not None # one or the other must not be None!
+    assert bm is not None or mesh is not None  # one or the other must not be None!
     verts = bm.verts if bm is not None else mesh.vertices
     for v in verts:
         v.co = (v.co[0] + co[0], v.co[1] + co[1], v.co[2] + co[2])
 
+
 def randomizeLoc(rand, width, height, bm=None, mesh=None):
     """ translate bm/mesh location by (width,width,height) randomized by cm.randomLoc """
-    assert bm is not None or mesh is not None # one or the other must not be None!
+    assert bm is not None or mesh is not None  # one or the other must not be None!
     verts = bm.verts if bm is not None else mesh.vertices
     scn = bpy.context.scene
     cm = scn.cmlist[scn.cmlist_index]
@@ -76,13 +80,16 @@ def randomizeLoc(rand, width, height, bm=None, mesh=None):
         v.co.x += x
         v.co.y += y
         v.co.z += z
-    return (x,y,z)
+    return (x, y, z)
+
+
 def translateBack(bm, loc):
     """ translate bm location by -loc """
     for v in bm.verts:
         v.co.x -= loc[0]
         v.co.y -= loc[1]
         v.co.z -= loc[2]
+
 
 def randomizeRot(rand, center, brickSize, bm):
     """ rotate 'bm' around 'center' randomized by cm.randomRot """
@@ -98,11 +105,14 @@ def randomizeRot(rand, center, brickSize, bm):
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(x, 3, 'X'))
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(y, 3, 'Y'))
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(z, 3, 'Z'))
-    return (x,y,z)
+    return (x, y, z)
+
+
 def rotateBack(bm, center, rot):
     """ rotate bm around center -rot """
-    for i,axis in enumerate(['Z', 'Y', 'X']):
+    for i, axis in enumerate(['Z', 'Y', 'X']):
         bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(-rot[2-i], 3, axis))
+
 
 def prepareLogoAndGetDetails(logo):
     """ duplicate and normalize custom logo object; return logo and bounds(logo) """
@@ -125,6 +135,7 @@ def prepareLogoAndGetDetails(logo):
         logo_details = None
     return logo_details, logo
 
+
 def getBrickMesh(cm, rand, dimensions, brickSize, undersideDetail, logoToUse, logo_type, logo_details, logo_scale, logo_inset, useStud, numStudVerts):
     # get bm_cache_string
     bm_cache_string = ""
@@ -136,15 +147,16 @@ def getBrickMesh(cm, rand, dimensions, brickSize, undersideDetail, logoToUse, lo
     bms = rebrickr_bm_cache.get(bm_cache_string)
     # if bmesh in cache
     if bms is not None:
-        bm = bms[rand.randint(0,len(bms))] if len(bms) > 1 else bms[0]
+        bm = bms[rand.randint(0, len(bms))] if len(bms) > 1 else bms[0]
     # if not found in rebrickr_bm_cache, create new brick mesh(es) and store to cache
     else:
         bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, undersideDetail=undersideDetail, logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.studVerts)
         if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
             rebrickr_bm_cache[bm_cache_string] = bms
-        bm = bms[rand.randint(0,len(bms))]
+        bm = bms[rand.randint(0, len(bms))]
 
     return bm
+
 
 def getMaterial(cm, bricksDict, key, brickSize, randState, brick_mats, k):
     mat = None
@@ -156,7 +168,7 @@ def getMaterial(cm, bricksDict, key, brickSize, randState, brick_mats, k):
         for x in range(brickSize[0]):
             for y in range(brickSize[1]):
                 loc = strToList(key)
-                x0,y0,z0 = loc
+                x0, y0, z0 = loc
                 key0 = listToStr([x0 + x, y0 + y, z0])
                 curBrickD = bricksDict[key0]
                 if curBrickD["val"] >= highestVal:
@@ -183,7 +195,8 @@ def getMaterial(cm, bricksDict, key, brickSize, randState, brick_mats, k):
 def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=None, customData=None, customObj_details=None, group_name=None, replaceExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True):
     # set up variables
     scn = bpy.context.scene
-    if cm is None: cm = scn.cmlist[scn.cmlist_index]
+    if cm is None:
+        cm = scn.cmlist[scn.cmlist_index]
     n = cm.source_name
     zStep = getZStep(cm)
     BandP = cm.brickType == "Bricks and Plates"
@@ -192,7 +205,8 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
     logo_details, logo = prepareLogoAndGetDetails(logo)
 
     # get bricksDict dicts in seeded order
-    if keys == "ALL": keys = list(bricksDict.keys())
+    if keys == "ALL":
+        keys = list(bricksDict.keys())
     keys.sort()
     random.seed(cm.mergeSeed)
     random.shuffle(keys)
@@ -200,7 +214,8 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
     keys.sort(key=lambda x: strToList(x)[2])
 
     # get brick group
-    if group_name is None: group_name = 'Rebrickr_%(n)s_bricks' % locals()
+    if group_name is None:
+        group_name = 'Rebrickr_%(n)s_bricks' % locals()
     bGroup = bpy.data.groups.get(group_name)
     # create new group if no existing group found
     if bGroup is None:
@@ -209,7 +224,6 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
     elif replaceExistingGroup:
         bpy.data.groups.remove(group=bGroup, do_unlink=True)
         bGroup = bpy.data.groups.new(group_name)
-
 
     brick_mats = []
     brick_materials_installed = hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
@@ -226,8 +240,8 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
         wm.progress_begin(0, 100)
 
     # initialize random states
-    randS1 = np.random.RandomState(cm.mergeSeed) # for brickSize calc
-    randS2 = np.random.RandomState(0) # for random colors, seed will be changed later
+    randS1 = np.random.RandomState(cm.mergeSeed)  # for brickSize calc
+    randS2 = np.random.RandomState(0)  # for random colors, seed will be changed later
     randS3 = np.random.RandomState(cm.mergeSeed+1)
     randS4 = np.random.RandomState(cm.mergeSeed+2)
     k = 0
@@ -247,25 +261,29 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
     supportBrickDs = []
     bricksCreated = []
     keysNotChecked = keys.copy()
-    if printStatus: update_progress("Building", 0.0)
+    if printStatus:
+        update_progress("Building", 0.0)
     # set number of times to run through all keys
     numIters = 2 if BandP else 1
     for timeThrough in range(numIters):
         # iterate through locations in bricksDict from bottom to top
-        for i,key in enumerate(keys):
+        for i, key in enumerate(keys):
             brickD = bricksDict[key]
             if brickD["draw"] and brickD["parent_brick"] in [None, "self"] and not brickD["attempted_merge"]:
                 # initialize vars
                 loc = strToList(key)
-                brickSizes = [[1,1,zStep]]
+                brickSizes = [[1, 1, zStep]]
 
                 # for bricks and plates, skip second and third rows on first time through
                 if BandP and cm.alignBricks:
-                    if timeThrough == 0: # first time
-                        if lowestLoc == -1: lowestLoc = loc[2] # initializes value once
-                        if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 in [1,2]: continue
-                    else: # second time
-                        if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 == 0: continue
+                    if timeThrough == 0:  # first time
+                        if lowestLoc == -1:
+                            lowestLoc = loc[2]  # initializes value once
+                        if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 in [1, 2]:
+                            continue
+                    else:  # second time
+                        if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 == 0:
+                            continue
 
                 # attempt to merge current brick with surrounding bricks, according to available brick types
                 if brickD["size"] is None or (cm.buildIsDirty):
@@ -312,7 +330,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                     d = dimensions["width"]/2
                     sX = (brickSize[0] * 2) - 1
                     sY = (brickSize[1] * 2) - 1
-                    center = ( ((d*sX)-d) / 2, ((d*sY)-d) / 2, 0.0 )
+                    center = (((d*sX)-d) / 2, ((d*sY)-d) / 2, 0.0)
                     randRot = randomizeRot(randS3, center, brickSize, bm)
                 # create new mesh and send bm to it
                 m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
@@ -367,7 +385,8 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                     percent = 1 - (len(keysNotChecked) / len(keys))
                     if percent - old_percent > 0.001 and percent < 1:
                         update_progress("Building", percent)
-                        if cursorStatus: wm.progress_update(percent*100)
+                        if cursorStatus:
+                            wm.progress_update(percent*100)
                         old_percent = percent
                 # remove keys in new brick from keysNotChecked (for attemptMerge)
                 for x1 in range(brickSize[0]):
@@ -380,16 +399,20 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                                 pass
             else:
                 # remove ignored key from keysNotChecked (for attemptMerge)
-                try:    keysNotChecked.remove(key)
-                except ValueError: pass
+                try:
+                    keysNotChecked.remove(key)
+                except ValueError:
+                    pass
 
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO Logo" and logo is not None:
         bpy.data.objects.remove(logo)
 
-    if printStatus: update_progress("Building", 1)
+    if printStatus:
+        update_progress("Building", 1)
     # end progress bar around cursor
-    if cursorStatus: wm.progress_end()
+    if cursorStatus:
+        wm.progress_end()
 
     # combine meshes, link to scene, and add relevant data to the new Blender MESH object
     if split:
@@ -404,7 +427,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                 scn.objects.unlink(brick)
         # iterate through keys
         old_percent = 0
-        for i,key in enumerate(keys):
+        for i, key in enumerate(keys):
             if printStatus:
                 # print status to terminal
                 percent = i/len(bricksDict)
@@ -427,11 +450,13 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                 brick.parent = parent
                 scn.objects.link(brick)
                 brick.isBrick = True
-        if printStatus: update_progress("Linking to Scene", 1)
+        if printStatus:
+            update_progress("Linking to Scene", 1)
     else:
         m = combineMeshes(allBrickMeshes)
         name = 'Rebrickr_%(n)s_bricks_combined' % locals()
-        if frameNum: name = "%(name)s_frame_%(frameNum)s" % locals()
+        if frameNum:
+            name = "%(name)s_frame_%(frameNum)s" % locals()
         allBricksObj = bpy.data.objects.new(name, m)
         allBricksObj.cmlist_id = cm.id
         # create vert group for bevel mod (assuming only logo verts are selected):
@@ -458,6 +483,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
         bricksCreated.append(allBricksObj)
 
     # reset 'attempted_merge' for all items in bricksDict
-    for key0 in bricksDict: bricksDict[key0]["attempted_merge"] = False
+    for key0 in bricksDict:
+        bricksDict[key0]["attempted_merge"] = False
 
     return bricksCreated, bricksDict

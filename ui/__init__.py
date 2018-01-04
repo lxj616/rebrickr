@@ -41,6 +41,7 @@ from ..functions import *
 # updater import
 from .. import addon_updater_ops
 
+
 def settingsCanBeDrawn():
     scn = bpy.context.scene
     if scn.cmlist_index == -1:
@@ -51,9 +52,10 @@ def settingsCanBeDrawn():
         return False
     return True
 
+
 class BasicMenu(bpy.types.Menu):
-    bl_idname = "Rebrickr_specials_menu"
-    bl_label = "Select"
+    bl_idname      = "Rebrickr_specials_menu"
+    bl_label       = "Select"
 
     def draw(self, context):
         layout = self.layout
@@ -61,6 +63,7 @@ class BasicMenu(bpy.types.Menu):
         layout.operator("cmlist.copy_to_others", icon="COPY_ID", text="Copy Settings to Others")
         layout.operator("cmlist.copy_settings", icon="COPYDOWN", text="Copy Settings")
         layout.operator("cmlist.paste_settings", icon="PASTEDOWN", text="Paste Settings")
+
 
 class BrickModelsPanel(Panel):
     bl_space_type  = "VIEW_3D"
@@ -78,7 +81,7 @@ class BrickModelsPanel(Panel):
         layout = self.layout
         scn = context.scene
 
-		# draw auto-updater update box
+        # draw auto-updater update box
         addon_updater_ops.update_notice_box_ui(self, context)
 
         # if blender version is before 2.78, ask user to upgrade Blender
@@ -177,7 +180,7 @@ class BrickModelsPanel(Panel):
                         col.label("run 'Update Model' so")
                         col.label("it is compatible with")
                         col.label("your current version.")
-                    elif matrixReallyIsDirty(cm):
+                    elif matrixReallyIsDirty(cm) and cm.customized:
                         row = col.row(align=True)
                         row.label("Customizations will be lost")
                         row = col.row(align=True)
@@ -189,7 +192,7 @@ class BrickModelsPanel(Panel):
             layout.operator("cmlist.list_action", icon='ZOOMIN', text="New Brick Model").action = 'ADD'
 
         if bpy.data.texts.find('Rebrickr_log') >= 0:
-            split = layout.split(align=True, percentage = 0.9)
+            split = layout.split(align=True, percentage=0.9)
             col = split.column(align=True)
             row = col.row(align=True)
             row.operator("rebrickr.report_error", text="Report Error", icon="URL")
@@ -197,8 +200,10 @@ class BrickModelsPanel(Panel):
             row = col.row(align=True)
             row.operator("rebrickr.close_report_error", text="", icon="PANEL_CLOSE")
 
+
 def is_baked(mod):
     return mod.point_cache.is_baked is not False
+
 
 class AnimationPanel(Panel):
     bl_space_type  = "VIEW_3D"
@@ -289,6 +294,7 @@ class AnimationPanel(Panel):
                 col.label("the command line.")
                 col.separator()
 
+
 class ModelTransformPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -333,6 +339,7 @@ class ModelTransformPanel(Panel):
         # row.column().prop(parent, "scale")
         layout.prop(parent, "rotation_mode")
         layout.prop(cm, "transformScale")
+
 
 class ModelSettingsPanel(Panel):
     bl_space_type  = "VIEW_3D"
@@ -447,6 +454,7 @@ class ModelSettingsPanel(Panel):
             # row = col.row(align=True)
             # row.operator("scene.make_closed_mesh", text="Make Single Closed Mesh", icon="EDIT")
 
+
 class BrickTypesPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -520,6 +528,7 @@ class BrickTypesPanel(Panel):
                 row = col.row(align=True)
                 row.prop(cm, "originSet")
 
+
 # def promptAppendBrickMatsIfNecessary(layoutElement, mats_needed):
 #     mats = bpy.data.materials.keys()
 #     for color in mats_needed:
@@ -529,6 +538,7 @@ class BrickTypesPanel(Panel):
 #             row.operator("scene.append_abs_plastic_materials", text="Import ABS Plastic Materials", icon="IMPORT")
 #             break
 #
+
 class MaterialsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -658,6 +668,7 @@ class MaterialsPanel(Panel):
             if len(obj.data.uv_layers) > 0:
                 col.label("(UV Maps not supported)")
 
+
 class DetailingPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -723,6 +734,7 @@ class DetailingPanel(Panel):
         row = col.row(align=True)
         row.prop(cm, "exposedUndersideDetail", text="")
 
+
 class SupportsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -765,6 +777,7 @@ class SupportsPanel(Panel):
             # row.scale_y = 0.7
             row.label("(Source is NOT single closed mesh)")
 
+
 class BevelPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -779,8 +792,6 @@ class BevelPanel(Panel):
             return False
         scn = context.scene
         cm = scn.cmlist[scn.cmlist_index]
-        if not cm.modelCreated and not cm.animated:
-            return False
         if not bpy.props.rebrickr_initialized:
             return False
         return True
@@ -800,6 +811,9 @@ class BevelPanel(Panel):
 
         col = layout.column(align=True)
         row = col.row(align=True)
+        if not (cm.modelCreated or cm.animated):
+            row.prop(cm, "bevelAdded", text="Bevel Bricks")
+            return
         try:
             ff = cm.lastStartFrame
             testBrick = getBricks()[0]
@@ -813,6 +827,7 @@ class BevelPanel(Panel):
             row.operator("rebrickr.bevel", text="Remove Bevel", icon="CANCEL")
         except (IndexError, KeyError):
             row.operator("rebrickr.bevel", text="Bevel bricks", icon="MOD_BEVEL")
+
 
 class CustomizeModel(Panel):
     bl_space_type  = "VIEW_3D"
@@ -891,6 +906,7 @@ class CustomizeModel(Panel):
         # row = col.row(align=True)
         # row.operator("rebrickr.redraw_bricks")
 
+
 class AdvancedPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -913,7 +929,7 @@ class AdvancedPanel(Panel):
         n = cm.source_name
 
         # Alert user that update is available
-        if addon_updater_ops.updater.update_ready == True:
+        if addon_updater_ops.updater.update_ready:
             col = layout.column(align=True)
             col.scale_y = 0.7
             col.label("Rebrickr update available!", icon="INFO")
@@ -938,6 +954,7 @@ class AdvancedPanel(Panel):
             row.label("Model Orientation:")
             row = col.row(align=True)
             row.prop(cm, "useLocalOrient", text="Use Source Local")
+
 
 class BrickDetailsPanel(Panel):
     """ for debugging purposes only """
@@ -984,9 +1001,9 @@ class BrickDetailsPanel(Panel):
         col.prop(cm, "activeKeyZ", text="z")
 
         if cm.animated:
-            bricksDict,_ = getBricksDict("UPDATE_ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current), restrictContext=True)
+            bricksDict, _ = getBricksDict("UPDATE_ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current), restrictContext=True)
         elif cm.modelCreated:
-            bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)
+            bricksDict, _ = getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)
         if bricksDict is None:
             layout.label("Matrix not available")
             return

@@ -26,9 +26,11 @@ import bmesh
 import bpy
 from mathutils import Vector
 
+
 # from CG Cookie's retopoflow plugin
 def hash_object(obj:bpy.types.Object):
-    if obj is None: return None
+    if obj is None:
+        return None
     assert type(obj) is bpy.types.Object, "Only call hash_object on mesh objects!"
     assert type(obj.data) is bpy.types.Mesh, "Only call hash_object on mesh objects!"
     # get object data to act as a hash
@@ -38,17 +40,19 @@ def hash_object(obj:bpy.types.Object):
         bbox = (tuple(min(v.co for v in me.vertices)), tuple(max(v.co for v in me.vertices)))
     else:
         bbox = (None, None)
-    vsum   = tuple(sum((v.co for v in me.vertices), Vector((0,0,0))))
+    vsum   = tuple(sum((v.co for v in me.vertices), Vector((0, 0, 0))))
     xform  = tuple(e for l in obj.matrix_world for e in l)
-    hashed = (counts, bbox, vsum, xform, hash(obj))      # ob.name???
+    hashed = (counts, bbox, vsum, xform, hash(obj))  # ob.name???
     return hashed
+
 
 # from CG Cookie's retopoflow plugin
 def hash_bmesh(bme:bmesh.types.BMesh):
-    if bme is None: return None
+    if bme is None:
+        return None
     assert type(bme) is bmesh.types.BMesh, 'Only call hash_bmesh on BMesh objects!'
     counts = (len(bme.verts), len(bme.edges), len(bme.faces))
     bbox   = BBox(from_bmverts=self.bme.verts)
-    vsum   = tuple(sum((v.co for v in bme.verts), Vector((0,0,0))))
+    vsum   = tuple(sum((v.co for v in bme.verts), Vector((0, 0, 0))))
     hashed = (counts, tuple(bbox.min), tuple(bbox.max), vsum)
     return hashed

@@ -1,15 +1,3 @@
-bl_info = {
-    "name"        : "Rebrickr",
-    "author"      : "Christopher Gearhart <chris@bblanimation.com>",
-    "version"     : (1, 0, 1),
-    "blender"     : (2, 78, 0),
-    "description" : "Turn any mesh into a 3D brick sculpture or simulation with the click of a button",
-    "location"    : "View3D > Tools > Rebrickr",
-    "warning"     : "",  # used for warning icon and text in addons panel
-    "wiki_url"    : "https://www.blendermarket.com/creator/products/rebrickr/",
-    "tracker_url" : "https://github.com/bblanimation/rebrickr/issues",
-    "category"    : "Object"}
-
 """
 Copyright (C) 2017 Bricks Brought to Life
 http://bblanimation.com/
@@ -40,6 +28,7 @@ from bpy.types import Operator
 
 # Rebrickr imports
 from ..functions.common import *
+
 
 class move_to_layer_override(Operator):
     """Move to Layer"""
