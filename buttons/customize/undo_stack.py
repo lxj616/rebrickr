@@ -134,8 +134,7 @@ class UndoStack():
         self.instrument_write('undo')
         # iterate undo states
         global python_undo_state
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         python_undo_state[cm.id] -= 1
 
     def undo_pop_clean(self):
@@ -155,8 +154,7 @@ class UndoStack():
         self.instrument_write('redo')
         # iterate undo states
         global python_undo_state
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         python_undo_state[cm.id] += 1
 
     def instrument_write(self, action):

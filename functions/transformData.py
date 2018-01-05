@@ -33,8 +33,7 @@ from .general import *
 
 def storeTransformData(obj):
     """ store transform data from obj into cm.modelLoc/Rot/Scale """
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    scn, cm, _ = getActiveContextInfo()
     if obj is not None:
         cm.modelLoc = listToStr(obj.location.to_tuple())
         # cm.modelLoc = listToStr(obj.matrix_world.to_translation().to_tuple())
@@ -49,8 +48,7 @@ def storeTransformData(obj):
 
 def getTransformData():
     """ return transform data from cm.modelLoc/Rot/Scale """
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    scn, cm, _ = getActiveContextInfo()
     l = tuple(strToList(cm.modelLoc, float))
     r = tuple(strToList(cm.modelRot, float))
     s = tuple(strToList(cm.modelScale, float))
@@ -58,8 +56,7 @@ def getTransformData():
 
 
 def clearTransformData():
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    scn, cm, _ = getActiveContextInfo()
     cm.modelLoc = "0,0,0"
     cm.modelRot = "0,0,0"
     cm.modelScale = "1,1,1"

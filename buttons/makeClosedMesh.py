@@ -55,8 +55,7 @@ class MakeClosedMesh(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            scn = bpy.context.scene
-            cm = scn.cmlist[scn.cmlist_index]
+            scn, cm, _ = getActiveContextInfo()
             source = bpy.data.objects.get(cm.source_name)
 
             # separate source by loose parts

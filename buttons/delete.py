@@ -63,8 +63,7 @@ class RebrickrDelete(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            scn = bpy.context.scene
-            cm = scn.cmlist[scn.cmlist_index]
+            scn, cm, _ = getActiveContextInfo()
             self.undo_stack.iterateStates(cm)
             self.runFullDelete()
         except:
@@ -82,22 +81,16 @@ class RebrickrDelete(bpy.types.Operator):
     #############################################
     # class methods
 
-    @staticmethod
-    def cleanUp(modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, preservedFrames=None):
+    @classmethod
+    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, preservedFrames=None):
         """ externally callable cleanup function for bricks, source, dupes, and parents """
         # set up variables
         scn = bpy.context.scene
         if cm is None:
             cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
-        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-        Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
-        Rebrickr_refBricks_gn = "Rebrickr_%(n)s_refBricks" % locals()
         Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
-        brickLoc = None
-        brickRot = None
-        brickScale = None
+        source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
 
         # set layers to source layers temporarily
         curLayers = list(scn.layers)
@@ -105,92 +98,200 @@ class RebrickrDelete(bpy.types.Operator):
 
         # clean up 'Rebrickr_[source name]' group
         if not skipSource:
-            # link source to scene
-            if source not in list(scn.objects):
-                safeLink(source)
-            # set source layers to brick layers
-            if modelType == "MODEL":
-                bGroup = bpy.data.groups.get(Rebrickr_bricks_gn)
-            elif modelType == "ANIMATION":
-                bGroup = bpy.data.groups.get(Rebrickr_bricks_gn + "_frame_" + str(cm.lastStartFrame))
-            if bGroup is not None and len(bGroup.objects) > 0:
-                source.layers = list(bGroup.objects[0].layers)
-            # select source and reset cm.modelHeight
-            select(source, active=source)
-            cm.modelHeight = -1
-            # reset source parent to original parent object
-            old_parent = bpy.data.objects.get(source["old_parent"])
-            if old_parent is not None:
-                select([source, old_parent], active=old_parent)
-                if source["frame_parent_cleared"] != -1:
-                    origFrame = scn.frame_current
-                    scn.frame_set(source["frame_parent_cleared"])
-                    bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
-                    scn.frame_set(origFrame)
-            # if modifiers were ignored/disabled from view, enable in view
-            if source["ignored_mods"] != "":
-                for mn in source["ignored_mods"]:
-                    source.modifiers[mn].show_viewport = True
-            source.name = n
-            source.cmlist_id = -1
+            cls.cleanSource(source, modelType)
 
         # clean up 'Rebrickr_[source name]_dupes' group
         if groupExists(Rebrickr_source_dupes_gn) and not skipDupes:
-            dGroup = bpy.data.groups[Rebrickr_source_dupes_gn]
-            dObjects = list(dGroup.objects)
-            # if preserve frames, remove those objects from dObjects
-            objsToRemove = []
-            if modelType == "ANIMATION" and preservedFrames is not None:
-                for obj in dObjects:
-                    frameNumIdx = obj.name.rfind("_") + 1
-                    curFrameNum = int(obj.name[frameNumIdx:])
-                    if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
-                        objsToRemove.append(obj)
-                for obj in objsToRemove:
-                    dObjects.remove(obj)
-            if len(dObjects) > 0:
-                delete(dObjects)
-            if preservedFrames is None:
-                bpy.data.groups.remove(dGroup, do_unlink=True)
+            cls.cleanDupes(preservedFrames, modelType)
 
         if not skipParents:
-            if preservedFrames is None:
-                p = bpy.data.objects.get(Rebrickr_parent_on)
-                if modelType == "ANIMATION" or cm.lastSplitModel:
-                    # store transform data of transformation parent object
-                    storeTransformData(p)
-                if not cm.lastSplitModel and groupExists(Rebrickr_bricks_gn):
-                    bricks = getBricks()
-                    if len(bricks) > 0:
-                        b = bricks[0]
-                        scn.update()
-                        brickLoc = b.matrix_world.to_translation().copy()
-                        brickRot = b.matrix_world.to_euler().copy()
-                        brickScale = b.matrix_world.to_scale().copy()
-            # clean up Rebrickr_parent objects
-            pGroup = bpy.data.groups.get(Rebrickr_parent_on)
-            if pGroup:
-                for parent in pGroup.objects:
-                    # if preserve frames, skip those parents
-                    if modelType == "ANIMATION" and preservedFrames is not None:
-                        frameNumIdx = parent.name.rfind("_") + 1
-                        try:
-                            curFrameNum = int(parent.name[frameNumIdx:])
-                            if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
-                                continue
-                        except ValueError:
-                            continue
-                    m = parent.data
-                    bpy.data.objects.remove(parent, True)
-                    bpy.data.meshes.remove(m, True)
-                if preservedFrames is None:
-                    bpy.data.groups.remove(pGroup, do_unlink=True)
+            brickLoc, brickRot, brickScale = cls.cleanParents(preservedFrames, modelType)
+        else:
+            brickLoc, brickRot, brickScale = None, None, None
 
         # initialize variables for cursor status updates
         wm = bpy.context.window_manager
         wm.progress_begin(0, 100)
         print()
 
+        cls.cleanBricks(preservedFrames, modelType)
+
+        # finish status update
+        update_progress("Deleting", 1)
+        wm.progress_end()
+
+        # set scene layers back to original layers
+        setLayers(scn, curLayers)
+
+        return source, brickLoc, brickRot, brickScale
+
+    @classmethod
+    def runFullDelete(cls, cm=None):
+        """ externally callable cleanup function for full delete action (clears everything from memory) """
+        scn = bpy.context.scene
+        scn.Rebrickr_runningOperation = True
+        if cm is None:
+            cm = scn.cmlist[scn.cmlist_index]
+        n = cm.source_name
+        source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
+        parentOb = None
+        origFrame = scn.frame_current
+        scn.frame_set(cm.modelCreatedOnFrame)
+
+        # store last active layers
+        lastLayers = list(scn.layers)
+        # match source layers to brick layers
+        brick = None
+        gn = "Rebrickr_%(n)s_bricks" % locals()
+        if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
+            brick = bpy.data.groups[gn].objects[0]
+            source.layers = brick.layers
+        # set active layers to source layers
+        setLayers(scn, source.layers)
+
+        modelType = getModelType(cm)
+
+        source, brickLoc, brickRot, brickScale = cls.cleanUp(modelType, cm=cm)
+
+        # select source
+        select(source, active=source)
+
+        # apply transformation to source
+        if not cm.armature and ((modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (modelType == "ANIMATION" and cm.applyToSourceObject)):
+            l, r, s = getTransformData()
+            if modelType == "MODEL":
+                loc = strToTuple(cm.lastSourceMid, float)
+                if brickLoc is not None:
+                    source.location = source.location + brickLoc - Vector(loc)
+                else:
+                    source.location = Vector(l) - Vector(loc)
+            else:
+                source.location = Vector(l)
+            source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
+            source.rotation_mode = "XYZ"
+            if cm.useLocalOrient:
+                source.rotation_euler = brickRot if brickRot is not None else Euler(tuple(r), "XYZ")
+            else:
+                source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
+
+        # return open layers to original
+        scn.Rebrickr_runningOperation = False
+        setLayers(scn, lastLayers)
+
+        # delete custom properties from source
+        customPropNames = ["ignored_mods", "frame_parent_cleared", "old_parent", "previous_location", "previous_rotation", "previous_scale", "before_edit_location", "before_origin_set_location"]
+        for cPN in customPropNames:
+            try:
+                del source[cPN]
+            except KeyError:
+                pass
+
+        Caches.clearCaches()
+
+        # reset default values for select items in cmlist
+        cls.resetCmlistAttrs()
+
+        clearTransformData()
+
+        # reset frame (for proper update), update scene and redraw 3D view
+        scn.frame_set(origFrame)
+        scn.update()
+        tag_redraw_areas("VIEW_3D")
+
+    def cleanSource(source, modelType):
+        scn, cm, n = getActiveContextInfo()
+        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+        # link source to scene
+        if source not in list(scn.objects):
+            safeLink(source)
+        # set source layers to brick layers
+        if modelType == "MODEL":
+            bGroup = bpy.data.groups.get(Rebrickr_bricks_gn)
+        elif modelType == "ANIMATION":
+            bGroup = bpy.data.groups.get(Rebrickr_bricks_gn + "_frame_" + str(cm.lastStartFrame))
+        if bGroup is not None and len(bGroup.objects) > 0:
+            source.layers = list(bGroup.objects[0].layers)
+        # select source and reset cm.modelHeight
+        select(source, active=source)
+        cm.modelHeight = -1
+        # reset source parent to original parent object
+        old_parent = bpy.data.objects.get(source["old_parent"])
+        if old_parent is not None:
+            select([source, old_parent], active=old_parent)
+            if source["frame_parent_cleared"] != -1:
+                origFrame = scn.frame_current
+                scn.frame_set(source["frame_parent_cleared"])
+                bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+                scn.frame_set(origFrame)
+        # if modifiers were ignored/disabled from view, enable in view
+        if source["ignored_mods"] != "":
+            for mn in source["ignored_mods"]:
+                source.modifiers[mn].show_viewport = True
+        source.name = n
+        source.cmlist_id = -1
+
+    def cleanDupes(preservedFrames, modelType):
+        scn, cm, n = getActiveContextInfo()
+        Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
+        dGroup = bpy.data.groups[Rebrickr_source_dupes_gn]
+        dObjects = list(dGroup.objects)
+        # if preserve frames, remove those objects from dObjects
+        objsToRemove = []
+        if modelType == "ANIMATION" and preservedFrames is not None:
+            for obj in dObjects:
+                frameNumIdx = obj.name.rfind("_") + 1
+                curFrameNum = int(obj.name[frameNumIdx:])
+                if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
+                    objsToRemove.append(obj)
+            for obj in objsToRemove:
+                dObjects.remove(obj)
+        if len(dObjects) > 0:
+            delete(dObjects)
+        if preservedFrames is None:
+            bpy.data.groups.remove(dGroup, do_unlink=True)
+
+    def cleanParents(preservedFrames, modelType):
+        scn, cm, n = getActiveContextInfo()
+        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+        Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
+        brickLoc, brickRot, brickScale = None, None, None
+        if preservedFrames is None:
+            p = bpy.data.objects.get(Rebrickr_parent_on)
+            if modelType == "ANIMATION" or cm.lastSplitModel:
+                # store transform data of transformation parent object
+                storeTransformData(p)
+            if not cm.lastSplitModel and groupExists(Rebrickr_bricks_gn):
+                bricks = getBricks()
+                if len(bricks) > 0:
+                    b = bricks[0]
+                    scn.update()
+                    brickLoc = b.matrix_world.to_translation().copy()
+                    brickRot = b.matrix_world.to_euler().copy()
+                    brickScale = b.matrix_world.to_scale().copy()  # currently unused
+        # clean up Rebrickr_parent objects
+        pGroup = bpy.data.groups.get(Rebrickr_parent_on)
+        if pGroup:
+            for parent in pGroup.objects:
+                # if preserve frames, skip those parents
+                if modelType == "ANIMATION" and preservedFrames is not None:
+                    frameNumIdx = parent.name.rfind("_") + 1
+                    try:
+                        curFrameNum = int(parent.name[frameNumIdx:])
+                        if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
+                            continue
+                    except ValueError:
+                        continue
+                m = parent.data
+                bpy.data.objects.remove(parent, True)
+                bpy.data.meshes.remove(m, True)
+            if preservedFrames is None:
+                bpy.data.groups.remove(pGroup, do_unlink=True)
+        return brickLoc, brickRot, brickScale
+
+    def cleanBricks(preservedFrames, modelType):
+        scn, cm, n = getActiveContextInfo()
+        wm = bpy.context.window_manager
+        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
         if modelType == "MODEL":
             # clean up Rebrickr_bricks group
             if groupExists(Rebrickr_bricks_gn):
@@ -229,78 +330,9 @@ class RebrickrDelete(bpy.types.Operator):
                         delete(bricks)
                     bpy.data.groups.remove(brickGroup, do_unlink=True)
             cm.animated = False
-        update_progress("Deleting", 1)
-        wm.progress_end()
 
-        # set scene layers back to original layers
-        setLayers(scn, curLayers)
-
-        return source, brickLoc, brickRot, brickScale
-
-    @staticmethod
-    def runFullDelete(cm=None):
-        """ externally callable cleanup function for full delete action (clears everything from memory) """
-        scn = bpy.context.scene
-        scn.Rebrickr_runningOperation = True
-        if cm is None:
-            cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
-        source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
-        parentOb = None
-        origFrame = scn.frame_current
-        scn.frame_set(cm.modelCreatedOnFrame)
-
-        # store last active layers
-        lastLayers = list(scn.layers)
-        # match source layers to brick layers
-        brick = None
-        gn = "Rebrickr_%(n)s_bricks" % locals()
-        if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
-            brick = bpy.data.groups[gn].objects[0]
-            source.layers = brick.layers
-        # set active layers to source layers
-        setLayers(scn, source.layers)
-
-        modelType = getModelType(cm)
-
-        source, brickLoc, brickRot, brickScale = RebrickrDelete.cleanUp(modelType, cm=cm)
-
-        # select source
-        select(source, active=source)
-
-        # apply transformation to source
-        if not cm.armature and ((modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (modelType == "ANIMATION" and cm.applyToSourceObject)):
-            l, r, s = getTransformData()
-            if modelType == "MODEL":
-                loc = strToTuple(cm.lastSourceMid, float)
-                if brickLoc is not None:
-                    source.location = source.location + brickLoc - Vector(loc)
-                else:
-                    source.location = Vector(l) - Vector(loc)
-            else:
-                source.location = Vector(l)
-            source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
-            source.rotation_mode = "XYZ"
-            if cm.useLocalOrient:
-                source.rotation_euler = brickRot if brickRot is not None else Euler(tuple(r), "XYZ")
-            else:
-                source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
-
-        # return open layers to original
-        scn.Rebrickr_runningOperation = False
-        setLayers(scn, lastLayers)
-
-        # delete custom properties from source
-        customPropNames = ["ignored_mods", "frame_parent_cleared", "old_parent", "previous_location", "previous_rotation", "previous_scale", "before_edit_location", "before_origin_set_location"]
-        for cPN in customPropNames:
-            try:
-                del source[cPN]
-            except KeyError:
-                pass
-
-        Caches.clearCaches()
-
-        # reset default values for select items in cmlist
+    def resetCmlistAttrs():
+        scn, cm, n = getActiveContextInfo()
         cm.modelLoc = "-1,-1,-1"
         cm.modelRot = "-1,-1,-1"
         cm.modelScale = "-1,-1,-1"
@@ -325,10 +357,3 @@ class RebrickrDelete(bpy.types.Operator):
         cm.activeKeyX = 1
         cm.activeKeyY = 1
         cm.activeKeyZ = 1
-
-        clearTransformData()
-
-        # reset frame (for proper update), update scene and redraw 3D view
-        scn.frame_set(origFrame)
-        scn.update()
-        tag_redraw_areas("VIEW_3D")

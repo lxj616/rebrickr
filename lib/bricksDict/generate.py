@@ -101,8 +101,7 @@ def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
     """
 
     # initialize variables
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    scn, cm, _ = getActiveContextInfo()
     intersections = 0
     noMoreChecks = False
     outsideL = []
@@ -228,8 +227,7 @@ def updateInternal(bricksDict, cm, keys="ALL", clearExisting=False):
 
 def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", cursorStatus=False):
     """ returns new brickFreqMatrix """
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    scn, cm, _ = getActiveContextInfo()
     brickFreqMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
     # convert source to bmesh and convert faces to tri's
     sourceBM = bmesh.new()
@@ -427,8 +425,7 @@ def createBricksDictEntry(name, val=0, draw=False, co=(0,0,0), nearest_face=None
 @timed_call('Time Elapsed')
 def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     """ Make bricksDict """
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    scn, cm, _ = getActiveContextInfo()
     # update source data in case data needs to be refreshed
     source.data.update()
     for scn in bpy.data.scenes:

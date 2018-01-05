@@ -218,8 +218,7 @@ class AnimationPanel(Panel):
     def poll(self, context):
         if not settingsCanBeDrawn():
             return False
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         if cm.modelCreated:
             return False
         # groupExistsBool = groupExists(Rebrickr_bricks) or groupExists("Rebrickr_%(n)s" % locals()) or groupExists("Rebrickr_%(n)s_refBricks" % locals())
@@ -233,8 +232,7 @@ class AnimationPanel(Panel):
 
     def draw(self, context):
         layout = self.layout
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
 
         if not cm.animated:
             col = layout.column(align=True)
@@ -307,17 +305,14 @@ class ModelTransformPanel(Panel):
     def poll(self, context):
         if not settingsCanBeDrawn():
             return False
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         if cm.modelCreated or cm.animated:
             return True
         return False
 
     def draw(self, context):
         layout = self.layout
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
+        scn, cm, n = getActiveContextInfo()
 
         col = layout.column(align=True)
         row = col.row(align=True)
@@ -358,8 +353,7 @@ class ModelSettingsPanel(Panel):
 
     def draw(self, context):
         layout = self.layout
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
 
         col = layout.column(align=True)
         # set up model dimensions variables sX, sY, and sZ
@@ -472,8 +466,7 @@ class BrickTypesPanel(Panel):
 
     def draw(self, context):
         layout = self.layout
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
 
         col = layout.column(align=True)
         row = col.row(align=True)
@@ -558,8 +551,7 @@ class MaterialsPanel(Panel):
 
     def draw(self, context):
         layout = self.layout
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
 
         col = layout.column(align=True)
         row = col.row(align=True)
@@ -686,8 +678,7 @@ class DetailingPanel(Panel):
 
     def draw(self, context):
         layout = self.layout
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
 
         if cm.brickType == "Custom":
             col = layout.column(align=True)
@@ -752,8 +743,7 @@ class SupportsPanel(Panel):
 
     def draw(self, context):
         layout = self.layout
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
 
         col = layout.column(align=True)
         row = col.row(align=True)
@@ -790,17 +780,14 @@ class BevelPanel(Panel):
     def poll(self, context):
         if not settingsCanBeDrawn():
             return False
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         if not bpy.props.rebrickr_initialized:
             return False
         return True
 
     def draw(self, context):
         layout = self.layout
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
+        scn, cm, n = getActiveContextInfo()
 
         if cm.lastBrickType == "Custom":
             col = layout.column(align=True)
@@ -842,8 +829,7 @@ class CustomizeModel(Panel):
     def poll(self, context):
         if not settingsCanBeDrawn():
             return False
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         if cm.version[:3] == "1_0":
             return False
         if not (cm.modelCreated or cm.animated):
@@ -852,8 +838,7 @@ class CustomizeModel(Panel):
 
     def draw(self, context):
         layout = self.layout
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
 
         if cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings():
             layout.label("Matrix is dirty!")
@@ -924,9 +909,7 @@ class AdvancedPanel(Panel):
 
     def draw(self, context):
         layout = self.layout
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
+        scn, cm, n = getActiveContextInfo()
 
         # Alert user that update is available
         if addon_updater_ops.updater.update_ready:
@@ -971,8 +954,7 @@ class BrickDetailsPanel(Panel):
         # return False # for debugging purposes only
         if not settingsCanBeDrawn():
             return False
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         if cm.version[:3] == "1_0":
             return False
         if not (cm.modelCreated or cm.animated):
@@ -981,8 +963,7 @@ class BrickDetailsPanel(Panel):
 
     def draw(self, context):
         layout = self.layout
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
 
         if cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings():
             layout.label("Matrix is dirty!")

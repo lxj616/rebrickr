@@ -120,8 +120,7 @@ def setOriginToObjOrigin(toObj, fromObj=None, fromLoc=None, deleteFromObj=False)
 def getBricks(cm=None):
     """ get bricks in 'cm' model """
     if cm is None:
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
     bricks = []
     n = cm.source_name
     if cm.modelCreated:
@@ -140,15 +139,13 @@ def getBricks(cm=None):
 
 def getMatrixSettings(cm=None):
     if cm is None:
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
     return listToStr([cm.brickHeight, cm.gap, cm.brickType, cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ, cm.customObjectName, cm.useNormals, cm.verifyExposure, cm.insidenessRayCastDir, cm.castDoubleCheckRays, cm.brickShell, cm.calculationAxes])
 
 
 def revertMatrixSettings(cm=None):
     if cm is None:
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
     settings = cm.lastMatrixSettings.split(",")
     cm.brickHeight = float(settings[0])
     cm.gap = float(settings[1])

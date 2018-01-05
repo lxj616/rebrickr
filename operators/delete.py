@@ -267,7 +267,7 @@ class delete_override(Operator):
                     cm = cmCur
                     break
         if cm is not None:
-            RebrickrDelete.runFullDelete(cm=cm)
+            RebrickrDelete.runFullDelete(RebrickrDelete, cm=cm)
             scn.objects.active.select = False
             return protected
         else:

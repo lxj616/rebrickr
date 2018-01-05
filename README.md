@@ -4,17 +4,21 @@ Blender add-on for automated generation of Brick sculptures and simulations from
 
 ## Rebrickr
   * Features:
-      * Create Brick Models out of any 3D model in Blender
-      * Adjust Brick settings after it's created
+      * Convert any 3D Mesh into a photo-real 3D brick model
+      * Generate animated brick models from keyframed animation, simulations (soft body physics, fluid, cloth, etc), armature, and much more
+      * Adjust model settings after it's been created
+      * Customize the model after it's been auto-generated using handy tools like split bricks, merge bricks, add adjacent bricks, change brick type, and more!
   * Instructions:
       * Create a new model with the 'New Model' button, and name it whatever you'd like
-      * Select a source object with the 'Source Object' dropdown (defaults to active object when model was created)
+      * Select a source object with the 'Source Object' eyedropper (defaults to active object when model was created)
       * Click 'Brickify Object'
-      * Adjust settings for your desired result
+      * Adjust model settings for your desired result
       * Click 'Update Model' to view setting adjustments
+      * Once you're satisfied with the settings, make adjustments to your model in the 'Customize Model' dropdown menu
   * Future improvements:
       * Add mode for selecting verts at locations next to bricks and adding bricks there
       * Add functionality for changing brick type
+      * Add many more brick types, including sloped bricks, studs, and cylinders
       * For animation, if last frame's brickFreqMatrix matches current frame's brickFreqMatrix, save time by just keeping that model around for another frame or duplicating it for the next frame or something
       * Prefer overlapping and staggering over stacking of bricks
       * New feature: SNOT (studs not on top) functionality

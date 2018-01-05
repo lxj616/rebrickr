@@ -2,6 +2,7 @@ import bpy
 import bmesh
 import math
 from mathutils import Matrix
+from ...functions.common import *
 
 # r = radius, N = numVerts, h = height, co = target cylinder position, botFace = Bool for creating face on bottom, bme = bmesh to insert mesh data into
 def makeCylinder(r, N, h, co=(0,0,0), botFace=True, topFace=True, bme=None):
@@ -184,8 +185,7 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
     # create new bmesh object
     if not bme:
         bme = bmesh.new()
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    scn, cm, _ = getActiveContextInfo()
 
     # set scale and thickness variables
     dX = dimensions["width"]

@@ -36,6 +36,7 @@ from ..functions import *
 
 def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limitMethod='NONE', angleLimit=0.523599, vertexGroup=None, offsetType='OFFSET'):
     """ create bevel modifier for 'obj' with given parameters """
+    print(obj)
     dMod = obj.modifiers.get(obj.name + '_bevel')
     if not dMod:
         dMod = obj.modifiers.new(obj.name + '_bevel', 'BEVEL')
@@ -61,10 +62,7 @@ def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limit
 def createBevelMods(objs):
     """ runs 'createBevelMod' on objects in 'objs' """
     objs = confirmList(objs)
-    # get objs to bevel
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
-    n = cm.source_name
+    scn, cm, _ = getActiveContextInfo()
     for obj in objs:
         segments = cm.bevelSegments
         profile = cm.bevelProfile
@@ -109,10 +107,7 @@ class RebrickrBevel(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            # get bricks to bevel
-            scn = context.scene
-            cm = scn.cmlist[scn.cmlist_index]
-            n = cm.source_name
+            scn, cm, n = getActiveContextInfo()
 
             # set bevel action to add or remove
             action = "REMOVE" if cm.bevelAdded else "ADD"
@@ -120,8 +115,9 @@ class RebrickrBevel(bpy.types.Operator):
             # auto-set bevel width
             cm.bevelWidth = cm.brickHeight/100
 
-            # create or remove bevel
+            # get bricks to bevel
             bricks = getBricks()
+            # create or remove bevel
             RebrickrBevel.runBevelAction(bricks, cm, action)
         except:
             handle_exception()

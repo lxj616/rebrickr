@@ -41,6 +41,13 @@ def bversion():
     return bversion
 
 
+def getActiveContextInfo():
+    scn = bpy.context.scene
+    cm = scn.cmlist[scn.cmlist_index]
+    n = cm.source_name
+    return scn, cm, n
+
+
 def stopWatch(text, value, precision=2):
     """From seconds to Days;Hours:Minutes;Seconds"""
 
@@ -244,16 +251,17 @@ def insertKeyframes(objList, keyframeType, frame, interpolationMode='Default', i
     objList = confirmList(objList)
     for obj in objList:
         obj.keyframe_insert(data_path=keyframeType, frame=frame)
-        if interpolationMode != "Default":
-            fcurves = []
-            for i in range(3):  # increase if inserting keyframes for something that takes up more than three fcurves
-                fc = obj.animation_data.action.fcurves.find(keyframeType, index=i)
-                if fc is not None:
-                    fcurves.append(fc)
-            for fcurve in fcurves:
-                # for kf in fcurve.keyframe_points:
-                kf = fcurve.keyframe_points[idx]
-                kf.interpolation = interpolationMode
+        if interpolationMode == "Default":
+            continue
+        fcurves = []
+        for i in range(3):  # increase if inserting keyframes for something that takes up more than three fcurves
+            fc = obj.animation_data.action.fcurves.find(keyframeType, index=i)
+            if fc is not None:
+                fcurves.append(fc)
+        for fcurve in fcurves:
+            # for kf in fcurve.keyframe_points:
+            kf = fcurve.keyframe_points[idx]
+            kf.interpolation = interpolationMode
 
 
 def setActiveScn(scn):
@@ -356,25 +364,24 @@ def getLibraryPath():
 
 # https://github.com/CGCookie/retopoflow
 def showErrorMessage(message, wrap=80):
-    if not message:
+    if not message or wrap == 0:
         return
     lines = message.splitlines()
-    if wrap > 0:
-        nlines = []
-        for line in lines:
-            spc = len(line) - len(line.lstrip())
-            while len(line) > wrap:
-                i = line.rfind(' ', 0, wrap)
-                if i == -1:
-                    nlines += [line[:wrap]]
-                    line = line[wrap:]
-                else:
-                    nlines += [line[:i]]
-                    line = line[i+1:]
-                if line:
-                    line = ' '*spc + line
-            nlines += [line]
-        lines = nlines
+    nlines = []
+    for line in lines:
+        spc = len(line) - len(line.lstrip())
+        while len(line) > wrap:
+            i = line.rfind(' ', 0, wrap)
+            if i == -1:
+                nlines += [line[:wrap]]
+                line = line[wrap:]
+            else:
+                nlines += [line[:i]]
+                line = line[i+1:]
+            if line:
+                line = ' '*spc + line
+        nlines += [line]
+    lines = nlines
 
     def draw(self,context):
         for line in lines:

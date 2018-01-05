@@ -67,15 +67,13 @@ class Caches(bpy.types.Operator):
     @staticmethod
     def cacheExists(cm=None):
         if cm is None:
-            scn = bpy.context.scene
-            cm = scn.cmlist[scn.cmlist_index]
+            scn, cm, _ = getActiveContextInfo()
         return not (rebrickr_bfm_cache.get(cm.id) is None and cm.BFMCache == "")
 
     def execute(self, context):
         try:
             self.clearCaches()
-            scn = bpy.context.scene
-            cm = scn.cmlist[scn.cmlist_index]
+            scn, cm, _ = getActiveContextInfo()
             self.undo_stack.iterateStates(cm)
             cm.matrixIsDirty = True
         except:

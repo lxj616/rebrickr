@@ -59,8 +59,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
 
     def setAction(self):
         """ sets self.action """
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         if cm.materialType == "Use Source Materials":
             self.action = "INTERNAL"
         elif cm.materialType == "Custom":
@@ -70,8 +69,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
 
     @classmethod
     def applyRandomMaterial(self, context, bricks):
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         # initialize list of brick materials
         brick_mats = []
         mats = bpy.data.materials.keys()
@@ -112,8 +110,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
     def runApplyMaterial(self, context):
 
         # set up variables
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         bricks = getBricks()
         cm.lastMaterialType = cm.materialType
         if self.action == "CUSTOM":

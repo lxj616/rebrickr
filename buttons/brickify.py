@@ -44,18 +44,16 @@ from ..functions import *
 
 
 def updateCanRun(type):
-    scn = bpy.context.scene
+    scn, cm, n = getActiveContextInfo()
     if scn.name == "Rebrickr_storage (DO NOT RENAME)":
         return True
     elif scn.cmlist_index == -1:
         return False
     else:
-        cm = scn.cmlist[scn.cmlist_index]
         if type == "ANIMATION":
             return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
         elif type == "MODEL":
             # set up variables
-            n = cm.source_name
             Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
             return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and not (cm.materialType == "Random" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
 
@@ -93,8 +91,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            scn = bpy.context.scene
-            cm = scn.cmlist[scn.cmlist_index]
+            scn, cm, _ = getActiveContextInfo()
             previously_animated = cm.animated
             previously_model_created = cm.modelCreated
             self.runBrickify(context)
@@ -127,8 +124,7 @@ class RebrickrBrickify(bpy.types.Operator):
         self.undo_stack.undo_push('brickify')
         self.createdObjects = []
         self.createdGroups = []
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         self.action = getAction(cm)
         self.source = self.getObjectToBrickify()
 
@@ -138,12 +134,10 @@ class RebrickrBrickify(bpy.types.Operator):
     @timed_call('Total Time Elapsed')
     def runBrickify(self, context):
         # set up variables
-        scn = context.scene
+        scn, cm, n = getActiveContextInfo()
         scn.Rebrickr_runningOperation = True
-        cm = scn.cmlist[scn.cmlist_index]
         cm.version = bpy.props.rebrickr_version
         self.undo_stack.iterateStates(cm)
-        n = cm.source_name
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
 
         # get source and initialize values
@@ -200,11 +194,9 @@ class RebrickrBrickify(bpy.types.Operator):
     def brickifyModel(self):
         """ create brick model """
         # set up variables
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, n = getActiveContextInfo()
         origFrame = None
         source = None
-        n = cm.source_name
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
         Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
 
@@ -324,6 +316,8 @@ class RebrickrBrickify(bpy.types.Operator):
         if sourceDup != self.source and sourceDup.name in scn.objects.keys():
             safeUnlink(sourceDup)
 
+        cm.modelCreated = True
+
         # add bevel if it was previously added
         if cm.bevelAdded:
             bricks = getBricks()
@@ -333,15 +327,12 @@ class RebrickrBrickify(bpy.types.Operator):
         if origFrame is not None:
             scn.frame_set(origFrame)
 
-        cm.modelCreated = True
         cm.lastSourceMid = listToStr(parentLoc)
 
     def brickifyAnimation(self):
         """ create brick animation """
         # set up variables
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
+        scn, cm, n = getActiveContextInfo()
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
         Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
         Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
@@ -481,6 +472,11 @@ class RebrickrBrickify(bpy.types.Operator):
 
         cm.animated = True
 
+        # add bevel if it was previously added
+        if cm.bevelAdded:
+            bricks = getBricks()
+            RebrickrBevel.runBevelAction(bricks, cm)
+
     def runCreateNewBricks(self, source, parent, source_details, dimensions, refLogo, action, curFrame=None, sceneCurFrame=None):
         group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, action, curFrame=curFrame, sceneCurFrame=sceneCurFrame)
         if int(round((source_details.x.dist)/(dimensions["width"]+dimensions["gap"]))) == 0:
@@ -541,8 +537,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
     def isValid(self, source, Rebrickr_bricks_gn):
         """ returns True if brickify action can run, else report WARNING/ERROR and return False """
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         if cm.brickType == "Custom":
             if cm.customObjectName == "":
                 self.report({"WARNING"}, "Custom brick type object not specified.")
@@ -716,22 +711,22 @@ class RebrickrBrickify(bpy.types.Operator):
             # apply stored transformation to parent of bricks
             applyTransformData(parent)
         obj = bGroup.objects[0] if len(bGroup.objects) > 0 else None
-        if obj is not None:
-            # if not split model
-            if not cm.splitModel:
-                # select the bricks object
-                select(obj, active=obj)
-                # if the model contains armature, lock the location, rotation, and scale
-                if cm.armature:
-                    # lock location, rotation, and scale of created bricks
-                    obj.lock_location = [True, True, True]
-                    obj.lock_rotation = [True, True, True]
-                    obj.lock_scale    = [True, True, True]
-            else:
-                # set active object to obj (keeps original selection)
-                select(None, active=obj)
-            # match brick layers to source layers
-            obj.layers = self.source.layers
+        if obj is None:
+            return
+        if not cm.splitModel:
+            # select the bricks object
+            select(obj, active=obj)
+            # if the model contains armature, lock the location, rotation, and scale
+            if cm.armature:
+                # lock location, rotation, and scale of created bricks
+                obj.lock_location = [True, True, True]
+                obj.lock_rotation = [True, True, True]
+                obj.lock_scale    = [True, True, True]
+        else:
+            # set active object to obj (keeps original selection)
+            select(None, active=obj)
+        # match brick layers to source layers
+        obj.layers = self.source.layers
 
     @classmethod
     def getLogo(self, cm):
@@ -745,8 +740,7 @@ class RebrickrBrickify(bpy.types.Operator):
         return refLogo
 
     def getLegoLogo(self):
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         # update refLogo
         if cm.logoDetail == "None":
             refLogo = None
@@ -780,8 +774,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
     def getDuplicateObjects(self, dGroup, source_name, startFrame, stopFrame):
         """ returns list of duplicates from self.source with all traits applied """
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         activeFrame = scn.frame_current
 
         duplicates = {}
@@ -878,8 +871,7 @@ class RebrickrBrickify(bpy.types.Operator):
         return duplicates
 
     def getObjectToBrickify(self):
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
+        scn, cm, _ = getActiveContextInfo()
         if self.action in ["UPDATE_MODEL", "UPDATE_ANIM"]:
             objToBrickify = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         elif self.action in ["CREATE", "ANIMATE"]:

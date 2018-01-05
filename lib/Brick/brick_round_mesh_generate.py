@@ -45,8 +45,7 @@ def makeBrickRound1x1(dimensions, brickSize, numStudVerts=None, detail="Low Deta
     # create new bmesh object
     if not bme:
         bme = bmesh.new()
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    scn, cm, _ = getActiveContextInfo()
 
     # set scale and thickness variables
     dX = dimensions["width"]
@@ -67,7 +66,7 @@ def makeBrickRound1x1(dimensions, brickSize, numStudVerts=None, detail="Low Deta
     dY = dY/2
     dZ = dZ/2
 
-    
+
 
     return
 def makeBrickRound2x2():

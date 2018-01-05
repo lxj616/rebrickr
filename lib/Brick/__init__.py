@@ -32,6 +32,7 @@ from mathutils import Vector, Matrix
 # Rebrickr imports
 from .brick_mesh_generate import *
 from ...functions.general import *
+from ...functions.common import *
 
 class Bricks:
     @staticmethod
@@ -128,8 +129,7 @@ class Bricks:
     @staticmethod
     def splitAll(bricksDict, keys=None, cm=None):
         if cm is None:
-            scn = bpy.context.scene
-            cm = scn.cmlist[scn.cmlist_index]
+            scn, cm, _ = getActiveContextInfo()
         if keys is None:
             keys = list(bricksDict.keys())
         zStep = getZStep(cm)
@@ -142,8 +142,7 @@ class Bricks:
     def split(bricksDict, key, loc=None, cm=None, v=True, h=True):
         # set up unspecified paramaters
         if cm is None:
-            scn = bpy.context.scene
-            cm = scn.cmlist[scn.cmlist_index]
+            scn, cm, _ = getActiveContextInfo()
         if loc is None:
             loc = strToList(key)
         # initialize vars

@@ -36,8 +36,7 @@ def getDictKey(name):
     return dictKey, dictLoc
 
 def getDetailsAndBounds(source, skipDimensions=False):
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    scn, cm, _ = getActiveContextInfo()
     # get dimensions and bounds
     source_details = bounds(source)
     if not skipDimensions:

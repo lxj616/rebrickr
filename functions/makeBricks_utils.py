@@ -42,7 +42,7 @@ from .general import bounds
 from ..lib.caches import rebrickr_bm_cache
 
 
-def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, keysNotChecked, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4):
+def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, R, keysNotChecked, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4):
     # check exposure of current [merged] brick
     if brickD["top_exposed"] is None or brickD["bot_exposed"] is None or cm.buildIsDirty:
         topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)
@@ -166,12 +166,6 @@ def updateKeysNotChecked(brickSize, loc, zStep, keysNotChecked, key):
                     keysNotChecked.remove(keyChecked)
                 except ValueError:
                     pass
-            else:
-                # remove ignored key from keysNotChecked (for attemptMerge)
-                try:
-                    keysNotChecked.remove(key)
-                except ValueError:
-                    pass
 
 
 def skipThisRow(timeThrough, lowestLoc, loc):
@@ -207,8 +201,7 @@ def randomizeLoc(rand, width, height, bm=None, mesh=None):
     """ translate bm/mesh location by (width,width,height) randomized by cm.randomLoc """
     assert bm is not None or mesh is not None  # one or the other must not be None!
     verts = bm.verts if bm is not None else mesh.vertices
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    scn, cm, _ = getActiveContextInfo()
 
     x = rand.uniform(-(width/2) * cm.randomLoc, (width/2) * cm.randomLoc)
     y = rand.uniform(-(width/2) * cm.randomLoc, (width/2) * cm.randomLoc)
@@ -230,8 +223,7 @@ def translateBack(bm, loc):
 
 def randomizeRot(rand, center, brickSize, bm):
     """ rotate 'bm' around 'center' randomized by cm.randomRot """
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    scn, cm, _ = getActiveContextInfo()
     if max(brickSize) == 0:
         denom = 0.75
     else:
@@ -253,8 +245,7 @@ def rotateBack(bm, center, rot):
 
 def prepareLogoAndGetDetails(logo):
     """ duplicate and normalize custom logo object; return logo and bounds(logo) """
-    scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    scn, cm, _ = getActiveContextInfo()
     if cm.logoDetail != "LEGO Logo" and logo is not None:
         oldLayers = list(scn.layers)
         setLayers(scn, logo.layers)
