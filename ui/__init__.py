@@ -33,6 +33,7 @@ props = bpy.props
 from .cmlist import *
 from .app_handlers import *
 from ..lib.bricksDict import *
+from ..lib.abs_plastic_materials import getAbsPlasticMaterials
 from ..buttons.delete import RebrickrDelete
 from ..buttons.revertSettings import *
 from ..buttons.cache import *
@@ -587,7 +588,7 @@ class MaterialsPanel(Panel):
             elif brick_materials_installed:
                 mats = bpy.data.materials.keys()
                 allGood = True
-                for color in bpy.props.abs_plastic_materials_for_random:
+                for color in getAbsPlasticMaterials():
                     if color not in mats:
                         # print("Color not found: " + color)
                         row = col.row(align=True)

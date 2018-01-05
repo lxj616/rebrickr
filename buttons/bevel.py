@@ -36,7 +36,6 @@ from ..functions import *
 
 def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limitMethod='NONE', angleLimit=0.523599, vertexGroup=None, offsetType='OFFSET'):
     """ create bevel modifier for 'obj' with given parameters """
-    print(obj)
     dMod = obj.modifiers.get(obj.name + '_bevel')
     if not dMod:
         dMod = obj.modifiers.new(obj.name + '_bevel', 'BEVEL')

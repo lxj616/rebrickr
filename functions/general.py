@@ -143,26 +143,6 @@ def getMatrixSettings(cm=None):
     return listToStr([cm.brickHeight, cm.gap, cm.brickType, cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ, cm.customObjectName, cm.useNormals, cm.verifyExposure, cm.insidenessRayCastDir, cm.castDoubleCheckRays, cm.brickShell, cm.calculationAxes])
 
 
-def revertMatrixSettings(cm=None):
-    if cm is None:
-        scn, cm, _ = getActiveContextInfo()
-    settings = cm.lastMatrixSettings.split(",")
-    cm.brickHeight = float(settings[0])
-    cm.gap = float(settings[1])
-    cm.brickType = settings[2]
-    cm.distOffsetX = float(settings[3])
-    cm.distOffsetY = float(settings[4])
-    cm.distOffsetZ = float(settings[5])
-    cm.customObjectName = settings[6]
-    cm.useNormals = str_to_bool(settings[7])
-    cm.verifyExposure = str_to_bool(settings[8])
-    cm.insidenessRayCastDir = settings[9]
-    cm.castDoubleCheckRays = str_to_bool(settings[10])
-    cm.brickShell = settings[11]
-    cm.calculationAxes = settings[12]
-    cm.matrixIsDirty = False
-
-
 def matrixReallyIsDirty(cm):
     return cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings()
 
@@ -190,16 +170,3 @@ def strToTuple(string, item_type=int, split_on=","):
 
 def getZStep(cm):
     return 3 if cm.brickType in ["Bricks", "Custom"] else 1
-
-
-def getAction(cm):
-    """ returns action """
-    if cm.modelCreated:
-        action = "UPDATE_MODEL"
-    elif cm.animated:
-        action = "UPDATE_ANIM"
-    elif not cm.useAnimation:
-        action = "CREATE"
-    else:
-        action = "ANIMATE"
-    return action

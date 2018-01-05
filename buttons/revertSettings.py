@@ -50,7 +50,26 @@ class RebrickrRevertSettings(Operator):
 
     def execute(self, context):
         try:
-            revertMatrixSettings()
+            self.revertMatrixSettings()
         except:
             handle_exception()
         return{"FINISHED"}
+
+    def revertMatrixSettings(cm=None):
+        if cm is None:
+            scn, cm, _ = getActiveContextInfo()
+        settings = cm.lastMatrixSettings.split(",")
+        cm.brickHeight = float(settings[0])
+        cm.gap = float(settings[1])
+        cm.brickType = settings[2]
+        cm.distOffsetX = float(settings[3])
+        cm.distOffsetY = float(settings[4])
+        cm.distOffsetZ = float(settings[5])
+        cm.customObjectName = settings[6]
+        cm.useNormals = str_to_bool(settings[7])
+        cm.verifyExposure = str_to_bool(settings[8])
+        cm.insidenessRayCastDir = settings[9]
+        cm.castDoubleCheckRays = str_to_bool(settings[10])
+        cm.brickShell = settings[11]
+        cm.calculationAxes = settings[12]
+        cm.matrixIsDirty = False

@@ -125,7 +125,7 @@ class RebrickrBrickify(bpy.types.Operator):
         self.createdObjects = []
         self.createdGroups = []
         scn, cm, _ = getActiveContextInfo()
-        self.action = getAction(cm)
+        self.setAction(cm)
         self.source = self.getObjectToBrickify()
 
     #############################################
@@ -889,5 +889,16 @@ class RebrickrBrickify(bpy.types.Operator):
         safeScn = getSafeScn()
         safeScn.objects.link(parent)
         return parent
+
+    def setAction(self, cm):
+        """ sets self.action """
+        if cm.modelCreated:
+            self.action = "UPDATE_MODEL"
+        elif cm.animated:
+            self.action = "UPDATE_ANIM"
+        elif not cm.useAnimation:
+            self.action = "CREATE"
+        else:
+            self.action = "ANIMATE"
 
     #############################################

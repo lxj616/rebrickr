@@ -44,6 +44,8 @@ from .buttons import *
 from .buttons.customize import *
 from .operators import *
 from .lib.preferences import *
+from .lib.Brick.legal_brick_sizes import getLegalBrickSizes
+from .lib import keymaps
 
 # updater import
 from . import addon_updater_ops
@@ -78,129 +80,13 @@ def register():
     bpy.types.Scene.Rebrickr_copy_from_id = IntProperty(default=-1)
 
     # define legal brick sizes (key:height, val:[width,depth])
-    bpy.props.Rebrickr_legal_brick_sizes = {
-        # tiles
-        0.9:[[1, 1],
-             [1, 2],
-             [1, 3],
-             [1, 4],
-             [1, 6],
-             [1, 8],
-             [2, 2],
-             [2, 4],
-             [3, 6],
-             [6, 6],
-             [8, 16]],
-        # plates
-        1:  [[1, 1],
-             [1, 2],
-             [1, 3],
-             [1, 4],
-             [1, 6],
-             [1, 8],
-             [1, 10],
-             [1, 12],
-             [2, 1],
-             [2, 2],
-             [2, 3],
-             [2, 4],
-             [2, 6],
-             [2, 8],
-             [2, 10],
-             [2, 12],
-             [2, 14],
-             [2, 16],
-             [3, 3],
-             [4, 4],
-             [4, 6],
-             [4, 8],
-             [4, 10],
-             [4, 12],
-             [6, 6],
-             [6, 8],
-             [6, 10],
-             [6, 12],
-             [6, 14],
-             [6, 16],
-             [6, 24],
-             [8, 8],
-             [8, 11],
-             [8, 16],
-             [16, 16]],
-        # bricks
-        3:  [[1, 1],
-             [1, 2],
-             [1, 3],
-             [1, 4],
-             [1, 6],
-             [1, 8],
-             [1, 10],
-             [1, 12],
-             [1, 14],
-             [1, 16],
-             [2, 1],
-             [2, 2],
-             [2, 3],
-             [2, 4],
-             [2, 6],
-             [2, 8],
-             [2, 10],
-             [4, 4],
-             [4, 6],
-             [4, 8],
-             [4, 10],
-             [4, 12],
-             [4, 18],
-             [8, 8],
-             [8, 16],
-             [10, 20],
-             [12, 24]]}
-    # add reverses of above brick sizes
-    for heightKey in bpy.props.Rebrickr_legal_brick_sizes:
-        sizes = bpy.props.Rebrickr_legal_brick_sizes[heightKey]
-        for size in sizes:
-            if size[::-1] not in sizes:
-                sizes.append(size[::-1])
-
-    # add reverses of above brick sizes
-    for heightKey in bpy.props.Rebrickr_legal_brick_sizes:
-        sizes = bpy.props.Rebrickr_legal_brick_sizes[heightKey]
-        for size in sizes:
-            if size[::-1] not in sizes:
-                sizes.append(size[::-1])
+    bpy.props.Rebrickr_legal_brick_sizes = getLegalBrickSizes()
 
     # bpy.types.Scene.Rebrickr_snapping = BoolProperty(
     #     name="Rebrickr Snap",
     #     description="Snap to brick dimensions",
     #     default=False)
     # bpy.types.VIEW3D_HT_header.append(Rebrickr_snap_button)
-
-    bpy.props.abs_plastic_materials_for_random = [
-        'ABS Plastic Black',
-        'ABS Plastic Blue',
-        'ABS Plastic Bright Green',
-        'ABS Plastic Bright Light Orange',
-        'ABS Plastic Brown',
-        'ABS Plastic Dark Azur',
-        'ABS Plastic Dark Brown',
-        'ABS Plastic Dark Green',
-        'ABS Plastic Dark Grey',
-        'ABS Plastic Dark Red',
-        'ABS Plastic Dark Tan',
-        'ABS Plastic Gold',
-        'ABS Plastic Green',
-        'ABS Plastic Light Grey',
-        'ABS Plastic Lime',
-        'ABS Plastic Orange',
-        'ABS Plastic Pink',
-        'ABS Plastic Purple',
-        'ABS Plastic Red',
-        'ABS Plastic Sand Blue',
-        'ABS Plastic Sand Green',
-        'ABS Plastic Silver',
-        'ABS Plastic Tan',
-        'ABS Plastic White',
-        'ABS Plastic Yellow']
 
     # handle the keymap
     wm = bpy.context.window_manager
@@ -209,14 +95,7 @@ def register():
     kc = wm.keyconfigs.addon
     if kc:
         km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
-        kmi = km.keymap_items.new("rebrickr.brickify", 'L', 'PRESS', alt=True, shift=True)
-        kmi = km.keymap_items.new("rebrickr.delete", 'D', 'PRESS', alt=True, shift=True)
-        kmi = km.keymap_items.new("rebrickr.draw_adjacent", 'EQUAL', 'PRESS', shift=True, alt=True)
-        kmi = km.keymap_items.new("rebrickr.split_bricks", 'S', 'PRESS', shift=True, alt=True)
-        kmi = km.keymap_items.new("rebrickr.merge_bricks", 'M', 'PRESS', shift=True, alt=True)
-        kmi = km.keymap_items.new("rebrickr.set_exposure", 'UP_ARROW', 'PRESS', shift=True, alt=True).properties.side = "TOP"
-        kmi = km.keymap_items.new("rebrickr.set_exposure", 'DOWN_ARROW', 'PRESS', shift=True, alt=True).properties.side = "BOTTOM"
-        kmi = km.keymap_items.new("rebrickr.customize_model", 'I', 'PRESS', shift=True)
+        keymaps.addKeymaps(km)
         addon_keymaps.append(km)
 
     # other things (UI List)
@@ -235,7 +114,6 @@ def unregister():
 
     del Scn.cmlist_index
     del Scn.cmlist
-    del bpy.props.abs_plastic_materials_for_random
     # bpy.types.VIEW3D_HT_header.remove(Rebrickr_snap_button)
     # del Scn.Rebrickr_snapping
     del Scn.Rebrickr_copy_from_id

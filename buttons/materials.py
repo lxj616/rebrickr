@@ -35,6 +35,7 @@ props = bpy.props
 from ..functions import *
 from ..functions.wrappers import *
 from .delete import RebrickrDelete
+from ..lib.abs_plastic_materials import getAbsPlasticMaterials
 
 
 class RebrickrApplyMaterial(bpy.types.Operator):
@@ -74,7 +75,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
         brick_mats = []
         mats = bpy.data.materials.keys()
         for color in bpy.props.abs_plastic_materials:
-            if color in mats and color in bpy.props.abs_plastic_materials_for_random:
+            if color in mats and color in getAbsPlasticMaterials():
                 brick_mats.append(color)
         randS0 = np.random.RandomState(0)
         # if model is split, apply a random material to each brick

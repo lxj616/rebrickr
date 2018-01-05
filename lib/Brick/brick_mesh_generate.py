@@ -437,75 +437,76 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                 t = (dZ*2)-thickZ
                 makeTube(r, numStudVerts, t, dimensions["tube_thickness"], co=(tubeX, tubeY, tubeZ), wings=True, bme=bme)
                 # add support next to odd tubes
-                if (detail == "Medium Detail" or detail == "High Detail") and addSupports and brickSize[2] != 1:
-                    if brickSize[0] > brickSize[1]:
-                        if brickSize[0] == 3 or xNum % 2 == 1:
-                            # initialize x, y, z
-                            x1 = tubeX + (dimensions["support_width"]/2)
-                            x2 = tubeX - (dimensions["support_width"]/2)
-                            y1 = tubeY + r
-                            y2 = tubeY + dY*2-thickXY
-                            y3 = tubeY - r
-                            y4 = tubeY - dY*2+thickXY
-                            z1 = dZ-thickZ
-                            z2 = z2b
-                            # CREATING SUPPORT BEAM
-                            v1a = bme.verts.new((x1, y1, z1))
-                            v2a = bme.verts.new((x2, y1, z1))
-                            v3a = bme.verts.new((x1, y1, z2))
-                            v4a = bme.verts.new((x2, y1, z2))
-                            v5a = bme.verts.new((x1, y2, z1))
-                            v6a = bme.verts.new((x2, y2, z1))
-                            v7a = bme.verts.new((x1, y2, z2))
-                            v8a = bme.verts.new((x2, y2, z2))
-                            bme.faces.new((v1a, v3a, v7a, v5a))
-                            bme.faces.new((v3a, v4a, v8a, v7a))
-                            bme.faces.new((v6a, v8a, v4a, v2a))
-                            v1b = bme.verts.new((x1, y3, z1))
-                            v2b = bme.verts.new((x2, y3, z1))
-                            v3b = bme.verts.new((x1, y3, z2))
-                            v4b = bme.verts.new((x2, y3, z2))
-                            v5b = bme.verts.new((x1, y4, z1))
-                            v6b = bme.verts.new((x2, y4, z1))
-                            v7b = bme.verts.new((x1, y4, z2))
-                            v8b = bme.verts.new((x2, y4, z2))
-                            bme.faces.new((v5b, v7b, v3b, v1b))
-                            bme.faces.new((v7b, v8b, v4b, v3b))
-                            bme.faces.new((v2b, v4b, v8b, v6b))
-                    elif brickSize[1] > brickSize[0]:
-                        if brickSize[1] == 3 or yNum % 2 == 1:
-                            # initialize x, y, z
-                            x1 = tubeX + r
-                            x2 = tubeX + dX*2-thickXY
-                            x3 = tubeX - r
-                            x4 = tubeX - dX*2+thickXY
-                            y1 = tubeY + (dimensions["support_width"]/2)
-                            y2 = tubeY - (dimensions["support_width"]/2)
-                            z1 = dZ-thickZ
-                            z2 = z2b
-                            # CREATING SUPPORT BEAM
-                            v1a = bme.verts.new((x1, y1, z1))
-                            v2a = bme.verts.new((x1, y2, z1))
-                            v3a = bme.verts.new((x1, y1, z2))
-                            v4a = bme.verts.new((x1, y2, z2))
-                            v5a = bme.verts.new((x2, y1, z1))
-                            v6a = bme.verts.new((x2, y2, z1))
-                            v7a = bme.verts.new((x2, y1, z2))
-                            v8a = bme.verts.new((x2, y2, z2))
-                            bme.faces.new((v5a, v7a, v3a, v1a))
-                            bme.faces.new((v7a, v8a, v4a, v3a))
-                            bme.faces.new((v2a, v4a, v8a, v6a))
-                            v1b = bme.verts.new((x3, y1, z1))
-                            v2b = bme.verts.new((x3, y2, z1))
-                            v3b = bme.verts.new((x3, y1, z2))
-                            v4b = bme.verts.new((x3, y2, z2))
-                            v5b = bme.verts.new((x4, y1, z1))
-                            v6b = bme.verts.new((x4, y2, z1))
-                            v7b = bme.verts.new((x4, y1, z2))
-                            v8b = bme.verts.new((x4, y2, z2))
-                            bme.faces.new((v1b, v3b, v7b, v5b))
-                            bme.faces.new((v3b, v4b, v8b, v7b))
-                            bme.faces.new((v6b, v8b, v4b, v2b))
+                if not (detail == "Medium Detail" or detail == "High Detail") or not addSupports or brickSize[2] == 1:
+                    continue
+                if brickSize[0] > brickSize[1]:
+                    if brickSize[0] == 3 or xNum % 2 == 1:
+                        # initialize x, y, z
+                        x1 = tubeX + (dimensions["support_width"]/2)
+                        x2 = tubeX - (dimensions["support_width"]/2)
+                        y1 = tubeY + r
+                        y2 = tubeY + dY*2-thickXY
+                        y3 = tubeY - r
+                        y4 = tubeY - dY*2+thickXY
+                        z1 = dZ-thickZ
+                        z2 = z2b
+                        # CREATING SUPPORT BEAM
+                        v1a = bme.verts.new((x1, y1, z1))
+                        v2a = bme.verts.new((x2, y1, z1))
+                        v3a = bme.verts.new((x1, y1, z2))
+                        v4a = bme.verts.new((x2, y1, z2))
+                        v5a = bme.verts.new((x1, y2, z1))
+                        v6a = bme.verts.new((x2, y2, z1))
+                        v7a = bme.verts.new((x1, y2, z2))
+                        v8a = bme.verts.new((x2, y2, z2))
+                        bme.faces.new((v1a, v3a, v7a, v5a))
+                        bme.faces.new((v3a, v4a, v8a, v7a))
+                        bme.faces.new((v6a, v8a, v4a, v2a))
+                        v1b = bme.verts.new((x1, y3, z1))
+                        v2b = bme.verts.new((x2, y3, z1))
+                        v3b = bme.verts.new((x1, y3, z2))
+                        v4b = bme.verts.new((x2, y3, z2))
+                        v5b = bme.verts.new((x1, y4, z1))
+                        v6b = bme.verts.new((x2, y4, z1))
+                        v7b = bme.verts.new((x1, y4, z2))
+                        v8b = bme.verts.new((x2, y4, z2))
+                        bme.faces.new((v5b, v7b, v3b, v1b))
+                        bme.faces.new((v7b, v8b, v4b, v3b))
+                        bme.faces.new((v2b, v4b, v8b, v6b))
+                elif brickSize[1] > brickSize[0]:
+                    if brickSize[1] == 3 or yNum % 2 == 1:
+                        # initialize x, y, z
+                        x1 = tubeX + r
+                        x2 = tubeX + dX*2-thickXY
+                        x3 = tubeX - r
+                        x4 = tubeX - dX*2+thickXY
+                        y1 = tubeY + (dimensions["support_width"]/2)
+                        y2 = tubeY - (dimensions["support_width"]/2)
+                        z1 = dZ-thickZ
+                        z2 = z2b
+                        # CREATING SUPPORT BEAM
+                        v1a = bme.verts.new((x1, y1, z1))
+                        v2a = bme.verts.new((x1, y2, z1))
+                        v3a = bme.verts.new((x1, y1, z2))
+                        v4a = bme.verts.new((x1, y2, z2))
+                        v5a = bme.verts.new((x2, y1, z1))
+                        v6a = bme.verts.new((x2, y2, z1))
+                        v7a = bme.verts.new((x2, y1, z2))
+                        v8a = bme.verts.new((x2, y2, z2))
+                        bme.faces.new((v5a, v7a, v3a, v1a))
+                        bme.faces.new((v7a, v8a, v4a, v3a))
+                        bme.faces.new((v2a, v4a, v8a, v6a))
+                        v1b = bme.verts.new((x3, y1, z1))
+                        v2b = bme.verts.new((x3, y2, z1))
+                        v3b = bme.verts.new((x3, y1, z2))
+                        v4b = bme.verts.new((x3, y2, z2))
+                        v5b = bme.verts.new((x4, y1, z1))
+                        v6b = bme.verts.new((x4, y2, z1))
+                        v7b = bme.verts.new((x4, y1, z2))
+                        v8b = bme.verts.new((x4, y2, z2))
+                        bme.faces.new((v1b, v3b, v7b, v5b))
+                        bme.faces.new((v3b, v4b, v8b, v7b))
+                        bme.faces.new((v6b, v8b, v4b, v2b))
         # Adding bar inside 1 by x bricks
         if brickSize[0] == 1:
             for y in range(1, brickSize[1]):
@@ -549,27 +550,28 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                 for v in topVerts:
                     v.select = True
                 # add supports next to odd bars
-                if (detail == "Medium Detail" or detail == "High Detail") and brickSize[2] != 1:
-                    if brickSize[0] == 3 or brickSize[0] == 2 or x % 2 == 0 or ((x == 1 or x == brickSize[0]-1) and brickSize[0] == 8):
-                        # initialize x, y, z
-                        x1 = barX + (dimensions["support_width"]/2)
-                        x2 = barX - (dimensions["support_width"]/2)
-                        y2 = barY + dY-thickXY
-                        y4 = barY - dY+thickXY
-                        z1 = dZ-thickZ
-                        z2 = z2b
-                        # CREATING SUPPORT BEAM
-                        v1 = bme.verts.new((x1, y2, z1))
-                        v2 = bme.verts.new((x2, y2, z1))
-                        v3 = bme.verts.new((x1, y2, z2))
-                        v4 = bme.verts.new((x2, y2, z2))
-                        v5 = bme.verts.new((x1, y4, z1))
-                        v6 = bme.verts.new((x2, y4, z1))
-                        v7 = bme.verts.new((x1, y4, z2))
-                        v8 = bme.verts.new((x2, y4, z2))
-                        bme.faces.new((v8, v6, v2, v4))
-                        bme.faces.new((v4, v3, v7, v8))
-                        bme.faces.new((v5, v7, v3, v1))
+                if not (detail == "Medium Detail" or detail == "High Detail") or brickSize[2] == 1:
+                    continue
+                if brickSize[0] == 3 or brickSize[0] == 2 or x % 2 == 0 or ((x == 1 or x == brickSize[0]-1) and brickSize[0] == 8):
+                    # initialize x, y, z
+                    x1 = barX + (dimensions["support_width"]/2)
+                    x2 = barX - (dimensions["support_width"]/2)
+                    y2 = barY + dY-thickXY
+                    y4 = barY - dY+thickXY
+                    z1 = dZ-thickZ
+                    z2 = z2b
+                    # CREATING SUPPORT BEAM
+                    v1 = bme.verts.new((x1, y2, z1))
+                    v2 = bme.verts.new((x2, y2, z1))
+                    v3 = bme.verts.new((x1, y2, z2))
+                    v4 = bme.verts.new((x2, y2, z2))
+                    v5 = bme.verts.new((x1, y4, z1))
+                    v6 = bme.verts.new((x2, y4, z1))
+                    v7 = bme.verts.new((x1, y4, z2))
+                    v8 = bme.verts.new((x2, y4, z2))
+                    bme.faces.new((v8, v6, v2, v4))
+                    bme.faces.new((v4, v3, v7, v8))
+                    bme.faces.new((v5, v7, v3, v1))
         # make face at top
         if detail == "Low Detail":
             bme.faces.new((v16, v15, v14, v13))
