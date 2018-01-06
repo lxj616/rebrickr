@@ -58,11 +58,13 @@ def createObjsD(objs):
         if obj.isBrick:
             # get cmlist item referred to by object
             cm = getItemByID(scn.cmlist, obj.cmlist_id)
+            print(cm.name)
             # add object to objsD
             if cm.idx not in objsD:
                 objsD[cm.idx] = [obj]
             else:
                 objsD[cm.idx].append(obj)
+    print(objsD)
     return objsD
 
 

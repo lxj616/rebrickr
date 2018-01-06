@@ -654,12 +654,20 @@ class MaterialsPanel(Panel):
         else:
             obj = bpy.data.objects.get(cm.source_name)
         if obj is not None:
+            if len(obj.data.uv_layers) > 0:
+                row = col.row(align=True)
+                row.prop(cm, "useUVMap")
+                if cm.useUVMap:
+                    mats = bpy.data.materials.keys()
+                    for color in bpy.props.abs_plastic_materials:
+                        if color not in mats:
+                            row = col.row(align=True)
+                            row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
+                            break
             col = layout.column(align=True)
             col.scale_y = 0.7
             if len(obj.data.vertex_colors) > 0:
                 col.label("(Vertex colors not supported)")
-            if len(obj.data.uv_layers) > 0:
-                col.label("(UV Maps not supported)")
 
 
 class DetailingPanel(Panel):

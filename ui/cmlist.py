@@ -72,6 +72,7 @@ def matchProperties(cmTo, cmFrom, bh=False):
                 "matShellDepth",
                 "mergeInconsistentMats",
                 "randomMatSeed",
+                "useUVMap",
                 "useNormals",
                 "verifyExposure",
                 "insidenessRayCastDir",
@@ -144,7 +145,7 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
             handle_exception()
         return{"FINISHED"}
 
-    def addItem():
+    def addItem(self):
         scn = bpy.context.scene
         active_object = scn.objects.active
         # if active object isn't on visible layer, don't set it as default source for new model
@@ -196,7 +197,7 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
         item.startFrame = scn.frame_start
         item.stopFrame = scn.frame_end
 
-    def removeItem(idx):
+    def removeItem(self, idx):
         scn, cm, sn = getActiveContextInfo()
         n = cm.name
         if not cm.modelCreated and not cm.animated:
@@ -208,13 +209,13 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
         else:
             self.report({"WARNING"}, 'Please delete the Brickified model before attempting to remove this item.' % locals())
 
-    def moveDown(item):
+    def moveDown(self, item):
         scn = bpy.context.scene
         scn.cmlist.move(scn.cmlist_index, scn.cmlist_index+1)
         scn.cmlist_index += 1
         item.idx = scn.cmlist_index
 
-    def moveUp(item):
+    def moveUp(self, item):
         scn = bpy.context.scene
         scn.cmlist.move(scn.cmlist_index, scn.cmlist_index-1)
         scn.cmlist_index -= 1
@@ -889,6 +890,11 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         description="Random seed for material assignment",
         min=-1, max=5000,
         default=1000)
+    useUVMap = BoolProperty(
+        name="Use UV Map",
+        description="Transfer colors from source UV map",
+        default=True
+    )
 
     lastMatrixSettings = StringProperty(default="")
     useNormals = BoolProperty(

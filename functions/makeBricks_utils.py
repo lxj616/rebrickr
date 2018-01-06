@@ -54,7 +54,6 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
 
     # get brick material
     mat = getMaterial(cm, bricksDict, key, brickSize, randS2, brick_mats, i)
-    print(None if mat is None else mat.name)
 
     # set up arguments for brick mesh
     logoToUse = logo if topExposed else None

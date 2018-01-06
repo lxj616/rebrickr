@@ -429,6 +429,8 @@ class drawAdjacent(Operator):
 
     def execute(self, context):
         try:
+            # store enabled/disabled values
+            createAdjBricks = [self.xPos, self.xNeg, self.yPos, self.yNeg, self.zPos, self.zNeg]
             # if no sides were and are selected, don't execute (i.e. if only brick type changed)
             shouldRun = False
             for i in range(6):
@@ -454,9 +456,6 @@ class drawAdjacent(Operator):
             x0,y0,z0 = dictLoc
             # get size of current brick (e.g. [2, 4, 1])
             objSize = self.bricksDict[dictKey]["size"]
-
-            # store enabled/disabled values
-            createAdjBricks = [self.xPos, self.xNeg, self.yPos, self.yNeg, self.zPos, self.zNeg]
 
             zStep = getZStep(cm)
             decriment = 0
@@ -664,7 +663,8 @@ class drawAdjacent(Operator):
         return not (brickNum == len(self.adjDKLs[side]) - 1 and
                     not any(self.adjBricksCreated[side])) # evaluates True if all values in this list are False
 
-    def verifyBrickExposureAboveAndBelow(adjDictLoc, decriment):
+    def verifyBrickExposureAboveAndBelow(self, adjDictLoc, decriment):
+        scn, cm, _ = getActiveContextInfo()
         # double check exposure of bricks above/below new adjacent brick
         if not self.zNeg:
             adjDictLoc[2] += decriment + 1

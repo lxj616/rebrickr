@@ -46,44 +46,71 @@ def getUVCoord(mesh, face, point, image):
     # multiply barycentric weights by uv coordinates
     uv_loc = sum((p*w for p,w in zip(luv,lwts)), Vector((0,0)))
     # convert uv_loc in range(0,1) to uv coordinate
-    uv_coord = (uv_loc.x * image.size[0], uv_loc.y * image.size[1])
+    image_size_x, image_size_y = image.size
+    x_co = round(uv_loc.x * (image_size_x - 1))
+    y_co = round(uv_loc.y * (image_size_y - 1))
+    uv_coord = (x_co, y_co)
 
     # return resulting uv coordinate
     return Vector(uv_coord)
 
 
-def getPixel(image, uv_coord):
+# reference: https://svn.blender.org/svnroot/bf-extensions/trunk/py/scripts/addons/uv_bake_texture_to_vcols.py
+def getUVImages(obj):
+    uv_images = {}
+    for uv_tex in obj.data.uv_textures.active.data:
+        if not uv_tex.image or uv_tex.image.name in uv_images or not uv_tex.image.pixels:
+            continue
+        uv_images[uv_tex.image.name] = (uv_tex.image.size[0],
+                                        uv_tex.image.size[1],
+                                        uv_tex.image.pixels[:]
+                                        # Accessing pixels directly is far too slow.
+                                        # Copied to new array for massive performance-gain.
+                                       )
+    return uv_images
+
+
+# reference: https://svn.blender.org/svnroot/bf-extensions/trunk/py/scripts/addons/uv_bake_texture_to_vcols.py
+def getPixel(image, uv_coord, uv_images):
     rgba = []
-    for i in range(4):
-        # formula from 'TrumanBlending' at https://blenderartists.org/forum/archive/index.php/t-195230.html
-        pixel_idx = (4 * (uv_coord.x + (image.size[0] * uv_coord.y))) + i
-        rgba.append(image.pixels[math.floor(pixel_idx)])
-    return rgba
+
+    image_size_x, image_size_y, uv_pixels = uv_images[image.name]
+    pixelNumber = (image_size_x * int(uv_coord.y)) + int(uv_coord.x)
+    r = uv_pixels[pixelNumber*4 + 0]
+    g = uv_pixels[pixelNumber*4 + 1]
+    b = uv_pixels[pixelNumber*4 + 2]
+    a = uv_pixels[pixelNumber*4 + 3]
+    return (r, g, b, a)
 
 
-def getClosestMaterial(source, face_idx, point):
+def getClosestMaterial(obj, face_idx, point, uv_images):
     """ sets all matNames in bricksDict based on nearest_face """
+    scn, cm, _ = getActiveContextInfo()
     if face_idx is None:
         return ""
-    face = source.data.polygons[face_idx]
+    face = obj.data.polygons[face_idx]
     matName = ""
-    if source.data.uv_layers.active is None and len(source.material_slots) > 0:
-        slot = source.material_slots[f.material_index]
-        mat = slot.material
-        matName = mat.name if mat is not None else ""
-    elif source.data.uv_layers.active is not None:
-        # get uv_texture image for face
-        image = source.data.uv_textures.active.data.values()[face_idx].image
+    # get closest material using UV map
+    if cm.useUVMap and obj.data.uv_layers.active is not None:
+        # get uv_texture for face
+        image = obj.data.uv_textures.active.data[face_idx].image
         # get uv coordinate based on nearest face intersection
-        uv_coord = getUVCoord(source.data, face, point, image)
+        uv_coord = getUVCoord(obj.data, face, point, image)
         # retrieve rgba value at uv coordinate
-        rgba = getPixel(image, uv_coord))
+        rgba = getPixel(image, uv_coord, uv_images)
 
         # pick material based on rgba value
-        if rgba[2] > 0.5:
-            matName = "white"
+        brick_materials_installed = hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
+        if cm.brickType != "Custom" and brick_materials_installed:
+            matName = findNearestBrickColorName(rgba)
         else:
-            matName = "black"
+            # TODO: create new material with exact RGBA values found at pixel
+            matName = ""
+    # get closest material using material slot of face
+    elif obj.data.uv_layers.active is None and len(obj.material_slots) > 0:
+        slot = obj.material_slots[f.material_index]
+        mat = slot.material
+        matName = mat.name if mat is not None else ""
 
     return matName
 

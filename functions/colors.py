@@ -26,30 +26,39 @@ import bpy
 def getColors():
     if not hasattr(getColors, 'colors'):
         colors = {}
-        colors["ABS Plastic Black"] = (0, 0.0009106, 0.002)
-        colors["ABS Plastic Blue"] = (0.033, 0.098, 0.402)
-        colors["ABS Plastic Bright Green"] = ()
-        colors["ABS Plastic Brown"] = ()
-        colors["ABS Plastic Dark Azur"] = ()
-        colors["ABS Plastic Dark Green"] = ()
-        colors["ABS Plastic Dark Grey"] = ()
-        colors["ABS Plastic Dark Red"] = ()
-        colors["ABS Plastic Gold"] = ()
-        colors["ABS Plastic Green"] = ()
-        colors["ABS Plastic Light Grey"] = ()
-        colors["ABS Plastic Lime"] = ()
-        colors["ABS Plastic Orange"] = ()
-        colors["ABS Plastic Pink"] = ()
-        colors["ABS Plastic Purple"] = ()
-        colors["ABS Plastic Red"] = ()
-        colors["ABS Plastic Tan"] = ()
-        colors["ABS Plastic Trans-Blue"] = ()
-        colors["ABS Plastic Trans-Clear"] = ()
-        colors["ABS Plastic Trans-Light Green"] = ()
-        colors["ABS Plastic Trans-Red"] = ()
-        colors["ABS Plastic Trans-Yellow"] = ()
-        colors["ABS Plastic White"] = ()
-        colors["ABS Plastic Yellow"] = ()
+        colors["ABS Plastic Black"] = (0, 0.008, 0.012, 1.0)
+        colors["ABS Plastic Blue"] = (0.033, 0.098, 0.402, 1.0)
+        colors["ABS Plastic Bright Green"] = (0.118, 0.576, 0.255, 1.0)
+        colors["ABS Plastic Bright Light Orange"] = (0.984, 0.741, 0.173, 1.0)
+        colors["ABS Plastic Brown"] = (0.478, 0.275, 0.149, 1.0)
+        colors["ABS Plastic Dark Azur"] = (0.302, 0.608, 0.792, 1.0)
+        colors["ABS Plastic Dark Brown"] = (0.318, 0.192, 0.114, 1.0)
+        colors["ABS Plastic Dark Green"] = (0.012, 0.216, 0.129, 1.0)
+        colors["ABS Plastic Dark Grey"] = (0.310, 0.349, 0.337, 1.0)
+        colors["ABS Plastic Dark Red"] = (0.490, 0.098, 0.106, 1.0)
+        colors["ABS Plastic Gold"] = (0.718, 0.522, 0.129, 1.0)
+        colors["ABS Plastic Green"] = (0.055, 0.463, 0.231, 1.0)
+        colors["ABS Plastic Light Grey"] = (0.541, 0.537, 0.537, 1.0)
+        colors["ABS Plastic Lime"] = (0.612, 0.745, 0.180, 1.0)
+        colors["ABS Plastic Orange"] = (0.992, 0.447, 0.133, 1.0)
+        colors["ABS Plastic Pink"] = (0.929, 0.329, 0.525, 1.0)
+        colors["ABS Plastic Purple"] = (0.529, 0.173, 0.416, 1.0)
+        colors["ABS Plastic Red"] = (0.753, 0.039, 0.106, 1.0)
+        colors["ABS Plastic Sand Blue"] = (0.361, 0.416, 0.471, 1.0)
+        colors["ABS Plastic Sand Green"] = (0.420, 0.573, 0.435, 1.0)
+        colors["ABS Plastic Silver"] = (0.682, 0.682, 0.682, 1.0)
+        colors["ABS Plastic Tan"] = (0.761, 0.667, 0.478, 1.0)
+        colors["ABS Plastic Trans-Blue"] = (0.114, 0.686, 0.871, 0.4)
+        colors["ABS Plastic Trans-Clear"] = (0.975, 0.975, 0.975, 0.3)
+        colors["ABS Plastic Trans-Light Blue"] = (0.114, 0.749, 0.341, 0.4)
+        colors["ABS Plastic Trans-Light Green"] = (0.949, 0.992, 0.247, 0.4)
+        colors["ABS Plastic Trans-Orange"] = (0.949, 0.992, 0.247, 0.4)
+        colors["ABS Plastic Trans-Red"] = (0.969, 0.051, 0.106, 0.4)
+        colors["ABS Plastic Trans-Reddish Orange"] = (0.992, 0.565, 0.153, 0.4)
+        colors["ABS Plastic Trans-Yellow"] = (0.996, 0.945, 0.255, 0.4)
+        colors["ABS Plastic Trans-Yellowish Clear"] = (0.949, 0.937, 0.898, 0.325)
+        colors["ABS Plastic White"] = (1.0, 0.980, 0.949, 1.0)
+        colors["ABS Plastic Yellow"] = (0.996, 0.855, 0.196, 1.0)
         getColors.colors = colors
     return getColors.colors
 
@@ -60,29 +69,34 @@ def rgbFromStr(s):
     return r, g, b
 
 
-def findNearestWebColorName((R, G, B)):
-    return ColorNames.findNearestColorName((R, G, B), ColorNames.WebColorMap)
+# def findNearestWebColorName((R, G, B)):
+#     return ColorNames.findNearestColorName((R, G, B), ColorNames.WebColorMap)
+#
+#
+# def findNearestImageMagickColorName((R, G, B)):
+#     return ColorNames.findNearestColorName((R, G, B), ColorNames.ImageMagickColorMap)
+#
+#
+def findNearestBrickColorName(rgba):
+    R, G, B, A = rgba
+    return findNearestColorName(R, G, B, A, getColors())
 
 
-def findNearestImageMagickColorName((R, G, B)):
-    return ColorNames.findNearestColorName((R, G, B), ColorNames.ImageMagickColorMap)
-
-
-def findNearestColorName((R, G, B), Map):
+def findNearestColorName(R, G, B, A, colorNames):
     mindiff = None
-    for d in Map:
-        r, g, b = ColorNames.rgbFromStr(Map[d])
+    for colorName in colorNames:
+        r, g, b, a = colorNames[colorName]
         diff = (abs(R - r) + abs(G - g) + abs(B - b)) * 256
+        diff += abs(A - a) * 768  # weight difference heavily towards alpha
         if mindiff is None or diff < mindiff:
             mindiff = diff
-            mincolorname = d
+            mincolorname = colorName
     return mincolorname
 
 
 def getMat(polygon):
     materialD = {}
     obj.data.materials[0].alpha = 1
-    print("face", polygon.index, "material_index", polygon.material_index)
     slot = obj.material_slots[polygon.material_index]
     mat = slot.material
 
@@ -102,9 +116,9 @@ def distance(c1, c2):
     (r1, g1, b1) = c1
     (r2, g2, b2) = c2
     return math.sqrt(((r1 - r2) + (g1 - g2) + (b1 - b2))**2)
-
-colorsDict = getColors()
-colors = list(colorsDict.keys())
-closest_colors = sorted(colors, key=lambda color: distance(color, point))
-closest_color = closest_colors[0]
-code = colorsDict[closest_color]
+#
+# colorsDict = getColors()
+# colors = list(colorsDict.keys())
+# closest_colors = sorted(colors, key=lambda color: distance(color, point))
+# closest_color = closest_colors[0]
+# code = colorsDict[closest_color]

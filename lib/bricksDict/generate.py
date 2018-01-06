@@ -444,6 +444,8 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     i = 0
     bricksDict = {}
     threshold = getThreshold(cm)
+    # get uv_texture image and pixels for material calculation
+    uv_images = getUVImages(source)
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
@@ -454,7 +456,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                 # get material from nearest face intersection point
                 nf = faceIdxMatrix[x][y][z]["idx"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 ni = faceIdxMatrix[x][y][z]["loc"] if type(faceIdxMatrix[x][y][z]) == dict else None
-                matName = getClosestMaterial(source, nf, ni)
+                matName = getClosestMaterial(source, nf, ni, uv_images)
                 bKey = listToStr([x,y,z])
                 keys.append(bKey)
                 drawBrick = brickFreqMatrix[x][y][z] >= threshold
