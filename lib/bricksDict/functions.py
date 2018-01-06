@@ -52,6 +52,15 @@ def getUVCoord(mesh, face, point, image):
     return Vector(uv_coord)
 
 
+def getPixel(image, uv_coord):
+    rgba = []
+    for i in range(4):
+        # formula from 'TrumanBlending' at https://blenderartists.org/forum/archive/index.php/t-195230.html
+        pixel_idx = (4 * (uv_coord.x + (image.size[0] * uv_coord.y))) + i
+        rgba.append(image.pixels[math.floor(pixel_idx)])
+    return rgba
+
+
 def getClosestMaterial(source, face_idx, point):
     """ sets all matNames in bricksDict based on nearest_face """
     if face_idx is None:
@@ -68,13 +77,7 @@ def getClosestMaterial(source, face_idx, point):
         # get uv coordinate based on nearest face intersection
         uv_coord = getUVCoord(source.data, face, point, image)
         # retrieve rgba value at uv coordinate
-        rgba = []
-        # print(image.size)
-        # print(uv_coord)
-        # print(len(image.pixels))
-        for i in range(4):
-            pixel_idx = (4 * (uv_coord.x + (image.size[0] * uv_coord.y))) + i
-            rgba.append(image.pixels[math.floor(pixel_idx)])
+        rgba = getPixel(image, uv_coord))
 
         # pick material based on rgba value
         if rgba[2] > 0.5:
