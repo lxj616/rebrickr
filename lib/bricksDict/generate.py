@@ -77,6 +77,7 @@ def castRays(obj, point, direction, miniDist, roundType="CEILING", edgeLen=0):
                     edgeIntersects = True
                     firstIntersection = {"idx":index, "dist":(location-point).length, "loc":location}
                 lastIntersection = {"idx":index, "dist":edgeLen - (location-point).length, "loc":location}
+
             # set nextIntersection
             if intersections == 1:
                 nextIntersection = location.copy()
@@ -84,6 +85,7 @@ def castRays(obj, point, direction, miniDist, roundType="CEILING", edgeLen=0):
         location = VectorRound(location, 5, roundType=roundType)
         orig = location + miniDist
         origs.append(orig)
+
 
     return intersections, firstDirection, firstIntersection, nextIntersection, lastIntersection, edgeIntersects
 
@@ -401,11 +403,14 @@ def getThreshold(cm):
     """ returns threshold (draw bricks if val >= threshold) """
     return 1.01 - (cm.shellThickness / 100)
 
-def createBricksDictEntry(name, val=0, draw=False, co=(0,0,0), mat_name=None, parent_brick=None, size=None, attempted_merge=False, top_exposed=None, bot_exposed=None, type=None):
+def createBricksDictEntry(name, val=0, draw=False, co=(0,0,0), nearest_face=None, nearest_intersection=None, rgba=None, mat_name=None, parent_brick=None, size=None, attempted_merge=False, top_exposed=None, bot_exposed=None, type=None):
     return {"name":name,
             "val":val,
             "draw":draw,
             "co":co,
+            "nearest_face":nearest_face,
+            "nearest_intersection":nearest_intersection,
+            "rgba":rgba,
             "mat_name":mat_name,
             "parent_brick":parent_brick,
             "size":size,
@@ -456,7 +461,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                 # get material from nearest face intersection point
                 nf = faceIdxMatrix[x][y][z]["idx"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 ni = faceIdxMatrix[x][y][z]["loc"] if type(faceIdxMatrix[x][y][z]) == dict else None
-                matName = getClosestMaterial(source, nf, ni, uv_images)
+                rgba = getUVPixelColor(source, nf, ni, uv_images)
                 bKey = listToStr([x,y,z])
                 keys.append(bKey)
                 drawBrick = brickFreqMatrix[x][y][z] >= threshold
@@ -466,7 +471,10 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                     val= brickFreqMatrix[x][y][z],
                     draw= drawBrick,
                     co= (co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
-                    mat_name= matName,
+                    nearest_face= nf,
+                    nearest_intersection= ni,
+                    rgba= rgba,
+                    mat_name= "",  # defined in 'updateMaterials' function
                 )
     cm.numBricksGenerated = i
 

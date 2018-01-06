@@ -27,23 +27,20 @@ import bpy
 
 # Rebrickr imports
 from ...functions.general import *
+from .functions import *
 
-def brickAvail(cm, sourceBrick, brick):
-    """ check brick is available to merge """
-    if brick is not None:
-        n = cm.source_name
-        Rebrickr_internal_mn = "Rebrickr_%(n)s_internal" % locals()
-        # This if statement ensures brick is present, brick isn't drawn already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal)
-        if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats):
-            return True
-    return False
 
-def canBeJoined(cm, bricksDict, loc, key, i, j, k=0):
-    curBrickD = bricksDict[key]
-    key = listToStr([loc[0] + i, loc[1] + j, loc[2] + k])
-    nextBrickD = bricksDict.get(key)
-    spotAvail = brickAvail(cm, curBrickD, nextBrickD)
-    return spotAvail
+def updateMaterials(bricksDict, source):
+    """ sets all matNames in bricksDict based on nearest_face """
+    for key in bricksDict.keys():
+        nf = bricksDict[key]["nearest_face"]
+        nearestFaceExists = nf is not None
+        if bricksDict[key]["draw"] and nearestFaceExists:
+            rgba = bricksDict[key]["rgba"]
+            matName = getClosestMaterial(source, nf, rgba)
+            bricksDict[key]["mat_name"] = matName
+    return bricksDict
+
 
 def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, mergeVertical=False):
     """ update 'brickSizes' with available brick sizes surrounding bricksDict[key] """
@@ -81,6 +78,7 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, me
             if breakOuter1: break
         breakOuter1 = False
         if breakOuter2: break
+
 
 def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True):
     """ attempt to merge bricksDict[key] with adjacent bricks """
@@ -120,32 +118,6 @@ def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, p
 
     return brickSize
 
-def checkExposure(bricksDict, x, y, z, direction:int=1):
-    isExposed = False
-    try:
-        valKeysChecked = []
-        k0 = listToStr([x,y,z])
-        val = bricksDict[k0]["val"]
-        if val == 0:
-            isExposed = True
-        # Check bricks on Z axis [above or below depending on 'direction'] this brick until shell (1) hit. If ouside (0) hit first, [top or bottom depending on 'direction'] is exposed
-        elif val > 0 and val < 1:
-            zz = z
-            while val > 0 and val < 1:
-                zz += direction
-                # NOTE: if key does not exist, we will be sent to 'except'
-                k1 = listToStr([x,y,zz])
-                val = bricksDict[k1]["val"]
-                valKeysChecked.append(k1)
-                if val == 0:
-                    isExposed = True
-    except KeyError:
-        isExposed = True
-    # if outside (0) hit before shell (1) [above or below depending on 'direction'] exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
-    if isExposed and len(valKeysChecked) > 0:
-        for k in valKeysChecked:
-            bricksDict[k]["val"] = 0
-    return isExposed
 
 def getBrickExposure(cm, bricksDict, key=None, loc=None):
     assert key is not None or loc is not None
@@ -187,3 +159,50 @@ def getBrickExposure(cm, bricksDict, key=None, loc=None):
                     if returnVal1: botExposed = True
 
     return topExposed, botExposed
+
+
+def checkExposure(bricksDict, x, y, z, direction:int=1):
+    isExposed = False
+    try:
+        valKeysChecked = []
+        k0 = listToStr([x,y,z])
+        val = bricksDict[k0]["val"]
+        if val == 0:
+            isExposed = True
+        # Check bricks on Z axis [above or below depending on 'direction'] this brick until shell (1) hit. If ouside (0) hit first, [top or bottom depending on 'direction'] is exposed
+        elif val > 0 and val < 1:
+            zz = z
+            while val > 0 and val < 1:
+                zz += direction
+                # NOTE: if key does not exist, we will be sent to 'except'
+                k1 = listToStr([x,y,zz])
+                val = bricksDict[k1]["val"]
+                valKeysChecked.append(k1)
+                if val == 0:
+                    isExposed = True
+    except KeyError:
+        isExposed = True
+    # if outside (0) hit before shell (1) [above or below depending on 'direction'] exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
+    if isExposed and len(valKeysChecked) > 0:
+        for k in valKeysChecked:
+            bricksDict[k]["val"] = 0
+    return isExposed
+
+
+def canBeJoined(cm, bricksDict, loc, key, i, j, k=0):
+    curBrickD = bricksDict[key]
+    key = listToStr([loc[0] + i, loc[1] + j, loc[2] + k])
+    nextBrickD = bricksDict.get(key)
+    spotAvail = brickAvail(cm, curBrickD, nextBrickD)
+    return spotAvail
+
+
+def brickAvail(cm, sourceBrick, brick):
+    """ check brick is available to merge """
+    if brick is not None:
+        n = cm.source_name
+        Rebrickr_internal_mn = "Rebrickr_%(n)s_internal" % locals()
+        # This if statement ensures brick is present, brick isn't drawn already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal)
+        if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats):
+            return True
+    return False

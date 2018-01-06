@@ -116,9 +116,3 @@ def distance(c1, c2):
     (r1, g1, b1) = c1
     (r2, g2, b2) = c2
     return math.sqrt(((r1 - r2) + (g1 - g2) + (b1 - b2))**2)
-#
-# colorsDict = getColors()
-# colors = list(colorsDict.keys())
-# closest_colors = sorted(colors, key=lambda color: distance(color, point))
-# closest_color = closest_colors[0]
-# code = colorsDict[closest_color]

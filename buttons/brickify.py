@@ -145,9 +145,10 @@ class RebrickrBrickify(bpy.types.Operator):
         source["old_parent"] = ""
         source.cmlist_id = cm.id
 
-        # check if matrix is dirty
+        # make sure matrix really is dirty
         if cm.matrixIsDirty:
-            if not matrixReallyIsDirty(cm) and getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)[1]:
+            _, loadedFromCache = getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)
+            if not matrixReallyIsDirty(cm) and loadedFromCache:
                 cm.matrixIsDirty = False
 
         if not self.isValid(source, Rebrickr_bricks_gn):
@@ -526,13 +527,17 @@ class RebrickrBrickify(bpy.types.Operator):
         if not loadedFromCache or cm.internalIsDirty:
             updateInternal(bricksDict, cm, keys, clearExisting=loadedFromCache)
             cm.buildIsDirty = True
+        # update materials in bricksDict
+        bricksDict = updateMaterials(bricksDict, source)
+        # make bricks
         group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else None
         bricksCreated, bricksDict = makeBricks(parent, refLogo, dimensions, bricksDict, cm=cm, split=cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
         if selectCreated:
             select(None)
             for brick in bricksCreated:
                 select(brick, active=brick, only=False)
-        cacheBricksDict(action, cm, bricksDict, curFrame=curFrame)  # store current bricksDict to cache
+        # store current bricksDict to cache
+        cacheBricksDict(action, cm, bricksDict, curFrame=curFrame)
         return group_name
 
     def isValid(self, source, Rebrickr_bricks_gn):

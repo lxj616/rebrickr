@@ -893,8 +893,20 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     useUVMap = BoolProperty(
         name="Use UV Map",
         description="Transfer colors from source UV map",
-        default=True
-    )
+        default=True,
+        update=dirtyMaterial)
+    snapToBrickColors = BoolProperty(
+        name="Snap to Brick Colors",
+        description="Snap nearest material to brick material",
+        default=False,
+        update=dirtyMaterial)
+    colorSnapAmount = FloatProperty(
+        name="Color Snap Amount",
+        description="Amount to snap colors by",
+        precision=3,
+        min=0.000, max=1.000,
+        default=0.0,
+        update=dirtyMaterial)
 
     lastMatrixSettings = StringProperty(default="")
     useNormals = BoolProperty(

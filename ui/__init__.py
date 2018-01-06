@@ -653,17 +653,22 @@ class MaterialsPanel(Panel):
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         else:
             obj = bpy.data.objects.get(cm.source_name)
-        if obj is not None:
+        if obj is not None and cm.materialType == "Use Source Materials":
             if len(obj.data.uv_layers) > 0:
                 row = col.row(align=True)
                 row.prop(cm, "useUVMap")
                 if cm.useUVMap:
+                    row = col.row(align=True)
+                    row.active = not cm.snapToBrickColors
+                    row.prop(cm, "colorSnapAmount")
+                    row = col.row(align=True)
                     mats = bpy.data.materials.keys()
                     for color in bpy.props.abs_plastic_materials:
                         if color not in mats:
-                            row = col.row(align=True)
                             row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
                             break
+                    else:
+                        row.prop(cm, "snapToBrickColors")
             col = layout.column(align=True)
             col.scale_y = 0.7
             if len(obj.data.vertex_colors) > 0:
@@ -1022,7 +1027,7 @@ class BrickDetailsPanel(Panel):
         col1 = layout.column(align=True)
         split = col1.split(align=True, percentage=0.35)
         # hard code keys so that they are in the order I want
-        keys = ["name", "val", "draw", "co", "mat_name", "parent_brick", "size", "attempted_merge", "top_exposed", "bot_exposed", "type"]
+        keys = ["name", "val", "draw", "co", "mat_name", "rgba", "parent_brick", "size", "attempted_merge", "top_exposed", "bot_exposed", "type"]
         # draw keys
         col = split.column(align=True)
         col.scale_y = 0.65
