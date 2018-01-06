@@ -63,9 +63,6 @@ def getBricksDict(action, source=None, source_details=None, dimensions=None, R=N
             source, source_details, dimensions, R,_,_ = getArgumentsForBricksDict(cm)
         # create new bricksDict
         bricksDict = makeBricksDict(source, source_details, dimensions, R,  cursorStatus=updateCursor)
-        # add materials to bricksDict
-        if len(source.material_slots) > 0:
-            bricksDict = addMaterialsToBricksDict(bricksDict, source)
     return bricksDict, loadedFromCache
 
 def lightToDeepCache(rebrickr_bfm_cache):

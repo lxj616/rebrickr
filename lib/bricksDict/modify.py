@@ -28,19 +28,6 @@ import bpy
 # Rebrickr imports
 from ...functions.general import *
 
-def addMaterialsToBricksDict(bricksDict, source):
-    """ sets all matNames in bricksDict based on nearest_face """
-    for key in bricksDict.keys():
-        nf = bricksDict[key]["nearest_face"]
-        nearestFaceExists = nf is not None
-        if bricksDict[key]["draw"] and nearestFaceExists:
-            f = source.data.polygons[nf]
-            slot = source.material_slots[f.material_index]
-            mat = slot.material
-            matName = mat.name if mat is not None else ""
-            bricksDict[key]["mat_name"] = matName
-    return bricksDict
-
 def brickAvail(cm, sourceBrick, brick):
     """ check brick is available to merge """
     if brick is not None:

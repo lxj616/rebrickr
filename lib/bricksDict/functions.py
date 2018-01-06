@@ -20,7 +20,8 @@ Created by Christopher Gearhart
 """
 
 # System imports
-# NONE!
+from mathutils.interpolate import poly_3d_calc
+import math
 
 # Blender imports
 import bpy
@@ -29,11 +30,67 @@ import bpy
 from ...functions import *
 from ..Brick import Bricks
 
+
+def getUVCoord(mesh, face, point, image):
+    # get active uv layer data
+    uv_layer = mesh.uv_layers.active
+    if uv_layer is None:
+        return None
+    uv = uv_layer.data
+    # get 3D coordinates of face's vertices
+    lco = [mesh.vertices[i].co for i in face.vertices]
+    # get uv coordinates of face's vertices
+    luv = [uv[i].uv for i in face.loop_indices]
+    # calculate barycentric weights for point
+    lwts = poly_3d_calc(lco, point)
+    # multiply barycentric weights by uv coordinates
+    uv_loc = sum((p*w for p,w in zip(luv,lwts)), Vector((0,0)))
+    # convert uv_loc in range(0,1) to uv coordinate
+    uv_coord = (uv_loc.x * image.size[0], uv_loc.y * image.size[1])
+
+    # return resulting uv coordinate
+    return Vector(uv_coord)
+
+
+def getClosestMaterial(source, face_idx, point):
+    """ sets all matNames in bricksDict based on nearest_face """
+    if face_idx is None:
+        return ""
+    face = source.data.polygons[face_idx]
+    matName = ""
+    if source.data.uv_layers.active is None and len(source.material_slots) > 0:
+        slot = source.material_slots[f.material_index]
+        mat = slot.material
+        matName = mat.name if mat is not None else ""
+    elif source.data.uv_layers.active is not None:
+        # get uv_texture image for face
+        image = source.data.uv_textures.active.data.values()[face_idx].image
+        # get uv coordinate based on nearest face intersection
+        uv_coord = getUVCoord(source.data, face, point, image)
+        # retrieve rgba value at uv coordinate
+        rgba = []
+        # print(image.size)
+        # print(uv_coord)
+        # print(len(image.pixels))
+        for i in range(4):
+            pixel_idx = (4 * (uv_coord.x + (image.size[0] * uv_coord.y))) + i
+            rgba.append(image.pixels[math.floor(pixel_idx)])
+
+        # pick material based on rgba value
+        if rgba[2] > 0.5:
+            matName = "white"
+        else:
+            matName = "black"
+
+    return matName
+
+
 def getDictKey(name):
     """ get dict key details of obj """
     dictKey = name.split("__")[1]
     dictLoc = strToList(dictKey)
     return dictKey, dictLoc
+
 
 def getDetailsAndBounds(source, skipDimensions=False):
     scn, cm, _ = getActiveContextInfo()
@@ -45,6 +102,7 @@ def getDetailsAndBounds(source, skipDimensions=False):
         return source_details, dimensions
     else:
         return source_details
+
 
 def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=None):
     if source is None:

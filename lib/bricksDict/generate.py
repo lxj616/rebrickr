@@ -30,6 +30,7 @@ from bpy.types import Object
 from mathutils import Matrix, Vector
 
 # Rebrickr imports
+from .functions import *
 from ...functions.common import *
 from ...functions.general import *
 from ...functions.generate_lattice import generateLattice
@@ -74,8 +75,8 @@ def castRays(obj, point, direction, miniDist, roundType="CEILING", edgeLen=0):
             if (location-point).length <= edgeLen2:
                 if intersections == 0:
                     edgeIntersects = True
-                    firstIntersection = {"idx":index, "dist":(location-point).length}
-                lastIntersection = {"idx":index, "dist":edgeLen - (location-point).length}
+                    firstIntersection = {"idx":index, "dist":(location-point).length, "loc":location}
+                lastIntersection = {"idx":index, "dist":edgeLen - (location-point).length, "loc":location}
             # set nextIntersection
             if intersections == 1:
                 nextIntersection = location.copy()
@@ -164,10 +165,9 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, bric
 
     origInside, edgeIntersects, intersections, nextIntersection, firstIntersection, lastIntersection = rayObjIntersections(orig,ray,miniDist,edgeLen,source)
 
-    if origInside:
-        if brickFreqMatrix[x0][y0][z0] == 0:
-            # define brick as inside shell
-            brickFreqMatrix[x0][y0][z0] = -1
+    if origInside and brickFreqMatrix[x0][y0][z0] == 0:
+        # define brick as inside shell
+        brickFreqMatrix[x0][y0][z0] = -1
     if edgeIntersects:
         if (origInside and brickShell == "Inside Mesh") or (not origInside and brickShell == "Outside Mesh") or brickShell == "Inside and Outside":
             # define brick as part of shell
@@ -209,10 +209,11 @@ def updateInternal(bricksDict, cm, keys="ALL", clearExisting=False):
         step = cm.colStep + cm.colThickness
         for key in keys:
             x,y,z = strToList(key)
-            if x % step in range(cm.colThickness):
-                if y % step in range(cm.colThickness):
-                    if isInternal(bricksDict, key):
-                        bricksDict[key]["draw"] = True
+            if (x % step in range(cm.colThickness) and
+                y % step in range(cm.colThickness) and
+                isInternal(bricksDict, key)
+               ):
+                bricksDict[key]["draw"] = True
     # draw lattice supports
     elif cm.internalSupports == "Lattice":
         step = cm.latticeStep
@@ -259,9 +260,6 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
             percent0 = printMatrixStatus(0)
             for y in range(len(coordMatrix[0])):
                 for x in range(len(coordMatrix)):
-                    if x != 0:
-                        if nextIntersection and nextIntersection[0] < coordMatrix[x][y][z][0]:
-                            continue
                     intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z, miniDist)
                     if intersections == 0:
                         break
@@ -278,9 +276,6 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
             percent1 = printMatrixStatus(percent0)
             for x in range(len(coordMatrix)):
                 for y in range(len(coordMatrix[0])):
-                    if y != 0:
-                        if nextIntersection and nextIntersection[1] < coordMatrix[x][y][z][1]:
-                            continue
                     intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z, miniDist)
                     if intersections == 0:
                         break
@@ -297,9 +292,6 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
             percent2 = printMatrixStatus(percent1)
             for y in range(len(coordMatrix[0])):
                 for z in range(len(coordMatrix[0][0])):
-                    if z != 0:
-                        if nextIntersection and nextIntersection[2] < coordMatrix[x][y][z][2]:
-                            continue
                     intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
                     if intersections == 0:
                         break
@@ -363,23 +355,24 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         for x in range(len(coordMatrix)):
             for y in range(len(coordMatrix[0])):
                 for z in range(len(coordMatrix[0][0])):
-                    if brickFreqMatrix[x][y][z] == -1:
-                        try:
-                            idxsToCheck = [(x+1, y, z),
-                                           (x-1, y, z),
-                                           (x, y+1, z),
-                                           (x, y-1, z),
-                                           (x, y, z+1),
-                                           (x, y, z-1)]
-                            for idxs in idxsToCheck:
-                                if brickFreqMatrix[idxs[0]][idxs[1]][idxs[2]] == round(j + 0.01,2):
-                                    brickFreqMatrix[x][y][z] = j
-                                    setNF(cm.matShellDepth, j, idxs, (x,y,z), faceIdxMatrix)
-                                    gotOne = True
-                                    break
-                        except Exception as e:
-                            print(e)
-                            pass
+                    if brickFreqMatrix[x][y][z] != -1:
+                        continue
+                    try:
+                        idxsToCheck = [(x+1, y, z),
+                                       (x-1, y, z),
+                                       (x, y+1, z),
+                                       (x, y-1, z),
+                                       (x, y, z+1),
+                                       (x, y, z-1)]
+                        for idxs in idxsToCheck:
+                            if brickFreqMatrix[idxs[0]][idxs[1]][idxs[2]] == round(j + 0.01,2):
+                                brickFreqMatrix[x][y][z] = j
+                                setNF(cm.matShellDepth, j, idxs, (x,y,z), faceIdxMatrix)
+                                gotOne = True
+                                break
+                    except Exception as e:
+                        print(e)
+                        pass
         if not gotOne:
             break
 
@@ -408,12 +401,11 @@ def getThreshold(cm):
     """ returns threshold (draw bricks if val >= threshold) """
     return 1.01 - (cm.shellThickness / 100)
 
-def createBricksDictEntry(name, val=0, draw=False, co=(0,0,0), nearest_face=None, mat_name=None, parent_brick=None, size=None, attempted_merge=False, top_exposed=None, bot_exposed=None, type=None):
+def createBricksDictEntry(name, val=0, draw=False, co=(0,0,0), mat_name=None, parent_brick=None, size=None, attempted_merge=False, top_exposed=None, bot_exposed=None, type=None):
     return {"name":name,
             "val":val,
             "draw":draw,
             "co":co,
-            "nearest_face":nearest_face,
             "mat_name":mat_name,
             "parent_brick":parent_brick,
             "size":size,
@@ -459,18 +451,20 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                 i += 1
                 n = cm.source_name
 
-                # get nearest face index and mat name
+                # get material from nearest face intersection point
                 nf = faceIdxMatrix[x][y][z]["idx"] if type(faceIdxMatrix[x][y][z]) == dict else None
+                ni = faceIdxMatrix[x][y][z]["loc"] if type(faceIdxMatrix[x][y][z]) == dict else None
+                matName = getClosestMaterial(source, nf, ni)
                 bKey = listToStr([x,y,z])
                 keys.append(bKey)
                 drawBrick = brickFreqMatrix[x][y][z] >= threshold
+                # create bricksDict entry for current brick
                 bricksDict[bKey] = createBricksDictEntry(
-                    name=         'Rebrickr_%(n)s_brick_%(i)s__%(bKey)s' % locals(),
-                    val=          brickFreqMatrix[x][y][z],
-                    draw=         drawBrick,
-                    co=           (co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
-                    nearest_face= nf,
-                    mat_name=     "", # defined in 'addMaterialsToBricksDict' function
+                    name= 'Rebrickr_%(n)s_brick_%(i)s__%(bKey)s' % locals(),
+                    val= brickFreqMatrix[x][y][z],
+                    draw= drawBrick,
+                    co= (co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
+                    mat_name= matName,
                 )
     cm.numBricksGenerated = i
 
