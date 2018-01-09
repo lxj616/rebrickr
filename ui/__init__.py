@@ -523,16 +523,6 @@ class BrickTypesPanel(Panel):
                 row.prop(cm, "originSet")
 
 
-# def promptAppendBrickMatsIfNecessary(layoutElement, mats_needed):
-#     mats = bpy.data.materials.keys()
-#     for color in mats_needed:
-#         if color not in mats:
-#             print("Color not found: " + color)
-#             row = layoutElement.row(align=True)
-#             row.operator("scene.append_abs_plastic_materials", text="Import ABS Plastic Materials", icon="IMPORT")
-#             break
-#
-
 class MaterialsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
@@ -558,24 +548,19 @@ class MaterialsPanel(Panel):
         row = col.row(align=True)
         row.prop(cm, "materialType", text="")
 
-        brick_materials_installed = hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
 
         if cm.materialType == "Custom":
             col = layout.column(align=True)
             row = col.row(align=True)
             row.prop_search(cm, "materialName", bpy.data, "materials", text="")
-            if brick_materials_installed:
+            if brick_materials_installed():
                 if bpy.context.scene.render.engine != 'CYCLES':
                     row = col.row(align=True)
                     row.label("Switch to 'Cycles' for Brick materials")
                 else:
-                    mats = bpy.data.materials.keys()
-                    for color in bpy.props.abs_plastic_materials:
-                        if color not in mats:
-                            # print("Color not found: " + color)
-                            row = col.row(align=True)
-                            row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
-                            break
+                    if not brick_materials_loaded():
+                        row = col.row(align=True)
+                        row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
             if cm.modelCreated or cm.animated:
                 col = layout.column(align=True)
                 row = col.row(align=True)
@@ -586,20 +571,14 @@ class MaterialsPanel(Panel):
                 row = col.row(align=True)
                 row.label("Switch to 'Cycles Render' engine")
             elif brick_materials_installed:
-                mats = bpy.data.materials.keys()
-                allGood = True
-                for color in getAbsPlasticMaterials():
-                    if color not in mats:
-                        # print("Color not found: " + color)
-                        row = col.row(align=True)
-                        row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
-                        col = layout.column(align=True)
-                        col.scale_y = 0.7
-                        col.label("'Brick Materials' must be")
-                        col.label("imported")
-                        allGood = False
-                        break
-                if allGood:
+                if not brick_materials_loaded():
+                    row = col.row(align=True)
+                    row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
+                    col = layout.column(align=True)
+                    col.scale_y = 0.7
+                    col.label("'Brick Materials' must be")
+                    col.label("imported")
+                else:
                     row = col.row(align=True)
                     row.prop(cm, "randomMatSeed")
                     if cm.modelCreated or cm.animated:
@@ -632,14 +611,9 @@ class MaterialsPanel(Panel):
                     if bpy.context.scene.render.engine != 'CYCLES':
                         row = col.row(align=True)
                         row.label("Switch to 'Cycles' for Brick materials")
-                    else:
-                        mats = bpy.data.materials.keys()
-                        for color in bpy.props.abs_plastic_materials:
-                            if color not in mats:
-                                # print("Color not found: " + color)
-                                row = col.row(align=True)
-                                row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
-                                break
+                    elif not brick_materials_loaded():
+                        row = col.row(align=True)
+                        row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
                 if cm.modelCreated:
                     if cm.splitModel:
                         col = layout.column(align=True)
@@ -658,17 +632,14 @@ class MaterialsPanel(Panel):
                 row = col.row(align=True)
                 row.prop(cm, "useUVMap")
                 if cm.useUVMap:
+                    row1 = col.row(align=True)
+                    row1.prop(cm, "colorSnapAmount")
                     row = col.row(align=True)
-                    row.active = not cm.snapToBrickColors
-                    row.prop(cm, "colorSnapAmount")
-                    row = col.row(align=True)
-                    mats = bpy.data.materials.keys()
-                    for color in bpy.props.abs_plastic_materials:
-                        if color not in mats:
-                            row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
-                            break
+                    if not brick_materials_loaded():
+                        row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
                     else:
                         row.prop(cm, "snapToBrickColors")
+                        row1.active = not cm.snapToBrickColors
             col = layout.column(align=True)
             col.scale_y = 0.7
             if len(obj.data.vertex_colors) > 0:

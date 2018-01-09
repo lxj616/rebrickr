@@ -22,6 +22,7 @@ Created by Christopher Gearhart
 # System imports
 from mathutils.interpolate import poly_3d_calc
 import math
+import colorsys
 
 # Blender imports
 import bpy
@@ -55,18 +56,49 @@ def getUVCoord(mesh, face, point, image):
     return Vector(uv_coord)
 
 
+def getUVTextureData(obj):
+    if len(obj.data.uv_textures) == 0:
+        return None
+    active_uv = obj.data.uv_textures.active
+    if active_uv is None and len(obj.data.uv_textures) > 0:
+        obj.data.uv_textures.active = obj.data.uv_textures[0]
+        active_uv = obj.data.uv_textures.active
+    return active_uv.data
+
+
+def getFirstImgTexNode(obj):
+    img = None
+    for mat_slot in obj.material_slots:
+        mat = mat_slot.material
+        if not mat.use_nodes:
+            return None
+        active_node = mat.node_tree.nodes.active
+        nodes_to_check = [active_node] + list(mat.node_tree.nodes)
+        for node in nodes_to_check:
+            if node is not None and node.type == "TEX_IMAGE":
+                img = node.image
+                break
+    return img
+
+
 # reference: https://svn.blender.org/svnroot/bf-extensions/trunk/py/scripts/addons/uv_bake_texture_to_vcols.py
 def getUVImages(obj):
     uv_images = {}
-    for uv_tex in obj.data.uv_textures.active.data:
-        if not uv_tex.image or uv_tex.image.name in uv_images or not uv_tex.image.pixels:
+    uv_tex_data = getUVTextureData(obj)
+    if uv_tex_data is None:
+        return {}
+    for uv_tex in uv_tex_data:
+        img = uv_tex.image
+        if img is None:
+            img = getFirstImgTexNode(obj)
+        if not img or img.name in uv_images or not img.pixels:
             continue
-        uv_images[uv_tex.image.name] = (uv_tex.image.size[0],
-                                        uv_tex.image.size[1],
-                                        uv_tex.image.pixels[:]
-                                        # Accessing pixels directly is far too slow.
-                                        # Copied to new array for massive performance-gain.
-                                       )
+        uv_images[img.name] = (img.size[0],
+                               img.size[1],
+                               img.pixels[:]
+                               # Accessing pixels directly is far too slow.
+                               #Copied to new array for massive performance-gain.
+                               )
     return uv_images
 
 
@@ -83,29 +115,67 @@ def getPixel(image, uv_coord, uv_images):
     return (r, g, b, a)
 
 
+def getAverage(rgba0, rgba1, weight):
+    r0, g0, b0, a0 = rgba0
+    r1, g1, b1, a1 = rgba1
+    r2 = ((r1 * weight) + r0) / (weight + 1)
+    g2 = ((g1 * weight) + g0) / (weight + 1)
+    b2 = ((b1 * weight) + b0) / (weight + 1)
+    a2 = ((a1 * weight) + a0) / (weight + 1)
+    return [r2, g2, b2, a2]
+
+
+
 def createNewMaterial(rgba):
     scn, cm, _ = getActiveContextInfo()
     r, g, b, a = rgba
+    if cm.colorSnapAmount > 0:
+        # r_hsv, g_hsv, b_hsv = colorsys.rgb_to_hsv(r, g, b)
+        # r0 = round(r / (1 + cm.colorSnapAmount * (60000/3)), 4)
+        # g0 = round(g / (1 + cm.colorSnapAmount * (60000/5.9)), 4)
+        # b0 = round(b / (1 + cm.colorSnapAmount * (60000/1.1)), 4)
+        r0 = round(r / (1 + cm.colorSnapAmount * 20000), 4)
+        g0 = round(g / (1 + cm.colorSnapAmount * 20000), 4)
+        b0 = round(b / (1 + cm.colorSnapAmount * 20000), 4)
+        a0 = round(a, 1)
+    else:
+        r0, g0, b0, a0 = rgba
     # get or create material with unique color
-    mat_name = "Rebrickr_mat_{}-{}-{}-{}".format(round(r / (1 + cm.colorSnapAmount * 10000), 4), round(g / (1 + cm.colorSnapAmount * 10000), 4), round(b / (1 + cm.colorSnapAmount * 10000), 4), round(a, 1))
+    mat_name = "Rebrickr_mat_{}-{}-{}-{}".format(r0, g0, b0, a0)
     mat = bpy.data.materials.get(mat_name)
+    mat_is_new = mat is None
     if mat is None:
         mat = bpy.data.materials.new(name=mat_name)
     # set diffuse and transparency of material
     if scn.render.engine == "BLENDER_RENDER":
-        mat.diffuse_color = rgba[:3]
-        mat.diffuse_intensity = 1.0
-        if a < 1.0:
-            mat.use_transparency = True
-            mat.alpha = a
+        if mat_is_new:
+            mat.diffuse_color = [r, g, b]
+            mat.diffuse_intensity = 1.0
+            if a < 1.0:
+                mat.use_transparency = True
+                mat.alpha = a
+        else:
+            r1, g1, b1 = mat.diffuse_color
+            a1 = mat.alpha
+            r2, g2, b2, a2 = getAverage(rgba, [r1, g1, b1, a1], mat.num_averaged)
+            mat.diffuse_color = [r2, g2, b2]
+            mat.alpha = a2
     elif scn.render.engine == "CYCLES":
-        mat.use_nodes = True
-        mat_nodes = mat.node_tree.nodes
-        mat_links = mat.node_tree.links
-        # a new material node tree already has a diffuse and material output node
-        output = mat_nodes['Material Output']
-        diffuse = mat_nodes['Diffuse BSDF']
-        diffuse.inputs[0].default_value = rgba
+        if mat_is_new:
+            mat.use_nodes = True
+            mat_nodes = mat.node_tree.nodes
+            mat_links = mat.node_tree.links
+            # a new material node tree already has a diffuse and material output node
+            output = mat_nodes['Material Output']
+            diffuse = mat_nodes['Diffuse BSDF']
+            diffuse.inputs[0].default_value = rgba
+        else:
+            mat_nodes = mat.node_tree.nodes
+            diffuse = mat_nodes['Diffuse BSDF']
+            rgba1 = diffuse.inputs[0].default_value
+            newRGBA = getAverage(rgba, rgba1, mat.num_averaged)
+            diffuse.inputs[0].default_value = newRGBA
+    mat.num_averaged += 1
     return mat_name
 
 
@@ -115,14 +185,16 @@ def getUVPixelColor(obj, face_idx, point, uv_images):
         return None
     scn, cm, _ = getActiveContextInfo()
     face = obj.data.polygons[face_idx]
-    # get uv_texture for face
+    # get uv_texture image for face
     image = obj.data.uv_textures.active.data[face_idx].image
+    if image is None:
+        image = getFirstImgTexNode(obj)
+        assert image is not None
     # get uv coordinate based on nearest face intersection
     uv_coord = getUVCoord(obj.data, face, point, image)
     # retrieve rgba value at uv coordinate
     rgba = getPixel(image, uv_coord, uv_images)
     return rgba
-
 
 
 def getClosestMaterial(obj, face_idx, rgba=None):
@@ -135,8 +207,7 @@ def getClosestMaterial(obj, face_idx, rgba=None):
     # get closest material using UV map
     if cm.useUVMap and rgba is not None:
         # pick material based on rgba value
-        brick_materials_installed = hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
-        if cm.brickType != "Custom" and brick_materials_installed and cm.snapToBrickColors:
+        if cm.brickType != "Custom" and brick_materials_loaded() and cm.snapToBrickColors:
             matName = findNearestBrickColorName(rgba)
         else:
             matName = createNewMaterial(rgba)

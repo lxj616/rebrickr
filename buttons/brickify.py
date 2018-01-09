@@ -528,7 +528,13 @@ class RebrickrBrickify(bpy.types.Operator):
             updateInternal(bricksDict, cm, keys, clearExisting=loadedFromCache)
             cm.buildIsDirty = True
         # update materials in bricksDict
+        if bricksDict is None:
+            print("**")
+            print(bricksDict)
         bricksDict = updateMaterials(bricksDict, source)
+        if bricksDict is None:
+            print("***")
+            print(bricksDict)
         # make bricks
         group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else None
         bricksCreated, bricksDict = makeBricks(parent, refLogo, dimensions, bricksDict, cm=cm, split=cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)

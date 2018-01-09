@@ -68,6 +68,7 @@ def register():
     bpy.types.Object.isBrickifiedObject = BoolProperty(name='Is Brickified Object', default=False)
     bpy.types.Object.isBrick = BoolProperty(name='Is Brick', default=False)
     bpy.types.Object.cmlist_id = IntProperty(name='Custom Model ID', description="ID of cmlist entry to which this object refers", default=-1)
+    bpy.types.Material.num_averaged = IntProperty(name='Colors Averaged', description="Number of colors averaged together", default=0)
 
     bpy.types.Scene.Rebrickr_printTimes = BoolProperty(default=False)
 

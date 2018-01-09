@@ -137,6 +137,25 @@ def getBricks(cm=None):
     return bricks
 
 
+def brick_materials_installed():
+    scn = bpy.context.scene
+    return hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
+
+
+def brick_materials_loaded():
+    scn = bpy.context.scene
+    # make sure abs_plastic_materials addon is installed
+    brick_mats_installed = hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
+    if not brick_mats_installed:
+        return False
+    # check if any of the colors haven't been loaded
+    mats = bpy.data.materials.keys()
+    for color in bpy.props.abs_plastic_materials:
+        if color not in mats:
+            return False
+    return True
+
+
 def getMatrixSettings(cm=None):
     if cm is None:
         scn, cm, _ = getActiveContextInfo()

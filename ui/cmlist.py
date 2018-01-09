@@ -906,7 +906,7 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         precision=3,
         min=0.000, max=1.000,
         default=0.0,
-        update=dirtyMaterial)
+        update=dirtyBuild)
 
     lastMatrixSettings = StringProperty(default="")
     useNormals = BoolProperty(

@@ -243,11 +243,11 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         wm = bpy.context.window_manager
         wm.progress_begin(0, 100)
 
-    def printMatrixStatus(lastPercent):
+    def printMatrixStatus(lastPercent, num0, denom0):
         # print status to terminal
         if scn.Rebrickr_printTimes:
             return None
-        percent = len(coordMatrix)/denom * (z/(len(coordMatrix[0][0])-1))
+        percent = lastPercent + len(coordMatrix)/denom * (num0/(denom0-1))
         if percent < 100:
             update_progress("Shell", percent/100.0)
             if cursorStatus: wm.progress_update(percent)
@@ -259,7 +259,8 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     if "x" in axes:
         miniDist = Vector((0.00015, 0.0, 0.0))
         for z in range(len(coordMatrix[0][0])):
-            percent0 = printMatrixStatus(0)
+            # # print status to terminal
+            percent0 = printMatrixStatus(0, z, len(coordMatrix[0][0]))
             for y in range(len(coordMatrix[0])):
                 for x in range(len(coordMatrix)):
                     intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z, miniDist)
@@ -275,7 +276,8 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     if "y" in axes:
         miniDist = Vector((0.0, 0.00015, 0.0))
         for z in range(len(coordMatrix[0][0])):
-            percent1 = printMatrixStatus(percent0)
+            # # print status to terminal
+            percent1 = printMatrixStatus(percent0, z, len(coordMatrix[0][0]))
             for x in range(len(coordMatrix)):
                 for y in range(len(coordMatrix[0])):
                     intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z, miniDist)
@@ -291,7 +293,8 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     if "z" in axes:
         miniDist = Vector((0.0, 0.0, 0.00015))
         for x in range(len(coordMatrix)):
-            percent2 = printMatrixStatus(percent1)
+            # # print status to terminal
+            percent2 = printMatrixStatus(percent1, x, len(coordMatrix))
             for y in range(len(coordMatrix[0])):
                 for z in range(len(coordMatrix[0][0])):
                     intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
@@ -472,7 +475,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
                     draw= drawBrick,
                     co= (co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
                     nearest_face= nf,
-                    nearest_intersection= ni,
+                    nearest_intersection= ni if ni is None else tuple(ni),
                     rgba= rgba,
                     mat_name= "",  # defined in 'updateMaterials' function
                 )
