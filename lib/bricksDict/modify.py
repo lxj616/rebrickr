@@ -32,12 +32,17 @@ from .functions import *
 
 def updateMaterials(bricksDict, source):
     """ sets all matNames in bricksDict based on nearest_face """
+    scn, cm, _ = getActiveContextInfo()
+    if cm.useUVMap and (len(source.data.uv_layers) > 0 or cm.uvImageName != ""):
+        uv_images = getUVImages(source)
+    else:
+        uv_images = None
     for key in bricksDict.keys():
         nf = bricksDict[key]["nearest_face"]
         nearestFaceExists = nf is not None
         if bricksDict[key]["draw"] and nearestFaceExists:
-            rgba = bricksDict[key]["rgba"]
-            matName = getClosestMaterial(source, nf, rgba)
+            ni = bricksDict[key]["nearest_intersection"]
+            matName = getClosestMaterial(source, nf, ni, uv_images)
             bricksDict[key]["mat_name"] = matName
     return bricksDict
 

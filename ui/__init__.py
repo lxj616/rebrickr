@@ -632,14 +632,29 @@ class MaterialsPanel(Panel):
                 row = col.row(align=True)
                 row.prop(cm, "useUVMap")
                 if cm.useUVMap:
-                    row1 = col.row(align=True)
-                    row1.prop(cm, "colorSnapAmount")
                     row = col.row(align=True)
-                    if not brick_materials_loaded():
-                        row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
-                    else:
-                        row.prop(cm, "snapToBrickColors")
-                        row1.active = not cm.snapToBrickColors
+                    split = row.split(align=True, percentage=0.65)
+                    split.prop_search(cm, "uvImageName", bpy.data, "images", text="")
+                    # split.operator("rebrickr.open_image", icon="FILESEL", text="Open")
+                    split.operator("image.open", icon="FILESEL", text="Open")
+            row1 = col.row(align=True)
+            if scn.render.engine == "BLENDER_RENDER":
+                row1.prop(cm, "colorSnapAmount")
+            row = col.row(align=True)
+            if not brick_materials_loaded():
+                row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
+            else:
+                row.prop(cm, "snapToBrickColors")
+                if scn.render.engine == "BLENDER_RENDER":
+                    row1.active = not cm.snapToBrickColors
+                elif scn.render.engine == "CYCLES" and cm.snapToBrickColors:
+                    col = layout.column(align=True)
+                    col.scale_y = 0.5
+                    col.label("Color snap based on default RGB")
+                    col.separator()
+                    col.label("values of first 'Diffuse' node")
+                    col.separator()
+                    col.label("found in source material")
             col = layout.column(align=True)
             col.scale_y = 0.7
             if len(obj.data.vertex_colors) > 0:

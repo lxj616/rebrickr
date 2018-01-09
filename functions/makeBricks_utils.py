@@ -293,6 +293,7 @@ def getMaterial(cm, bricksDict, key, brickSize, randState, brick_mats, k):
     if cm.materialType == "Custom":
         mat = bpy.data.materials.get(cm.materialName)
     elif cm.materialType == "Use Source Materials":
+        # get most frequent material in brick size
         for x in range(brickSize[0]):
             for y in range(brickSize[1]):
                 loc = strToList(key)

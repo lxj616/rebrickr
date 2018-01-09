@@ -895,6 +895,11 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         description="Transfer colors from source UV map",
         default=True,
         update=dirtyMaterial)
+    uvImageName = StringProperty(
+        name="UV Image",
+        description="UV Image to use for UV Map color transfer (defaults to active UV if left blank)",
+        default="",
+        update=dirtyBuild)
     snapToBrickColors = BoolProperty(
         name="Snap to Brick Colors",
         description="Snap nearest material to brick material",

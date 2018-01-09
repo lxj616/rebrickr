@@ -55,7 +55,7 @@ class RebrickrRevertSettings(Operator):
             handle_exception()
         return{"FINISHED"}
 
-    def revertMatrixSettings(cm=None):
+    def revertMatrixSettings(self, cm=None):
         if cm is None:
             scn, cm, _ = getActiveContextInfo()
         settings = cm.lastMatrixSettings.split(",")

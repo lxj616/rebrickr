@@ -83,14 +83,18 @@ def getFirstImgTexNode(obj):
 
 # reference: https://svn.blender.org/svnroot/bf-extensions/trunk/py/scripts/addons/uv_bake_texture_to_vcols.py
 def getUVImages(obj):
-    uv_images = {}
+    scn, cm, _ = getActiveContextInfo()
+    # get list of images to store
+    images = []
+    images.append(bpy.data.images.get(cm.uvImageName))
     uv_tex_data = getUVTextureData(obj)
-    if uv_tex_data is None:
-        return {}
-    for uv_tex in uv_tex_data:
-        img = uv_tex.image
-        if img is None:
-            img = getFirstImgTexNode(obj)
+    if uv_tex_data is not None:
+        for uv_tex in uv_tex_data:
+            images.append(uv_tex.image)
+    images.append(getFirstImgTexNode(obj))
+    # store images
+    uv_images = {}
+    for img in images:
         if not img or img.name in uv_images or not img.pixels:
             continue
         uv_images[img.name] = (img.size[0],
@@ -179,17 +183,26 @@ def createNewMaterial(rgba):
     return mat_name
 
 
+def getUVImage(obj, face_idx):
+    scn, cm, _ = getActiveContextInfo()
+    image = bpy.data.images.get(cm.uvImageName)
+    if image is None and obj.data.uv_textures.active is not None:
+        image = obj.data.uv_textures.active.data[face_idx].image
+    if image is None:
+        image = getFirstImgTexNode(obj)
+    return image
+
+
 def getUVPixelColor(obj, face_idx, point, uv_images):
-    # get closest material using UV map
-    if obj.data.uv_layers.active is None or face_idx is None:
+    if face_idx is None:
         return None
+    # get closest material using UV map
     scn, cm, _ = getActiveContextInfo()
     face = obj.data.polygons[face_idx]
     # get uv_texture image for face
-    image = obj.data.uv_textures.active.data[face_idx].image
+    image = getUVImage(obj, face_idx)
     if image is None:
-        image = getFirstImgTexNode(obj)
-        assert image is not None
+        return None
     # get uv coordinate based on nearest face intersection
     uv_coord = getUVCoord(obj.data, face, point, image)
     # retrieve rgba value at uv coordinate
@@ -197,26 +210,58 @@ def getUVPixelColor(obj, face_idx, point, uv_images):
     return rgba
 
 
-def getClosestMaterial(obj, face_idx, rgba=None):
+def getMaterialColor(matName):
+    mat = bpy.data.materials.get(matName)
+    if mat is None:
+        return None
+    if mat.use_nodes:
+        mat_nodes = mat.node_tree.nodes
+        mat_links = mat.node_tree.links
+        # a new material node tree already has a diffuse and material output node
+        output = mat_nodes['Material Output']
+        diffuse = mat_nodes.get('Diffuse BSDF')
+        if diffuse is not None:
+            r, g, b, a = diffuse.inputs[0].default_value
+        else:
+            return None
+    else:
+        r, g, b = mat.diffuse_color
+        intensity = mat.diffuse_intensity
+        r = r * intensity
+        g = g * intensity
+        b = b * intensity
+        a = mat.alpha if mat.use_transparency else 1.0
+    return [r, g, b, a]
+
+
+def getClosestMaterial(obj, face_idx, point, uv_images):
     """ sets all matNames in bricksDict based on nearest_face """
     scn, cm, _ = getActiveContextInfo()
     if face_idx is None:
         return ""
     face = obj.data.polygons[face_idx]
     matName = ""
-    # get closest material using UV map
-    if cm.useUVMap and rgba is not None:
-        # pick material based on rgba value
-        if cm.brickType != "Custom" and brick_materials_loaded() and cm.snapToBrickColors:
+    # get material based on rgba value
+    if uv_images is not None:
+        rgba = getUVPixelColor(obj, face_idx, Vector(point), uv_images)
+    else:
+        rgba = None
+    if rgba is not None:
+        if brick_materials_loaded() and cm.snapToBrickColors:
+            # pick closest brick material
             matName = findNearestBrickColorName(rgba)
         else:
+            # create new material
             matName = createNewMaterial(rgba)
     # get closest material using material slot of face
-    elif obj.data.uv_layers.active is None and len(obj.material_slots) > 0:
+    elif len(obj.material_slots) > 0:
         slot = obj.material_slots[face.material_index]
         mat = slot.material
         matName = mat.name if mat is not None else ""
-
+        if brick_materials_loaded() and cm.snapToBrickColors:
+            rgba = getMaterialColor(matName)
+            if rgba is not None:
+                matName = findNearestBrickColorName(rgba)
     return matName
 
 
