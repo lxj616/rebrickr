@@ -149,7 +149,7 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
         scn = bpy.context.scene
         active_object = scn.objects.active
         # if active object isn't on visible layer, don't set it as default source for new model
-        if active_object is not None:
+        if active_object:
             objVisible = False
             for i in range(20):
                 if active_object.layers[i] and scn.layers[i]:
@@ -158,7 +158,7 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
                 active_object = None
         # if active object already has a model or isn't on visible layer, don't set it as default source for new model
         # NOTE: active object may have been removed, so we need to re-check if none
-        if active_object is not None:
+        if active_object:
             for cm in scn.cmlist:
                 if cm.source_name == active_object.name:
                     active_object = None
@@ -172,7 +172,7 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
             item.version = bpy.props.rebrickr_version
             # set up default brickHeight values
             source = bpy.data.objects.get(item.source_name)
-            if source is not None:
+            if source:
                 source_details = bounds(source)
                 h = max(source_details.x.dist, source_details.y.dist, source_details.z.dist)
                 # update brick height based on model height
@@ -393,7 +393,7 @@ class Rebrickr_Uilist_selectSource(bpy.types.Operator):
         if groupExists(Rebrickr_source) and len(bpy.data.groups[Rebrickr_source].objects) == 1:
             return True
         obj = py.data.objects.get(n)
-        if obj is not None and obj.type == "MESH":
+        if obj and obj.type == "MESH":
             return True
         return False
 
@@ -517,12 +517,12 @@ def updateParentExposure(self, context):
         return
     if cm.exposeParent:
         parentOb = bpy.data.objects.get(cm.parent_name)
-        if parentOb is not None:
+        if parentOb:
             safeLink(parentOb, unhide=True, protect=True)
             select(parentOb, active=parentOb)
     else:
         parentOb = bpy.data.objects.get(cm.parent_name)
-        if parentOb is not None:
+        if parentOb:
             safeUnlink(parentOb)
 
 
@@ -532,7 +532,7 @@ def updateModelScale(self, context):
         return
     _, _, s = getTransformData()
     parentOb = bpy.data.objects.get(cm.parent_name)
-    if parentOb is not None:
+    if parentOb:
         parentOb.scale = Vector(s) * cm.transformScale
 
 
@@ -577,7 +577,7 @@ def dirtyBricks(self, context):
 #     bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
 #     brickD = bricksDict[dictKey]
 #     obj = bpy.data.objects.get(brickD["name"])
-#     if obj is not None:
+#     if obj:
 #         select(obj, active=obj, only=False)
 
 

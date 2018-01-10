@@ -39,8 +39,7 @@ def updateMaterials(bricksDict, source):
         uv_images = None
     for key in bricksDict.keys():
         nf = bricksDict[key]["nearest_face"]
-        nearestFaceExists = nf is not None
-        if bricksDict[key]["draw"] and nearestFaceExists:
+        if bricksDict[key]["draw"] and nf:
             ni = bricksDict[key]["nearest_intersection"]
             matName = getClosestMaterial(source, nf, ni, uv_images)
             bricksDict[key]["mat_name"] = matName
@@ -125,7 +124,7 @@ def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, p
 
 
 def getBrickExposure(cm, bricksDict, key=None, loc=None):
-    assert key is not None or loc is not None
+    assert key or loc
     # initialize vars
     topExposed = False
     botExposed = False
@@ -204,7 +203,7 @@ def canBeJoined(cm, bricksDict, loc, key, i, j, k=0):
 
 def brickAvail(cm, sourceBrick, brick):
     """ check brick is available to merge """
-    if brick is not None:
+    if brick:
         n = cm.source_name
         Rebrickr_internal_mn = "Rebrickr_%(n)s_internal" % locals()
         # This if statement ensures brick is present, brick isn't drawn already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal)

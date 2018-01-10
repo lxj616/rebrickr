@@ -111,7 +111,7 @@ class CustomizeModel(Operator):
     #         km = None
     #
     #     # check if event equivalent to action km
-    #     if (km is not None and
+    #     if (km and
     #         km.alt == event.alt and
     #         km.ctrl == event.ctrl and
     #         km.oskey == event.oskey and

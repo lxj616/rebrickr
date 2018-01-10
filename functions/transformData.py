@@ -34,7 +34,7 @@ from .general import *
 def storeTransformData(obj):
     """ store transform data from obj into cm.modelLoc/Rot/Scale """
     scn, cm, _ = getActiveContextInfo()
-    if obj is not None:
+    if obj:
         cm.modelLoc = listToStr(obj.location.to_tuple())
         # cm.modelLoc = listToStr(obj.matrix_world.to_translation().to_tuple())
         obj.rotation_mode = "XYZ"

@@ -434,7 +434,7 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
     print("\ngenerating blueprint...")
     lScale = (source_details.x.dist, source_details.y.dist, source_details.z.dist)
     offset = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
-    if source.parent is not None:
+    if source.parent:
         offset = Vector(offset)-source.parent.location
         offset = offset.to_tuple()
     # get coordinate list from intersections of edges with faces

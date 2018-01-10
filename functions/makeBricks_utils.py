@@ -191,16 +191,16 @@ def combineMeshes(meshes):
 
 def addToMeshLoc(co, bm=None, mesh=None):
     """ add 'co' to bm/mesh location """
-    assert bm is not None or mesh is not None  # one or the other must not be None!
-    verts = bm.verts if bm is not None else mesh.vertices
+    assert bm or mesh  # one or the other must not be None!
+    verts = bm.verts if bm else mesh.vertices
     for v in verts:
         v.co = (v.co[0] + co[0], v.co[1] + co[1], v.co[2] + co[2])
 
 
 def randomizeLoc(rand, width, height, bm=None, mesh=None):
     """ translate bm/mesh location by (width,width,height) randomized by cm.randomLoc """
-    assert bm is not None or mesh is not None  # one or the other must not be None!
-    verts = bm.verts if bm is not None else mesh.vertices
+    assert bm or mesh  # one or the other must not be None!
+    verts = bm.verts if bm else mesh.vertices
     scn, cm, _ = getActiveContextInfo()
 
     x = rand.uniform(-(width/2) * cm.randomLoc, (width/2) * cm.randomLoc)

@@ -505,7 +505,7 @@ class drawAdjacent(Operator):
 
             # select original brick
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
-            if orig_obj is not None: select(orig_obj, active=orig_obj)
+            if orig_obj: select(orig_obj, active=orig_obj)
 
             # model is now customized
             cm.customized = True
@@ -741,7 +741,7 @@ class drawAdjacent(Operator):
                 # adjBrickD["size"] = None
                 # adjBrickD["parent_brick"] = None
                 brick = bpy.data.objects.get(adjBrickD["name"])
-                if brick is not None: delete(brick)
+                if brick: delete(brick)
                 self.adjBricksCreated[side][brickNum] = False
                 return True
         # if brick doesn't exist there
@@ -1030,7 +1030,7 @@ class redrawBricks(Operator):
             scn = bpy.context.scene
             selected_objects = bpy.context.selected_objects
             active_obj = scn.objects.active
-            if active_obj is not None:
+            if active_obj:
                 initial_active_obj_name = active_obj.name
             else:
                 initial_active_obj_name = ""
@@ -1058,7 +1058,7 @@ class redrawBricks(Operator):
 
             # select original brick
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
-            if orig_obj is not None: select(orig_obj, active=orig_obj, only=False)
+            if orig_obj: select(orig_obj, active=orig_obj, only=False)
         except:
             handle_exception()
         return {"FINISHED"}

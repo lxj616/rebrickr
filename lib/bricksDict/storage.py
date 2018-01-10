@@ -71,7 +71,7 @@ def lightToDeepCache(rebrickr_bfm_cache):
     for cmlist_id in rebrickr_bfm_cache.keys():
         # get cmlist item referred to by object
         cm = getItemByID(scn.cmlist, cmlist_id)
-        if cm is not None:
+        if cm:
             # save last cache to cm.BFMCache
             cm.BFMCache = json.dumps(rebrickr_bfm_cache[cmlist_id])
             numPushedIDs += 1

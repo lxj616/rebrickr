@@ -209,14 +209,14 @@ class RebrickrDelete(bpy.types.Operator):
             bGroup = bpy.data.groups.get(Rebrickr_bricks_gn)
         elif modelType == "ANIMATION":
             bGroup = bpy.data.groups.get(Rebrickr_bricks_gn + "_frame_" + str(cm.lastStartFrame))
-        if bGroup is not None and len(bGroup.objects) > 0:
+        if bGroup and len(bGroup.objects) > 0:
             source.layers = list(bGroup.objects[0].layers)
         # select source and reset cm.modelHeight
         select(source, active=source)
         cm.modelHeight = -1
         # reset source parent to original parent object
         old_parent = bpy.data.objects.get(source["old_parent"])
-        if old_parent is not None:
+        if old_parent:
             select([source, old_parent], active=old_parent)
             if source["frame_parent_cleared"] != -1:
                 origFrame = scn.frame_current
@@ -324,7 +324,7 @@ class RebrickrDelete(bpy.types.Operator):
                     wm.progress_update(percent*100)
                 Rebrickr_bricks_cur_frame_gn = Rebrickr_bricks_gn + "_frame_" + str(i)
                 brickGroup = bpy.data.groups.get(Rebrickr_bricks_cur_frame_gn)
-                if brickGroup is not None:
+                if brickGroup:
                     bricks = list(brickGroup.objects)
                     if len(bricks) > 0:
                         delete(bricks)

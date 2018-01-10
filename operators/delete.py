@@ -263,10 +263,10 @@ class delete_override(Operator):
                 break
             elif obj.isBrick:
                 bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks" % locals())
-                if bGroup is not None and len(bGroup.objects) < 2:
+                if bGroup and len(bGroup.objects) < 2:
                     cm = cmCur
                     break
-        if cm is not None:
+        if cm:
             RebrickrDelete.runFullDelete(RebrickrDelete, cm=cm)
             scn.objects.active.select = False
             return protected

@@ -88,7 +88,7 @@ def getUVImages(obj):
     images = []
     images.append(bpy.data.images.get(cm.uvImageName))
     uv_tex_data = getUVTextureData(obj)
-    if uv_tex_data is not None:
+    if uv_tex_data:
         for uv_tex in uv_tex_data:
             images.append(uv_tex.image)
     images.append(getFirstImgTexNode(obj))
@@ -129,30 +129,35 @@ def getAverage(rgba0, rgba1, weight):
     return [r2, g2, b2, a2]
 
 
-
-def createNewMaterial(rgba):
-    scn, cm, _ = getActiveContextInfo()
+def getSnappedColorsForString(rgba, snapAmount):
     r, g, b, a = rgba
-    if cm.colorSnapAmount > 0:
+    if snapAmount > 0:
         # r_hsv, g_hsv, b_hsv = colorsys.rgb_to_hsv(r, g, b)
-        # r0 = round(r / (1 + cm.colorSnapAmount * (60000/3)), 4)
-        # g0 = round(g / (1 + cm.colorSnapAmount * (60000/5.9)), 4)
-        # b0 = round(b / (1 + cm.colorSnapAmount * (60000/1.1)), 4)
-        r0 = round(r / (1 + cm.colorSnapAmount * 20000), 4)
-        g0 = round(g / (1 + cm.colorSnapAmount * 20000), 4)
-        b0 = round(b / (1 + cm.colorSnapAmount * 20000), 4)
+        # r0 = round(r / (1 + snapAmount * (60000/3)), 4)
+        # g0 = round(g / (1 + snapAmount * (60000/5.9)), 4)
+        # b0 = round(b / (1 + snapAmount * (60000/1.1)), 4)
+        r0 = round(r / (1 + snapAmount * 20000), 4)
+        g0 = round(g / (1 + snapAmount * 20000), 4)
+        b0 = round(b / (1 + snapAmount * 20000), 4)
         a0 = round(a, 1)
     else:
         r0 = round(r, 5)
         g0 = round(g, 5)
         b0 = round(b, 5)
         a0 = round(a, 5)
+    return [r0, g0, b0, a0]
+
+
+def createNewMaterial(rgba):
+    scn, cm, _ = getActiveContextInfo()
+    r0, g0, b0, a0 = getSnappedColorsForString(rgba, cm.colorSnapAmount)
     # get or create material with unique color
     mat_name = "Rebrickr_mat_{}-{}-{}-{}".format(r0, g0, b0, a0)
     mat = bpy.data.materials.get(mat_name)
     mat_is_new = mat is None
     if mat is None:
         mat = bpy.data.materials.new(name=mat_name)
+    r, g, b, a = rgba
     # set diffuse and transparency of material
     if scn.render.engine == "BLENDER_RENDER":
         if mat_is_new:
@@ -189,7 +194,7 @@ def createNewMaterial(rgba):
 def getUVImage(obj, face_idx):
     scn, cm, _ = getActiveContextInfo()
     image = bpy.data.images.get(cm.uvImageName)
-    if image is None and obj.data.uv_textures.active is not None:
+    if image is None and obj.data.uv_textures.active:
         image = obj.data.uv_textures.active.data[face_idx].image
     if image is None:
         image = getFirstImgTexNode(obj)
@@ -226,7 +231,7 @@ def getMaterialColor(matName):
             if node.type == "BSDF_DIFFUSE":
                 diffuse = node
                 break
-        if diffuse is not None:
+        if diffuse:
             r, g, b, a = diffuse.inputs[0].default_value
         else:
             return None
@@ -248,7 +253,7 @@ def getClosestMaterial(obj, face_idx, point, uv_images):
     face = obj.data.polygons[face_idx]
     matName = ""
     # get material based on rgba value
-    if uv_images is not None:
+    if uv_images:
         rgba = getUVPixelColor(obj, face_idx, Vector(point), uv_images)
     else:
         rgba = None

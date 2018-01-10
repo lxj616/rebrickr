@@ -99,18 +99,18 @@ def bounds(obj, local=False):
 
 
 def setOriginToObjOrigin(toObj, fromObj=None, fromLoc=None, deleteFromObj=False):
-    assert fromObj is not None or fromLoc is not None
+    assert fromObj or fromLoc
     scn = bpy.context.scene
     oldCursorLocation = tuple(scn.cursor_location)
     unlinkToo = False
-    if fromObj is not None:
+    if fromObj:
         scn.cursor_location = fromObj.matrix_world.to_translation().to_tuple()
-    elif fromLoc is not None:
+    else:
         scn.cursor_location = fromLoc
     select(toObj, active=toObj)
     bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
     scn.cursor_location = oldCursorLocation
-    if fromObj is not None:
+    if fromObj:
         if deleteFromObj:
             m = fromObj.data
             bpy.data.objects.remove(fromObj, True)
@@ -126,13 +126,13 @@ def getBricks(cm=None):
     if cm.modelCreated:
         gn = "Rebrickr_%(n)s_bricks" % locals()
         bGroup = bpy.data.groups.get(gn)
-        if bGroup is not None:
+        if bGroup:
             bricks = list(bGroup.objects)
     elif cm.animated:
         for cf in range(cm.lastStartFrame, cm.lastStopFrame+1):
             gn = "Rebrickr_%(n)s_bricks_frame_%(cf)s" % locals()
             bGroup = bpy.data.groups.get(gn)
-            if bGroup is not None:
+            if bGroup:
                 bricks += list(bGroup.objects)
     return bricks
 

@@ -250,7 +250,7 @@ class AnimationPanel(Panel):
             col.prop(cm, "stopFrame")
             source = bpy.data.objects.get(cm.source_name)
             self.appliedMods = False
-            if source is not None:
+            if source:
                 for mod in source.modifiers:
                     if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
                         self.appliedMods = True
@@ -363,7 +363,7 @@ class ModelSettingsPanel(Panel):
                 source = bpy.data.objects.get(cm.source_name)
             else:
                 source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
-            if source is not None:
+            if source:
                 source_details = bounds(source)
                 sX = round(source_details.x.dist, 2)
                 sY = round(source_details.y.dist, 2)
@@ -387,7 +387,7 @@ class ModelSettingsPanel(Panel):
                 rZ = int(sZ/dimensions["height"])
             elif cm.brickType == "Custom":
                 customObj = bpy.data.objects.get(cm.customObjectName)
-                if customObj is not None and customObj.type == "MESH":
+                if customObj and customObj.type == "MESH":
                     custom_details = bounds(customObj)
                     if custom_details.x.dist != 0 and custom_details.y.dist != 0 and custom_details.z.dist != 0:
                         multiplier = (cm.brickHeight/custom_details.z.dist)
@@ -442,7 +442,7 @@ class ModelSettingsPanel(Panel):
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         else:
             obj = bpy.data.objects.get(cm.source_name)
-        if obj is not None and not cm.isWaterTight:
+        if obj and not cm.isWaterTight:
             row = col.row(align=True)
             # row.scale_y = 0.7
             row.label("(Source is NOT single closed mesh)")
@@ -627,7 +627,7 @@ class MaterialsPanel(Panel):
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         else:
             obj = bpy.data.objects.get(cm.source_name)
-        if obj is not None and cm.materialType == "Use Source Materials":
+        if obj and cm.materialType == "Use Source Materials":
             row1 = col.row(align=True)
             if scn.render.engine == "BLENDER_RENDER":
                 row1.prop(cm, "colorSnapAmount")
@@ -766,7 +766,7 @@ class SupportsPanel(Panel):
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         else:
             obj = bpy.data.objects.get(cm.source_name)
-        if obj is not None and not cm.isWaterTight:
+        if obj and not cm.isWaterTight:
             row = col.row(align=True)
             # row.scale_y = 0.7
             row.label("(Source is NOT single closed mesh)")

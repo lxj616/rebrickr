@@ -36,6 +36,7 @@ def getColors():
         colors["ABS Plastic Dark Green"] = (0.012, 0.216, 0.129, 1.0)
         colors["ABS Plastic Dark Grey"] = (0.310, 0.349, 0.337, 1.0)
         colors["ABS Plastic Dark Red"] = (0.490, 0.098, 0.106, 1.0)
+        colors["ABS Plastic Dark Tan"] = (0.467, 0.412, 0.267, 1.0)
         colors["ABS Plastic Gold"] = (0.718, 0.522, 0.129, 1.0)
         colors["ABS Plastic Green"] = (0.055, 0.463, 0.231, 1.0)
         colors["ABS Plastic Light Grey"] = (0.541, 0.537, 0.537, 1.0)
@@ -49,7 +50,8 @@ def getColors():
         colors["ABS Plastic Silver"] = (0.682, 0.682, 0.682, 1.0)
         colors["ABS Plastic Tan"] = (0.761, 0.667, 0.478, 1.0)
         colors["ABS Plastic Trans-Blue"] = (0.114, 0.686, 0.871, 0.4)
-        colors["ABS Plastic Trans-Clear"] = (0.975, 0.975, 0.975, 0.3)
+        colors["ABS Plastic Trans-Clear"] = (0.975, 0.975, 0.975, 0.25)
+        colors["ABS Plastic Trans-Green"] = (0.114, 0.749, 0.341, 0.25)
         colors["ABS Plastic Trans-Light Blue"] = (0.114, 0.749, 0.341, 0.4)
         colors["ABS Plastic Trans-Light Green"] = (0.949, 0.992, 0.247, 0.4)
         colors["ABS Plastic Trans-Orange"] = (0.949, 0.992, 0.247, 0.4)
@@ -107,7 +109,7 @@ def getMat(polygon, matType):
     slot = obj.material_slots[polygon.material_index]
     mat = slot.material
 
-    if mat is not None:
+    if mat:
         if matType == "DIFFUSE_BSDF":
             materialD["RGB"] = mat.node_tree.nodes.find('Diffuse BSDF')
         elif matType == "DIFFUSE":

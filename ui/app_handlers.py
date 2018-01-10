@@ -73,7 +73,7 @@ def handle_animation(scene):
                 if brick.hide == onCurF:
                     brick.hide = not onCurF
                     brick.hide_render = not onCurF
-                if scn.objects.active is not None and "Rebrickr_%(n)s_bricks_combined_frame_" % locals() in scn.objects.active.name and onCurF:
+                if scn.objects.active and "Rebrickr_%(n)s_bricks_combined_frame_" % locals() in scn.objects.active.name and onCurF:
                     select(brick, active=brick)
                 # prevent bricks from being selected on frame change
                 elif brick.select:
@@ -94,7 +94,7 @@ def isObjVisible(scn, cm):
             obj = None
     else:
         obj = bpy.data.objects.get(cm.source_name)
-    if obj is not None:
+    if obj:
         objVisible = False
         for i in range(20):
             if obj.layers[i] and scn.layers[i]:
@@ -132,11 +132,11 @@ def handle_selections(scene):
         obj = bpy.data.objects.get(cm.source_name)
         if obj is None:
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
-        if obj is not None:
+        if obj:
             if cm.modelCreated:
                 n = cm.source_name
                 bricks = getBricks()
-                if bricks is not None and len(bricks) > 0:
+                if bricks and len(bricks) > 0:
                     select(bricks, active=bricks[0])
                     scn.Rebrickr_last_active_object_name = scn.objects.active.name
             elif cm.animated:
@@ -196,7 +196,7 @@ def handle_selections(scene):
         cm = scn.cmlist[scn.cmlist_index]
         # keep isWaterTight updated
         obj = bpy.data.objects.get(cm.source_name)
-        if obj is not None and (len(obj.data.vertices) != cm.objVerts or len(obj.data.polygons) != cm.objPolys or len(obj.data.edges) != cm.objEdges):
+        if obj and (len(obj.data.vertices) != cm.objVerts or len(obj.data.polygons) != cm.objPolys or len(obj.data.edges) != cm.objEdges):
             cm.objVerts = len(obj.data.vertices)
             cm.objPolys = len(obj.data.polygons)
             cm.objEdges = len(obj.data.edges)
@@ -234,7 +234,7 @@ def keep_object_names_unique(scene):
                 continue
             # rename object if not part of a model or animation
             obj = bpy.data.objects.get(obj_name)
-            if obj is not None and (cm.modelCreated or cm.animated):
+            if obj and (cm.modelCreated or cm.animated):
                 obj.name = "%(obj_name)s.001" % locals()
 
 
