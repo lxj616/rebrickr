@@ -330,7 +330,7 @@ class setExposure(Operator):
             scn = bpy.context.scene
             selected_objects = bpy.context.selected_objects
             active_obj = scn.objects.active
-            initial_active_obj_name = active_obj.name if active_obj is not None else ""
+            initial_active_obj_name = active_obj.name if active_obj else ""
 
             # initialize objsD (key:cm_idx, val:list of brick objects)
             objsD = createObjsD(selected_objects)
@@ -367,7 +367,7 @@ class setExposure(Operator):
                 cm.customized = True
             # select original brick
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
-            if orig_obj is not None:
+            if orig_obj:
                 select(orig_obj, active=orig_obj, only=False)
         except:
             handle_exception()
