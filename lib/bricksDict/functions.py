@@ -219,7 +219,10 @@ def getMaterialColor(matName):
         mat_links = mat.node_tree.links
         # a new material node tree already has a diffuse and material output node
         output = mat_nodes['Material Output']
-        diffuse = mat_nodes.get('Diffuse BSDF')
+        for node in mat_nodes:
+            if node.type == "BSDF_DIFFUSE":
+                diffuse = node
+                break
         if diffuse is not None:
             r, g, b, a = diffuse.inputs[0].default_value
         else:

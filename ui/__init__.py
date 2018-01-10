@@ -628,15 +628,6 @@ class MaterialsPanel(Panel):
         else:
             obj = bpy.data.objects.get(cm.source_name)
         if obj is not None and cm.materialType == "Use Source Materials":
-            if len(obj.data.uv_layers) > 0:
-                row = col.row(align=True)
-                row.prop(cm, "useUVMap")
-                if cm.useUVMap:
-                    row = col.row(align=True)
-                    split = row.split(align=True, percentage=0.65)
-                    split.prop_search(cm, "uvImageName", bpy.data, "images", text="")
-                    # split.operator("rebrickr.open_image", icon="FILESEL", text="Open")
-                    split.operator("image.open", icon="FILESEL", text="Open")
             row1 = col.row(align=True)
             if scn.render.engine == "BLENDER_RENDER":
                 row1.prop(cm, "colorSnapAmount")
@@ -647,7 +638,7 @@ class MaterialsPanel(Panel):
                 row.prop(cm, "snapToBrickColors")
                 if scn.render.engine == "BLENDER_RENDER":
                     row1.active = not cm.snapToBrickColors
-                elif scn.render.engine == "CYCLES" and cm.snapToBrickColors:
+                elif scn.render.engine == "CYCLES" and cm.snapToBrickColors and not cm.useUVMap:
                     col = layout.column(align=True)
                     col.scale_y = 0.5
                     col.label("Color snap based on default RGB")
@@ -655,6 +646,19 @@ class MaterialsPanel(Panel):
                     col.label("values of first 'Diffuse' node")
                     col.separator()
                     col.label("found in source material")
+                    col.separator()
+            if len(obj.data.uv_layers) > 0:
+                row = col.row(align=True)
+                row.prop(cm, "useUVMap")
+                if cm.useUVMap:
+                    row = col.row(align=True)
+                    split = row.split(align=True, percentage=0.65)
+                    split.prop_search(cm, "uvImageName", bpy.data, "images", text="")
+                    split.operator("image.open", icon="FILESEL", text="Open")
+                elif scn.render.engine == "CYCLES" and cm.snapToBrickColors and not cm.useUVMap:
+                    col.separator()
+                    col.separator()
+                    col.separator()
             col = layout.column(align=True)
             col.scale_y = 0.7
             if len(obj.data.vertex_colors) > 0:
