@@ -39,7 +39,7 @@ def updateMaterials(bricksDict, source):
         uv_images = None
     for key in bricksDict.keys():
         nf = bricksDict[key]["nearest_face"]
-        if bricksDict[key]["draw"] and nf:
+        if bricksDict[key]["draw"] and nf is not None:
             ni = bricksDict[key]["nearest_intersection"]
             matName = getClosestMaterial(source, nf, ni, uv_images)
             bricksDict[key]["mat_name"] = matName
@@ -124,7 +124,7 @@ def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, p
 
 
 def getBrickExposure(cm, bricksDict, key=None, loc=None):
-    assert key or loc
+    assert key is not None or loc is not None
     # initialize vars
     topExposed = False
     botExposed = False

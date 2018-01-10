@@ -148,6 +148,16 @@ def getSnappedColorsForString(rgba, snapAmount):
     return [r0, g0, b0, a0]
 
 
+def getFirstNode(mat, type="BSDF_DIFFUSE"):
+    diffuse = None
+    mat_nodes = mat.node_tree.nodes
+    for node in mat_nodes:
+        if node.type == type:
+            diffuse = node
+            break
+    return diffuse
+
+
 def createNewMaterial(rgba):
     scn, cm, _ = getActiveContextInfo()
     r0, g0, b0, a0 = getSnappedColorsForString(rgba, cm.colorSnapAmount)
@@ -182,11 +192,13 @@ def createNewMaterial(rgba):
             diffuse = mat_nodes['Diffuse BSDF']
             diffuse.inputs[0].default_value = rgba
         else:
-            mat_nodes = mat.node_tree.nodes
-            diffuse = mat_nodes['Diffuse BSDF']
-            rgba1 = diffuse.inputs[0].default_value
-            newRGBA = getAverage(rgba, rgba1, mat.num_averaged)
-            diffuse.inputs[0].default_value = newRGBA
+            diffuse = getFirstNode(mat, type="BSDF_DIFFUSE")
+            if diffuse:
+                rgba1 = diffuse.inputs[0].default_value
+                newRGBA = getAverage(rgba, rgba1, mat.num_averaged)
+                # if diffuse.inputs[0].is_linked:
+                #     # TODO: read different types of input to the diffuse node
+                diffuse.inputs[0].default_value = newRGBA
     mat.num_averaged += 1
     return mat_name
 
@@ -223,14 +235,7 @@ def getMaterialColor(matName):
     if mat is None:
         return None
     if mat.use_nodes:
-        mat_nodes = mat.node_tree.nodes
-        mat_links = mat.node_tree.links
-        # a new material node tree already has a diffuse and material output node
-        output = mat_nodes['Material Output']
-        for node in mat_nodes:
-            if node.type == "BSDF_DIFFUSE":
-                diffuse = node
-                break
+        diffuse = getFirstNode(mat, type="BSDF_DIFFUSE")
         if diffuse:
             r, g, b, a = diffuse.inputs[0].default_value
         else:
@@ -252,27 +257,24 @@ def getClosestMaterial(obj, face_idx, point, uv_images):
         return ""
     face = obj.data.polygons[face_idx]
     matName = ""
-    # get material based on rgba value
+    # get material based on rgba value of UV image at face index
     if uv_images:
         rgba = getUVPixelColor(obj, face_idx, Vector(point), uv_images)
     else:
         rgba = None
-    if rgba is not None:
-        if brick_materials_loaded() and cm.snapToBrickColors:
-            # pick closest brick material
-            matName = findNearestBrickColorName(rgba)
-        else:
-            # create new material
-            matName = createNewMaterial(rgba)
     # get closest material using material slot of face
-    elif len(obj.material_slots) > 0:
+    if rgba is None and len(obj.material_slots) > 0:
         slot = obj.material_slots[face.material_index]
         mat = slot.material
         matName = mat.name if mat is not None else ""
-        if brick_materials_loaded() and cm.snapToBrickColors:
+        if snapToBrickColors() or cm.colorSnapAmount > 0:
             rgba = getMaterialColor(matName)
-            if rgba is not None:
-                matName = findNearestBrickColorName(rgba)
+    # snap materials and get new material name
+    if rgba is not None:
+        if snapToBrickColors():
+            matName = findNearestBrickColorName(rgba)
+        else:
+            matName = createNewMaterial(rgba)
     return matName
 
 

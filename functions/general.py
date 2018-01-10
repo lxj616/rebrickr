@@ -156,6 +156,12 @@ def brick_materials_loaded():
     return True
 
 
+def snapToBrickColors(cm=None):
+    if cm is None:
+        _, cm, _ = getActiveContextInfo()
+    return (brick_materials_loaded() and cm.snapToBrickColors)
+
+
 def getMatrixSettings(cm=None):
     if cm is None:
         scn, cm, _ = getActiveContextInfo()
