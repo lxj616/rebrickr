@@ -99,13 +99,13 @@ class RebrickrBrickify(bpy.types.Operator):
             if self.action in ["CREATE", "ANIMATE"]:
                 for n in self.createdObjects:
                     obj = bpy.data.objects.get(n)
-                    if obj is not None:
+                    if obj:
                         bpy.data.objects.remove(obj)
                 for n in self.createdGroups:
                     group = bpy.data.groups.get(n)
-                    if group is not None:
+                    if group:
                         bpy.data.groups.remove(group)
-                if self.source is not None:
+                if self.source:
                     self.source.protected = False
                     select(self.source, active=self.source)
                 cm.animated = previously_animated
@@ -166,7 +166,7 @@ class RebrickrBrickify(bpy.types.Operator):
         # set cmlist_id for all created objects
         for obj_name in self.createdObjects:
             obj = bpy.data.objects.get(obj_name)
-            if obj is not None:
+            if obj:
                 obj.cmlist_id = cm.id
 
         # # set final variables
@@ -219,7 +219,7 @@ class RebrickrBrickify(bpy.types.Operator):
             return{"FINISHED"}
 
         sto_scn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
-        if sto_scn is not None:
+        if sto_scn:
             sto_scn.update()
 
         if matrixReallyIsDirty(cm) and cm.customized:
@@ -251,13 +251,13 @@ class RebrickrBrickify(bpy.types.Operator):
             # set up sourceDup["old_parent"] and remove sourceDup parent
             sourceDup["frame_parent_cleared"] = -1
             select(sourceDup, active=sourceDup)
-            if sourceDup.parent is not None:
+            if sourceDup.parent:
                 sourceDup["old_parent"] = sourceDup.parent.name
                 sourceDup["frame_parent_cleared"] = scn.frame_current
                 bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
             # apply shape keys if existing
             shapeKeys = sourceDup.data.shape_keys
-            if shapeKeys is not None and len(shapeKeys.key_blocks) > 0:
+            if shapeKeys and len(shapeKeys.key_blocks) > 0:
                 select(sourceDup, active=sourceDup)
                 bpy.ops.object.shape_key_add(from_mix=True)
                 for i in range(len(shapeKeys.key_blocks)):
@@ -310,7 +310,7 @@ class RebrickrBrickify(bpy.types.Operator):
         self.runCreateNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, self.action)
 
         bGroup = bpy.data.groups.get(Rebrickr_bricks_gn)  # redefine bGroup since it was removed
-        if bGroup is not None:
+        if bGroup:
             self.transformBricks(bGroup, cm, parent, self.source, self.action)
 
         # unlink source duplicate if created
@@ -325,7 +325,7 @@ class RebrickrBrickify(bpy.types.Operator):
             RebrickrBevel.runBevelAction(bricks, cm)
 
         # set active frame to original active frame
-        if origFrame is not None:
+        if origFrame:
             scn.frame_set(origFrame)
 
         cm.lastSourceMid = listToStr(parentLoc)
@@ -528,13 +528,7 @@ class RebrickrBrickify(bpy.types.Operator):
             updateInternal(bricksDict, cm, keys, clearExisting=loadedFromCache)
             cm.buildIsDirty = True
         # update materials in bricksDict
-        if bricksDict is None:
-            print("**")
-            print(bricksDict)
         bricksDict = updateMaterials(bricksDict, source)
-        if bricksDict is None:
-            print("***")
-            print(bricksDict)
         # make bricks
         group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else None
         bricksCreated, bricksDict = makeBricks(parent, refLogo, dimensions, bricksDict, cm=cm, split=cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
@@ -685,7 +679,7 @@ class RebrickrBrickify(bpy.types.Operator):
         else:
             obj = source
         for i in range(20):
-            if obj is not None and obj.layers[i] and scn.layers[i]:
+            if obj and obj.layers[i] and scn.layers[i]:
                 success = True
         if not success:
             self.report({"WARNING"}, "Object is not on active layer(s)")
@@ -796,7 +790,7 @@ class RebrickrBrickify(bpy.types.Operator):
             if self.action == "UPDATE_ANIM":
                 # retrieve previously duplicated source
                 sourceDup = bpy.data.objects.get("Rebrickr_" + source_name + "_frame_" + str(curFrame))
-            if sourceDup is not None:
+            if sourceDup:
                 duplicates[curFrame] = {"obj":sourceDup, "isReused":True}
                 continue
             # duplicate source for current frame
@@ -818,7 +812,7 @@ class RebrickrBrickify(bpy.types.Operator):
                 continue
             sourceDup = duplicates[curFrame]["obj"]
             self.createdObjects.append(sourceDup.name)
-            if sourceDup.parent is not None:
+            if sourceDup.parent:
                 # apply parent transformation
                 select(sourceDup, active=sourceDup)
                 bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')

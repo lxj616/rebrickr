@@ -69,8 +69,8 @@ def createObjsD(objs):
 
 
 def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
-    assert loc is not None or key is not None
-    if loc is not None:
+    assert loc or key
+    if loc:
         x, y, z = loc
     else:
         x, y, z = strToList(key)

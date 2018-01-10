@@ -75,7 +75,7 @@ def getFirstImgTexNode(obj):
         active_node = mat.node_tree.nodes.active
         nodes_to_check = [active_node] + list(mat.node_tree.nodes)
         for node in nodes_to_check:
-            if node is not None and node.type == "TEX_IMAGE":
+            if node and node.type == "TEX_IMAGE":
                 img = node.image
                 break
     return img
@@ -143,7 +143,10 @@ def createNewMaterial(rgba):
         b0 = round(b / (1 + cm.colorSnapAmount * 20000), 4)
         a0 = round(a, 1)
     else:
-        r0, g0, b0, a0 = rgba
+        r0 = round(r, 5)
+        g0 = round(g, 5)
+        b0 = round(b, 5)
+        a0 = round(a, 5)
     # get or create material with unique color
     mat_name = "Rebrickr_mat_{}-{}-{}-{}".format(r0, g0, b0, a0)
     mat = bpy.data.materials.get(mat_name)
