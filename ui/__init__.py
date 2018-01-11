@@ -779,6 +779,7 @@ class BevelPanel(Panel):
     bl_idname      = "VIEW3D_PT_tools_Rebrickr_bevel"
     bl_context     = "objectmode"
     bl_category    = "Rebrickr"
+    bl_options     = {"DEFAULT_CLOSED"}
 
     @classmethod
     def poll(self, context):

@@ -31,3 +31,4 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * In bricks mode, bricks don't merge well
       * In bricks mode, when adding adj bricks to object and then adding adj bricks to brick above, the adj bricks of the first don't get top exposure updated
       * For models with thin outer shells, Rebrickr may use color of inside face instead of outside face for brick material
+      * In basketball test file, error occurs when attempting to generate model with materials based on UV map (index out of range)

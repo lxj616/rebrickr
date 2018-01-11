@@ -22,6 +22,7 @@ Created by Christopher Gearhart
 # System imports
 import collections
 import json
+import math
 
 # Blender imports
 import bpy
@@ -195,3 +196,11 @@ def strToTuple(string, item_type=int, split_on=","):
 
 def getZStep(cm):
     return 3 if cm.brickType in ["Bricks", "Custom"] else 1
+
+
+def gammaCorrect(rgba, val):
+    r, g, b, a = rgba
+    r = math.pow(r, val)
+    g = math.pow(g, val)
+    b = math.pow(b, val)
+    return [r, g, b, a]

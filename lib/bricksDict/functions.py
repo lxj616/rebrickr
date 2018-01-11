@@ -46,6 +46,8 @@ def getUVCoord(mesh, face, point, image):
     lwts = poly_3d_calc(lco, point)
     # multiply barycentric weights by uv coordinates
     uv_loc = sum((p*w for p,w in zip(luv,lwts)), Vector((0,0)))
+    # ensure uv_loc is in range(0,1)
+    uv_loc = Vector((uv_loc[0] % 1, uv_loc[1] % 1))
     # convert uv_loc in range(0,1) to uv coordinate
     image_size_x, image_size_y = image.size
     x_co = round(uv_loc.x * (image_size_x - 1))
@@ -116,6 +118,8 @@ def getPixel(image, uv_coord, uv_images):
     g = uv_pixels[pixelNumber*4 + 1]
     b = uv_pixels[pixelNumber*4 + 2]
     a = uv_pixels[pixelNumber*4 + 3]
+    # gamma correct RGB value
+    r, g, b, a = gammaCorrect([r, g, b, a], 2)
     return (r, g, b, a)
 
 
@@ -169,20 +173,9 @@ def createNewMaterial(rgba):
         mat = bpy.data.materials.new(name=mat_name)
     r, g, b, a = rgba
     # set diffuse and transparency of material
-    if scn.render.engine == "BLENDER_RENDER":
-        if mat_is_new:
-            mat.diffuse_color = [r, g, b]
-            mat.diffuse_intensity = 1.0
-            if a < 1.0:
-                mat.use_transparency = True
-                mat.alpha = a
-        else:
-            r1, g1, b1 = mat.diffuse_color
-            a1 = mat.alpha
-            r2, g2, b2, a2 = getAverage(rgba, [r1, g1, b1, a1], mat.num_averaged)
-            mat.diffuse_color = [r2, g2, b2]
-            mat.alpha = a2
-    elif scn.render.engine == "CYCLES":
+    if scn.render.engine == "CYCLES":
+        # gamma correct RGB value
+        rgba = gammaCorrect(rgba, 0.5)
         if mat_is_new:
             mat.use_nodes = True
             mat_nodes = mat.node_tree.nodes
@@ -192,6 +185,8 @@ def createNewMaterial(rgba):
             diffuse = mat_nodes['Diffuse BSDF']
             diffuse.inputs[0].default_value = rgba
         else:
+            if not mat.use_nodes:
+                mat.use_nodes = True
             diffuse = getFirstNode(mat, type="BSDF_DIFFUSE")
             if diffuse:
                 rgba1 = diffuse.inputs[0].default_value
@@ -199,6 +194,21 @@ def createNewMaterial(rgba):
                 # if diffuse.inputs[0].is_linked:
                 #     # TODO: read different types of input to the diffuse node
                 diffuse.inputs[0].default_value = newRGBA
+    else:
+        if mat_is_new:
+            mat.diffuse_color = [r, g, b]
+            mat.diffuse_intensity = 1.0
+            if a < 1.0:
+                mat.use_transparency = True
+                mat.alpha = a
+        else:
+            if mat.use_nodes:
+                mat.use_nodes = False
+            r1, g1, b1 = mat.diffuse_color
+            a1 = mat.alpha
+            r2, g2, b2, a2 = getAverage(rgba, [r1, g1, b1, a1], mat.num_averaged)
+            mat.diffuse_color = [r2, g2, b2]
+            mat.alpha = a2
     mat.num_averaged += 1
     return mat_name
 
