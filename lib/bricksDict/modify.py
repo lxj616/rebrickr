@@ -37,12 +37,29 @@ def updateMaterials(bricksDict, source):
         uv_images = getUVImages(source)
     else:
         uv_images = None
+    rgba_vals = []
+    # clear materials
+    for mat in bpy.data.materials:
+        if mat.name.startswith("Rebrickr_{}_mat_".format(source.name)):
+            bpy.data.materials.remove(mat)
+    # get original matNames, and populate rgba_vals
     for key in bricksDict.keys():
+        # skip irrelevant bricks
         nf = bricksDict[key]["nearest_face"]
-        if bricksDict[key]["draw"] and nf is not None:
-            ni = bricksDict[key]["nearest_intersection"]
-            matName = getClosestMaterial(source, nf, ni, uv_images)
-            bricksDict[key]["mat_name"] = matName
+        if not bricksDict[key]["draw"] or nf is None:
+            continue
+        # get RGBA value at nearest face intersection
+        ni = bricksDict[key]["nearest_intersection"]
+        rgba = getBrickRGBA(source, nf, ni, uv_images)
+        # get material with snapped RGBA value
+        if rgba is None:
+            matName = ""
+        elif snapToBrickColors():
+            matName = findNearestBrickColorName(rgba)
+        else:
+            matName = createNewMaterial(source.name, rgba, rgba_vals)
+        rgba_vals.append(rgba)
+        bricksDict[key]["mat_name"] = matName
     return bricksDict
 
 

@@ -346,6 +346,31 @@ def delete(objList):
         objs.remove(obj, True)
 
 
+def checkEqual1(iterator):
+    iterator = iter(iterator)
+    try:
+        first = next(iterator)
+    except StopIteration:
+        return True
+    return all(first == rest for rest in iterator)
+
+
+def checkEqual2(iterator):
+   return len(set(iterator)) <= 1
+
+
+def checkEqual3(lst):
+   return lst[1:] == lst[:-1]
+# The difference between the 3 versions are that:
+#
+# In checkEqual2 the content must be hashable.
+# checkEqual1 and checkEqual2 can use any iterators, but checkEqual3 must take a sequence input, typically concrete containers like a list or tuple.
+# checkEqual1 stops as soon as a difference is found.
+# Since checkEqual1 contains more Python code, it is less efficient when many of the items are equal in the beginning.
+# Since checkEqual2 and checkEqual3 always perform O(N) copying operations, they will take longer if most of your input will return False.
+# checkEqual2 and checkEqual3 can't be easily changed to adopt to compare a is b instead of a == b.
+
+
 def changeContext(context, areaType):
     """ Changes current context and returns previous area type """
     lastAreaType = context.area.type

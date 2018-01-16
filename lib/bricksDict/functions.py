@@ -32,6 +32,16 @@ from ...functions import *
 from ..Brick import Bricks
 
 
+def getMatAtFaceIdx(obj, face_idx):
+    if len(obj.material_slots) == 0:
+        return ""
+    face = obj.data.polygons[face_idx]
+    slot = obj.material_slots[face.material_index]
+    mat = slot.material
+    matName = mat.name if mat else ""
+    return matName
+
+
 def getUVCoord(mesh, face, point, image):
     # get active uv layer data
     uv_layer = mesh.uv_layers.active
@@ -47,6 +57,7 @@ def getUVCoord(mesh, face, point, image):
     # multiply barycentric weights by uv coordinates
     uv_loc = sum((p*w for p,w in zip(luv,lwts)), Vector((0,0)))
     # ensure uv_loc is in range(0,1)
+    # TODO: possibly approach this differently? currently, uv verts that are outside the image are wrapped to the other side
     uv_loc = Vector((uv_loc[0] % 1, uv_loc[1] % 1))
     # convert uv_loc in range(0,1) to uv coordinate
     image_size_x, image_size_y = image.size
@@ -140,9 +151,9 @@ def getSnappedColorsForString(rgba, snapAmount):
         # r0 = round(r / (1 + snapAmount * (60000/3)), 4)
         # g0 = round(g / (1 + snapAmount * (60000/5.9)), 4)
         # b0 = round(b / (1 + snapAmount * (60000/1.1)), 4)
-        r0 = round(r / (1 + snapAmount * 20000), 4)
-        g0 = round(g / (1 + snapAmount * 20000), 4)
-        b0 = round(b / (1 + snapAmount * 20000), 4)
+        # r0 = round(r * (1 + snapAmount), 4)
+        # g0 = round(g * (1 + snapAmount), 4)
+        # b0 = round(b * (1 + snapAmount), 4)
         a0 = round(a, 1)
     else:
         r0 = round(r, 5)
@@ -162,20 +173,29 @@ def getFirstNode(mat, type="BSDF_DIFFUSE"):
     return diffuse
 
 
-def createNewMaterial(rgba):
+def createNewMaterial(model_name, rgba, rgba_vals):
     scn, cm, _ = getActiveContextInfo()
-    r0, g0, b0, a0 = getSnappedColorsForString(rgba, cm.colorSnapAmount)
+    # if scn.render.engine == "CYCLES":
+    #     rgba = gammaCorrect(rgba, 0.5)
     # get or create material with unique color
-    mat_name = "Rebrickr_mat_{}-{}-{}-{}".format(r0, g0, b0, a0)
+    min_diff = float("inf")
+    r0, g0, b0, a0 = rgba
+    for i in range(len(rgba_vals)):
+        diff = distance(rgba, rgba_vals[i])
+        print(diff)
+        if diff < min_diff and diff < cm.colorSnapAmount:
+            min_diff = diff
+            r0, g0, b0, a0 = rgba_vals[i]
+            break
+    mat_name = "Rebrickr_{}_mat_{}-{}-{}-{}".format(model_name, round(r0, 5), round(g0, 5), round(b0, 5), round(a0, 5))
     mat = bpy.data.materials.get(mat_name)
     mat_is_new = mat is None
     if mat is None:
         mat = bpy.data.materials.new(name=mat_name)
-    r, g, b, a = rgba
     # set diffuse and transparency of material
     if scn.render.engine == "CYCLES":
-        # gamma correct RGB value
         rgba = gammaCorrect(rgba, 0.5)
+        # gamma correct RGB value
         if mat_is_new:
             mat.use_nodes = True
             mat_nodes = mat.node_tree.nodes
@@ -196,11 +216,11 @@ def createNewMaterial(rgba):
                 diffuse.inputs[0].default_value = newRGBA
     else:
         if mat_is_new:
-            mat.diffuse_color = [r, g, b]
+            mat.diffuse_color = rgba[:3]
             mat.diffuse_intensity = 1.0
             if a < 1.0:
                 mat.use_transparency = True
-                mat.alpha = a
+                mat.alpha = rgba[3]
         else:
             if mat.use_nodes:
                 mat.use_nodes = False
@@ -260,32 +280,18 @@ def getMaterialColor(matName):
     return [r, g, b, a]
 
 
-def getClosestMaterial(obj, face_idx, point, uv_images):
-    """ sets all matNames in bricksDict based on nearest_face """
+def getBrickRGBA(obj, face_idx, point, uv_images):
     scn, cm, _ = getActiveContextInfo()
     if face_idx is None:
-        return ""
-    face = obj.data.polygons[face_idx]
-    matName = ""
+        return None
     # get material based on rgba value of UV image at face index
     if uv_images:
         rgba = getUVPixelColor(obj, face_idx, Vector(point), uv_images)
     else:
-        rgba = None
-    # get closest material using material slot of face
-    if rgba is None and len(obj.material_slots) > 0:
-        slot = obj.material_slots[face.material_index]
-        mat = slot.material
-        matName = mat.name if mat is not None else ""
-        if snapToBrickColors() or cm.colorSnapAmount > 0:
-            rgba = getMaterialColor(matName)
-    # snap materials and get new material name
-    if rgba is not None:
-        if snapToBrickColors():
-            matName = findNearestBrickColorName(rgba)
-        else:
-            matName = createNewMaterial(rgba)
-    return matName
+        # get closest material using material slot of face
+        origMatName = getMatAtFaceIdx(obj, face_idx)
+        rgba = getMaterialColor(origMatName) if origMatName is not None else None
+    return rgba
 
 
 def getDictKey(name):
