@@ -105,7 +105,7 @@ def isObjVisible(scn, cm):
 @persistent
 def handle_selections(scene):
     scn = bpy.context.scene
-    if not rebrickrIsActive() or rebrickrRunningOp:
+    if not rebrickrIsActive() or rebrickrRunningOp():
         return
     # if scn.layers changes and active object is no longer visible, set scn.cmlist_index to -1
     if scn.Rebrickr_last_layers != str(list(scn.layers)):
@@ -209,7 +209,7 @@ bpy.app.handlers.scene_update_pre.append(handle_selections)
 @persistent
 def prevent_user_from_viewing_storage_scene(scene):
     scn = bpy.context.scene
-    if not rebrickrIsActive() or rebrickrRunningOp:
+    if not rebrickrIsActive() or rebrickrRunningOp():
         return
     if scn.name == "Rebrickr_storage (DO NOT RENAME)":
         i = 0

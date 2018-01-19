@@ -254,7 +254,8 @@ class delete_override(Operator):
                         # add key to simple bricksDict for drawing
                         keysToUpdate.append(k1)
 
-    def deleteBrickObject(obj, use_global=False):
+    def deleteBrickObject(self, obj, use_global=False):
+        scn = bpy.context.scene
         cm = None
         for cmCur in scn.cmlist:
             n = cmCur.source_name
@@ -267,9 +268,8 @@ class delete_override(Operator):
                     cm = cmCur
                     break
         if cm:
-            RebrickrDelete.runFullDelete(RebrickrDelete, cm=cm)
+            RebrickrDelete.runFullDelete(cm=cm)
             scn.objects.active.select = False
-            return protected
         else:
             obj_users_scene = len(obj.users_scene)
             scn.objects.unlink(obj)

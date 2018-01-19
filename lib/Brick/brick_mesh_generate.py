@@ -768,7 +768,7 @@ def newObjFromBmesh(layer, bme, meshName, objName=False):
     for i in range(20):
         layerList.append(i == layer-1)
     bpy.ops.object.move_to_layer(layers=layerList)
-    setLayers(scn, layerList)
+    setLayers(layerList)
     bpy.ops.object.select_all(action='TOGGLE')
     return ob
 

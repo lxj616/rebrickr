@@ -248,7 +248,7 @@ def prepareLogoAndGetDetails(logo):
     scn, cm, _ = getActiveContextInfo()
     if cm.logoDetail != "LEGO Logo" and logo is not None:
         oldLayers = list(scn.layers)
-        setLayers(scn, logo.layers)
+        setLayers(logo.layers)
         logo.hide = False
         select(logo, active=logo)
         bpy.ops.object.duplicate()
@@ -257,7 +257,7 @@ def prepareLogoAndGetDetails(logo):
             mod.show_viewport = False
         logo.parent = None
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-        setLayers(scn, oldLayers)
+        setLayers(oldLayers)
         logo_details = bounds(logo)
     else:
         logo_details = None

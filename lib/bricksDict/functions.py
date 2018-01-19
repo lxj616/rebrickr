@@ -175,14 +175,11 @@ def getFirstNode(mat, type="BSDF_DIFFUSE"):
 
 def createNewMaterial(model_name, rgba, rgba_vals):
     scn, cm, _ = getActiveContextInfo()
-    # if scn.render.engine == "CYCLES":
-    #     rgba = gammaCorrect(rgba, 0.5)
     # get or create material with unique color
     min_diff = float("inf")
     r0, g0, b0, a0 = rgba
     for i in range(len(rgba_vals)):
         diff = distance(rgba, rgba_vals[i])
-        print(diff)
         if diff < min_diff and diff < cm.colorSnapAmount:
             min_diff = diff
             r0, g0, b0, a0 = rgba_vals[i]
@@ -194,8 +191,8 @@ def createNewMaterial(model_name, rgba, rgba_vals):
         mat = bpy.data.materials.new(name=mat_name)
     # set diffuse and transparency of material
     if scn.render.engine == "CYCLES":
-        rgba = gammaCorrect(rgba, 0.5)
         # gamma correct RGB value
+        rgba = gammaCorrect(rgba, 0.5)
         if mat_is_new:
             mat.use_nodes = True
             mat_nodes = mat.node_tree.nodes
@@ -286,12 +283,13 @@ def getBrickRGBA(obj, face_idx, point, uv_images):
         return None
     # get material based on rgba value of UV image at face index
     if uv_images:
+        origMatName = ""
         rgba = getUVPixelColor(obj, face_idx, Vector(point), uv_images)
     else:
         # get closest material using material slot of face
         origMatName = getMatAtFaceIdx(obj, face_idx)
         rgba = getMaterialColor(origMatName) if origMatName is not None else None
-    return rgba
+    return rgba, origMatName
 
 
 def getDictKey(name):
@@ -323,7 +321,7 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
         scn = bpy.context.scene
         customObj = bpy.data.objects[cm.customObjectName]
         oldLayers = list(scn.layers) # store scene layers for later reset
-        setLayers(scn, customObj.layers)
+        setLayers(customObj.layers)
         select(customObj, active=customObj)
         bpy.ops.object.duplicate()
         customObj0 = scn.objects.active
@@ -336,7 +334,7 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
         R = (scale * customObj_details.x.dist + dimensions["gap"],
              scale * customObj_details.y.dist + dimensions["gap"],
              scale * customObj_details.z.dist + dimensions["gap"])
-        setLayers(scn, oldLayers)
+        setLayers(oldLayers)
     else:
         customData = None
         customObj_details = None

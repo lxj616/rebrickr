@@ -277,9 +277,11 @@ def getLayersList(layerList):
     return newLayersList
 
 
-def setLayers(scn, layers):
+def setLayers(layers, scn=None):
     """ set active layers of scn w/o 'dag ZERO' error """
     assert len(layers) == 20
+    if scn is None:
+        scn = bpy.context.scene
     # set active scene (prevents dag ZERO errors)
     setActiveScn(scn)
     # set active layers of scn

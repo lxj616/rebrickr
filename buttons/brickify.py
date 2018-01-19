@@ -136,7 +136,6 @@ class RebrickrBrickify(bpy.types.Operator):
         # set up variables
         scn, cm, n = getActiveContextInfo()
         scn.Rebrickr_runningOperation = True
-        cm.version = bpy.props.rebrickr_version
         self.undo_stack.iterateStates(cm)
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
 
@@ -185,6 +184,7 @@ class RebrickrBrickify(bpy.types.Operator):
         cm.matrixIsDirty = False
         cm.internalIsDirty = False
         scn.Rebrickr_runningOperation = False
+        cm.version = bpy.props.rebrickr_version
 
         # unlink source from scene and link to safe scene
         if source.name in scn.objects.keys():
