@@ -191,8 +191,6 @@ def createNewMaterial(model_name, rgba, rgba_vals):
         mat = bpy.data.materials.new(name=mat_name)
     # set diffuse and transparency of material
     if scn.render.engine == "CYCLES":
-        # gamma correct RGB value
-        rgba = gammaCorrect(rgba, 0.5)
         if mat_is_new:
             mat.use_nodes = True
             mat_nodes = mat.node_tree.nodes

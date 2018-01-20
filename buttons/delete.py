@@ -164,7 +164,7 @@ class RebrickrDelete(bpy.types.Operator):
                 if brickLoc is not None:
                     source.location = source.location + brickLoc - Vector(loc)
                 else:
-                    source.location = Vector(l) - Vector(loc)
+                    source.location = Vector(l)# - Vector(loc)
             else:
                 source.location = Vector(l)
             source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])

@@ -56,14 +56,14 @@ def getColors():
         colors["ABS Plastic Tan"] = [0.761, 0.667, 0.478, 1.0]
         colors["ABS Plastic Trans-Blue"] = [0.114, 0.686, 0.871, 0.4]
         colors["ABS Plastic Trans-Clear"] = [0.5, 0.5, 0.5, 0.1]
-        colors["ABS Plastic Trans-Green"] = [0.114, 0.749, 0.341, 0.25]
+        colors["ABS Plastic Trans-Green"] = [0.114, 0.749, 0.341, 0.4]
         colors["ABS Plastic Trans-Light Blue"] = [0.114, 0.749, 0.341, 0.4]
         colors["ABS Plastic Trans-Light Green"] = [0.949, 0.992, 0.247, 0.4]
         colors["ABS Plastic Trans-Orange"] = [0.949, 0.992, 0.247, 0.4]
         colors["ABS Plastic Trans-Red"] = [0.969, 0.051, 0.106, 0.4]
         colors["ABS Plastic Trans-Reddish Orange"] = [0.992, 0.565, 0.153, 0.4]
         colors["ABS Plastic Trans-Yellow"] = [0.996, 0.945, 0.255, 0.4]
-        colors["ABS Plastic Trans-Yellowish Clear"] = [0.949, 0.937, 0.898, 0.325]
+        colors["ABS Plastic Trans-Yellowish Clear"] = [0.949, 0.937, 0.898, 0.2]
         colors["ABS Plastic White"] = [1.0, 0.980, 0.949, 1.0]
         colors["ABS Plastic Yellow"] = [0.996, 0.855, 0.196, 1.0]
         # gamma correct RGB values
@@ -73,55 +73,8 @@ def getColors():
     return getColors.colors
 
 
-def rgbFromStr(s):
-    # s starts with a #.
-    r, g, b = int(s[1:3], 16), int(s[3:5], 16), int(s[5:7], 16)
-    return r, g, b
-
-
-# def findNearestWebColorName((R, G, B)):
-#     return ColorNames.findNearestColorName((R, G, B), ColorNames.WebColorMap)
-#
-#
-# def findNearestImageMagickColorName((R, G, B)):
-#     return ColorNames.findNearestColorName((R, G, B), ColorNames.ImageMagickColorMap)
-#
-#
 def findNearestBrickColorName(rgba):
     return findNearestColorName(rgba, getColors())
-
-def rgb_to_lab(rgb):
-    def func(t):
-        if (t > 0.008856):
-            return np.power(t, 1/3.0);
-        else:
-            return 7.787 * t + 16 / 116.0;
-
-    #Conversion Matrix
-    matrix = [[0.412453, 0.357580, 0.180423],
-              [0.212671, 0.715160, 0.072169],
-              [0.019334, 0.119193, 0.950227]]
-
-    # RGB values lie between 0 to 1.0
-    rgb = [1.0, 0, 0] # RGB
-
-    cie = np.dot(matrix, rgb);
-
-    cie[0] = cie[0] /0.950456;
-    cie[2] = cie[2] /1.088754;
-
-    # Calculate the L
-    L = 116 * np.power(cie[1], 1/3.0) - 16.0 if cie[1] > 0.008856 else 903.3 * cie[1];
-
-    # Calculate the a
-    a = 500*(func(cie[0]) - func(cie[1]));
-
-    # Calculate the b
-    b = 200*(func(cie[1]) - func(cie[2]));
-
-    #  Values lie between -128 < b <= 127, -128 < a <= 127, 0 <= L <= 100
-    lab = [b , a, L];
-    return lab
 
 
 def distance(c1, c2):
@@ -133,6 +86,10 @@ def distance(c1, c2):
     # a2 = c2[3]
     # # r2, g2, b2 = rgb_to_lab(c2[:3])
     # r2, g2, b2 = colorsys.rgb_to_hsv(r1, g1, b1)
+    # diff =  0.33 * ((r1 - r2)**2)
+    # diff += 0.33 * ((g1 - g2)**2)
+    # diff += 0.33 * ((b1 - b2)**2)
+    # diff += 1.0 * ((a1 - a2)**2)
     diff =  0.30 * ((r1 - r2)**2)
     diff += 0.59 * ((g1 - g2)**2)
     diff += 0.11 * ((b1 - b2)**2)
@@ -148,20 +105,3 @@ def findNearestColorName(rgba, colorNames):
             mindiff = diff
             mincolorname = colorName
     return mincolorname
-
-
-def getMat(polygon, matType):
-    materialD = {}
-    obj.data.materials[0].alpha = 1
-    slot = obj.material_slots[polygon.material_index]
-    mat = slot.material
-
-    if mat:
-        if matType == "DIFFUSE_BSDF":
-            materialD["RGB"] = mat.node_tree.nodes.find('Diffuse BSDF')
-        elif matType == "DIFFUSE":
-            materialD["RGB"] = mat.diffuse_color
-            materialD["Alpha"] = mat.alpha
-        return materialD
-    else:
-        return None
