@@ -329,14 +329,14 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
         customData = customObj0.data
         bpy.data.objects.remove(customObj0, True)
         scale = cm.brickHeight/customObj_details.z.dist
-        R = (scale * customObj_details.x.dist + dimensions["gap"],
-             scale * customObj_details.y.dist + dimensions["gap"],
-             scale * customObj_details.z.dist + dimensions["gap"])
+        brickScale = Vector((scale * customObj_details.x.dist + dimensions["gap"],
+                    scale * customObj_details.y.dist + dimensions["gap"],
+                    scale * customObj_details.z.dist + dimensions["gap"]))
         setLayers(oldLayers)
     else:
         customData = None
         customObj_details = None
-        R = (dimensions["width"] + dimensions["gap"],
-             dimensions["width"] + dimensions["gap"],
-             dimensions["height"]+ dimensions["gap"])
-    return source, source_details, dimensions, R, customData, customObj_details
+        brickScale = Vector((dimensions["width"] + dimensions["gap"],
+                    dimensions["width"] + dimensions["gap"],
+                    dimensions["height"]+ dimensions["gap"]))
+    return source, source_details, dimensions, brickScale, customData, customObj_details

@@ -423,7 +423,7 @@ def createBricksDictEntry(name, val=0, draw=False, co=(0,0,0), nearest_face=None
             "type":type}
 
 @timed_call('Time Elapsed')
-def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
+def makeBricksDict(source, source_details, dimensions, brickScale, cursorStatus=False):
     """ Make bricksDict """
     scn, cm, _ = getActiveContextInfo()
     # update source data in case data needs to be refreshed
@@ -432,13 +432,12 @@ def makeBricksDict(source, source_details, dimensions, R, cursorStatus=False):
         scn.update()
     # get lattice bmesh
     print("\ngenerating blueprint...")
-    lScale = (source_details.x.dist, source_details.y.dist, source_details.z.dist)
-    offset = (source_details.x.mid, source_details.y.mid, source_details.z.mid)
+    lScale = Vector((source_details.x.dist, source_details.y.dist, source_details.z.dist))
+    offset = Vector((source_details.x.mid, source_details.y.mid, source_details.z.mid))
     if source.parent:
-        offset = Vector(offset)-source.parent.location
-        offset = offset.to_tuple()
+        offset = offset - source.parent.location
     # get coordinate list from intersections of edges with faces
-    coordMatrix = generateLattice(R, lScale, offset)
+    coordMatrix = generateLattice(brickScale, lScale, offset)
     if len(coordMatrix) == 0:
         coordMatrix.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
     # set calculationAxes

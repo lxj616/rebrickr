@@ -495,11 +495,11 @@ class RebrickrBrickify(bpy.types.Operator):
         if cm is None:
             cm = scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        _, _, _, R, customData, customObj_details = getArgumentsForBricksDict(cm, source=source, source_details=source_details, dimensions=dimensions)
+        _, _, _, brickScale, customData, customObj_details = getArgumentsForBricksDict(cm, source=source, source_details=source_details, dimensions=dimensions)
         updateCursor = action in ["CREATE", "UPDATE_MODEL"]  # evaluates to boolean value
         if bricksDict is None:
-            R2 = (R[0] * cm.distOffsetX, R[1] * cm.distOffsetY, R[2] * cm.distOffsetZ)
-            bricksDict, loadedFromCache = getBricksDict(action, source=source, source_details=source_details, dimensions=dimensions, R=R2, updateCursor=updateCursor, curFrame=curFrame)
+            brickScale2 = Vector((brickScale.x * cm.distOffsetX, brickScale.y * cm.distOffsetY, brickScale.z * cm.distOffsetZ))
+            bricksDict, loadedFromCache = getBricksDict(action, source=source, source_details=source_details, dimensions=dimensions, brickScale=brickScale2, updateCursor=updateCursor, curFrame=curFrame)
             if curFrame == sceneCurFrame:
                 cm.activeKeyX = 1
                 cm.activeKeyY = 1
@@ -531,7 +531,7 @@ class RebrickrBrickify(bpy.types.Operator):
         bricksDict = updateMaterials(bricksDict, source)
         # make bricks
         group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else None
-        bricksCreated, bricksDict = makeBricks(parent, refLogo, dimensions, bricksDict, cm=cm, split=cm.splitModel, R=R, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
+        bricksCreated, bricksDict = makeBricks(parent, refLogo, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
         if selectCreated:
             select(None)
             for brick in bricksCreated:

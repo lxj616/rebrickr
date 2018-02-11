@@ -30,51 +30,38 @@ from mathutils import Vector
 from .common import drawBMesh
 
 
-def tupleAdd(p1, p2):
-    """ returns linear sum of two given tuples """
-    return tuple(x+y for x,y in zip(p1, p2))
+def generateLattice(vertDist:Vector, scale:Vector, offset:Vector=(0, 0, 0)):
+    """ return lattice coordinate matrix surrounding object of size 'scale'
 
+    Keyword arguments:
+    vertDist -- distance between lattice verts in 3D space
+    scale    -- lattice scale in 3D space
+    offset   -- offset lattice center from origin
 
-# R = resolution tuple, s = 3D scale tuple, o = offset lattice center from origin
-def generateLattice(R, s, o=(0, 0, 0)):
-    """ returns matrix with lattice vert coords given R, s, and o """
-    # bme = bmesh.new()
+    """
 
-    # initialize variables
-    coordMatrix = []
-    xR, yR, zR = R
-    xS, yS, zS = s
-    o = (o[0] - (o[0] % xR), o[1] - (o[1] % yR), o[2] - (o[2] % zR))
-    xN = (xS/(2*xR))
-    yN = (yS/(2*yR))
-    zN = (zS/(2*zR))
-    xL = int(round((xS)/xR))+2
-    yL = int(round((yS)/yR))+2
-    zL = int(round((zS)/zR))+2
-    if yL != 1:
-        yL += 2
-    if xL != 1:
-        xL += 2
-    if zL != 1:
-        zL += 2
-    # iterate through x,y,z dimensions and create verts/connect with edges
-    for x in range(xL):
-        coordList1 = []
-        xCO = (x-xN)*xR
-        xCO -= xCO % R[0]
-        for y in range(yL):
-            coordList2 = []
-            yCO = (y-yN)*yR
-            yCO -= yCO % R[1]
-            for z in range(zL):
-                # create verts
-                zCO = (z-zN)*zR
-                zCO -= zCO % R[2]
-                p = Vector((o[0] + xCO, o[1] + yCO, o[2] + zCO))
-                # bme.verts.new(p)
-                coordList2.append(p)
-            coordList1.append(coordList2)
-        coordMatrix.append(coordList1)
-    # drawBMesh(bme)
-    # return coord matrix
+    # create bmesh for visualizing the lattice coordinates
+    bme = bmesh.new()
+    # shift offset to ensure lattice surrounds object
+    offset = offset - (vertDist / 2)
+    # calculate res of lattice
+    res = Vector((round(scale.x / vertDist.x),
+                  round(scale.y / vertDist.y),
+                  round(scale.z / vertDist.z)))
+    # populate coord matrix
+    nx, ny, nz = int(res.x) + 2, int(res.y) + 2, int(res.z) + 2
+    coordMatrix = [[[Vector((((x - res.x / 2) * vertDist.x),
+                             ((y - res.y / 2) * vertDist.y),
+                             ((z - res.z / 2) * vertDist.z))) + offset
+                       for z in range(nz)
+                    ] for y in range(ny)
+                   ] for x in range(nx)
+                  ]
+    # create bmesh vertex for each coordinate
+    for x in range(len(coordMatrix)):
+        for y in range(len(coordMatrix[0])):
+            for z in range(len(coordMatrix[0][0])):
+                bme.verts.new(coordMatrix[x][y][z])
+    # draw bmesh object with vertices at coordinate locations
+    drawBMesh(bme)
     return coordMatrix

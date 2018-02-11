@@ -32,7 +32,7 @@ from .functions import *
 from ..caches import rebrickr_bfm_cache
 from ...functions import *
 
-def getBricksDict(action, source=None, source_details=None, dimensions=None, R=None, updateCursor=True, curFrame=None, cm=None, restrictContext=False):
+def getBricksDict(action, source=None, source_details=None, dimensions=None, brickScale=None, updateCursor=True, curFrame=None, cm=None, restrictContext=False):
     scn = bpy.context.scene
     if cm is None:
         cm = scn.cmlist[scn.cmlist_index]
@@ -59,10 +59,10 @@ def getBricksDict(action, source=None, source_details=None, dimensions=None, R=N
     # else, new bricksDict must be created
     else:
         # get arguments for makeBricksDict function call
-        if source is None or source_details is None or dimensions is None or R is None:
-            source, source_details, dimensions, R,_,_ = getArgumentsForBricksDict(cm)
+        if source is None or source_details is None or dimensions is None or brickScale is None:
+            source, source_details, dimensions, brickScale, _, _ = getArgumentsForBricksDict(cm)
         # create new bricksDict
-        bricksDict = makeBricksDict(source, source_details, dimensions, R,  cursorStatus=updateCursor)
+        bricksDict = makeBricksDict(source, source_details, dimensions, brickScale, cursorStatus=updateCursor)
     return bricksDict, loadedFromCache
 
 def lightToDeepCache(rebrickr_bfm_cache):

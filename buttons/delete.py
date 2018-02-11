@@ -105,9 +105,9 @@ class RebrickrDelete(bpy.types.Operator):
             cls.cleanDupes(preservedFrames, modelType)
 
         if not skipParents:
-            brickLoc, brickRot, brickScale = cls.cleanParents(preservedFrames, modelType)
+            brickLoc, brickRot, brickScl = cls.cleanParents(preservedFrames, modelType)
         else:
-            brickLoc, brickRot, brickScale = None, None, None
+            brickLoc, brickRot, brickScl = None, None, None
 
         # initialize variables for cursor status updates
         wm = bpy.context.window_manager
@@ -123,7 +123,7 @@ class RebrickrDelete(bpy.types.Operator):
         # set scene layers back to original layers
         setLayers(curLayers)
 
-        return source, brickLoc, brickRot, brickScale
+        return source, brickLoc, brickRot, brickScl
 
     @classmethod
     def runFullDelete(cls, cm=None):
@@ -151,7 +151,7 @@ class RebrickrDelete(bpy.types.Operator):
 
         modelType = getModelType(cm)
 
-        source, brickLoc, brickRot, brickScale = cls.cleanUp(modelType, cm=cm)
+        source, brickLoc, brickRot, brickScl = cls.cleanUp(modelType, cm=cm)
 
         # select source
         select(source, active=source)
@@ -254,7 +254,7 @@ class RebrickrDelete(bpy.types.Operator):
         scn, cm, n = getActiveContextInfo()
         Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
         Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
-        brickLoc, brickRot, brickScale = None, None, None
+        brickLoc, brickRot, brickScl = None, None, None
         if preservedFrames is None:
             p = bpy.data.objects.get(Rebrickr_parent_on)
             if modelType == "ANIMATION" or cm.lastSplitModel:
@@ -267,7 +267,7 @@ class RebrickrDelete(bpy.types.Operator):
                     scn.update()
                     brickLoc = b.matrix_world.to_translation().copy()
                     brickRot = b.matrix_world.to_euler().copy()
-                    brickScale = b.matrix_world.to_scale().copy()  # currently unused
+                    brickScl = b.matrix_world.to_scale().copy()  # currently unused
         # clean up Rebrickr_parent objects
         pGroup = bpy.data.groups.get(Rebrickr_parent_on)
         if pGroup:
@@ -286,7 +286,7 @@ class RebrickrDelete(bpy.types.Operator):
                 bpy.data.meshes.remove(m, True)
             if preservedFrames is None:
                 bpy.data.groups.remove(pGroup, do_unlink=True)
-        return brickLoc, brickRot, brickScale
+        return brickLoc, brickRot, brickScl
 
     def cleanBricks(preservedFrames, modelType):
         scn, cm, n = getActiveContextInfo()

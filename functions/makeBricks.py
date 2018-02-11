@@ -45,7 +45,7 @@ from .makeBricks_utils import *
 
 
 @timed_call('Time Elapsed')
-def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=None, customData=None, customObj_details=None, group_name=None, replaceExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True):
+def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brickScale=None, customData=None, customObj_details=None, group_name=None, replaceExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True):
     # set up variables
     scn = bpy.context.scene
     if cm is None:
@@ -139,7 +139,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, R=Non
                 brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, loc, brickSizes, zStep, randS1)
 
                 # create brick based on the current brickD information
-                drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, R, keysNotChecked, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4)
+                drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, brickScale, keysNotChecked, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4)
 
                 # print build status to terminal
                 old_percent = printBuildStatus(keys, printStatus, cursorStatus, keysNotChecked, old_percent)
