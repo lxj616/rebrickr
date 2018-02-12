@@ -30,18 +30,20 @@ from mathutils import Vector
 from .common import drawBMesh
 
 
-def generateLattice(vertDist:Vector, scale:Vector, offset:Vector=(0, 0, 0)):
+def generateLattice(vertDist:Vector, scale:Vector, offset:Vector=(0, 0, 0), visualize:bool=True):
     """ return lattice coordinate matrix surrounding object of size 'scale'
 
     Keyword arguments:
-    vertDist -- distance between lattice verts in 3D space
-    scale    -- lattice scale in 3D space
-    offset   -- offset lattice center from origin
+    vertDist  -- distance between lattice verts in 3D space
+    scale     -- lattice scale in 3D space
+    offset    -- offset lattice center from origin
+    visualize -- draw lattice coordinates in 3D space
 
     """
 
-    # create bmesh for visualizing the lattice coordinates
-    bme = bmesh.new()
+    # helper function for componentwise multiplication
+    vector_mult = lambda v1, v2: Vector(e1 * e2 for e1, e2 in zip(v1, v2))
+
     # shift offset to ensure lattice surrounds object
     offset = offset - (vertDist / 2)
     # calculate res of lattice
@@ -50,18 +52,18 @@ def generateLattice(vertDist:Vector, scale:Vector, offset:Vector=(0, 0, 0)):
                   round(scale.z / vertDist.z)))
     # populate coord matrix
     nx, ny, nz = int(res.x) + 2, int(res.y) + 2, int(res.z) + 2
-    coordMatrix = [[[Vector((((x - res.x / 2) * vertDist.x),
-                             ((y - res.y / 2) * vertDist.y),
-                             ((z - res.z / 2) * vertDist.z))) + offset
-                       for z in range(nz)
-                    ] for y in range(ny)
-                   ] for x in range(nx)
-                  ]
-    # create bmesh vertex for each coordinate
-    for x in range(len(coordMatrix)):
-        for y in range(len(coordMatrix[0])):
-            for z in range(len(coordMatrix[0][0])):
-                bme.verts.new(coordMatrix[x][y][z])
-    # draw bmesh object with vertices at coordinate locations
-    drawBMesh(bme)
+    create_coord = lambda v: vector_mult(v - res / 2, vertDist) + offset
+    coordMatrix = [[[create_coord(Vector((x, y, z))) for z in range(nz)] for y in range(ny)] for x in range(nx)]
+
+    if visualize:
+        # create bmesh
+        bme = bmesh.new()
+        # add vertex for each coordinate
+        for x in range(len(coordMatrix)):
+            for y in range(len(coordMatrix[0])):
+                for z in range(len(coordMatrix[0][0])):
+                    bme.verts.new(coordMatrix[x][y][z])
+        # draw bmesh verts in 3D space
+        drawBMesh(bme)
+
     return coordMatrix
