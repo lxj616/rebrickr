@@ -36,12 +36,12 @@ from ...functions.common import *
 
 class Bricks:
     @staticmethod
-    def new_mesh(dimensions, size=[1,1,3], logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_resolution=None, logo_inset=None, undersideDetail="Flat", stud=True, numStudVerts=None):
+    def new_mesh(dimensions, size=[1,1,3], logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_resolution=None, logo_inset=None, undersideDetail="Flat", stud=True, cylinderVerts=None):
         """ create unlinked Brick at origin """
 
         bm = bmesh.new()
 
-        brickBM = makeBrick(dimensions=dimensions, brickSize=size, numStudVerts=numStudVerts, detail=undersideDetail, stud=stud)
+        brickBM = makeBrick(dimensions=dimensions, brickSize=size, cylinderVerts=cylinderVerts, detail=undersideDetail, stud=stud)
         if logo and stud:
             # get logo rotation angle based on size of brick
             rot_mult = 180

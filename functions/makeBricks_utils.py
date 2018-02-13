@@ -72,7 +72,7 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
         bmesh.ops.scale(bm, vec=Vector(((brickScale.x - dimensions["gap"]) / customObj_details.x.dist, (brickScale.y - dimensions["gap"]) / customObj_details.y.dist, (brickScale.z - dimensions["gap"]) / customObj_details.z.dist)), verts=bm.verts)
     else:
         # get brick mesh
-        # bm = Bricks.new_mesh(dimensions=dimensions, size=brickSize, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.cylinderVerts)
+        # bm = Bricks.new_mesh(dimensions=dimensions, size=brickSize, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, cylinderVerts=cm.cylinderVerts)
         bm = getBrickMesh(cm, randS4, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.cylinderVerts)
     # apply random rotation to BMesh according to parameters
     if cm.randomRot > 0:
@@ -264,7 +264,7 @@ def prepareLogoAndGetDetails(logo):
     return logo_details, logo
 
 
-def getBrickMesh(cm, rand, dimensions, brickSize, undersideDetail, logoToUse, logo_type, logo_details, logo_scale, logo_inset, useStud, numStudVerts):
+def getBrickMesh(cm, rand, dimensions, brickSize, undersideDetail, logoToUse, logo_type, logo_details, logo_scale, logo_inset, useStud, cylinderVerts):
     # get bm_cache_string
     bm_cache_string = ""
     if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
@@ -278,7 +278,7 @@ def getBrickMesh(cm, rand, dimensions, brickSize, undersideDetail, logoToUse, lo
         bm = bms[rand.randint(0, len(bms))] if len(bms) > 1 else bms[0]
     # if not found in rebrickr_bm_cache, create new brick mesh(es) and store to cache
     else:
-        bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, undersideDetail=undersideDetail, logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, numStudVerts=cm.cylinderVerts)
+        bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, undersideDetail=undersideDetail, logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, cylinderVerts=cm.cylinderVerts)
         if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
             rebrickr_bm_cache[bm_cache_string] = bms
         bm = bms[rand.randint(0, len(bms))]
