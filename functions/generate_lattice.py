@@ -30,7 +30,7 @@ from mathutils import Vector
 from .common import drawBMesh
 
 
-def generateLattice(vertDist:Vector, scale:Vector, offset:Vector=(0, 0, 0), visualize:bool=True):
+def generateLattice(vertDist:Vector, scale:Vector, offset:Vector=(0, 0, 0), visualize:bool=False):
     """ return lattice coordinate matrix surrounding object of size 'scale'
 
     Keyword arguments:

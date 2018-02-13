@@ -44,7 +44,7 @@ def matchProperties(cmTo, cmFrom, bh=False):
                 "logoInset",
                 "hiddenUndersideDetail",
                 "exposedUndersideDetail",
-                "studVerts",
+                "cylinderVerts",
                 "gap",
                 "mergeSeed",
                 "randomLoc",
@@ -674,9 +674,9 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBricks,
         default="Flat")
 
-    studVerts = IntProperty(
-        name="Stud Verts",
-        description="Number of vertices on each Brick stud",
+    cylinderVerts = IntProperty(
+        name="Num Verts",
+        description="Number of vertices for each circle on cylinders",
         update=dirtyBricks,
         min=4, max=64,
         default=16)

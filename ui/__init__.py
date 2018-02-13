@@ -696,10 +696,6 @@ class DetailingPanel(Panel):
         row.label("Studs:")
         row = col.row(align=True)
         row.prop(cm, "studDetail", text="")
-        if cm.studDetail != "None":
-            row = col.row(align=True)
-            row.prop(cm, "studVerts")
-            col = layout.column(align=True)
         row = col.row(align=True)
         row.label("Logo:")
         row = col.row(align=True)
@@ -728,6 +724,11 @@ class DetailingPanel(Panel):
         row.label("Underside Exposed:")
         row = col.row(align=True)
         row.prop(cm, "exposedUndersideDetail", text="")
+        row = col.row(align=True)
+        row.label("Cylinders:")
+        row = col.row(align=True)
+        row.prop(cm, "cylinderVerts")
+        row.active = not (cm.studDetail == "None" and cm.exposedUndersideDetail == "Flat" and cm.hiddenUndersideDetail == "Flat")
 
 
 class SupportsPanel(Panel):

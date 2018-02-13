@@ -1,183 +1,144 @@
 import bpy
 import bmesh
 import math
-from mathutils import Matrix
+from mathutils import Matrix, Vector
 from ...functions.common import *
 
-# r = radius, N = numVerts, h = height, co = target cylinder position, botFace = Bool for creating face on bottom, bme = bmesh to insert mesh data into
-def makeCylinder(r, N, h, co=(0,0,0), botFace=True, topFace=True, bme=None):
+
+def makeCube(coord1, coord2, sides=[False]*6, flipNormals=False, bme=None):
+    """
+    Keyword Arguments:
+        coord1 -- back/left/bottom corner of the cube (furthest negative in all three axes)
+        coord2 -- front/right/top  corner of the cube (furthest positive in all three axes)
+        sides  -- draw sides [+z, -z, +x, -x, +y, -y]
+        bme    -- bmesh object in which to create verts
+
+    """
+
+    assert coord1[0] < coord2[0]
+    assert coord1[1] < coord2[1]
+    assert coord1[2] < coord2[2]
+
     # create new bmesh object
-    if bme == None:
+    if bme is None:
         bme = bmesh.new()
 
-    # create upper and lower circles
-    vertListT = []
-    vertListB = []
+    # create vertices
+    vList = []
+    for x in [coord1[0], coord2[0]]:
+        for y in [coord1[1], coord2[1]]:
+            for z in [coord1[2], coord2[2]]:
+                vList.append(bme.verts.new((x, y, z)))
+
+    # create faces
+    v1, v2, v3, v4, v5, v6, v7, v8 = vList
+    newFaces = []
+    if sides[0]:
+        newFaces.append([v6, v8, v4, v2])
+    if sides[1]:
+        newFaces.append([v3, v7, v5, v1])
+    if sides[4]:
+        newFaces.append([v4, v8, v7, v3])
+    if sides[3]:
+        newFaces.append([v2, v4, v3, v1])
+    if sides[2]:
+        newFaces.append([v8, v6, v5, v7])
+    if sides[5]:
+        newFaces.append([v6, v2, v1, v5])
+
+    for f in newFaces:
+        if flipNormals:
+            f.reverse()
+        bme.faces.new(f)
+
+    return vList
+
+# r = radius, N = numVerts, h = height, co = target cylinder position, botFace = Bool for creating face on bottom, bme = bmesh to insert mesh data into
+def makeCylinder(r, N, h, co:Vector=Vector((0,0,0)), botFace=True, topFace=True, flipNormals=False, bme=None):
+    # create new bmesh object
+    if bme is None:
+        bme = bmesh.new()
+
+    # initialize lists
+    topVerts = []
+    botVerts = []
     sideFaces = []
+
+    # create upper and lower circles
     for i in range(N):
         x = r * math.cos(((2 * math.pi) / N) * i)
         y = r * math.sin(((2 * math.pi) / N) * i)
         z = h / 2
-        coordT = (x + co[0], y + co[1], z + co[2])
-        coordB = (x + co[0], y + co[1], -z + co[2])
-        vertListT.append(bme.verts.new(coordT))
-        vertListB.append(bme.verts.new(coordB))
-
-    # create top and bottom faces
-    topVerts = vertListT[:]
-    botVerts = vertListB[::-1]
-    if topFace:
-        bme.faces.new(topVerts)
-    if botFace:
-        bme.faces.new(botVerts)
+        coordT = co + Vector((x, y, z))
+        coordB = co + Vector((x, y, -z))
+        topVerts.append(bme.verts.new(coordT))
+        botVerts.append(bme.verts.new(coordB))
 
     # create faces on the sides
-    sideFaces.append(bme.faces.new((vertListT[-1], vertListB[-1], vertListB[0], vertListT[0])))
-    for v in range(N-1):
-        sideFaces.append(bme.faces.new((vertListT.pop(0), vertListB.pop(0), vertListB[0], vertListT[0])))
-
+    for v in range(N):
+        idx1 = v if flipNormals else (v-1)
+        idx2 = (v-1) if flipNormals else v
+        sideFaces.append(bme.faces.new((topVerts[idx1], botVerts[idx1], botVerts[idx2], topVerts[idx2])))
+    # set side faces to smooth
     for f in sideFaces:
         f.smooth = True
 
+    # create top and bottom faces
+    if topFace:
+        bme.faces.new(topVerts if not flipNormals else topVerts[::-1])
+    if botFace:
+        bme.faces.new(botVerts[::-1] if not flipNormals else botVerts)
+
     # return bmesh
-    return bme, botVerts, topVerts
+    return bme, botVerts[::-1], topVerts
 
 # r = radius, N = numVerts, h = height, t = thickness, co = target cylinder position
-def makeTube(r, N, h, t, co=(0,0,0), wings=False, bme=None):
+def makeTube(r, N, h, t, co:Vector=Vector((0,0,0)), wings=False, bme=None):
     # create new bmesh object
     if bme == None:
         bme = bmesh.new()
 
     # create upper and lower circles
-    vertListTInner = []
-    vertListBInner = []
-    vertListTOuter = []
-    vertListBOuter = []
     for i in range(N):
-        # set coord x,y,z locations
-        xInner = r * math.cos(((2 * math.pi) / N) * i)
-        xOuter = (r + t) * math.cos(((2 * math.pi) / N) * i)
-        yInner = r * math.sin(((2 * math.pi) / N) * i)
-        yOuter = (r + t) * math.sin(((2 * math.pi) / N) * i)
-        z = h / 2
-        # inner cylinder verts
-        coordT = (xInner + co[0], yInner + co[1], z + co[2])
-        coordB = (xInner + co[0], yInner + co[1], -z + co[2])
-        vertListTInner.append(bme.verts.new(coordT))
-        vertListBInner.append(bme.verts.new(coordB))
-        # outer cylinder verts
-        coordT = (xOuter + co[0], yOuter + co[1], z + co[2])
-        coordB = (xOuter + co[0], yOuter + co[1], -z + co[2])
-        vertListTOuter.append(bme.verts.new(coordT))
-        vertListBOuter.append(bme.verts.new(coordB))
-        # create faces between them
-        if i > 0:
-            bme.faces.new((vertListBOuter[-2], vertListBInner[-2], vertListBInner[-1], vertListBOuter[-1]))
+        bme, vertListBInner, vertListTInner = makeCylinder(r, N, h, co=co, botFace=False, topFace=False, flipNormals=True, bme=bme)
+        bme, vertListBOuter, vertListTOuter = makeCylinder(r + t, N, h, co=co, botFace=False, topFace=False, bme=bme)
+    for i in range(len(vertListBInner)):
+        bme.faces.new((vertListBOuter[i], vertListBInner[i], vertListBInner[i-1], vertListBOuter[i-1]))
     # select top verts for exclusion from vert group
     for lst in [vertListTOuter, vertListTInner]:
         for v in lst:
             v.select = True
 
-    bme.faces.new((vertListBOuter[-1], vertListBInner[-1], vertListBInner[0], vertListBOuter[0]))
-
-    # create faces on the outer and inner sides
-    sideFaces = []
-    sideFaces.append(bme.faces.new((vertListTOuter[-1], vertListBOuter[-1], vertListBOuter[0], vertListTOuter[0])))
-    sideFaces.append(bme.faces.new((vertListTInner[0], vertListBInner[0], vertListBInner[-1], vertListTInner[-1])))
-    for v in range(N-1):
-        sideFaces.append(bme.faces.new((vertListTOuter.pop(0), vertListBOuter.pop(0), vertListBOuter[0], vertListTOuter[0])))
-        sideFaces.append(bme.faces.new((vertListTInner[1], vertListBInner[1], vertListBInner.pop(0), vertListTInner.pop(0))))
-
-    for f in sideFaces:
-        f.smooth = True
-
     # return bmesh
     return bme
 
 # r = radius, N = numVerts, h = height, o = z offset, co = target cylinder position, bme = bmesh to insert mesh data into
-def makeInnerCylinder(r, N, h, co=(0,0,0), bme=None):
+def makeInnerCylinder(r, N, h, co:Vector=Vector((0,0,0)), bme=None):
     """ Make a brick inner cylinder """
-    # create upper circle
-    vertListT = []
-    vertListB = []
-    vertListBDict = {"++":[], "-+":[], "--":[], "+-":[], "x+":[], "x-":[], "y+":[], "y-":[]}
-    for i in range(N):
-        # set coord x,y,z locations
-        x = r * math.cos(((2 * math.pi) / N) * i)
-        y = r * math.sin(((2 * math.pi) / N) * i)
-        z = co[2]
-        # create top verts
-        vertListT.append(bme.verts.new((x + co[0], y + co[1], z + h)))
 
-        # create bottom verts and add to dict
-        v = bme.verts.new((x + co[0], y + co[1], z))
-        yP = v.co.y > co[1] # true if 'y' is positive
-        xP = v.co.x > co[0] # true if 'x' is positive
-        if abs(v.co.x - co[0]) < 0.00001:
-            l = "y+" if yP else "y-"
-        elif abs(v.co.y - co[1]) < 0.00001:
-            l = "x+" if xP else "x-"
-        else:
-            if xP and yP:
-                l = "++"
-            elif not xP and yP:
-                l = "-+"
-            elif not xP and not yP:
-                l = "--"
-            else:
-                l = "+-"
-        vertListBDict[l].insert(0,v)
-        vertListB.append(v)
-    bme.faces.new(vertListT[::-1])
-    if len(vertListBDict["y+"]) == 0:
-        v0 = vertListBDict["++"][0]
-        v1 = vertListBDict["-+"][0]
-        if v0.co.y > v1.co.y:
-            vertListBDict["y+"] = [vertListBDict["++"].pop(0)]
-        else:
-            vertListBDict["y+"] = [vertListBDict["-+"].pop(-1)]
-    if len(vertListBDict["x+"]) == 0:
-        v0 = vertListBDict["+-"][0]
-        v1 = vertListBDict["++"][0]
-        if v0.co.x > v1.co.x:
-            vertListBDict["x+"] = [vertListBDict["+-"].pop(0)]
-        else:
-            vertListBDict["x+"] = [vertListBDict["++"].pop(-1)]
-    if len(vertListBDict["y-"]) == 0:
-        v0 = vertListBDict["--"][0]
-        v1 = vertListBDict["+-"][0]
-        if v0.co.y > v1.co.y:
-            vertListBDict["y-"] = [vertListBDict["--"].pop(0)]
-        else:
-            vertListBDict["y-"] = [vertListBDict["+-"].pop(-1)]
-    if len(vertListBDict["x-"]) == 0:
-        v0 = vertListBDict["-+"][0]
-        v1 = vertListBDict["--"][0]
-        if v0.co.x > v1.co.x:
-            vertListBDict["x-"] = [vertListBDict["-+"].pop(0)]
-        else:
-            vertListBDict["x-"] = [vertListBDict["--"].pop(-1)]
+    # create new bmesh object
+    if bme == None:
+        bme = bmesh.new()
 
-    # select bottom verts for vertex group
-    for v in vertListB:
-        v.select = True
+    # shift co down by half the hight
+    co.z = co.z + h/2
 
-   # # create lower circle faces with square
-   # lastKey = "x-y"
-   # for key in ["xy", "-xy", "-x-y", "x-y"]:
-   #     bme.faces.new((vertListBDict[lastKey][1][-1], vertListBDict[key][1][0], vertListBDict[key][0], vertListBDict[lastKey][0]))
-   #     for i in range(1, len(vertListBDict[key][1])):
-   #         bme.faces.new((vertListBDict[key][1][i-1], vertListBDict[key][1][i], vertListBDict[key][0]))
-   #     lastKey = key
+    # create cylinder
+    bme, vertListB, vertListT = makeCylinder(r, N, h, co=co, botFace=False, flipNormals=True, bme=bme)
 
-    # create faces around edge
-    sideFaces = []
-    sideFaces.append(bme.faces.new((vertListT[0], vertListB[0], vertListB[-1], vertListT[-1])))
-    for v in range(N-1):
-        sideFaces.append(bme.faces.new((vertListT[1], vertListB[1], vertListB.pop(0), vertListT.pop(0))))
+    idx4 = len(vertListB) - 1
+    idx1 = int(round(len(vertListB) * 1 / 4)) - 1
+    idx2 = int(round(len(vertListB) * 2 / 4)) - 1
+    idx3 = int(round(len(vertListB) * 3 / 4)) - 1
 
-    for f in sideFaces:
-        f.smooth = True
+    vertListBDict = {"++":[vertListB[idx] for idx in range(idx1 + 1, idx2)],
+                     "+-":[vertListB[idx] for idx in range(idx2 + 1, idx3)],
+                     "--":[vertListB[idx] for idx in range(idx3 + 1, idx4)],
+                     "-+":[vertListB[idx] for idx in range(0,        idx1)],
+                     "y+":[vertListB[idx1]],
+                     "x+":[vertListB[idx2]],
+                     "y-":[vertListB[idx3]],
+                     "x-":[vertListB[idx4]]}
 
     return vertListBDict
 
@@ -188,11 +149,9 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
     scn, cm, _ = getActiveContextInfo()
 
     # set scale and thickness variables
-    dX = dimensions["width"]
-    dY = dimensions["width"]
-    dZ = dimensions["height"]
+    d = Vector((dimensions["width"] / 2, dimensions["width"] / 2, dimensions["height"] / 2))
     if cm.brickType != "Bricks":
-        dZ = dZ*brickSize[2]
+        d.z = d.z * brickSize[2]
     thickZ = dimensions["thickness"]
     if detail == "High Detail" and not (brickSize[0] == 1 or brickSize[1] == 1) and brickSize[2] != 1:
         thickXY = dimensions["thickness"] - dimensions["tick_depth"]
@@ -201,32 +160,21 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
     sX = (brickSize[0] * 2) - 1
     sY = (brickSize[1] * 2) - 1
 
-    # half scale inputs
-    dX = dX/2
-    dY = dY/2
-    dZ = dZ/2
-
     # set z2b value for use later
-    z2 = -dZ
+    z2 = -d.z
     if cm.brickType in ["Bricks and Plates"] and brickSize[2] == 3:
-        z2b = dZ-thickZ-dimensions["support_height_triple"]
+        z2b = d.z-thickZ-dimensions["support_height_triple"]
     else:
-        z2b = dZ-thickZ-dimensions["support_height"]
+        z2b = d.z-thickZ-dimensions["support_height"]
 
     # CREATING CUBE
-    v1 = bme.verts.new(( dX * sX, dY * sY, dZ))
-    v2 = bme.verts.new((-dX, dY * sY, dZ))
-    v3 = bme.verts.new((-dX,-dY, dZ))
-    v4 = bme.verts.new(( dX * sX,-dY, dZ))
-    bme.faces.new((v1, v2, v3, v4))
-    v5 = bme.verts.new(( dX * sX, dY * sY,-dZ))
-    v6 = bme.verts.new((-dX, dY * sY,-dZ))
-    bme.faces.new((v2, v1, v5, v6))
-    v7 = bme.verts.new((-dX,-dY,-dZ))
-    bme.faces.new((v3, v2, v6, v7))
-    v8 = bme.verts.new(( dX * sX,-dY,-dZ))
-    bme.faces.new((v1, v4, v8, v5))
-    bme.faces.new((v4, v3, v7, v8))
+    x1 = -d.x
+    x2 = d.x * sX
+    y1 = -d.y
+    y2 = d.y * sY
+    z1 = -d.z
+    z2 = d.z
+    v1, v2, v3, v4, v5, v6, v7, v8 = makeCube((x1, y1, z1), (x2, y2, z2), [1, 1 if detail == "Flat" else 0, 1, 1, 1, 1], bme=bme)
 
     # CREATING STUD(S)
     if stud:
@@ -237,315 +185,195 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                     zCO = dimensions["stud_offset_triple"]-(studInset/2)
                 else:
                     zCO = dimensions["stud_offset"]-(studInset/2)
-                _,botVerts,_ = makeCylinder(r=dimensions["stud_radius"], N=numStudVerts, h=dimensions["stud_height"]+studInset, co=(xNum*dX*2,yNum*dY*2,zCO), botFace=False, bme=bme)
+                _,botVerts,_ = makeCylinder(r=dimensions["stud_radius"], N=numStudVerts, h=dimensions["stud_height"]+studInset, co=Vector((xNum*d.x*2,yNum*d.y*2,zCO)), botFace=False, bme=bme)
                 for v in botVerts:
                     v.select = True
 
-    if detail == "Flat":
-        bme.faces.new((v8, v7, v6, v5))
-    else:
+    if detail != "Flat":
         # creating cylinder
-        # making verts for hollow portion at bottom
-        v9 = bme.verts.new((v5.co.x-thickXY, v5.co.y-thickXY, v5.co.z))
-        v10 = bme.verts.new((v6.co.x+thickXY, v6.co.y-thickXY, v6.co.z))
-        v11 = bme.verts.new((v7.co.x+thickXY, v7.co.y+thickXY, v7.co.z))
-        v12 = bme.verts.new((v8.co.x-thickXY, v8.co.y+thickXY, v8.co.z))
-        # making verts for hollow portion at top
-        v13 = bme.verts.new((v9.co.x, v9.co.y, dZ-thickZ))
-        v14 = bme.verts.new((v10.co.x, v10.co.y, dZ-thickZ))
-        bme.faces.new((v9, v13, v14, v10))
-        v15 = bme.verts.new((v11.co.x, v11.co.y, dZ-thickZ))
-        bme.faces.new((v10, v14, v15, v11))
-        v16 = bme.verts.new((v12.co.x, v12.co.y, dZ-thickZ))
-        bme.faces.new((v11, v15, v16, v12))
-        bme.faces.new((v12,v16, v13, v9))
+        # making verts for hollow portion
+        x1 = v2.co.x + thickXY
+        x2 = v6.co.x - thickXY
+        y1 = v2.co.y + thickXY
+        y2 = v4.co.y - thickXY
+        z1 = v1.co.z
+        z2 = d.z - thickZ
+        v9, v10, v11, v12, v13, v14, v15, v16 = makeCube((x1, y1, z1), (x2, y2, z2), [1 if detail == "Low Detail" else 0, 0, 1, 1, 1, 1], flipNormals=True, bme=bme)
         # set edge vert refs (n=negative, p=positive, o=outer, i=inner)
-        nno = v5
-        pno = v6
+        nno = v1
+        npo = v3
+        pno = v5
         ppo = v7
-        npo = v8
         nni = v9
-        pni = v10
-        ppi = v11
-        npi = v12
+        npi = v11
+        pni = v13
+        ppi = v15
         # make tick marks inside 2 by x bricks
         if detail == "High Detail" and ((brickSize[0] == 2 and brickSize[1] > 1) or (brickSize[1] == 2 and brickSize[0] > 1)) and brickSize[2] != 1:
             for xNum in range(brickSize[0]):
                 for yNum in range(brickSize[1]):
                     to_select = []
+                    # initialize z
+                    z1 = -d.z
+                    z2 = d.z - thickZ
                     if xNum == 0:
-                        # initialize x, y, z
-                        x1 = -dX+thickXY
-                        x2 = x1+dimensions["tick_depth"]
-                        y1 = yNum*dY*2+dimensions["tick_width"]/2
-                        y2 = yNum*dY*2-dimensions["tick_width"]/2
-                        z1 = dZ-thickZ
-                        z2 = -dZ
+                        # initialize x, y
+                        x1 = -d.x + thickXY
+                        x2 = -d.x + thickXY + dimensions["tick_depth"]
+                        y1 = yNum * d.y * 2 - dimensions["tick_width"] / 2
+                        y2 = yNum * d.y * 2 + dimensions["tick_width"] / 2
                         # CREATING SUPPORT BEAM
-                        v1 = bme.verts.new((x1, y1, z1))
-                        v2 = bme.verts.new((x1, y2, z1))
-                        v3 = bme.verts.new((x1, y1, z2))
-                        v4 = bme.verts.new((x1, y2, z2))
-                        v5 = bme.verts.new((x2, y1, z1))
-                        v6 = bme.verts.new((x2, y2, z1))
-                        v7 = bme.verts.new((x2, y1, z2))
-                        v8 = bme.verts.new((x2, y2, z2))
-                        bme.faces.new((v8, v6, v2, v4))
-                        bme.faces.new((v4, v3, v7, v8))
-                        bme.faces.new((v5, v7, v3, v1))
-                        bme.faces.new((v6, v8, v7, v5))
-                        to_select += [v1, v2, v3, v4]
+                        v1, v2, v3, v4, _, _, _, _ = makeCube((x1, y1, z1), (x2, y2, z2), sides=[0, 1, 1, 0, 1, 1], bme=bme)
+                        to_select += [v1, v3, v2, v4]
                         if yNum == 0:
-                            bme.faces.new((v4, ppi, ppo))
-                            pass
+                            bme.faces.new((v1, nni, nno))
                         else:
-                            bme.faces.new((v4, xN0v, ppo))
+                            bme.faces.new((v1, xN0v, nno))
                         if yNum == brickSize[1]-1:
-                            bme.faces.new((v3, pno, pni))
-                            bme.faces.new((v3, v4, ppo, pno))
-                            pass
+                            bme.faces.new((v3, npo, npi))
+                            bme.faces.new((v3, v1, nno, npo))
                         else:
-                            bme.faces.new((v3, v4, ppo))
-                            pass
+                            bme.faces.new((v3, v1, nno))
                         xN0v = v3
                     elif xNum == brickSize[0]-1:
-                        # initialize x, y, z
-                        x1 = xNum*dX*2+dX-thickXY
-                        x2 = x1-dimensions["tick_depth"]
-                        y1 = yNum*dY*2+dimensions["tick_width"]/2
-                        y2 = yNum*dY*2-dimensions["tick_width"]/2
-                        z1 = dZ-thickZ
-                        z2 = -dZ
+                        # initialize x, y
+                        x1 = xNum * d.x * 2 + d.x - thickXY - dimensions["tick_depth"]
+                        x2 = xNum * d.x * 2 + d.x - thickXY
+                        y1 = yNum * d.y * 2 - dimensions["tick_width"] / 2
+                        y2 = yNum * d.y * 2 + dimensions["tick_width"] / 2
                         # CREATING SUPPORT BEAM
-                        v1 = bme.verts.new((x1, y1, z1))
-                        v2 = bme.verts.new((x1, y2, z1))
-                        v3 = bme.verts.new((x1, y1, z2))
-                        v4 = bme.verts.new((x1, y2, z2))
-                        v5 = bme.verts.new((x2, y1, z1))
-                        v6 = bme.verts.new((x2, y2, z1))
-                        v7 = bme.verts.new((x2, y1, z2))
-                        v8 = bme.verts.new((x2, y2, z2))
-                        bme.faces.new((v4, v2, v6, v8))
-                        bme.faces.new((v8, v7, v3, v4))
-                        bme.faces.new((v1, v3, v7, v5))
-                        bme.faces.new((v5, v7, v8, v6))
-                        to_select += [v1, v2, v3, v4]
+                        _, _, _, _, v5, v6, v7, v8 = makeCube((x1, y1, z1), (x2, y2, z2), sides=[0, 1, 0, 1, 1, 1], bme=bme)
+                        to_select += [v5, v6, v7, v8]
                         if yNum == 0:
-                            bme.faces.new((npi, v4, npo))
-                            pass
+                            bme.faces.new((pni, v5, pno))
                         else:
-                            bme.faces.new((v4, npo, xN1v))
+                            bme.faces.new((v5, pno, xN1v))
                         if yNum == brickSize[1]-1:
-                            bme.faces.new((nno, v3, nni))
-                            bme.faces.new((v4, v3, nno, npo))
-                            pass
+                            bme.faces.new((ppo, v7, ppi))
+                            bme.faces.new((v5, v7, ppo, pno))
                         else:
-                            bme.faces.new((v4, v3, npo))
-                            pass
-                        xN1v = v3
+                            bme.faces.new((v5, v7, pno))
+                        xN1v = v7
                     if yNum == 0:
-                        # initialize x, y, z
-                        y1 = -dY+thickXY
-                        y2 = y1+dimensions["tick_depth"]
-                        x1 = xNum*dX*2+dimensions["tick_width"]/2
-                        x2 = xNum*dX*2-dimensions["tick_width"]/2
-                        z1 = dZ-thickZ
-                        z2 = -dZ
+                        # initialize x, y
+                        y1 = -d.y + thickXY
+                        y2 = -d.y + thickXY + dimensions["tick_depth"]
+                        x1 = xNum * d.x * 2 - dimensions["tick_width"] / 2
+                        x2 = xNum * d.x * 2 + dimensions["tick_width"] / 2
                         # CREATING SUPPORT BEAM
-                        v1 = bme.verts.new((x1, y1, z1))
-                        v2 = bme.verts.new((x2, y1, z1))
-                        v3 = bme.verts.new((x1, y1, z2))
-                        v4 = bme.verts.new((x2, y1, z2))
-                        v5 = bme.verts.new((x1, y2, z1))
-                        v6 = bme.verts.new((x2, y2, z1))
-                        v7 = bme.verts.new((x1, y2, z2))
-                        v8 = bme.verts.new((x2, y2, z2))
-                        bme.faces.new((v4, v2, v6, v8))
-                        bme.faces.new((v8, v7, v3, v4))
-                        bme.faces.new((v1, v3, v7, v5))
-                        bme.faces.new((v5, v7, v8, v6))
-                        to_select += [v1, v2, v3, v4]
+                        v1, v2, _, _, v5, v6, _, _ = makeCube((x1, y1, z1), (x2, y2, z2), sides=[0, 1, 1, 1, 1, 0], bme=bme)
+                        to_select += [v1, v2, v5, v6]
                         if xNum == 0:
-                            bme.faces.new((ppi, v4, ppo))
-                            pass
+                            bme.faces.new((nni, v1, nno))
                         else:
-                            bme.faces.new((v3, ppo, yN0v))
-                            pass
+                            bme.faces.new((v5, nno, yN0v))
                         if xNum == brickSize[0]-1:
-                            bme.faces.new((npo, v3, npi))
-                            bme.faces.new((ppo, v4, v3, npo))
-                            pass
+                            bme.faces.new((pno, v5, pni))
+                            bme.faces.new((nno, v1, v5, pno))
                         else:
-                            bme.faces.new((v4, v3, ppo))
-                            pass
-                        yN0v = v3
+                            bme.faces.new((v1, v5, nno))
+                        yN0v = v5
                     elif yNum == brickSize[1]-1:
-                        # initialize x, y, z
-                        y1 = yNum*dY*2+dY-thickXY
-                        y2 = y1-dimensions["tick_depth"]
-                        x1 = xNum*dX*2+dimensions["tick_width"]/2
-                        x2 = xNum*dX*2-dimensions["tick_width"]/2
-                        z1 = dZ-thickZ
-                        z2 = -dZ
+                        # initialize x, y
+                        x1 = xNum * d.x * 2 - dimensions["tick_width"] / 2
+                        x2 = xNum * d.x * 2 + dimensions["tick_width"] / 2
+                        y1 = yNum * d.y * 2 + d.y - thickXY - dimensions["tick_depth"]
+                        y2 = yNum * d.y * 2 + d.y - thickXY
                         # CREATING SUPPORT BEAM
-                        v1 = bme.verts.new((x1, y1, z1))
-                        v2 = bme.verts.new((x1, y2, z1))
-                        v3 = bme.verts.new((x1, y1, z2))
-                        v4 = bme.verts.new((x1, y2, z2))
-                        v5 = bme.verts.new((x2, y1, z1))
-                        v6 = bme.verts.new((x2, y2, z1))
-                        v7 = bme.verts.new((x2, y1, z2))
-                        v8 = bme.verts.new((x2, y2, z2))
-                        bme.faces.new((v4, v2, v6, v8))
-                        bme.faces.new((v8, v7, v3, v4))
-                        bme.faces.new((v8, v6, v5, v7))
-                        bme.faces.new((v2, v4, v3, v1))
+                        _, _, v3, v4, _, _, v7, v8 = makeCube((x1, y1, z1), (x2, y2, z2), sides=[0, 1, 1, 1, 0, 1], bme=bme)
                         # select bottom connecting verts for exclusion from vertex group
-                        to_select += [v1, v2, v3, v7]
+                        to_select += [v3, v4, v7, v8]
                         if xNum == 0:
-                            bme.faces.new((v7, pni, pno))
+                            bme.faces.new((v3, npi, npo))
                             pass
                         else:
-                            bme.faces.new((pno, v7, yN1v))
+                            bme.faces.new((npo, v3, yN1v))
                         if xNum == brickSize[0]-1:
-                            bme.faces.new((v3, nno, nni))
-                            bme.faces.new((v3, v7, pno, nno))
+                            bme.faces.new((v7, ppo, ppi))
+                            bme.faces.new((v7, v3, npo, ppo))
                             pass
                         else:
-                            bme.faces.new((v3, v7, pno))
+                            bme.faces.new((v7, v3, npo))
                             pass
-                        yN1v = v3
+                        yN1v = v7
                     # select verts for exclusion from vertex group
                     for v in to_select:
                         v.select = True
         else:
             # make faces on bottom edges of brick
-            bme.faces.new((v5, v9, v10, v6))
-            bme.faces.new((v6, v10, v11, v7))
-            bme.faces.new((v7, v11, v12, v8))
-            bme.faces.new((v8, v12, v9, v5))
+            bme.faces.new((v1,  v9,  v13, v5))
+            bme.faces.new((v1,  v3,  v11, v9))
+            bme.faces.new((v15, v7,  v5,  v13))
+            bme.faces.new((v15, v11, v3,  v7))
+            pass
 
 
         # make tubes
         addSupports = (brickSize[0] > 2 and brickSize[1] == 2) or (brickSize[1] > 2 and brickSize[0] == 2)
+        z1 = z2b
+        z2 = d.z-thickZ
         for xNum in range(brickSize[0]-1):
             for yNum in range(brickSize[1]-1):
-                tubeX = (xNum * dX * 2) + dX
-                tubeY = (yNum * dY * 2) + dY
+                tubeX = (xNum * d.x * 2) + d.x
+                tubeY = (yNum * d.y * 2) + d.y
                 tubeZ = (-thickZ/2)
                 r = dimensions["stud_radius"]
-                t = (dZ*2)-thickZ
-                makeTube(r, numStudVerts, t, dimensions["tube_thickness"], co=(tubeX, tubeY, tubeZ), wings=True, bme=bme)
+                t = (d.z*2)-thickZ
+                makeTube(r, numStudVerts, t, dimensions["tube_thickness"], co=Vector((tubeX, tubeY, tubeZ)), wings=True, bme=bme)
                 # add support next to odd tubes
                 if not (detail == "Medium Detail" or detail == "High Detail") or not addSupports or brickSize[2] == 1:
                     continue
                 if brickSize[0] > brickSize[1]:
                     if brickSize[0] == 3 or xNum % 2 == 1:
-                        # initialize x, y, z
-                        x1 = tubeX + (dimensions["support_width"]/2)
-                        x2 = tubeX - (dimensions["support_width"]/2)
+                        # initialize x, y
+                        x1 = tubeX - (dimensions["support_width"]/2)
+                        x2 = tubeX + (dimensions["support_width"]/2)
                         y1 = tubeY + r
-                        y2 = tubeY + dY*2-thickXY
-                        y3 = tubeY - r
-                        y4 = tubeY - dY*2+thickXY
-                        z1 = dZ-thickZ
-                        z2 = z2b
+                        y2 = tubeY + d.y*2-thickXY
+                        y3 = tubeY - d.y*2+thickXY
+                        y4 = tubeY - r
                         # CREATING SUPPORT BEAM
-                        v1a = bme.verts.new((x1, y1, z1))
-                        v2a = bme.verts.new((x2, y1, z1))
-                        v3a = bme.verts.new((x1, y1, z2))
-                        v4a = bme.verts.new((x2, y1, z2))
-                        v5a = bme.verts.new((x1, y2, z1))
-                        v6a = bme.verts.new((x2, y2, z1))
-                        v7a = bme.verts.new((x1, y2, z2))
-                        v8a = bme.verts.new((x2, y2, z2))
-                        bme.faces.new((v1a, v3a, v7a, v5a))
-                        bme.faces.new((v3a, v4a, v8a, v7a))
-                        bme.faces.new((v6a, v8a, v4a, v2a))
-                        v1b = bme.verts.new((x1, y3, z1))
-                        v2b = bme.verts.new((x2, y3, z1))
-                        v3b = bme.verts.new((x1, y3, z2))
-                        v4b = bme.verts.new((x2, y3, z2))
-                        v5b = bme.verts.new((x1, y4, z1))
-                        v6b = bme.verts.new((x2, y4, z1))
-                        v7b = bme.verts.new((x1, y4, z2))
-                        v8b = bme.verts.new((x2, y4, z2))
-                        bme.faces.new((v5b, v7b, v3b, v1b))
-                        bme.faces.new((v7b, v8b, v4b, v3b))
-                        bme.faces.new((v2b, v4b, v8b, v6b))
+                        makeCube((x1, y1, z1), (x2, y2, z2), sides=[0, 1, 1, 1, 0, 0], bme=bme)
+                        makeCube((x1, y3, z1), (x2, y4, z2), sides=[0, 1, 1, 1, 0, 0], bme=bme)
                 elif brickSize[1] > brickSize[0]:
                     if brickSize[1] == 3 or yNum % 2 == 1:
-                        # initialize x, y, z
+                        # initialize x, y
                         x1 = tubeX + r
-                        x2 = tubeX + dX*2-thickXY
-                        x3 = tubeX - r
-                        x4 = tubeX - dX*2+thickXY
-                        y1 = tubeY + (dimensions["support_width"]/2)
-                        y2 = tubeY - (dimensions["support_width"]/2)
-                        z1 = dZ-thickZ
-                        z2 = z2b
+                        x2 = tubeX + d.x*2-thickXY
+                        x3 = tubeX - d.x*2+thickXY
+                        x4 = tubeX - r
+                        y1 = tubeY - (dimensions["support_width"] / 2)
+                        y2 = tubeY + (dimensions["support_width"] / 2)
                         # CREATING SUPPORT BEAM
-                        v1a = bme.verts.new((x1, y1, z1))
-                        v2a = bme.verts.new((x1, y2, z1))
-                        v3a = bme.verts.new((x1, y1, z2))
-                        v4a = bme.verts.new((x1, y2, z2))
-                        v5a = bme.verts.new((x2, y1, z1))
-                        v6a = bme.verts.new((x2, y2, z1))
-                        v7a = bme.verts.new((x2, y1, z2))
-                        v8a = bme.verts.new((x2, y2, z2))
-                        bme.faces.new((v5a, v7a, v3a, v1a))
-                        bme.faces.new((v7a, v8a, v4a, v3a))
-                        bme.faces.new((v2a, v4a, v8a, v6a))
-                        v1b = bme.verts.new((x3, y1, z1))
-                        v2b = bme.verts.new((x3, y2, z1))
-                        v3b = bme.verts.new((x3, y1, z2))
-                        v4b = bme.verts.new((x3, y2, z2))
-                        v5b = bme.verts.new((x4, y1, z1))
-                        v6b = bme.verts.new((x4, y2, z1))
-                        v7b = bme.verts.new((x4, y1, z2))
-                        v8b = bme.verts.new((x4, y2, z2))
-                        bme.faces.new((v1b, v3b, v7b, v5b))
-                        bme.faces.new((v3b, v4b, v8b, v7b))
-                        bme.faces.new((v6b, v8b, v4b, v2b))
+                        makeCube((x1, y1, z1), (x2, y2, z2), sides=[0, 1, 0, 0, 1, 1], bme=bme)
+                        makeCube((x3, y1, z1), (x4, y2, z2), sides=[0, 1, 0, 0, 1, 1], bme=bme)
         # Adding bar inside 1 by x bricks
         if brickSize[0] == 1:
             for y in range(1, brickSize[1]):
                 barX = 0
-                barY = (y * dY * 2) - dY
+                barY = (y * d.y * 2) - d.y
                 barZ = -thickZ/2
                 r = dimensions["bar_radius"]
-                _,_,topVerts = makeCylinder(r=r, N=numStudVerts, h=(dZ*2)-thickZ, co=(barX, barY, barZ), botFace=True, topFace=False, bme=bme)
+                _,_,topVerts = makeCylinder(r=r, N=numStudVerts, h=(d.z*2)-thickZ, co=Vector((barX, barY, barZ)), botFace=True, topFace=False, bme=bme)
                 # select top verts for exclusion from vert group
                 for v in topVerts:
                     v.select = True
                 if (detail == "Medium Detail" or detail == "High Detail") and brickSize[2] != 1:
                     if brickSize[1] == 3 or brickSize[1] == 2 or y % 2 == 0 or ((y == 1 or y == brickSize[1]-1) and brickSize[1] == 8):
                         # initialize x, y, z
-                        x2 = barX + dX-thickXY
-                        x4 = barX - dX+thickXY
-                        y1 = barY + (dimensions["support_width"]/2)
-                        y2 = barY - (dimensions["support_width"]/2)
-                        z1 = dZ-thickZ
-                        z2 = z2b
+                        x1 = barX - d.x+thickXY
+                        x2 = barX + d.x-thickXY
+                        y1 = barY - (dimensions["support_width"]/2)
+                        y2 = barY + (dimensions["support_width"]/2)
                         # CREATING SUPPORT BEAM
-                        v1 = bme.verts.new((x2, y1, z1))
-                        v2 = bme.verts.new((x2, y2, z1))
-                        v3 = bme.verts.new((x2, y1, z2))
-                        v4 = bme.verts.new((x2, y2, z2))
-                        v5 = bme.verts.new((x4, y1, z1))
-                        v6 = bme.verts.new((x4, y2, z1))
-                        v7 = bme.verts.new((x4, y1, z2))
-                        v8 = bme.verts.new((x4, y2, z2))
-                        bme.faces.new((v4, v2, v6, v8))
-                        bme.faces.new((v8, v7, v3, v4))
-                        bme.faces.new((v1, v3, v7, v5))
+                        makeCube((x1, y1, z1), (x2, y2, z2), sides=[0, 1, 0, 0, 1, 1], bme=bme)
         if brickSize[1] == 1:
             for x in range(1, brickSize[0]):
-                barX = (x * dX * 2) - dX
+                barX = (x * d.x * 2) - d.x
                 barY = 0
                 barZ = -thickZ/2
                 r = dimensions["bar_radius"]
-                _,_,topVerts = makeCylinder(r=r, N=numStudVerts, h=(dZ*2)-thickZ, co=(barX, barY, barZ), botFace=True, topFace=False, bme=bme)
+                _,_,topVerts = makeCylinder(r=r, N=numStudVerts, h=(d.z*2)-thickZ, co=Vector((barX, barY, barZ)), botFace=True, topFace=False, bme=bme)
                 # select top verts for exclusion from vert group
                 for v in topVerts:
                     v.select = True
@@ -554,97 +382,71 @@ def makeBrick(dimensions, brickSize, numStudVerts=None, detail="Low Detail", log
                     continue
                 if brickSize[0] == 3 or brickSize[0] == 2 or x % 2 == 0 or ((x == 1 or x == brickSize[0]-1) and brickSize[0] == 8):
                     # initialize x, y, z
-                    x1 = barX + (dimensions["support_width"]/2)
-                    x2 = barX - (dimensions["support_width"]/2)
-                    y2 = barY + dY-thickXY
-                    y4 = barY - dY+thickXY
-                    z1 = dZ-thickZ
-                    z2 = z2b
+                    x1 = barX - (dimensions["support_width"]/2)
+                    x2 = barX + (dimensions["support_width"]/2)
+                    y1 = barY - d.y+thickXY
+                    y2 = barY + d.y-thickXY
                     # CREATING SUPPORT BEAM
-                    v1 = bme.verts.new((x1, y2, z1))
-                    v2 = bme.verts.new((x2, y2, z1))
-                    v3 = bme.verts.new((x1, y2, z2))
-                    v4 = bme.verts.new((x2, y2, z2))
-                    v5 = bme.verts.new((x1, y4, z1))
-                    v6 = bme.verts.new((x2, y4, z1))
-                    v7 = bme.verts.new((x1, y4, z2))
-                    v8 = bme.verts.new((x2, y4, z2))
-                    bme.faces.new((v8, v6, v2, v4))
-                    bme.faces.new((v4, v3, v7, v8))
-                    bme.faces.new((v5, v7, v3, v1))
+                    makeCube((x1, y1, z1), (x2, y2, z2), sides=[0, 1, 1, 1, 0, 0], bme=bme)
         # make face at top
-        if detail == "Low Detail":
-            bme.faces.new((v16, v15, v14, v13))
-        else:
-        # make small inner cylinder at top
+        if detail in ["Medium Detail", "High Detail"]:
+            # make small inner cylinder at top
             botVertsDofDs = {}
             for xNum in range(brickSize[0]):
                 for yNum in range(brickSize[1]):
                     r = dimensions["stud_radius"]-(2 * thickZ)
                     N = numStudVerts
                     h = thickZ * 0.99
-                    botVertsD = makeInnerCylinder(r, N, h, co=(xNum*dX*2,yNum*dY*2,dZ-thickZ), bme=bme)
+                    botVertsD = makeInnerCylinder(r, N, h, co=Vector((xNum*d.x*2,yNum*d.y*2,d.z-thickZ)), bme=bme)
                     botVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = botVertsD
 
             # Make corner faces
             vList = botVertsDofDs["0,0"]["y-"] + botVertsDofDs["0,0"]["--"] + botVertsDofDs["0,0"]["x-"]
             for i in range(1, len(vList)):
-                bme.faces.new((vList[i], vList[i-1], v15))
+                bme.faces.new((vList[i], vList[i-1], v10))
             vList = botVertsDofDs[str(xNum) + "," + str(0)]["x+"] + botVertsDofDs[str(xNum) + "," + str(0)]["+-"] + botVertsDofDs[str(xNum) + "," + str(0)]["y-"]
             for i in range(1, len(vList)):
-                bme.faces.new((vList[i], vList[i-1], v16))
+                bme.faces.new((vList[i], vList[i-1], v14))
             vList = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["++"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["x+"]
             for i in range(1, len(vList)):
-                bme.faces.new((vList[i], vList[i-1], v13))
+                bme.faces.new((vList[i], vList[i-1], v16))
             vList = botVertsDofDs[str(0) + "," + str(yNum)]["x-"] + botVertsDofDs[str(0) + "," + str(yNum)]["-+"] + botVertsDofDs[str(0) + "," + str(yNum)]["y+"]
             for i in range(1, len(vList)):
-                bme.faces.new((vList[i], vList[i-1], v14))
+                bme.faces.new((vList[i], vList[i-1], v12))
 
             # Make edge faces
             v = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"][0]
-            bme.faces.new((v14, v13, v))
-            # except:
-            #     v = botVertsDofDs[str(xNum) + "," + str(yNum)]["++"][0]
-            # bme.faces.new((v14, v13, v))
+            bme.faces.new((v12, v16, v))
             v = botVertsDofDs[str(0) + "," + str(yNum)]["x-"][0]
-            bme.faces.new((v15, v14, v))
-            # except:
-            #     v = botVertsDofDs[str(0) + "," + str(yNum)]["--"][0]
-            # bme.faces.new((v15, v14, v))
+            bme.faces.new((v10, v12, v))
             v = botVertsDofDs[str(0) + "," + str(0)]["y-"][0]
-            bme.faces.new((v16, v15, v))
-            # except:
-            #     v = botVertsDofDs[str(0) + "," + str(0)]["--"][0]
-            # bme.faces.new((v16, v15, v))
+            bme.faces.new((v14, v10, v))
             v = botVertsDofDs[str(xNum) + "," + str(0)]["x+"][0]
-            bme.faces.new((v13, v16, v))
-            # except:
-            #     v = botVertsDofDs[str(xNum) + "," + str(0)]["++"][0]
-            # bme.faces.new((v13, v16, v))
+            bme.faces.new((v16, v14, v))
             for xNum in range(1, brickSize[0]):
                 try:
                     v1 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"][0]
                     v2 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"][0]
-                    bme.faces.new((v1, v2, v14))
+                    bme.faces.new((v1, v2, v12))
                 except:
                     pass
                 try:
                     v1 = botVertsDofDs[str(xNum) + "," + str(0)]["y-"][0]
                     v2 = botVertsDofDs[str(xNum-1) + "," + str(0)]["y-"][0]
-                    bme.faces.new((v16, v2, v1))
+                    bme.faces.new((v14, v2, v1))
                 except:
                     pass
             for yNum in range(1, brickSize[1]):
                 try:
                     v1 = botVertsDofDs[str(xNum) + "," + str(yNum)]["x+"][0]
                     v2 = botVertsDofDs[str(xNum) + "," + str(yNum-1)]["x+"][0]
-                    bme.faces.new((v13, v2, v1))
+                    bme.faces.new((v16, v2, v1))
                 except:
                     pass
                 try:
                     v1 = botVertsDofDs[str(0) + "," + str(yNum)]["x-"][0]
                     v2 = botVertsDofDs[str(0) + "," + str(yNum-1)]["x-"][0]
-                    bme.faces.new((v1, v2, v15))
+                    bme.faces.new((v1, v2, v10))
                 except:
                     pass
 
