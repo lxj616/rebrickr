@@ -272,13 +272,7 @@ class Singleton_updater(object):
 
 	@property
 	def tags(self):
-		if self._tags == []:
-			return []
-		tag_names = []
-		for tag in self._tags:
-			tag_names.append(tag["name"])
-
-		return tag_names
+		return [tag["name"] for tag in self._tags]
 
 	@property
 	def tag_latest(self):

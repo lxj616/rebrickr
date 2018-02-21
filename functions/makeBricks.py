@@ -82,9 +82,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
     brick_materials_installed = hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
     if cm.materialType == "Random" and brick_materials_installed:
         mats0 = bpy.data.materials.keys()
-        for color in bpy.props.abs_plastic_materials:
-            if color in mats0 and color in getAbsPlasticMaterials():
-                brick_mats.append(color)
+        brick_mats = [color for color in bpy.props.abs_plastic_materials if color in mats0 and color in getAbsPlasticMaterials]
 
     # initialize progress bar around cursor
     old_percent = 0
@@ -190,10 +188,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
                 brick = bpy.data.objects[name]
                 # create vert group for bevel mod (assuming only logo verts are selected):
                 vg = brick.vertex_groups.new("%(name)s_bevel" % locals())
-                vertList = []
-                for v in brick.data.vertices:
-                    if not v.select:
-                        vertList.append(v.index)
+                vertList = [v.index for v in brick.data.vertices if not v.select]
                 vg.add(vertList, 1, "ADD")
                 # set up remaining brick info
                 bGroup.objects.link(brick)
@@ -211,10 +206,11 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
         allBricksObj.cmlist_id = cm.id
         # create vert group for bevel mod (assuming only logo verts are selected):
         vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())
-        vertList = []
-        for v in allBricksObj.data.vertices:
-            if not v.select:
-                vertList.append(v.index)
+        vertList = [v.index for v in allBricksObj.data.vertices if not v.select]
+        # vertList = []
+        # for v in allBricksObj.data.vertices:
+        #     if not v.select:
+        #         vertList.append(v.index)
         vg.add(vertList, 1, "ADD")
         # add edge split modifier
         addEdgeSplitMod(allBricksObj)

@@ -69,18 +69,20 @@ class splitBricks(Operator):
         # invoke props popup if conditions met
         for cm_idx in self.objNamesD.keys():
             cm = scn.cmlist[cm_idx]
+            if cm.brickType != "Bricks and Plates":
+                continue
             bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
-            if cm.brickType == "Bricks and Plates":
-                for obj_name in self.objNamesD[cm_idx]:
-                    dictKey, dictLoc = getDictKey(obj_name)
-                    size = bricksDict[dictKey]["size"]
-                    if size[2] > 1:
-                        if size[0] + size[1] > 2:
-                            return context.window_manager.invoke_props_popup(self, event)
-                        else:
-                            self.vertical = True
-                            self.splitBricks()
-                            return {"FINISHED"}
+            for obj_name in self.objNamesD[cm_idx]:
+                dictKey, dictLoc = getDictKey(obj_name)
+                size = bricksDict[dictKey]["size"]
+                if size[2] <= 1:
+                    continue
+                if size[0] + size[1] > 2:
+                    return context.window_manager.invoke_props_popup(self, event)
+                else:
+                    self.vertical = True
+                    self.splitBricks()
+                    return {"FINISHED"}
         self.horizontal = True
         self.splitBricks()
         return {"FINISHED"}
@@ -98,9 +100,7 @@ class splitBricks(Operator):
         # initialize objsD (key:cm_idx, val:list of brick objects)
         objsD = createObjsD(selected_objects)
         for cm_idx in objsD.keys():
-            self.objNamesD[cm_idx] = []
-            for obj in objsD[cm_idx]:
-                self.objNamesD[cm_idx].append(obj.name)
+            self.objNamesD[cm_idx] = [obj.name for obj in objsD[cm_idx]]
         # initialize bricksDicts
         for cm_idx in objsD.keys():
             cm = scn.cmlist[cm_idx]
@@ -161,9 +161,7 @@ class splitBricks(Operator):
                         # split the bricks in the matrix
                         splitKeys = Bricks.split(bricksDict, dictKey, loc=dictLoc, cm=cm, v=self.vertical, h=self.horizontal)
                         # append new splitKeys to keysToUpdate
-                        for k in splitKeys:
-                            if k not in keysToUpdate:
-                                keysToUpdate.append(k)
+                        keysToUpdate = [k for k in splitKeys if k not in keysToUpdate]
 
                 # draw modified bricks
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate)
@@ -459,7 +457,7 @@ class drawAdjacent(Operator):
 
             zStep = getZStep(cm)
             decriment = 0
-            dimensions = Bricks.get_dimensions(cm.brickHeight, zStep/3, cm.gap)
+            dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)
             # check all 6 directions for action to be executed
             for i in range(6):
                 # if checking beneath obj in 'Bricks and Plates', check 3 keys below instead of 1 key below
@@ -1009,8 +1007,6 @@ class redrawBricks(Operator):
     bl_label = "Redraw Bricks"
     bl_options = {"REGISTER", "UNDO"}
 
-    # TODO: Add support for redrawing custom objects
-
     ################################################
     # Blender Operator methods
 
@@ -1045,13 +1041,12 @@ class redrawBricks(Operator):
                 bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
                 keysToUpdate = []
 
+                # delete objects to be updated
                 for obj in objsD[cm_idx]:
-                    # get dict key details of current obj
-                    dictKey, dictLoc = getDictKey(obj.name)
-                    # delete the current object
                     delete(obj)
-                    # add curKey to simple bricksDict for drawing
-                    keysToUpdate.append(dictKey)
+
+                # add keys for updated objects to simple bricksDict for drawing
+                keysToUpdate = [getDictKey(obj.name)[0] for obj in objsD[cm_idx]]
 
                 # draw modified bricks
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate)

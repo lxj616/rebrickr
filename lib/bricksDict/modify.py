@@ -141,6 +141,7 @@ def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, p
 
 
 def getBrickExposure(cm, bricksDict, key=None, loc=None):
+    """ return top and bottom exposure of brick at 'key' """
     assert key is not None or loc is not None
     # initialize vars
     topExposed = False
@@ -220,10 +221,12 @@ def canBeJoined(cm, bricksDict, loc, key, i, j, k=0):
 
 def brickAvail(cm, sourceBrick, brick):
     """ check brick is available to merge """
-    if brick:
-        n = cm.source_name
-        Rebrickr_internal_mn = "Rebrickr_%(n)s_internal" % locals()
-        # This if statement ensures brick is present, brick isn't drawn already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal)
-        if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats):
-            return True
-    return False
+    if not brick:
+        return False
+    n = cm.source_name
+    Rebrickr_internal_mn = "Rebrickr_%(n)s_internal" % locals()
+    # This if statement ensures brick is present, brick isn't drawn already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal)
+    if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats):
+        return True
+    else:
+        return False

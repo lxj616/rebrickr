@@ -44,7 +44,7 @@ def matchProperties(cmTo, cmFrom, bh=False):
                 "logoInset",
                 "hiddenUndersideDetail",
                 "exposedUndersideDetail",
-                "cylinderVerts",
+                "circleVerts",
                 "gap",
                 "mergeSeed",
                 "randomLoc",
@@ -182,9 +182,7 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
             item.source_name = ""
             item.name = "<New Model>"
         # get all existing IDs
-        existingIDs = []
-        for cm in scn.cmlist:
-            existingIDs.append(cm.id)
+        existingIDs = [cm.id for cm in scn.cmlist]
         i = max(existingIDs) + 1
         # protect against massive item IDs
         if i > 9999:
@@ -674,9 +672,9 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBricks,
         default="Flat")
 
-    cylinderVerts = IntProperty(
+    circleVerts = IntProperty(
         name="Num Verts",
-        description="Number of vertices for each circle on cylinders",
+        description="Number of vertices for each circle of brick mesh",
         update=dirtyBricks,
         min=4, max=64,
         default=16)

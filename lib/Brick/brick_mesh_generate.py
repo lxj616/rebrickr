@@ -29,11 +29,7 @@ def makeCube(coord1:Vector, coord2:Vector, sides:list=[False]*6, flipNormals:boo
         bme = bmesh.new()
 
     # create vertices
-    vList = []
-    for x in [coord1.x, coord2.x]:
-        for y in [coord1.y, coord2.y]:
-            for z in [coord1.z, coord2.z]:
-                vList.append(bme.verts.new((x, y, z)))
+    vList = [bme.verts.new((x, y, z)) for x in [coord1.x, coord2.x] for y in [coord1.y, coord2.y] for z in [coord1.z, coord2.z]]
 
     # create faces
     v1, v2, v3, v4, v5, v6, v7, v8 = vList
@@ -59,14 +55,42 @@ def makeCube(coord1:Vector, coord2:Vector, sides:list=[False]*6, flipNormals:boo
     return vList
 
 
-def makeCylinder(r:float, N:int, h:float, co:Vector=Vector((0,0,0)), botFace:bool=True, topFace:bool=True, flipNormals:bool=False, bme:bmesh=None):
+def makeCircle(r:float, N:int, co:Vector=Vector((0,0,0)), face=True, bme:bmesh=None):
+    """
+    create a circle with bmesh
+
+    Keyword Arguments:
+        r    -- radius of circle
+        N    -- number of verts on circumference
+        co   -- coordinate of cylinder's center
+        face -- create face between circle verts
+        bme  -- bmesh object in which to create verts
+
+    """
+    # create new bmesh object
+    if bme is None:
+        bme = bmesh.new()
+
+    verts = []
+
+    # create upper and lower circles
+    for i in range(N):
+        x = r * math.cos(((2 * math.pi) / N) * i)
+        y = r * math.sin(((2 * math.pi) / N) * i)
+        coord = co + Vector((x, y, 0))
+        verts.append(bme.verts.new(coordT))
+
+    return bme, verts
+
+
+def makeCylinder(r:float, h:float, N:int, co:Vector=Vector((0,0,0)), botFace:bool=True, topFace:bool=True, flipNormals:bool=False, bme:bmesh=None):
     """
     create a cylinder with bmesh
 
     Keyword Arguments:
         r           -- radius of cylinder
-        N           -- number of verts per circle
         h           -- height of cylinder
+        N           -- number of verts per circle
         co          -- coordinate of cylinder's center
         botFace     -- create face on bottom of cylinder
         topFace     -- create face on top of cylinder
@@ -112,17 +136,19 @@ def makeCylinder(r:float, N:int, h:float, co:Vector=Vector((0,0,0)), botFace:boo
     return bme, botVerts[::-1], topVerts
 
 
-def makeTube(r:float, N:int, h:float, t:float, co:Vector=Vector((0,0,0)), bme:bmesh=None):
+def makeTube(r:float, h:float, t:float, N:int, co:Vector=Vector((0,0,0)), topFace:bool=True, botFace:bool=True, bme:bmesh=None):
     """
     create a tube with bmesh
 
     Keyword Arguments:
-        r   -- radius of inner cylinder
-        N   -- number of verts per circle
-        h   -- height of cylinder
-        t   -- thickness of tube
-        co  -- coordinate of cylinder's center
-        bme -- bmesh object in which to create verts
+        r       -- radius of inner cylinder
+        h       -- height of cylinder
+        t       -- thickness of tube
+        N       -- number of verts per circle
+        co      -- coordinate of cylinder's center
+        botFace -- create face on bottom of cylinder
+        topFace -- create face on top of cylinder
+        bme     -- bmesh object in which to create verts
 
     """
     # create new bmesh object
@@ -131,10 +157,14 @@ def makeTube(r:float, N:int, h:float, t:float, co:Vector=Vector((0,0,0)), bme:bm
 
     # create upper and lower circles
     for i in range(N):
-        bme, vertListBInner, vertListTInner = makeCylinder(r, N, h, co=co, botFace=False, topFace=False, flipNormals=True, bme=bme)
-        bme, vertListBOuter, vertListTOuter = makeCylinder(r + t, N, h, co=co, botFace=False, topFace=False, bme=bme)
-    for i in range(len(vertListBInner)):
-        bme.faces.new((vertListBOuter[i], vertListBInner[i], vertListBInner[i-1], vertListBOuter[i-1]))
+        bme, vertListBInner, vertListTInner = makeCylinder(r, h, N, co=co, botFace=False, topFace=False, flipNormals=True, bme=bme)
+        bme, vertListBOuter, vertListTOuter = makeCylinder(r + t, h, N, co=co, botFace=False, topFace=False, bme=bme)
+    if topFace:
+        for i in range(len(vertListTInner)):
+            bme.faces.new((vertListTOuter[i], vertListTInner[i], vertListTInner[i-1], vertListTOuter[i-1]))
+    if botFace:
+        for i in range(len(vertListBInner)):
+            bme.faces.new((vertListBOuter[i], vertListBInner[i], vertListBInner[i-1], vertListBOuter[i-1]))
     # select top verts for exclusion from vert group
     for lst in [vertListTOuter, vertListTInner]:
         for v in lst:
@@ -143,15 +173,14 @@ def makeTube(r:float, N:int, h:float, t:float, co:Vector=Vector((0,0,0)), bme:bm
     # return bmesh
     return bme
 
-# r = radius, N = numVerts, h = height, o = z offset, co = target cylinder position, bme = bmesh to insert mesh data into
-def makeInnerCylinder(r:float, N:int, h:float, co:Vector=Vector((0,0,0)), bme:bmesh=None):
+def makeInnerCylinder(r:float, h:float, N:int, co:Vector=Vector((0,0,0)), bme:bmesh=None):
     """
     create inner cylinder for brick with bmesh
 
     Keyword Arguments:
         r   -- radius of cylinder
-        N   -- number of verts per circle
         h   -- height of cylinder
+        N   -- number of verts per circle
         co  -- coordinate of cylinder's center
         bme -- bmesh object in which to create verts
 
@@ -165,7 +194,7 @@ def makeInnerCylinder(r:float, N:int, h:float, co:Vector=Vector((0,0,0)), bme:bm
     co.z = co.z + h/2
 
     # create cylinder
-    bme, vertListB, vertListT = makeCylinder(r, N, h, co=co, botFace=False, flipNormals=True, bme=bme)
+    bme, vertListB, vertListT = makeCylinder(r, h, N, co=co, botFace=False, flipNormals=True, bme=bme)
 
     idx4 = len(vertListB) - 1
     idx1 = int(round(len(vertListB) * 1 / 4)) - 1
@@ -183,14 +212,14 @@ def makeInnerCylinder(r:float, N:int, h:float, co:Vector=Vector((0,0,0)), bme:bm
 
     return vertListBDict
 
-def makeBrick(dimensions:dict, brickSize:list, cylinderVerts:int=16, detail:str="Low Detail", logo:Object=None, stud:bool=True, bme:bmesh=None):
+def makeBrick(dimensions:dict, brickSize:list, circleVerts:int=16, detail:str="Low Detail", logo:Object=None, stud:bool=True, bme:bmesh=None):
     """
     create brick with bmesh
 
     Keyword Arguments:
         dimensions   -- dictionary containing brick dimensions
         brickSize    -- size of brick (e.g. standard 2x4 -> [2, 4, 3])
-        cylinderVerts -- number of vertices per circle of cylinders
+        circleVerts -- number of vertices per circle of cylinders
         detail       -- level of brick detail (options: ["Flat", "Low Detail", "Medium Detail", "High Detail"])
         logo         -- logo object to create on top of studs
         stud         -- create stud on top of brick
@@ -240,7 +269,7 @@ def makeBrick(dimensions:dict, brickSize:list, cylinderVerts:int=16, detail:str=
                     zCO = dimensions["stud_offset_triple"]-(studInset/2)
                 else:
                     zCO = dimensions["stud_offset"]-(studInset/2)
-                _,botVerts,_ = makeCylinder(r=dimensions["stud_radius"], N=cylinderVerts, h=dimensions["stud_height"]+studInset, co=Vector((xNum*d.x*2,yNum*d.y*2,zCO)), botFace=False, bme=bme)
+                _,botVerts,_ = makeCylinder(r=dimensions["stud_radius"], h=dimensions["stud_height"]+studInset, N=circleVerts, co=Vector((xNum*d.x*2,yNum*d.y*2,zCO)), botFace=False, bme=bme)
                 for v in botVerts:
                     v.select = True
 
@@ -369,8 +398,8 @@ def makeBrick(dimensions:dict, brickSize:list, cylinderVerts:int=16, detail:str=
                 tubeY = (yNum * d.y * 2) + d.y
                 tubeZ = (-thickZ/2)
                 r = dimensions["stud_radius"]
-                t = (d.z*2)-thickZ
-                makeTube(r, cylinderVerts, t, dimensions["tube_thickness"], co=Vector((tubeX, tubeY, tubeZ)), bme=bme)
+                h = (d.z*2)-thickZ
+                makeTube(r, h, dimensions["tube_thickness"], circleVerts, co=Vector((tubeX, tubeY, tubeZ)), botFace=True, topFace=False, bme=bme)
                 # add support next to odd tubes
                 if not (detail == "Medium Detail" or detail == "High Detail") or not addSupports or brickSize[2] == 1:
                     continue
@@ -405,7 +434,7 @@ def makeBrick(dimensions:dict, brickSize:list, cylinderVerts:int=16, detail:str=
                 barY = (y * d.y * 2) - d.y
                 barZ = -thickZ/2
                 r = dimensions["bar_radius"]
-                _,_,topVerts = makeCylinder(r=r, N=cylinderVerts, h=(d.z*2)-thickZ, co=Vector((barX, barY, barZ)), botFace=True, topFace=False, bme=bme)
+                _,_,topVerts = makeCylinder(r=r, h=(d.z*2)-thickZ, N=circleVerts, co=Vector((barX, barY, barZ)), botFace=True, topFace=False, bme=bme)
                 # select top verts for exclusion from vert group
                 for v in topVerts:
                     v.select = True
@@ -424,7 +453,7 @@ def makeBrick(dimensions:dict, brickSize:list, cylinderVerts:int=16, detail:str=
                 barY = 0
                 barZ = -thickZ/2
                 r = dimensions["bar_radius"]
-                _,_,topVerts = makeCylinder(r=r, N=cylinderVerts, h=(d.z*2)-thickZ, co=Vector((barX, barY, barZ)), botFace=True, topFace=False, bme=bme)
+                _,_,topVerts = makeCylinder(r=r, h=(d.z*2)-thickZ, N=circleVerts, co=Vector((barX, barY, barZ)), botFace=True, topFace=False, bme=bme)
                 # select top verts for exclusion from vert group
                 for v in topVerts:
                     v.select = True
@@ -446,9 +475,9 @@ def makeBrick(dimensions:dict, brickSize:list, cylinderVerts:int=16, detail:str=
             for xNum in range(brickSize[0]):
                 for yNum in range(brickSize[1]):
                     r = dimensions["stud_radius"]-(2 * thickZ)
-                    N = cylinderVerts
+                    N = circleVerts
                     h = thickZ * 0.99
-                    botVertsD = makeInnerCylinder(r, N, h, co=Vector((xNum*d.x*2,yNum*d.y*2,d.z-thickZ)), bme=bme)
+                    botVertsD = makeInnerCylinder(r, h, N, co=Vector((xNum*d.x*2,yNum*d.y*2,d.z-thickZ)), bme=bme)
                     botVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = botVertsD
 
             # Make corner faces
@@ -617,9 +646,7 @@ def newObjFromBmesh(layer, bme, meshName, objName=False):
     obj = bme.to_mesh(me)         # push bmesh data into me
 
     # move to appropriate layer
-    layerList = []
-    for i in range(20):
-        layerList.append(i == layer-1)
+    layerList = [i == layer-1 for i in range(20)]
     bpy.ops.object.move_to_layer(layers=layerList)
     setLayers(layerList)
     bpy.ops.object.select_all(action='TOGGLE')
@@ -636,13 +663,20 @@ def deleteExisting():
     scn.layers = ([False]*19) + [True]
 
 def get_dimensions(height=1, zScale=1, gap_percentage=0.01):
+    """
+    returns the dimensions of a brick in Blender units
+
+    Keyword Arguments:
+    height         -- height of a standard brick in Blender units
+    zScale         -- height of the brick in plates (1: standard plate, 3: standard brick)
+    gap_percentage -- gap between bricks relative to brick height
+    """
     scale = height/9.6
     brick_dimensions = {}
-    brick_dimensions["height"] = scale*9.6*zScale
+    brick_dimensions["height"] = scale*9.6*(zScale/3)
     brick_dimensions["width"] = scale*8
     brick_dimensions["gap"] = scale*9.6*gap_percentage
     brick_dimensions["stud_height"] = scale*1.8
-    brick_dimensions["stud_diameter"] = scale*4.8
     brick_dimensions["stud_radius"] = scale*2.4
     brick_dimensions["stud_offset"] = (brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"] / 2)
     brick_dimensions["thickness"] = scale*1.6
@@ -666,41 +700,41 @@ def main():
     deleteExisting()
 
     # create objects
-    dimensions = get_dimensions(.1, 1, .01)
-    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1,3], cylinderVerts=16, detail="Flat"), "1x1 flat").location = (-.2,0,0)
-    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1,3], cylinderVerts=16, detail="Low Detail"), "1x1 low").location = (0,0,0)
-    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1,3], cylinderVerts=16, detail="Medium Detail"), "1x1 medium").location = (.2,0,0)
-    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1,3], cylinderVerts=16, detail="High Detail"), "1x1 high").location = (.4,0,0)
-    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], cylinderVerts=16, detail="Flat"), "1x2 flat").location = (-.4,0,0)
-    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], cylinderVerts=16, detail="Low Detail"), "1x2 low").location = (-.2,0,0)
-    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], cylinderVerts=16, detail="Medium Detail"), "1x2 meidium").location = (0,0,0)
-    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], cylinderVerts=16, detail="High Detail"), "1x2 high").location = (.2,0,0)
-    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], cylinderVerts=16, detail="Full Detail"), "1x2 full").location = (.4,0,0)
-    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], cylinderVerts=16, detail="Flat"), "3x1 flat").location = (0,-.4,0)
-    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], cylinderVerts=16, detail="Low Detail"), "3x1 low").location = (0,-.2,0)
-    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], cylinderVerts=16, detail="Medium Detail"), "3x1 meidium").location = (0,0,0)
-    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], cylinderVerts=16, detail="High Detail"), "3x1 high").location = (0,.2,0)
-    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], cylinderVerts=16, detail="Full Detail"), "3x1 full").location = (0,.4,0)
-    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], cylinderVerts=16, detail="Flat"), "1x8 flat").location = (-.4,0,0)
-    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], cylinderVerts=16, detail="Low Detail"), "1x8 low").location = (-.2,0,0)
-    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], cylinderVerts=16, detail="Medium Detail"), "1x8 meidium").location = (0,0,0)
-    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], cylinderVerts=16, detail="High Detail"), "1x8 high").location = (.2,0,0)
-    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], cylinderVerts=16, detail="Full Detail"), "1x8 full").location = (.4,0,0)
-    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], cylinderVerts=16, detail="Flat"), "2x2 flat").location = (-.6,0,0)
-    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], cylinderVerts=16, detail="Low Detail"), "2x2 low").location = (-.3,0,0)
-    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], cylinderVerts=16, detail="Medium Detail"), "2x2 medium").location = (0,0,0)
-    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], cylinderVerts=16, detail="High Detail"), "2x2 high").location = (.3,0,0)
-    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], cylinderVerts=16, detail="Full Detail"), "2x2 full").location = (.6,0,0)
-    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], cylinderVerts=16, detail="Flat"), "2x6 flat").location = (-.6,0,0)
-    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], cylinderVerts=16, detail="Low Detail"), "2x6 low").location = (-.3,0,0)
-    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], cylinderVerts=16, detail="Medium Detail"), "2x6 medium").location = (0,0,0)
-    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], cylinderVerts=16, detail="High Detail"), "2x6 high").location = (.3,0,0)
-    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], cylinderVerts=16, detail="Full Detail"), "2x6 full").location = (.6,0,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], cylinderVerts=15, detail="Flat"), "6x2 flat").location = (0,-.6,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], cylinderVerts=15, detail="Low Detail"), "6x2 low").location = (0,-.3,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], cylinderVerts=15, detail="Medium Detail"), "6x2 medium").location = (0,0,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], cylinderVerts=15, detail="High Detail"), "6x2 high").location = (0,.3,0)
-    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], cylinderVerts=15, detail="Full Detail"), "6x2 full").location = (0,.6,0)
+    dimensions = get_dimensions(.1, 3, .01)
+    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1,3], circleVerts=16, detail="Flat"), "1x1 flat").location = (-.2,0,0)
+    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1,3], circleVerts=16, detail="Low Detail"), "1x1 low").location = (0,0,0)
+    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1,3], circleVerts=16, detail="Medium Detail"), "1x1 medium").location = (.2,0,0)
+    newObjFromBmesh(1, makeBrick(dimensions=dimensions, brickSize=[1,1,3], circleVerts=16, detail="High Detail"), "1x1 high").location = (.4,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], circleVerts=16, detail="Flat"), "1x2 flat").location = (-.4,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], circleVerts=16, detail="Low Detail"), "1x2 low").location = (-.2,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], circleVerts=16, detail="Medium Detail"), "1x2 meidium").location = (0,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], circleVerts=16, detail="High Detail"), "1x2 high").location = (.2,0,0)
+    newObjFromBmesh(2, makeBrick(dimensions=dimensions, brickSize=[1,2,3], circleVerts=16, detail="Full Detail"), "1x2 full").location = (.4,0,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], circleVerts=16, detail="Flat"), "3x1 flat").location = (0,-.4,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], circleVerts=16, detail="Low Detail"), "3x1 low").location = (0,-.2,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], circleVerts=16, detail="Medium Detail"), "3x1 meidium").location = (0,0,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], circleVerts=16, detail="High Detail"), "3x1 high").location = (0,.2,0)
+    newObjFromBmesh(3, makeBrick(dimensions=dimensions, brickSize=[3,1,3], circleVerts=16, detail="Full Detail"), "3x1 full").location = (0,.4,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], circleVerts=16, detail="Flat"), "1x8 flat").location = (-.4,0,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], circleVerts=16, detail="Low Detail"), "1x8 low").location = (-.2,0,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], circleVerts=16, detail="Medium Detail"), "1x8 meidium").location = (0,0,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], circleVerts=16, detail="High Detail"), "1x8 high").location = (.2,0,0)
+    newObjFromBmesh(4, makeBrick(dimensions=dimensions, brickSize=[1,8,3], circleVerts=16, detail="Full Detail"), "1x8 full").location = (.4,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], circleVerts=16, detail="Flat"), "2x2 flat").location = (-.6,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], circleVerts=16, detail="Low Detail"), "2x2 low").location = (-.3,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], circleVerts=16, detail="Medium Detail"), "2x2 medium").location = (0,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], circleVerts=16, detail="High Detail"), "2x2 high").location = (.3,0,0)
+    newObjFromBmesh(5, makeBrick(dimensions=dimensions, brickSize=[2,2,3], circleVerts=16, detail="Full Detail"), "2x2 full").location = (.6,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], circleVerts=16, detail="Flat"), "2x6 flat").location = (-.6,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], circleVerts=16, detail="Low Detail"), "2x6 low").location = (-.3,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], circleVerts=16, detail="Medium Detail"), "2x6 medium").location = (0,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], circleVerts=16, detail="High Detail"), "2x6 high").location = (.3,0,0)
+    newObjFromBmesh(6, makeBrick(dimensions=dimensions, brickSize=[2,6,3], circleVerts=16, detail="Full Detail"), "2x6 full").location = (.6,0,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], circleVerts=15, detail="Flat"), "6x2 flat").location = (0,-.6,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], circleVerts=15, detail="Low Detail"), "6x2 low").location = (0,-.3,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], circleVerts=15, detail="Medium Detail"), "6x2 medium").location = (0,0,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], circleVerts=15, detail="High Detail"), "6x2 high").location = (0,.3,0)
+    newObjFromBmesh(7, makeBrick(dimensions=dimensions, brickSize=[6,2,3], circleVerts=15, detail="Full Detail"), "6x2 full").location = (0,.6,0)
 
     layerToOpen = 7
 

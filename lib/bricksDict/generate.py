@@ -36,24 +36,33 @@ from ...functions.general import *
 from ...functions.generate_lattice import generateLattice
 from ...functions.wrappers import *
 from ..Brick import Bricks
+from bpy.types import Object
 
 def VectorRound(vec, dec, roundType="ROUND"):
-    """ round all vals in Vector 'vec' to 'dec' precision using 'ROUND', 'FLOOR', or 'CEIL' """
-    lst = []
-    for i in range(len(vec)):
-        if roundType == "ROUND":
-            val = round(vec[i], dec)
-        else:
+    """ round all vals in Vector 'vec' to 'dec' precision """
+    if roundType == "ROUND":
+        lst = [round(vec[i], dec) for i in range(len(vec))]
+    else:
+        lst = []
+        for i in range(len(vec)):
             val = vec[i] * 10**dec
             if roundType == "FLOOR":
                 val = math.floor(val)
             elif roundType in ["CEILING", "CEIL"]:
                 val = math.ceil(val)
             val = val / 10**dec
-        lst.append(val)
+            lst.append(val)
     return Vector(lst)
 
-def castRays(obj, point, direction, miniDist, roundType="CEILING", edgeLen=0):
+def castRays(obj:Object, point:Vector, direction:Vector, miniDist:float, roundType:str="CEILING", edgeLen:int=0):
+    """
+    obj       -- source object to test intersections for
+    point     -- origin point for ray casting
+    direction -- cast ray in this direction
+    miniDist  -- Vector with miniscule amount to add after intersection
+    roundType -- round final intersection location Vector with this type
+    edgeLen   -- distance to test for intersections
+    """
     # initialize variables
     firstDirection = False
     firstIntersection = None
@@ -192,10 +201,48 @@ def setNF(matShellDepth, j, orig, target, faceIdxMatrix):
         faceIdxMatrix[target[0]][target[1]][target[2]] = faceIdxMatrix[orig[0]][orig[1]][orig[2]]
 
 def isInternal(bricksDict, key):
+    """ check if brick entry in bricksDict is internal """
     val = bricksDict[key]["val"]
     return (val > 0 and val < 1) or val == -1
 
+def addColumnSupports(cm, bricksDict, keys):
+    """ update bricksDict internal entries to draw columns
+    cm         -- active cmlist object
+    bricksDict -- dictionary with brick information at each lattice coordinate
+    keys       -- keys to test in bricksDict
+    """
+    step = cm.colStep + cm.colThickness
+    for key in keys:
+        x,y,z = strToList(key)
+        if (x % step in range(cm.colThickness) and
+            y % step in range(cm.colThickness) and
+            isInternal(bricksDict, key)
+           ):
+            bricksDict[key]["draw"] = True
+
+def addLatticeSupports(cm, bricksDict, keys):
+    """ update bricksDict internal entries to draw lattice supports
+    cm         -- active cmlist object
+    bricksDict -- dictionary with brick information at each lattice coordinate
+    keys       -- keys to test in bricksDict
+    """
+    step = cm.latticeStep
+    for key in keys:
+        x,y,z = strToList(key)
+        if x % step == 0 and (not cm.alternateXY or z % 2 == 0):
+            if isInternal(bricksDict, key):
+                bricksDict[key]["draw"] = True
+        elif y % step == 0 and (not cm.alternateXY or z % 2 == 1):
+            if isInternal(bricksDict, key):
+                bricksDict[key]["draw"] = True
+
 def updateInternal(bricksDict, cm, keys="ALL", clearExisting=False):
+    """ update bricksDict internal entries
+    cm            -- active cmlist object
+    bricksDict    -- dictionary with brick information at each lattice coordinate
+    keys          -- keys to test in bricksDict
+    clearExisting -- set draw for all internal bricks to False before adding supports
+    """
     if keys == "ALL": keys = list(bricksDict.keys())
     # clear extisting internal structure
     if clearExisting:
@@ -208,25 +255,10 @@ def updateInternal(bricksDict, cm, keys="ALL", clearExisting=False):
                 bricksDict[key]["draw"] = False
     # Draw column supports
     if cm.internalSupports == "Columns":
-        step = cm.colStep + cm.colThickness
-        for key in keys:
-            x,y,z = strToList(key)
-            if (x % step in range(cm.colThickness) and
-                y % step in range(cm.colThickness) and
-                isInternal(bricksDict, key)
-               ):
-                bricksDict[key]["draw"] = True
+        addColumnSupports(cm, bricksDict, keys)
     # draw lattice supports
     elif cm.internalSupports == "Lattice":
-        step = cm.latticeStep
-        for key in keys:
-            x,y,z = strToList(key)
-            if x % step == 0 and (not cm.alternateXY or z % 2 == 0):
-                if isInternal(bricksDict, key):
-                    bricksDict[key]["draw"] = True
-            elif y % step == 0 and (not cm.alternateXY or z % 2 == 1):
-                if isInternal(bricksDict, key):
-                    bricksDict[key]["draw"] = True
+        addLatticeSupports(cm, bricksDict, keys)
 
 def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", cursorStatus=False):
     """ returns new brickFreqMatrix """
@@ -330,11 +362,22 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                     continue
                 if cm.verifyExposure:
                     # If inside location (-1) intersects outside location (0), make it ouside (0)
-                    if brickFreqMatrix[x][y][z] == -1:
-                        if brickFreqMatrix[x+1][y][z] == 0 or brickFreqMatrix[x-1][y][z] == 0 or brickFreqMatrix[x][y+1][z] == 0 or brickFreqMatrix[x][y-1][z] == 0 or brickFreqMatrix[x][y][z+1] == 0 or brickFreqMatrix[x][y][z-1] == 0:
-                            brickFreqMatrix[x][y][z] = 0
+                    if (brickFreqMatrix[x][y][z] == -1 and
+                        (brickFreqMatrix[x+1][y][z] == 0 or
+                         brickFreqMatrix[x-1][y][z] == 0 or
+                         brickFreqMatrix[x][y+1][z] == 0 or
+                         brickFreqMatrix[x][y-1][z] == 0 or
+                         brickFreqMatrix[x][y][z+1] == 0 or
+                         brickFreqMatrix[x][y][z-1] == 0)):
+                        brickFreqMatrix[x][y][z] = 0
                     # If shell location (1) does not intersect outside location (0), make it inside (-1)
-                    if brickFreqMatrix[x][y][z] == 1 and brickFreqMatrix[x+1][y][z] != 0 and brickFreqMatrix[x-1][y][z] != 0 and brickFreqMatrix[x][y+1][z] != 0 and brickFreqMatrix[x][y-1][z] != 0 and brickFreqMatrix[x][y][z+1] != 0 and brickFreqMatrix[x][y][z-1] != 0:
+                    if (brickFreqMatrix[x][y][z] == 1 and
+                        brickFreqMatrix[x+1][y][z] != 0 and
+                        brickFreqMatrix[x-1][y][z] != 0 and
+                        brickFreqMatrix[x][y+1][z] != 0 and
+                        brickFreqMatrix[x][y-1][z] != 0 and
+                        brickFreqMatrix[x][y][z+1] != 0 and
+                        brickFreqMatrix[x][y][z-1] != 0):
                         brickFreqMatrix[x][y][z] = -1
 
     # print status to terminal
@@ -349,10 +392,10 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     # for idx in range(cm.shellThickness-1):
     # NOTE: Following two lines are alternative for calculating full brickFreqMatrix
     denom = max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)/2
-    for idx in range(100):
+    for i in range(100):
         # print status to terminal
         if not scn.Rebrickr_printTimes:
-            percent = idx/denom
+            percent = i / denom
             if percent < 1:
                 update_progress("Internal", percent**0.9)
         j = round(j-0.01, 2)
@@ -369,10 +412,10 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                                        (x, y-1, z),
                                        (x, y, z+1),
                                        (x, y, z-1)]
-                        for idxs in idxsToCheck:
-                            if brickFreqMatrix[idxs[0]][idxs[1]][idxs[2]] == round(j + 0.01,2):
+                        for idx in idxsToCheck:
+                            if brickFreqMatrix[idx[0]][idx[1]][idx[2]] == round(j + 0.01,2):
                                 brickFreqMatrix[x][y][z] = j
-                                setNF(cm.matShellDepth, j, idxs, (x,y,z), faceIdxMatrix)
+                                setNF(cm.matShellDepth, j, i, (x,y,z), faceIdxMatrix)
                                 gotOne = True
                                 break
                     except Exception as e:
@@ -403,10 +446,29 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     return brickFreqMatrix
 
 def getThreshold(cm):
-    """ returns threshold (draw bricks if val >= threshold) """
+    """ returns threshold (draw bricks if returned val >= threshold) """
     return 1.01 - (cm.shellThickness / 100)
 
-def createBricksDictEntry(name, val=0, draw=False, co=(0,0,0), nearest_face=None, nearest_intersection=None, rgba=None, mat_name=None, parent_brick=None, size=None, attempted_merge=False, top_exposed=None, bot_exposed=None, type=None):
+def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,0), nearest_face:int=None, nearest_intersection:int=None, rgba:tuple=None, mat_name:str=None, parent_brick:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, type:str=None):
+    """
+    create an entry in the dictionary of brick locations
+
+    Keyword Arguments:
+    name                 -- name of the brick object
+    val                  -- location of brick in model (0: outside of model, 0.00-1.00: number of bricks away from shell / 100, 1: on shell)
+    draw                 -- draw the brick in 3D space
+    co                   -- 1x1 brick centered at this location
+    nearest_face         -- index of nearest face intersection with source mesh
+    nearest_intersection -- coordinate location of nearest intersection with source mesh
+    rgba                 -- [red, green, blue, alpha] values of brick color
+    mat_name             -- name of material attributed to bricks at this location
+    parent_brick         -- key into brick dictionary with information about the parent brick merged with this one
+    size                 -- 3D size of brick (e.g. standard 2x4 brick -> [2, 4, 3])
+    attempted_merge      -- attempt has been made in makeBricks function to merge this brick with nearby bricks
+    top_exposed          -- top of brick is visible to camera
+    bot_exposed          -- bottom of brick is visible to camera
+    type                 -- type of brick
+    """
     return {"name":name,
             "val":val,
             "draw":draw,
@@ -423,8 +485,13 @@ def createBricksDictEntry(name, val=0, draw=False, co=(0,0,0), nearest_face=None
             "type":type}
 
 @timed_call('Time Elapsed')
-def makeBricksDict(source, source_details, dimensions, brickScale, cursorStatus=False):
-    """ Make bricksDict """
+def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
+    """ make dictionary with brick information at each coordinate of lattice surrounding source
+    source         -- source object to construct lattice around
+    source_details -- object details with subattributes for distance and midpoint of x, y, z axes
+    brickScale     -- scale of bricks
+    cursorStatus   -- update mouse cursor with status of matrix creation
+    """
     scn, cm, _ = getActiveContextInfo()
     # update source data in case data needs to be refreshed
     source.data.update()
@@ -447,7 +514,6 @@ def makeBricksDict(source, source_details, dimensions, brickScale, cursorStatus=
     brickFreqMatrix = getBrickMatrix(source, faceIdxMatrix, coordMatrix, cm.brickShell, axes=calculationAxes, cursorStatus=cursorStatus)
 
     # create bricks dictionary with brickFreqMatrix values
-    keys = []
     i = 0
     bricksDict = {}
     threshold = getThreshold(cm)
@@ -465,7 +531,6 @@ def makeBricksDict(source, source_details, dimensions, brickScale, cursorStatus=
                 ni = faceIdxMatrix[x][y][z]["loc"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 rgba = getUVPixelColor(source, nf, ni, uv_images)
                 bKey = listToStr([x,y,z])
-                keys.append(bKey)
                 drawBrick = brickFreqMatrix[x][y][z] >= threshold
                 # create bricksDict entry for current brick
                 bricksDict[bKey] = createBricksDictEntry(

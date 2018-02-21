@@ -26,6 +26,7 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add support for smoke animations
       * Add support for rigid bodies
       * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
+      * simply calculate brick dimensions, then divide height by three if plate later on. (gets rid of zScale parameter in get_dimensions function)
   * Known issues:
       * In snapchat hotdog test file, when parents removed and transformation kept, then when model created then deleted, source shrinks
       * In bricks mode, bricks don't merge well

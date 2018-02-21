@@ -271,9 +271,7 @@ def setActiveScn(scn):
 
 def getLayersList(layerList):
     layerList = confirmList(layerList)
-    newLayersList = []
-    for i in range(20):
-        newLayersList.append(i in layerList)
+    newLayersList = [i in layerList for i in range(20)]
     return newLayersList
 
 

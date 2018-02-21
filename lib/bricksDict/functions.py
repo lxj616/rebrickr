@@ -33,6 +33,7 @@ from ..Brick import Bricks
 
 
 def getMatAtFaceIdx(obj, face_idx):
+    """ get material at target face index of object """
     if len(obj.material_slots) == 0:
         return ""
     face = obj.data.polygons[face_idx]
@@ -43,6 +44,12 @@ def getMatAtFaceIdx(obj, face_idx):
 
 
 def getUVCoord(mesh, face, point, image):
+    """ returns UV coordinate of target point in source mesh image texture
+    mesh  -- mesh data from source object
+    face  -- face object from mesh
+    point -- coordinate of target point on source mesh
+    image -- image texture for source mesh
+    """
     # get active uv layer data
     uv_layer = mesh.uv_layers.active
     if uv_layer is None:
@@ -70,6 +77,7 @@ def getUVCoord(mesh, face, point, image):
 
 
 def getUVTextureData(obj):
+    """ returns data of active uv texture for object """
     if len(obj.data.uv_textures) == 0:
         return None
     active_uv = obj.data.uv_textures.active
@@ -80,6 +88,7 @@ def getUVTextureData(obj):
 
 
 def getFirstImgTexNode(obj):
+    """ return first image texture found in object's material slots """
     img = None
     for mat_slot in obj.material_slots:
         mat = mat_slot.material
@@ -96,14 +105,12 @@ def getFirstImgTexNode(obj):
 
 # reference: https://svn.blender.org/svnroot/bf-extensions/trunk/py/scripts/addons/uv_bake_texture_to_vcols.py
 def getUVImages(obj):
+    """ returns dictionary with duplicate pixel arrays for all UV textures in object """
     scn, cm, _ = getActiveContextInfo()
     # get list of images to store
-    images = []
-    images.append(bpy.data.images.get(cm.uvImageName))
     uv_tex_data = getUVTextureData(obj)
-    if uv_tex_data:
-        for uv_tex in uv_tex_data:
-            images.append(uv_tex.image)
+    images = [uv_tex.image for uv_tex in uv_tex_data] if uv_tex_data else []
+    images.append(bpy.data.images.get(cm.uvImageName))
     images.append(getFirstImgTexNode(obj))
     # store images
     uv_images = {}
@@ -120,9 +127,11 @@ def getUVImages(obj):
 
 
 # reference: https://svn.blender.org/svnroot/bf-extensions/trunk/py/scripts/addons/uv_bake_texture_to_vcols.py
-def getPixel(image, uv_coord, uv_images):
-    rgba = []
-
+def getPixel(pixels, uv_coord):
+    """ get RGBA value for specified coordinate in UV image
+    pixels    -- list of pixel data from UV texture image
+    uv_coord  -- UV coordinate of desired pixel value
+    """
     image_size_x, image_size_y, uv_pixels = uv_images[image.name]
     pixelNumber = (image_size_x * int(uv_coord.y)) + int(uv_coord.x)
     r = uv_pixels[pixelNumber*4 + 0]
@@ -134,36 +143,13 @@ def getPixel(image, uv_coord, uv_images):
     return (r, g, b, a)
 
 
-def getAverage(rgba0, rgba1, weight):
-    r0, g0, b0, a0 = rgba0
-    r1, g1, b1, a1 = rgba1
-    r2 = ((r1 * weight) + r0) / (weight + 1)
-    g2 = ((g1 * weight) + g0) / (weight + 1)
-    b2 = ((b1 * weight) + b0) / (weight + 1)
-    a2 = ((a1 * weight) + a0) / (weight + 1)
-    return [r2, g2, b2, a2]
-
-
-def getSnappedColorsForString(rgba, snapAmount):
-    r, g, b, a = rgba
-    if snapAmount > 0:
-        # r_hsv, g_hsv, b_hsv = colorsys.rgb_to_hsv(r, g, b)
-        # r0 = round(r / (1 + snapAmount * (60000/3)), 4)
-        # g0 = round(g / (1 + snapAmount * (60000/5.9)), 4)
-        # b0 = round(b / (1 + snapAmount * (60000/1.1)), 4)
-        # r0 = round(r * (1 + snapAmount), 4)
-        # g0 = round(g * (1 + snapAmount), 4)
-        # b0 = round(b * (1 + snapAmount), 4)
-        a0 = round(a, 1)
-    else:
-        r0 = round(r, 5)
-        g0 = round(g, 5)
-        b0 = round(b, 5)
-        a0 = round(a, 5)
-    return [r0, g0, b0, a0]
+def getAverage(rgba0:Vector, rgba1:Vector, weight:float):
+    """ returns weighted average of two rgba values """
+    return (rgba1 * weight + rgba0) / (weight + 1)
 
 
 def getFirstNode(mat, type="BSDF_DIFFUSE"):
+    """ get first node in material of specified type """
     diffuse = None
     mat_nodes = mat.node_tree.nodes
     for node in mat_nodes:
@@ -174,6 +160,7 @@ def getFirstNode(mat, type="BSDF_DIFFUSE"):
 
 
 def createNewMaterial(model_name, rgba, rgba_vals):
+    """ create new material with specified rgba values """
     scn, cm, _ = getActiveContextInfo()
     # get or create material with unique color
     min_diff = float("inf")
@@ -205,7 +192,7 @@ def createNewMaterial(model_name, rgba, rgba_vals):
             diffuse = getFirstNode(mat, type="BSDF_DIFFUSE")
             if diffuse:
                 rgba1 = diffuse.inputs[0].default_value
-                newRGBA = getAverage(rgba, rgba1, mat.num_averaged)
+                newRGBA = getAverage(Vector(rgba), Vector(rgba1), mat.num_averaged)
                 # if diffuse.inputs[0].is_linked:
                 #     # TODO: read different types of input to the diffuse node
                 diffuse.inputs[0].default_value = newRGBA
@@ -229,6 +216,7 @@ def createNewMaterial(model_name, rgba, rgba_vals):
 
 
 def getUVImage(obj, face_idx):
+    """ returns UV image (priority to user settings, then face index, then first one found in object """
     scn, cm, _ = getActiveContextInfo()
     image = bpy.data.images.get(cm.uvImageName)
     if image is None and obj.data.uv_textures.active:
@@ -239,6 +227,7 @@ def getUVImage(obj, face_idx):
 
 
 def getUVPixelColor(obj, face_idx, point, uv_images):
+    """ get RGBA value for point in UV image at specified face index """
     if face_idx is None:
         return None
     # get closest material using UV map
@@ -251,11 +240,12 @@ def getUVPixelColor(obj, face_idx, point, uv_images):
     # get uv coordinate based on nearest face intersection
     uv_coord = getUVCoord(obj.data, face, point, image)
     # retrieve rgba value at uv coordinate
-    rgba = getPixel(image, uv_coord, uv_images)
+    rgba = getPixel(uv_images[image.name], uv_coord)
     return rgba
 
 
 def getMaterialColor(matName):
+    """ get RGBA value of material """
     mat = bpy.data.materials.get(matName)
     if mat is None:
         return None
@@ -276,6 +266,7 @@ def getMaterialColor(matName):
 
 
 def getBrickRGBA(obj, face_idx, point, uv_images):
+    """ returns RGBA value for brick """
     scn, cm, _ = getActiveContextInfo()
     if face_idx is None:
         return None
@@ -297,19 +288,17 @@ def getDictKey(name):
     return dictKey, dictLoc
 
 
-def getDetailsAndBounds(source, skipDimensions=False):
+def getDetailsAndBounds(source):
+    """ returns dimensions and bounds of source object """
     scn, cm, _ = getActiveContextInfo()
-    # get dimensions and bounds
     source_details = bounds(source)
-    if not skipDimensions:
-        zStep = getZStep(cm)
-        dimensions = Bricks.get_dimensions(cm.brickHeight, zStep/3, cm.gap)
-        return source_details, dimensions
-    else:
-        return source_details
+    zStep = getZStep(cm)
+    dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)
+    return source_details, dimensions
 
 
 def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=None):
+    """ returns arguments for makeBricksDict function """
     if source is None:
         source = bpy.data.objects.get(cm.source_name)
         if source is None: source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")

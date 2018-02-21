@@ -122,7 +122,6 @@ def getBricks(cm=None):
     """ get bricks in 'cm' model """
     if cm is None:
         scn, cm, _ = getActiveContextInfo()
-    bricks = []
     n = cm.source_name
     if cm.modelCreated:
         gn = "Rebrickr_%(n)s_bricks" % locals()
@@ -130,6 +129,7 @@ def getBricks(cm=None):
         if bGroup:
             bricks = list(bGroup.objects)
     elif cm.animated:
+        bricks = []
         for cf in range(cm.lastStartFrame, cm.lastStopFrame+1):
             gn = "Rebrickr_%(n)s_bricks_frame_%(cf)s" % locals()
             bGroup = bpy.data.groups.get(gn)

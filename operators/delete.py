@@ -123,9 +123,7 @@ class delete_override(Operator):
     def deleteUnprotected(self, context, use_global=False):
         scn = context.scene
         protected = []
-        objNamesToDelete = []
-        for obj in self.objsToDelete:
-            objNamesToDelete.append(obj.name)
+        objNamesToDelete = [obj.name for obj in self.objsToDelete]
 
         # initialize objsD (key:cm_idx, val:list of brick objects)
         objsD = createObjsD(self.objsToDelete)

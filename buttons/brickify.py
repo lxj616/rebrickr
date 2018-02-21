@@ -498,7 +498,11 @@ class RebrickrBrickify(bpy.types.Operator):
         _, _, _, brickScale, customData, customObj_details = getArgumentsForBricksDict(cm, source=source, source_details=source_details, dimensions=dimensions)
         updateCursor = action in ["CREATE", "UPDATE_MODEL"]  # evaluates to boolean value
         if bricksDict is None:
-            brickScale2 = Vector((brickScale.x * cm.distOffsetX, brickScale.y * cm.distOffsetY, brickScale.z * cm.distOffsetZ))
+            # create helper function for componentwise mulitplication
+            vector_mult = lambda v1, v2: Vector(e1 * e2 for e1, e2 in zip(v1, v2))
+            # multiply brickScale by offset distance
+            brickScale2 = vector_mult(brickScale, Vector((cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ)))
+            # get bricks dictionary
             bricksDict, loadedFromCache = getBricksDict(action, source=source, source_details=source_details, dimensions=dimensions, brickScale=brickScale2, updateCursor=updateCursor, curFrame=curFrame)
             if curFrame == sceneCurFrame:
                 cm.activeKeyX = 1

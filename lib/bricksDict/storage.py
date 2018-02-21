@@ -33,6 +33,7 @@ from ..caches import rebrickr_bfm_cache
 from ...functions import *
 
 def getBricksDict(action, source=None, source_details=None, dimensions=None, brickScale=None, updateCursor=True, curFrame=None, cm=None, restrictContext=False):
+    """ retrieve bricksDict from cache if possible, else create a new one """
     scn = bpy.context.scene
     if cm is None:
         cm = scn.cmlist[scn.cmlist_index]
@@ -44,9 +45,6 @@ def getBricksDict(action, source=None, source_details=None, dimensions=None, bri
         if bricksDict is None:
             # get bricksDict from deep cache
             bricksDict = json.loads(cm.BFMCache)
-        #     print("accessing deep cache")
-        # else:
-        #     print("accessing light cache")
         loadedFromCache = True
         # if animated, index into that dict
         if action == "UPDATE_ANIM":
@@ -62,10 +60,11 @@ def getBricksDict(action, source=None, source_details=None, dimensions=None, bri
         if source is None or source_details is None or dimensions is None or brickScale is None:
             source, source_details, dimensions, brickScale, _, _ = getArgumentsForBricksDict(cm)
         # create new bricksDict
-        bricksDict = makeBricksDict(source, source_details, dimensions, brickScale, cursorStatus=updateCursor)
+        bricksDict = makeBricksDict(source, source_details, brickScale, cursorStatus=updateCursor)
     return bricksDict, loadedFromCache
 
 def lightToDeepCache(rebrickr_bfm_cache):
+    """ send bricksDict from blender cache to python cache for quick access """
     scn = bpy.context.scene
     numPushedIDs = 0
     for cmlist_id in rebrickr_bfm_cache.keys():
@@ -79,6 +78,7 @@ def lightToDeepCache(rebrickr_bfm_cache):
         print("pushed {numKeys} dicts from light cache to deep cache".format(numKeys=numPushedIDs))
 
 def deepToLightCache(rebrickr_bfm_cache):
+    """ send bricksDict from python cache to blender cache for saving to file """
     scn = bpy.context.scene
     numpulledIDs = 0
     for cm in scn.cmlist:
@@ -91,6 +91,7 @@ def deepToLightCache(rebrickr_bfm_cache):
         print("pulled {numKeys} dicts from deep cache to light cache".format(numKeys=numpulledIDs))
 
 def cacheBricksDict(action, cm, bricksDict, curFrame=None):
+    """ store bricksDict in light python cache for future access """
     scn = bpy.context.scene
     if action in ["CREATE", "UPDATE_MODEL"]:
         rebrickr_bfm_cache[cm.id] = bricksDict

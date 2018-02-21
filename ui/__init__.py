@@ -381,7 +381,7 @@ class ModelSettingsPanel(Panel):
             noCustomObj = False
             if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
                 zStep = getZStep(cm)
-                dimensions = Bricks.get_dimensions(cm.brickHeight, zStep/3, cm.gap)
+                dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)
                 rX = int(sX/dimensions["width"])
                 rY = int(sY/dimensions["width"])
                 rZ = int(sZ/dimensions["height"])
@@ -727,7 +727,7 @@ class DetailingPanel(Panel):
         row = col.row(align=True)
         row.label("Cylinders:")
         row = col.row(align=True)
-        row.prop(cm, "cylinderVerts")
+        row.prop(cm, "circleVerts")
         row.active = not (cm.studDetail == "None" and cm.exposedUndersideDetail == "Flat" and cm.hiddenUndersideDetail == "Flat")
 
 
@@ -1019,7 +1019,7 @@ class BrickDetailsPanel(Panel):
         col1 = layout.column(align=True)
         split = col1.split(align=True, percentage=0.35)
         # hard code keys so that they are in the order I want
-        keys = ["name", "val", "draw", "co", "mat_name", "rgba", "parent_brick", "size", "attempted_merge", "top_exposed", "bot_exposed", "type"]
+        keys = ["name", "val", "draw", "co", "nearest_face", "nearest_intersection", "mat_name", "rgba", "parent_brick", "size", "attempted_merge", "top_exposed", "bot_exposed", "type"]
         # draw keys
         col = split.column(align=True)
         col.scale_y = 0.65

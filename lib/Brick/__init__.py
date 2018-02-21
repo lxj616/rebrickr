@@ -36,12 +36,12 @@ from ...functions.common import *
 
 class Bricks:
     @staticmethod
-    def new_mesh(dimensions, size=[1,1,3], logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_resolution=None, logo_inset=None, undersideDetail="Flat", stud=True, cylinderVerts=None):
+    def new_mesh(dimensions, size=[1,1,3], logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_resolution=None, logo_inset=None, undersideDetail="Flat", stud=True, circleVerts=None):
         """ create unlinked Brick at origin """
 
         bm = bmesh.new()
 
-        brickBM = makeBrick(dimensions=dimensions, brickSize=size, cylinderVerts=cylinderVerts, detail=undersideDetail, stud=stud)
+        brickBM = makeBrick(dimensions=dimensions, brickSize=size, circleVerts=circleVerts, detail=undersideDetail, stud=stud)
         if logo and stud:
             # get logo rotation angle based on size of brick
             rot_mult = 180
@@ -60,9 +60,7 @@ class Bricks:
                 rot_add = 90
             # set zRot to random rotation angle
             if all_vars:
-                zRots = []
-                for i in range(rot_vars):
-                    zRots.append(i * rot_mult + rot_add)
+                zRots = [i * rot_mult + rot_add for i in range(rot_vars)]
             else:
                 randomSeed = int(time.time()*10**6) % 10000
                 randS0 = np.random.RandomState(randomSeed)
@@ -176,13 +174,20 @@ class Bricks:
 
     @staticmethod
     def get_dimensions(height=1, zScale=1, gap_percentage=0.01):
+        """
+        returns the dimensions of a brick in Blender units
+
+        Keyword Arguments:
+        height         -- height of a standard brick in Blender units
+        zScale         -- height of the brick in plates (1: standard plate, 3: standard brick)
+        gap_percentage -- gap between bricks relative to brick height
+        """
         scale = height/9.6
         brick_dimensions = {}
-        brick_dimensions["height"] = round(scale*9.6*zScale, 8)
+        brick_dimensions["height"] = round(scale*9.6*(zScale/3), 8)
         brick_dimensions["width"] = round(scale*8, 8)
         brick_dimensions["gap"] = round(scale*9.6*gap_percentage, 8)
         brick_dimensions["stud_height"] = round(scale*1.8, 8)
-        brick_dimensions["stud_diameter"] = round(scale*4.8, 8)
         brick_dimensions["stud_radius"] = round(scale*2.4, 8)
         brick_dimensions["stud_offset"] = round((brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"] / 2), 8)
         brick_dimensions["stud_offset_triple"] = round(((brick_dimensions["height"]*3) / 2) + (brick_dimensions["stud_height"] / 2), 8)
