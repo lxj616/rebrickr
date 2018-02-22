@@ -25,7 +25,6 @@ import os
 
 # Blender imports
 import bpy
-props = bpy.props
 
 # Rebrickr imports
 from ..functions import *

@@ -30,89 +30,31 @@ import numpy as np
 from mathutils import Vector, Matrix
 
 # Rebrickr imports
-from .brick_mesh_generate import *
+from .mesh_generators.standard_brick import *
+from .mesh_generators.round_1x1 import *
+from .get_brick_dimensions import *
 from ...functions.general import *
 from ...functions.common import *
 
 class Bricks:
     @staticmethod
-    def new_mesh(dimensions, size=[1,1,3], logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_resolution=None, logo_inset=None, undersideDetail="Flat", stud=True, circleVerts=None):
+    def new_mesh(dimensions, size=[1,1,3], type="STANDARD", logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_inset=None, undersideDetail="Flat", stud=True, circleVerts=None):
         """ create unlinked Brick at origin """
 
-        bm = bmesh.new()
-
-        brickBM = makeBrick(dimensions=dimensions, brickSize=size, circleVerts=circleVerts, detail=undersideDetail, stud=stud)
-        if logo and stud:
-            # get logo rotation angle based on size of brick
-            rot_mult = 180
-            rot_vars = 2
-            rot_add = 0
-            if size[0] == 1 and size[1] == 1:
-                rot_mult = 90
-                rot_vars = 4
-            elif size[0] == 2 and size[1] > 2:
-                rot_add = 90
-            elif size[1] == 2 and size[0] > 2:
-                pass
-            elif size[0] == 2 and size[1] == 2:
-                pass
-            elif size[0] == 1:
-                rot_add = 90
-            # set zRot to random rotation angle
-            if all_vars:
-                zRots = [i * rot_mult + rot_add for i in range(rot_vars)]
-            else:
-                randomSeed = int(time.time()*10**6) % 10000
-                randS0 = np.random.RandomState(randomSeed)
-                zRots = [randS0.randint(0,rot_vars) * rot_mult + rot_add]
-            lw = dimensions["logo_width"] * logo_scale
-            logoBM_ref = bmesh.new()
-            logoBM_ref.from_mesh(logo.data)
-            if logo_type == "LEGO Logo":
-                # smooth faces
-                for f in logoBM_ref.faces:
-                    f.smooth = True
-                # transform logo into place
-                bmesh.ops.scale(logoBM_ref, vec=Vector((lw, lw, lw)), verts=logoBM_ref.verts)
-                bmesh.ops.rotate(logoBM_ref, verts=logoBM_ref.verts, cent=(1.0, 0.0, 0.0), matrix=Matrix.Rotation(math.radians(90.0), 3, 'X'))
-            else:
-                # transform logo to origin (transform was (or should be at least) applied, origin is at center)
-                xOffset = logo_details.x.mid
-                yOffset = logo_details.y.mid
-                zOffset = logo_details.z.mid
-                for v in logoBM_ref.verts:
-                    v.co.x -= xOffset
-                    v.co.y -= yOffset
-                    v.co.z -= zOffset
-                    v.select = True
-                # scale logo
-                distMax = max(logo_details.x.dist, logo_details.y.dist)
-                bmesh.ops.scale(logoBM_ref, vec=Vector((lw/distMax, lw/distMax, lw/distMax)), verts=logoBM_ref.verts)
-
-            bms = []
-            for zRot in zRots:
-                bm_cur = bm.copy()
-                for x in range(size[0]):
-                    for y in range(size[1]):
-                        logoBM = logoBM_ref.copy()
-                        # rotate logo around stud
-                        if zRot != 0:
-                            bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(0.0, 0.0, 1.0), matrix=Matrix.Rotation(math.radians(zRot), 3, 'Z'))
-                        # transform logo to appropriate position
-                        zOffset = dimensions["logo_offset"]
-                        if logo_type != "LEGO Logo" and logo_details is not None:
-                            zOffset += ((logo_details.z.dist * (lw/distMax)) / 2) * (1-(logo_inset * 2))
-                        xyOffset = dimensions["width"]+dimensions["gap"]
-                        for v in logoBM.verts:
-                            v.co = ((v.co.x + x*(xyOffset)), (v.co.y + y*(xyOffset)), (v.co.z + zOffset))
-                        # add logoBM mesh to bm mesh
-                        junkMesh = bpy.data.meshes.new('Rebrickr_junkMesh')
-                        logoBM.to_mesh(junkMesh)
-                        bm_cur.from_mesh(junkMesh)
-                        bpy.data.meshes.remove(junkMesh, do_unlink=True)
-                bms.append(bm_cur)
+        # create brick mesh
+        if type == "STANDARD":
+            _,cm,_ = getActiveContextInfo()
+            brickBM = makeStandardBrick(dimensions=dimensions, brickSize=size, brickType=cm.brickType, circleVerts=circleVerts, detail=undersideDetail, stud=stud)
+        elif type in ["CYLINDER", "CONE", "STUD", "STUD_HOLLOW"]:
+            brickBM = makeRound1x1(dimensions=dimensions, circleVerts=circleVerts, type=type, detail=undersideDetail, stud=stud)
         else:
-            bms = [bm]
+            raise ValueError("'new_mesh' function received unrecognized parameter '" + type + "'")
+
+        # create list of brick bmesh variations
+        if logo and stud and type in ["STANDARD", "STUD"]:
+            bms = makeLogoVariations(dimensions, size, randS0, all_vars, logo_type, logo_details, logo_scale, logo_inset)
+        else:
+            bms = [bmesh.new()]
 
         # add brick mesh to bm mesh
         junkMesh = bpy.data.meshes.new('Rebrickr_junkMesh')
@@ -174,32 +116,65 @@ class Bricks:
 
     @staticmethod
     def get_dimensions(height=1, zScale=1, gap_percentage=0.01):
-        """
-        returns the dimensions of a brick in Blender units
+        return get_brick_dimensions(height, zScale, gap_percentage)
 
-        Keyword Arguments:
-        height         -- height of a standard brick in Blender units
-        zScale         -- height of the brick in plates (1: standard plate, 3: standard brick)
-        gap_percentage -- gap between bricks relative to brick height
-        """
-        scale = height/9.6
-        brick_dimensions = {}
-        brick_dimensions["height"] = round(scale*9.6*(zScale/3), 8)
-        brick_dimensions["width"] = round(scale*8, 8)
-        brick_dimensions["gap"] = round(scale*9.6*gap_percentage, 8)
-        brick_dimensions["stud_height"] = round(scale*1.8, 8)
-        brick_dimensions["stud_radius"] = round(scale*2.4, 8)
-        brick_dimensions["stud_offset"] = round((brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"] / 2), 8)
-        brick_dimensions["stud_offset_triple"] = round(((brick_dimensions["height"]*3) / 2) + (brick_dimensions["stud_height"] / 2), 8)
-        brick_dimensions["thickness"] = round(scale*1.6, 8)
-        brick_dimensions["tube_thickness"] = round(scale*0.855, 8)
-        brick_dimensions["bar_radius"] = round(scale*1.6, 8)
-        brick_dimensions["logo_width"] = round(scale*4.8, 8) # originally round(scale*3.74, 8)
-        brick_dimensions["support_width"] = round(scale*0.8, 8)
-        brick_dimensions["tick_width"] = round(scale*0.6, 8)
-        brick_dimensions["tick_depth"] = round(scale*0.3, 8)
-        brick_dimensions["support_height"] = round(brick_dimensions["height"]*0.65, 8)
-        brick_dimensions["support_height_triple"] = round((brick_dimensions["height"]*3)*0.65, 8)
+def makeLogoVariations(dimensions, size, randS0, all_vars, logo_type, logo_details, logo_scale, logo_inset):
+    # get logo rotation angle based on size of brick
+    rot_mult = 180
+    rot_vars = 2
+    rot_add = 0
+    if size[0] == 1 and size[1] == 1:
+        rot_mult = 90
+        rot_vars = 4
+    elif size[0] == 2 and size[1] > 2:
+        rot_add = 90
+    elif ((size[1] == 2 and size[0] > 2) or
+          (size[0] == 2 and size[1] == 2)):
+        pass
+    elif size[0] == 1:
+        rot_add = 90
+    # set zRot to random rotation angle
+    if all_vars:
+        zRots = [i * rot_mult + rot_add for i in range(rot_vars)]
+    else:
+        randomSeed = int(time.time()*10**6) % 10000
+        randS0 = np.random.RandomState(randomSeed)
+        zRots = [randS0.randint(0,rot_vars) * rot_mult + rot_add]
+    lw = dimensions["logo_width"] * logo_scale
+    logoBM_ref = bmesh.new()
+    logoBM_ref.from_mesh(logo.data)
+    if logo_type == "LEGO Logo":
+        smoothFaces(list(logoBM_ref.faces))
+        # transform logo into place
+        bmesh.ops.scale(logoBM_ref, vec=Vector((lw, lw, lw)), verts=logoBM_ref.verts)
+        bmesh.ops.rotate(logoBM_ref, verts=logoBM_ref.verts, cent=(1.0, 0.0, 0.0), matrix=Matrix.Rotation(math.radians(90.0), 3, 'X'))
+    else:
+        # transform logo to origin (transform was (or should be at least) applied, origin is at center)
+        for v in logoBM_ref.verts:
+            v.co -= Vector((logo_details.x.mid, logo_details.y.mid, logo_details.z.mid))
+            v.select = True
+        # scale logo
+        distMax = max(logo_details.x.dist, logo_details.y.dist)
+        bmesh.ops.scale(logoBM_ref, vec=Vector((lw/distMax, lw/distMax, lw/distMax)), verts=logoBM_ref.verts)
 
-        brick_dimensions["logo_offset"] = round((brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"]), 8)
-        return brick_dimensions
+    bms = [bm.copy() for zRot in zRots]
+    for i,zRot in enumerate(zRots):
+        for x in range(size[0]):
+            for y in range(size[1]):
+                logoBM = logoBM_ref.copy()
+                # rotate logo around stud
+                if zRot != 0:
+                    bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(0.0, 0.0, 1.0), matrix=Matrix.Rotation(math.radians(zRot), 3, 'Z'))
+                # transform logo to appropriate position
+                zOffset = dimensions["logo_offset"]
+                if logo_type != "LEGO Logo" and logo_details is not None:
+                    zOffset += ((logo_details.z.dist * (lw / distMax)) / 2) * (1 - logo_inset * 2)
+                xyOffset = dimensions["width"] + dimensions["gap"]
+                for v in logoBM.verts:
+                    v.co += Vector((x * xyOffset, y * xyOffset, zOffset))
+                # add logoBM mesh to bm mesh
+                junkMesh = bpy.data.meshes.new('Rebrickr_junkMesh')
+                logoBM.to_mesh(junkMesh)
+                bms[i].from_mesh(junkMesh)
+                bpy.data.meshes.remove(junkMesh, do_unlink=True)
+    return bms

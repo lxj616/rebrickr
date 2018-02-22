@@ -286,6 +286,15 @@ def setLayers(layers, scn=None):
     scn.layers = layers
 
 
+def openLayer(layerNum, scn=None):
+    assert type(layerNum) == int
+    if scn is None:
+        scn = bpy.context.scene
+    layerList = [i == layerNum - 1 for i in range(20)]
+    scn.layers = layerList
+    return layerList
+
+
 def deselectAll():
     bpy.ops.object.select_all(action='DESELECT')
 
@@ -312,27 +321,22 @@ def select(objList=[], active=None, deselect=False, only=True, scene=None):
         deselectAll()
     objList = confirmList(objList)
     try:
-        if not deselect:
-            # deselect all if selection is exclusive
-            if only and len(objList) > 0:
-                deselectAll()
-            # select objects in list
-            for obj in objList:
-                obj.select = True
-        elif deselect:
-            # deselect objects in list
-            for obj in objList:
-                obj.select = False
+        # deselect all if selection is exclusive
+        if not deselect and only and len(objList) > 0:
+            deselectAll()
+        # select/deselect objects in list
+        for obj in objList:
+            obj.select = not deselect
 
         # set active object
         if active:
+            scene = bpy.context.scene if scene is None else scene
             try:
-                if scene is None:
-                    scene = bpy.context.scene
-                scene.objects.active = active
+                scene.objects.active = objList[0] if type(active) == bool else active
             except:
-                print("argument passed to 'active' parameter not valid (" + str(active) + ")")
-    except:
+                raise TypeError("argument passed to 'active' parameter not valid (recieved '" + str(active) + "')")
+    except Exception as e:
+        print(e)
         return False
     return True
 
@@ -344,6 +348,16 @@ def delete(objList):
         if obj is None:
             continue
         objs.remove(obj, True)
+
+
+def selectVerts(vertsList):
+    for v in vertsList:
+        v.select = True
+
+
+def smoothFaces(facesList):
+    for f in facesList:
+        f.smooth = True
 
 
 def checkEqual1(iterator):

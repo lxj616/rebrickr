@@ -542,6 +542,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                     nearest_intersection= ni if ni is None else tuple(ni),
                     rgba= rgba,
                     mat_name= "",  # defined in 'updateMaterials' function
+                    type= "STANDARD" if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"] else cm.brickType,
                 )
     cm.numBricksGenerated = i
 

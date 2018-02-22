@@ -33,6 +33,7 @@ props = bpy.props
 from .cmlist import *
 from .app_handlers import *
 from ..lib.bricksDict import *
+from ..lib.Brick.test_brick_generators import *
 from ..lib.abs_plastic_materials import getAbsPlasticMaterials
 from ..buttons.delete import RebrickrDelete
 from ..buttons.revertSettings import *
@@ -136,6 +137,9 @@ class BrickModelsPanel(Panel):
             if not bpy.props.rebrickr_initialized:
                 row = col1.row(align=True)
                 row.operator("rebrickr.customize_model", text="Initialize Rebrickr", icon="MODIFIER")
+                # draw test brick generator button (for testing purposes only)
+                col = layout.column(align=True)
+                col.operator("rebrickr.test_brick_generators", text="Test Brick Generators", icon="OUTLINER_OB_MESH")
             # if use animation is selected, draw animation options
             elif cm.useAnimation:
                 if cm.animated:
@@ -888,8 +892,8 @@ class CustomizeModel(Panel):
         row = col1.row(align=True)
         row.operator("rebrickr.draw_adjacent", text="Draw Adjacent Bricks")
         # change brick type
-        # row = col1.row(align=True)
-        # row.operator("rebrickr.change_brick_type", text="Change Type")
+        row = col1.row(align=True)
+        row.operator("rebrickr.change_brick_type", text="Change Type")
         # additional controls
         col = layout.column(align=True)
         row = col.row(align=True)
