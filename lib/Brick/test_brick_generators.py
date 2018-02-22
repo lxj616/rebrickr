@@ -81,23 +81,9 @@ def newObjFromBmesh(layer, bme, meshName, objName=None, loc=(0,0,0), edgeSplit=T
     return ob
 
 
-def deleteExisting():
-    scn = bpy.context.scene
-    # delete existing objects
-    tmpList = [True]*20
-    scn.layers = tmpList
-    selectAll()
-    bpy.ops.object.delete()
-    scn.layers = ([False]*19) + [True]
-
-
 def test_brick_generators():
     # try to delete existing objects
-    try:
-        deleteExisting()
-    except:
-        print("not in object mode!")
-        return
+    delete(list(bpy.data.objects))
 
     # create objects
     scn, cm, _ = getActiveContextInfo()

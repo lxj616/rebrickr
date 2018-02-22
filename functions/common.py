@@ -239,11 +239,11 @@ def most_common(L):
     return max(groups, key=_auxfun)[0]
 
 
-def confirmList(objList):
-    """ if single object passed, convert to list """
-    if type(objList) != list:
-        objList = [objList]
-    return objList
+def confirmList(itemList):
+    """ if single item passed, convert to list """
+    if type(itemList) != list:
+        itemList = [itemList]
+    return itemList
 
 
 def insertKeyframes(objList, keyframeType, frame, interpolationMode='Default', idx=-1):
