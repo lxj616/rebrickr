@@ -504,10 +504,6 @@ class RebrickrBrickify(bpy.types.Operator):
             brickScale2 = vector_mult(brickScale, Vector((cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ)))
             # get bricks dictionary
             bricksDict, loadedFromCache = getBricksDict(action=action, source=source, source_details=source_details, dimensions=dimensions, brickScale=brickScale2, updateCursor=updateCursor, curFrame=curFrame)
-            if curFrame == sceneCurFrame:
-                cm.activeKeyX = 1
-                cm.activeKeyY = 1
-                cm.activeKeyZ = 1
         else:
             loadedFromCache = True
         # reset all values for certain keys in bricksDict dictionaries

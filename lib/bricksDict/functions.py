@@ -132,7 +132,7 @@ def getPixel(pixels, uv_coord):
     pixels    -- list of pixel data from UV texture image
     uv_coord  -- UV coordinate of desired pixel value
     """
-    image_size_x, image_size_y, uv_pixels = uv_images[image.name]
+    image_size_x, image_size_y, uv_pixels = pixels
     pixelNumber = (image_size_x * int(uv_coord.y)) + int(uv_coord.x)
     r = uv_pixels[pixelNumber*4 + 0]
     g = uv_pixels[pixelNumber*4 + 1]

@@ -354,6 +354,7 @@ class RebrickrDelete(bpy.types.Operator):
         cm.armature = False
         cm.exposeParent = False
         cm.version = bpy.props.rebrickr_version
-        cm.activeKeyX = 1
-        cm.activeKeyY = 1
-        cm.activeKeyZ = 1
+        cm.activeKeyX = -1
+        cm.activeKeyY = -1
+        cm.activeKeyZ = -1
+        cm.firstKey = ""

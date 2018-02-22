@@ -52,7 +52,7 @@ class Bricks:
 
         # create list of brick bmesh variations
         if logo and stud and type in ["STANDARD", "STUD"]:
-            bms = makeLogoVariations(dimensions, size, randS0, all_vars, logo_type, logo_details, logo_scale, logo_inset)
+            bms = makeLogoVariations(dimensions, size, all_vars, logo, logo_type, logo_details, logo_scale, logo_inset)
         else:
             bms = [bmesh.new()]
 
@@ -118,7 +118,7 @@ class Bricks:
     def get_dimensions(height=1, zScale=1, gap_percentage=0.01):
         return get_brick_dimensions(height, zScale, gap_percentage)
 
-def makeLogoVariations(dimensions, size, randS0, all_vars, logo_type, logo_details, logo_scale, logo_inset):
+def makeLogoVariations(dimensions, size, all_vars, logo, logo_type, logo_details, logo_scale, logo_inset):
     # get logo rotation angle based on size of brick
     rot_mult = 180
     rot_vars = 2
@@ -157,7 +157,7 @@ def makeLogoVariations(dimensions, size, randS0, all_vars, logo_type, logo_detai
         distMax = max(logo_details.x.dist, logo_details.y.dist)
         bmesh.ops.scale(logoBM_ref, vec=Vector((lw/distMax, lw/distMax, lw/distMax)), verts=logoBM_ref.verts)
 
-    bms = [bm.copy() for zRot in zRots]
+    bms = [bmesh.new() for zRot in zRots]
     for i,zRot in enumerate(zRots):
         for x in range(size[0]):
             for y in range(size[1]):

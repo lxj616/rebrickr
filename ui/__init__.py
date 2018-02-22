@@ -998,11 +998,8 @@ class BrickDetailsPanel(Panel):
         if bricksDict is None:
             layout.label("Matrix not available")
             return
-        aKX = cm.activeKeyX
-        aKY = cm.activeKeyY
-        aKZ = cm.activeKeyZ
         try:
-            dictKey = listToStr([aKX, aKY, aKZ])
+            dictKey = listToStr([cm.activeKeyX, cm.activeKeyY, cm.activeKeyZ])
             brickD = bricksDict[dictKey]
         except Exception as e:
             layout.label("No brick details available")
@@ -1018,6 +1015,7 @@ class BrickDetailsPanel(Panel):
                 print("Key not set (entered else)")
             else:
                 print("Error fetching brickD:", e)
+            drawSendToFileButton(layout)
             return
 
         col1 = layout.column(align=True)
@@ -1040,7 +1038,9 @@ class BrickDetailsPanel(Panel):
         for key in keys:
             row = col.row(align=True)
             row.label(str(brickD[key]))
+        drawSendToFileButton(layout)
 
-        layout.separator()
-        col = layout.column(align=True)
-        col.operator("rebrickr.send_dictionary_to_file", text="Send to File", icon="EXPORT")
+def drawSendToFileButton(layout):
+    layout.separator()
+    col = layout.column(align=True)
+    col.operator("rebrickr.send_dictionary_to_file", text="Send to File", icon="EXPORT")

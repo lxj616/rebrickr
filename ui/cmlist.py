@@ -1051,9 +1051,10 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         description="When bricks are deleted, automatically update bricks that become exposed",
         default=False)
 
-    activeKeyX = IntProperty(default=1)
-    activeKeyY = IntProperty(default=1)
-    activeKeyZ = IntProperty(default=1)
+    activeKeyX = IntProperty(default=-1)
+    activeKeyY = IntProperty(default=-1)
+    activeKeyZ = IntProperty(default=-1)
+    firstKey = StringProperty(default="")
 
     modelCreatedOnFrame = IntProperty(default=-1)
 

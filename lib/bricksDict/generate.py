@@ -379,6 +379,18 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                         brickFreqMatrix[x][y][z+1] != 0 and
                         brickFreqMatrix[x][y][z-1] != 0):
                         brickFreqMatrix[x][y][z] = -1
+    # mark outside brickFreqMatrix values not adjacent to an inside value for removal
+    for x in range(0, len(coordMatrix)):
+        for y in range(0, len(coordMatrix[0])):
+            for z in range(0, len(coordMatrix[0][0])):
+                if (brickFreqMatrix[x][y][z] == 0 and
+                    (x == len(coordMatrix) - 1 or       brickFreqMatrix[x+1][y][z] == 0) and
+                    (x == 0 or                          brickFreqMatrix[x-1][y][z] == 0) and
+                    (y == len(coordMatrix[0]) - 1 or    brickFreqMatrix[x][y+1][z] == 0) and
+                    (y == 0 or                          brickFreqMatrix[x][y-1][z] == 0) and
+                    (z == len(coordMatrix[0][0]) - 1 or brickFreqMatrix[x][y][z+1] == 0) and
+                    (z == 0 or                          brickFreqMatrix[x][y][z-1] == 0)):
+                    brickFreqMatrix[x][y][z] = None
 
     # print status to terminal
     if not scn.Rebrickr_printTimes:
@@ -492,7 +504,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
     brickScale     -- scale of bricks
     cursorStatus   -- update mouse cursor with status of matrix creation
     """
-    scn, cm, _ = getActiveContextInfo()
+    scn, cm, n = getActiveContextInfo()
     # update source data in case data needs to be refreshed
     source.data.update()
     for scn in bpy.data.scenes:
@@ -512,6 +524,10 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
     # set up faceIdxMatrix and brickFreqMatrix
     faceIdxMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
     brickFreqMatrix = getBrickMatrix(source, faceIdxMatrix, coordMatrix, cm.brickShell, axes=calculationAxes, cursorStatus=cursorStatus)
+    # initialize active keys
+    cm.activeKeyX = -1
+    cm.activeKeyY = -1
+    cm.activeKeyZ = -1
 
     # create bricks dictionary with brickFreqMatrix values
     i = 0
@@ -522,16 +538,26 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
             for z in range(len(coordMatrix[0][0])):
+                # skip brickFreqMatrix values set to None
+                if brickFreqMatrix[x][y][z] is None:
+                    continue
+
+                # initialize variables
+                bKey = listToStr([x,y,z])
                 co = coordMatrix[x][y][z]
                 i += 1
-                n = cm.source_name
 
                 # get material from nearest face intersection point
                 nf = faceIdxMatrix[x][y][z]["idx"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 ni = faceIdxMatrix[x][y][z]["loc"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 rgba = getUVPixelColor(source, nf, ni, uv_images)
-                bKey = listToStr([x,y,z])
                 drawBrick = brickFreqMatrix[x][y][z] >= threshold
+                # store first key to active keys
+                if cm.activeKeyX == -1 and drawBrick:
+                    keyVals = bKey.split(",")
+                    cm.activeKeyX = int(keyVals[0])
+                    cm.activeKeyY = int(keyVals[1])
+                    cm.activeKeyZ = int(keyVals[2])
                 # create bricksDict entry for current brick
                 bricksDict[bKey] = createBricksDictEntry(
                     name= 'Rebrickr_%(n)s_brick_%(i)s__%(bKey)s' % locals(),
