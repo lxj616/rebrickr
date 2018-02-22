@@ -992,9 +992,9 @@ class BrickDetailsPanel(Panel):
         col.prop(cm, "activeKeyZ", text="z")
 
         if cm.animated:
-            bricksDict, _ = getBricksDict("UPDATE_ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current), restrictContext=True)
+            bricksDict, _ = getBricksDict(cm=cm, action="UPDATE_ANIM", curFrame=getAnimAdjustedFrame(cm, scn.frame_current), restrictContext=True)
         elif cm.modelCreated:
-            bricksDict, _ = getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)
+            bricksDict, _ = getBricksDict(cm=cm, restrictContext=True)
         if bricksDict is None:
             layout.label("Matrix not available")
             return
@@ -1040,3 +1040,7 @@ class BrickDetailsPanel(Panel):
         for key in keys:
             row = col.row(align=True)
             row.label(str(brickD[key]))
+
+        layout.separator()
+        col = layout.column(align=True)
+        col.operator("rebrickr.send_dictionary_to_file", text="Send to File", icon="EXPORT")

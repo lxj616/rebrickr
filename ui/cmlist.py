@@ -572,7 +572,7 @@ def dirtyBricks(self, context):
 # def updateActiveObject(self, context):
 #     scn, cm, _ = getActiveContextInfo()
 #     dictKey = cm.activeBFMKey
-#     bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+#     bricksDict, _ = getBricksDict(cm=cm)
 #     brickD = bricksDict[dictKey]
 #     obj = bpy.data.objects.get(brickD["name"])
 #     if obj:

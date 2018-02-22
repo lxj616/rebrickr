@@ -105,7 +105,7 @@ class splitBricks(Operator):
         for cm_idx in objsD.keys():
             cm = scn.cmlist[cm_idx]
             # get bricksDict from cache
-            bricksDict, _ = getBricksDict("UPDATE_MODEL", cm=cm)
+            bricksDict, _ = getBricksDict(cm=cm)
             # add to bricksDicts
             self.bricksDicts[cm_idx] = bricksDict
 
@@ -255,7 +255,7 @@ class mergeBricks(Operator):
         for cm_idx in objsD.keys():
             cm = scn.cmlist[cm_idx]
             # get bricksDict from cache
-            bricksDict, _ = getBricksDict("UPDATE_MODEL", cm=cm)
+            bricksDict, _ = getBricksDict(cm=cm)
             # add to bricksDicts
             self.bricksDicts[cm_idx] = bricksDict
 
@@ -384,7 +384,7 @@ class setExposure(Operator):
         for cm_idx in objsD.keys():
             cm = scn.cmlist[cm_idx]
             # get bricksDict from cache
-            bricksDict, _ = getBricksDict("UPDATE_MODEL", cm=cm)
+            bricksDict, _ = getBricksDict(cm=cm)
             # add to bricksDicts
             self.bricksDicts[cm_idx] = bricksDict
 
@@ -526,7 +526,7 @@ class drawAdjacent(Operator):
             obj = scn.objects.active
 
             # initialize self.bricksDict
-            self.bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            self.bricksDict, _ = getBricksDict(cm=cm)
 
             # initialize direction bools
             self.zPos = False
@@ -591,7 +591,7 @@ class drawAdjacent(Operator):
         obj = scn.objects.active
         if obj is None: return [("NULL", "Null", "")]
         cm = scn.cmlist[scn.cmlist_index]
-        bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+        bricksDict, _ = getBricksDict(cm=cm)
         dictKey,_ = getDictKey(obj.name)
         # build items
         if bricksDict[dictKey]["size"][2] == 3:
@@ -908,7 +908,7 @@ class changeBrickType(Operator):
             # get cmlist item referred to by object
             cm = getItemByID(scn.cmlist, obj.cmlist_id)
             # get bricksDict from cache
-            self.bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+            self.bricksDict, _ = getBricksDict(cm=cm)
             dictKey, dictLoc = getDictKey(obj.name)
             self.cm_idx = cm.idx
             curBrickType = self.bricksDict[dictKey]["type"]
@@ -932,7 +932,7 @@ class changeBrickType(Operator):
         items = [("STANDARD", "Standard", "")]
 
         dictKey, dictLoc = getDictKey(obj.name)
-        bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+        bricksDict, _ = getBricksDict(cm=cm)
         objSize = bricksDict[dictKey]["size"]
         # Bricks
         if objSize[2] == 3:
@@ -1033,7 +1033,7 @@ class redrawBricks(Operator):
             for cm_idx in objsD.keys():
                 cm = scn.cmlist[cm_idx]
                 # get bricksDict from cache
-                bricksDict,_ = getBricksDict("UPDATE_MODEL", cm=cm)
+                bricksDict, _ = getBricksDict(cm=cm)
                 keysToUpdate = []
 
                 # delete objects to be updated

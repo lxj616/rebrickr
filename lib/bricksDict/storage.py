@@ -32,7 +32,7 @@ from .functions import *
 from ..caches import rebrickr_bfm_cache
 from ...functions import *
 
-def getBricksDict(action, source=None, source_details=None, dimensions=None, brickScale=None, updateCursor=True, curFrame=None, cm=None, restrictContext=False):
+def getBricksDict(action="UPDATE_MODEL", source=None, source_details=None, dimensions=None, brickScale=None, updateCursor=True, curFrame=None, cm=None, restrictContext=False):
     """ retrieve bricksDict from cache if possible, else create a new one """
     scn = bpy.context.scene
     if cm is None:

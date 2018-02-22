@@ -4,3 +4,4 @@ error_log/
 rebrickr_updater/
 rebrickr_options.db
 textures/
+bricksDict_dump.py
