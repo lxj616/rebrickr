@@ -32,6 +32,7 @@ from math import *
 
 # Blender imports
 import bpy
+from mathutils import Vector
 props = bpy.props
 
 
@@ -237,6 +238,16 @@ def most_common(L):
 
     # pick the highest-count/earliest item
     return max(groups, key=_auxfun)[0]
+
+
+def vector_mult(v1, v2):
+    """ componentwise multiplication for vectors """
+    return Vector(e1 * e2 for e1, e2 in zip(v1, v2))
+
+
+def vector_div(v1, v2):
+    """ componentwise division for vectors """
+    return Vector(e1 / e2 for e1, e2 in zip(v1, v2))
 
 
 def confirmList(itemList):

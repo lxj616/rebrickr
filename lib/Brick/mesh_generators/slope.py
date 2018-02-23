@@ -30,12 +30,14 @@ from mathutils import Vector, Matrix
 
 # Rebrickr imports
 from .geometric_shapes import *
-from .standard_brick import *
+from .generator_utils import *
 
 
 def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:int=None, detail:str="LOW", stud:bool=True, bme:bmesh=None):
     """
     create slope brick with bmesh
+
+    NOTE: brick created with slope facing +X direction, then translated/rotated as necessary
 
     Keyword Arguments:
         dimensions  -- dictionary containing brick dimensions
@@ -53,25 +55,24 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
     # set direction to longest side if None (defaults to X if sides are the same)
     maxIdx = brickSize.index(max(brickSize[:2]))
     directions = ["+X", "+Y", "-X", "-Y"]
-    if direction is None:
-        # set to "+X" if X is larger, "+Y" if Y is larger
-        direction = directions[maxIdx]
+    # default to "+X" if X is larger, "+Y" if Y is larger
+    direction = directions[maxIdx] if direction is None else direction
     # verify direction is valid
     assert direction in directions
-    # NOTE: builds brick with slope facing +X direction, then rotates
 
     # get halfScale
-    d = Vector( [dimensions["width"] / 2] * 2 + [dimensions["height"] / 2] )
-    # get scalar for d in both positive directions
+    d = Vector((dimensions["width"] / 2, dimensions["width"] / 2, dimensions["height"] / 2))
+    # get scalar for d in positive xyz directions
     adjustedBrickSize = (brickSize[:2] if "X" in direction else brickSize[1::-1]) + brickSize[2:]
-    sX = (adjustedBrickSize[0] * 2) - 1
-    sY = (adjustedBrickSize[1] * 2) - 1
+    scalar = Vector((adjustedBrickSize[0] * 2 - 1,
+                     adjustedBrickSize[1] * 2 - 1,
+                     1))
     # get thickness of brick from inside to outside
-    thickXY = dimensions["thickness"] - (dimensions["tick_depth"] if "High" in detail and min(brickSize) != 1 else 0)
+    thick = Vector([dimensions["thickness"]] * 3)
 
     # make brick body cube
     coord1 = -d
-    coord2 = Vector((d.x, d.y * sY, d.z))
+    coord2 = vector_mult(d, [1, scalar.y, 1])
     v1, v2, d0, d1, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1 if detail == "FLAT" else 0, 0, 0, 1, 1], bme=bme)
     # remove bottom verts on slope side
     bme.verts.remove(d0)
@@ -79,34 +80,36 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
     # add face to opposite side from slope
     bme.faces.new((v1, v5, v8, v2))
 
+    # create stud
+    if stud: addStuds(dimensions, [1] + adjustedBrickSize[1:], "CONE", circleVerts, bme, inset=thick.z * 0.9)
+
     # make square at end of slope
-    coord1 = Vector((d.x * sX, -d.y,     -d.z))
-    coord2 = Vector((d.x * sX, d.y * sY, -d.z + dimensions["thickness"]))
+    coord1 = vector_mult(d, [scalar.x, -1, -1])
+    coord2 = vector_mult(d, [scalar.x, scalar.y, -1])
+    coord2.z += thick.z
     v9, v10, v11, v12 = makeSquare(coord1, coord2, bme=bme)
 
     # connect square to body cube
     bme.faces.new((v2, v8,  v7, v11, v10))
     bme.faces.new((v9, v12, v6,  v5, v1))
     bme.faces.new((v12, v11, v7, v6))
+
+    # add underside details
     if detail == "FLAT":
         bme.faces.new((v10, v9, v1, v2))
-
-    # create stud
-    if stud: addStuds(dimensions, [1] + adjustedBrickSize[1:], "CONE", circleVerts, bme, inset=dimensions["thickness"] * 0.9)
-
-    # add details
-    if detail != "FLAT":
+    else:
         # add inside square at end of slope
-        coord1 = Vector(( d.x * sX - dimensions["thickness"],
-                         -d.y + dimensions["thickness"],
+        coord1 = Vector(( d.x * sX - thick.x,
+                         -d.y + thick.y,
                          -d.z))
-        coord2 = Vector(( d.x * sX - dimensions["thickness"],
-                          d.y * sY - dimensions["thickness"],
-                         -d.z + dimensions["thickness"]))
+        coord2 = Vector(( d.x * sX - thick.x,
+                          d.y * sY - thick.y,
+                         -d.z + thick.z))
         v13, v14, v15, v16 = makeSquare(coord1, coord2, flipNormal=True, bme=bme)
         # add verts next to inside square at end of slope
         if adjustedBrickSize[0] in [3, 4]:
-            x = d.x * sX - (dimensions["tube_thickness"] + dimensions["stud_radius"]) * (brickSize[0] - 2) + (dimensions["thickness"] * (brickSize[0] - 3))
+            x = d.x * scalar.x + (thick.x * (brickSize[0] - 3))
+            x -= (dimensions["tube_thickness"] + dimensions["stud_radius"]) * (brickSize[0] - 2)
             v17 = bme.verts.new((x, coord1.y, coord2.z))
             v18 = bme.verts.new((x, coord2.y, coord2.z))
             bme.faces.new((v17, v18, v15, v16))
@@ -114,8 +117,10 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
             v17 = v16
             v18 = v15
         # add inside verts cube at deepest section
-        coord1 = -d + Vector( [dimensions["thickness"]] * 2 + [0] )
-        coord2 = Vector((d.x, d.y * sY, d.z)) - Vector( [0] + [dimensions["thickness"]] * 2 )
+        coord1 = -d
+        coord1.xy += thick.xy
+        coord2 = vector_mult(d, [1, scalar.y, 1])
+        coord2.yz -= thick.yz
         v19, v20, d0, d1, v23, v24, v25, v26 = makeCube(coord1, coord2, [1 if detail != "HIGH" else 0, 1, 0, 1, 0, 0], flipNormals=True, bme=bme)
         # remove bottom verts on slope side
         bme.verts.remove(d0)
@@ -142,10 +147,10 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
         if detail in ["MEDIUM", "HIGH"]:
             # add bars
             if min(brickSize) == 1:
-                addBars(dimensions, adjustedBrickSize, circleVerts, "SLOPE", detail, d, sX, thickXY, bme)
+                addBars(dimensions, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme)
             # add tubes
             else:
-                addTubeSupports(dimensions, adjustedBrickSize, circleVerts, "SLOPE", detail, d, sX, thickXY, bme)
+                addTubeSupports(dimensions, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme)
         # add inner cylinders
         if detail == "HIGH":
             addInnerCylinders(dimensions, [1] + adjustedBrickSize[1:], circleVerts, d, v23, v24, v25, v26, bme)
@@ -153,8 +158,8 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
 
     # # translate slope to adjust for flipped brick
     for v in bme.verts:
-        v.co.y -= d.y * (sY - 1) if direction in ["-X", "+Y"] else 0
-        v.co.x -= d.x * (sX - 1) if "-" in direction else 0
+        v.co.y -= d.y * (scalar.y - 1) if direction in ["-X", "+Y"] else 0
+        v.co.x -= d.x * (scalar.x - 1) if direction in ["-X", "-Y"] else 0
     # rotate slope to the appropriate orientation
     mult = directions.index(direction)
     bmesh.ops.rotate(bme, verts=bme.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(math.radians(90) * mult, 3, 'Z'))

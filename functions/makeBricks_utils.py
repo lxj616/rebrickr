@@ -77,13 +77,15 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
     # apply random rotation to BMesh according to parameters
     if cm.randomRot > 0:
         # get half width
-        dX = dimensions["width"] / 2
-        # get scalar for d in both positive directions
-        sX = (brickSize[0] * 2) - 1
-        sY = (brickSize[1] * 2) - 1
+        d = Vector((dimensions["width"] / 2, dimensions["width"] / 2, dimensions["height"] / 2))
+        # get scalar for d in positive xyz directions
+        scalar = Vector((brickSize[0] * 2 - 1,
+                         brickSize[1] * 2 - 1,
+                         1))
         # calculate center and rotate bm about center
-        center = (((dX*sX)-dX) / 2, ((dX*sY)-dX) / 2, 0.0)
-        randRot = randomizeRot(randS3, center, brickSize, bm)
+        center = (vector_mult(d, scalar) - d) / 2
+        center.z = 0
+        randRot = randomizeRot(randS3, center.to_tuple(), brickSize, bm)
     # create new mesh and send bm to it
     m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
     bm.to_mesh(m)

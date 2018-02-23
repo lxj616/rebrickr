@@ -362,6 +362,7 @@ class ModelSettingsPanel(Panel):
 
         col = layout.column(align=True)
         # set up model dimensions variables sX, sY, and sZ
+        s = Vector((-1, -1, -1))
         if cm.modelScaleX == -1 or cm.modelScaleY == -1 or cm.modelScaleZ == -1:
             if not cm.modelCreated and not cm.animated:
                 source = bpy.data.objects.get(cm.source_name)
@@ -369,48 +370,40 @@ class ModelSettingsPanel(Panel):
                 source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
             if source:
                 source_details = bounds(source)
-                sX = round(source_details.x.dist, 2)
-                sY = round(source_details.y.dist, 2)
-                sZ = round(source_details.z.dist, 2)
-            else:
-                sX = -1
-                sY = -1
-                sZ = -1
+                s.x = round(source_details.x.dist, 2)
+                s.y = round(source_details.y.dist, 2)
+                s.z = round(source_details.z.dist, 2)
         else:
-            sX = cm.modelScaleX
-            sY = cm.modelScaleY
-            sZ = cm.modelScaleZ
+            s = Vector((cm.modelScaleX, cm.modelScaleY, cm.modelScaleZ))
         # draw Brick Model dimensions to UI if set
-        if sX != -1 and sY != -1 and sZ != -1:
-            noCustomObj = False
+        if -1 not in s:
             if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
-                zStep = getZStep(cm)
-                dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)
-                rX = int(sX / dimensions["width"])
-                rY = int(sY / dimensions["width"])
-                rZ = int(sZ / dimensions["height"])
+                dimensions = Bricks.get_dimensions(cm.brickHeight, getZStep(cm), cm.gap)
+                full_d = Vector((dimensions["width"],
+                                 dimensions["width"],
+                                 dimensions["height"]))
+                r = vector_div(s, full_d)
             elif cm.brickType == "Custom":
+                customObjFound = False
                 customObj = bpy.data.objects.get(cm.customObjectName)
                 if customObj and customObj.type == "MESH":
                     custom_details = bounds(customObj)
-                    if custom_details.x.dist != 0 and custom_details.y.dist != 0 and custom_details.z.dist != 0:
-                        multiplier = (cm.brickHeight/custom_details.z.dist)
-                        rX = int(sX / (custom_details.x.dist * multiplier))
-                        rY = int(sY / (custom_details.y.dist * multiplier))
-                        rZ = int(sZ / cm.brickHeight)
-                    else:
-                        noCustomObj = True
-                else:
-                    noCustomObj = True
-            if noCustomObj:
+                    if 0 not in [custom_details.x.dist, custom_details.y.dist, custom_details.z.dist]:
+                        mult = (cm.brickHeight / custom_details.z.dist)
+                        full_d = Vector((custom_details.x.dist * mult,
+                                         custom_details.y.dist * mult,
+                                         cm.brickHeight))
+                        r = vector_div(s, full_d)
+                        customObjFound = True
+            if cm.brickType == "Custom" and not customObjFound:
                 col.label("[Custom object not found]")
             else:
                 split = col.split(align=True, percentage=0.5)
                 col1 = split.column(align=True)
-                col1.label("~Num Bricks:")
+                col1.label("Dimensions:")
                 col2 = split.column(align=True)
                 col2.alignment = "RIGHT"
-                col2.label("%(rX)s x %(rY)s x %(rZ)s" % locals())
+                col2.label("{}x{}x{}".format(int(r.x), int(r.y), int(r.z)))
         row = col.row(align=True)
         row.prop(cm, "brickHeight")
         row = col.row(align=True)

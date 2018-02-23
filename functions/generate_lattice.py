@@ -27,7 +27,7 @@ import bpy
 from mathutils import Vector
 
 # Rebrickr imports
-from .common import drawBMesh
+from .common import drawBMesh, vector_mult
 
 
 def generateLattice(vertDist:Vector, scale:Vector, offset:Vector=(0, 0, 0), visualize:bool=False):
@@ -40,9 +40,6 @@ def generateLattice(vertDist:Vector, scale:Vector, offset:Vector=(0, 0, 0), visu
     visualize -- draw lattice coordinates in 3D space
 
     """
-
-    # helper function for componentwise multiplication
-    vector_mult = lambda v1, v2: Vector(e1 * e2 for e1, e2 in zip(v1, v2))
 
     # shift offset to ensure lattice surrounds object
     offset = offset - (vertDist / 2)

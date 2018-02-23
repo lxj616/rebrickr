@@ -116,8 +116,9 @@ def makeCircle(r:float, N:int, co:Vector=Vector((0,0,0)), face:bool=True, flipNo
 
     # create verts around circumference of circle
     for i in range(N):
-        x = r * math.cos(((2 * math.pi) / N) * i)
-        y = r * math.sin(((2 * math.pi) / N) * i)
+        circ_val = ((2 * math.pi) / N) * i
+        x = r * math.cos(circ_val)
+        y = r * math.sin(circ_val)
         coord = co + Vector((x, y, 0))
         verts.append(bme.verts.new(coord))
     # create face
@@ -153,8 +154,9 @@ def makeCylinder(r:float, h:float, N:int, co:Vector=Vector((0,0,0)), botFace:boo
 
     # create upper and lower circles
     for i in range(N):
-        x = r * math.cos(((2 * math.pi) / N) * i)
-        y = r * math.sin(((2 * math.pi) / N) * i)
+        circ_val = ((2 * math.pi) / N) * i
+        x = r * math.cos(circ_val)
+        y = r * math.sin(circ_val)
         z = h / 2
         coordT = co + Vector((x, y, z))
         coordB = co + Vector((x, y, -z))

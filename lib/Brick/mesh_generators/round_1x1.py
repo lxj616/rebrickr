@@ -30,7 +30,7 @@ from mathutils import Vector
 
 # Rebrickr imports
 from .geometric_shapes import *
-from .standard_brick import *
+from .generator_utils import *
 
 
 def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="LOW", bme=None):
@@ -64,6 +64,8 @@ def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="LOW", bm
     # set brick height
     height = dimensions["height"] if "STUD" not in type else dimensions["height"] / 3
 
+    thick = Vector([dimensions["thickness"] * 3])
+
     # create outer cylinder
     r = dimensions["width"] / 2
     h = height - dimensions["stud_height"]
@@ -74,8 +76,7 @@ def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="LOW", bm
         new_radius = dimensions["stud_radius"] * 1.075
         factor = new_radius / (dimensions["width"] / 2)
         for vert in vertsOuterCylinder["top"]:
-            vert.co.x = vert.co.x * factor
-            vert.co.y = vert.co.y * factor
+            vert.co.xy = vector_mult(vert.co.xy, [factor]*2)
     # select verts for exclusion from vert group
     selectVerts(vertsOuterCylinder["bottom"])
 
@@ -119,9 +120,9 @@ def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="LOW", bm
         # create small inner cylinder inside stud for medium/high detail
         if type == "STUD" and origDetail in ["MEDIUM", "HIGH"]:
             # make small inner cylinders
-            r = dimensions["stud_radius"]-(2 * dimensions["thickness"])
-            h = dimensions["thickness"] * 0.99
-            z = dimensions["thickness"] + h / 2
+            r = dimensions["stud_radius"]-(2 * thick.x)
+            h = thick.z * 0.99
+            z = thick.z + h / 2
             bme, innerCylinderVerts = makeCylinder(r, h, circleVerts, co=Vector((0, 0, z)), botFace=False, flipNormals=True, bme=bme)
             # create faces connecting bottom of inner cylinder with bottom of stud
             connectCircles(studVertsInner["bottom"], innerCylinderVerts["bottom"], bme, offset=circleVerts // 2)
