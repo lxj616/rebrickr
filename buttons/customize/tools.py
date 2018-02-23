@@ -874,21 +874,15 @@ class changeBrickType(Operator):
                 for y in range(brickSize[1]):
                     curLoc = [x0 + x, y0 + y, z0]
                     self.bricksDict = verifyBrickExposureAboveAndBelow(curLoc, self.bricksDict)
-                    curLoc[2] = z0 + 1
-                    k0 = listToStr(curLoc)
-                    curLoc[2] = z0 - 1
-                    k1 = listToStr(curLoc)
-                    parent_key0 = k0 if self.bricksDict[k0]["parent_brick"] == "self" else self.bricksDict[k0]["parent_brick"]
-                    parent_key1 = k1 if self.bricksDict[k1]["parent_brick"] == "self" else self.bricksDict[k1]["parent_brick"]
-                    if parent_key0 not in keysToUpdate:
-                        keysToUpdate.append(parent_key0)
-                    if parent_key1 not in keysToUpdate:
-                        keysToUpdate.append(parent_key1)
+                    for i in [1, -1]:
+                        k0 = listToStr([curLoc[0], curLoc[1], z0 + i])
+                        parent_key = k0 if self.bricksDict[k0]["parent_brick"] == "self" else self.bricksDict[k0]["parent_brick"]
+                        if parent_key not in keysToUpdate and parent_key is not None:
+                            keysToUpdate.append(parent_key)
 
             # delete objects to be updated
             for k1 in keysToUpdate:
                 obj0 = bpy.data.objects.get(self.bricksDict[k1]["name"])
-                print(self.bricksDict[k1]["name"])
                 if obj0 is not None:
                     delete(obj0)
             # draw updated brick

@@ -170,14 +170,16 @@ def getBrickExposure(cm, bricksDict, key=None, loc=None):
     for x in range(loc[0], size[0] + loc[0]):
         for y in range(loc[1], size[1] + loc[1]):
             for z in range(loc[2], size[2] + loc[2], zStep):
-                # get brick at x,y,z location
+                # get brick at x,y location
                 k0 = listToStr([x,y,z])
                 curBrick = bricksDict[k0]
                 # check if brick top or bottom is exposed
                 if curBrick["val"] != 1 and not (cm.brickType == "Bricks and Plates" and size[2] == 3):
                     continue
-                topExposed = checkExposure(bricksDict, x, y, idxZa, 1, ignoredTypes=["STANDARD", "TILE", "SLOPE", "STUD"])
-                botExposed = checkExposure(bricksDict, x, y, idxZb, 1, ignoredTypes=["STANDARD", "TILE", "SLOPE_INVERTED"])
+                returnVal0 = checkExposure(bricksDict, x, y, idxZa, 1, ignoredTypes=["STANDARD", "TILE", "SLOPE", "STUD"])
+                if returnVal0: topExposed = True
+                returnVal1 = checkExposure(bricksDict, x, y, idxZb, 1, ignoredTypes=["STANDARD", "TILE", "SLOPE_INVERTED"])
+                if returnVal1: botExposed = True
 
     return topExposed, botExposed
 
