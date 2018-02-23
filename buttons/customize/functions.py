@@ -98,8 +98,11 @@ def setCurBrickVal(bricksDict, loc):
 
 def verifyBrickExposureAboveAndBelow(origDictLoc, bricksDict, decriment=0, zNeg=False, zPos=False):
     scn, cm, _ = getActiveContextInfo()
-    dictLocs = [[] if zNeg else (origDictLoc[:2] + [origDictLoc[2] + 1 + decriment]),
-                [] if zPos else (origDictLoc[:2] + [origDictLoc[2] - 1])]
+    dictLocs = []
+    if zNeg:
+        dictLocs.append(origDictLoc[:2] + [origDictLoc[2] + 1 + decriment])
+    if zPos:
+        dictLocs.append(origDictLoc[:2] + [origDictLoc[2] - 1])
     # double check exposure of bricks above/below new adjacent brick
     for dictLoc in dictLocs:
         k = listToStr(dictLoc)
@@ -108,5 +111,4 @@ def verifyBrickExposureAboveAndBelow(origDictLoc, bricksDict, decriment=0, zNeg=
             topExposed, botExposed = getBrickExposure(cm, bricksDict, k, loc=dictLoc)
             bricksDict[parent_key]["top_exposed"] = topExposed
             bricksDict[parent_key]["bot_exposed"] = botExposed
-    print("Verified")
     return bricksDict
