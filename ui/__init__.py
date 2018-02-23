@@ -386,18 +386,18 @@ class ModelSettingsPanel(Panel):
             if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
                 zStep = getZStep(cm)
                 dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)
-                rX = int(sX/dimensions["width"])
-                rY = int(sY/dimensions["width"])
-                rZ = int(sZ/dimensions["height"])
+                rX = int(sX / dimensions["width"])
+                rY = int(sY / dimensions["width"])
+                rZ = int(sZ / dimensions["height"])
             elif cm.brickType == "Custom":
                 customObj = bpy.data.objects.get(cm.customObjectName)
                 if customObj and customObj.type == "MESH":
                     custom_details = bounds(customObj)
                     if custom_details.x.dist != 0 and custom_details.y.dist != 0 and custom_details.z.dist != 0:
                         multiplier = (cm.brickHeight/custom_details.z.dist)
-                        rX = int(sX/(custom_details.x.dist * multiplier))
-                        rY = int(sY/(custom_details.y.dist * multiplier))
-                        rZ = int(sZ/cm.brickHeight)
+                        rX = int(sX / (custom_details.x.dist * multiplier))
+                        rY = int(sY / (custom_details.y.dist * multiplier))
+                        rZ = int(sZ / cm.brickHeight)
                     else:
                         noCustomObj = True
                 else:
@@ -732,7 +732,7 @@ class DetailingPanel(Panel):
         row.label("Cylinders:")
         row = col.row(align=True)
         row.prop(cm, "circleVerts")
-        row.active = not (cm.studDetail == "None" and cm.exposedUndersideDetail == "Flat" and cm.hiddenUndersideDetail == "Flat")
+        row.active = not (cm.studDetail == "None" and cm.exposedUndersideDetail == "FLAT" and cm.hiddenUndersideDetail == "FLAT")
 
 
 class SupportsPanel(Panel):
@@ -947,6 +947,9 @@ class AdvancedPanel(Panel):
             row.label("Model Orientation:")
             row = col.row(align=True)
             row.prop(cm, "useLocalOrient", text="Use Source Local")
+        # draw test brick generator button (for testing purposes only)
+        col = layout.column(align=True)
+        col.operator("rebrickr.test_brick_generators", text="Test Brick Generators", icon="OUTLINER_OB_MESH")
 
 
 class BrickDetailsPanel(Panel):

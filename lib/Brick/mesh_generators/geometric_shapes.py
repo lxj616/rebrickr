@@ -5,6 +5,44 @@ from mathutils import Vector
 from ....functions.common import *
 
 
+def makeSquare(coord1:Vector, coord2:Vector, face:bool=True, flipNormal:bool=False, bme:bmesh=None):
+    """
+    create a square with bmesh
+
+    Keyword Arguments:
+        coord1     -- back/left/bottom corner of the square (furthest negative in all three axes)
+        coord2     -- front/right/top  corner of the square (furthest positive in all three axes)
+        face       -- draw face connecting cube verts
+        flipNormal -- flip the normals of the cube
+        bme        -- bmesh object in which to create verts
+    NOTE: if coord1 and coord2 are different on all three axes, z axis will stay consistent at coord1.z
+
+    Returns:
+        vList      -- list of vertices with normal facing in positive direction (right hand rule)
+
+    """
+    # create new bmesh object
+    if bme is None:
+        bme = bmesh.new()
+
+    # create square with normal facing +x direction
+    if coord1.x == coord2.x:
+        v1, v2, v3, v4 = [bme.verts.new((coord1.x, y, z)) for y in [coord1.y, coord2.y] for z in [coord1.z, coord2.z]]
+    # create square with normal facing +y direction
+    elif coord1.y == coord2.y:
+        v1, v2, v3, v4 = [bme.verts.new((x, coord1.y, z)) for x in [coord1.x, coord2.x] for z in [coord1.z, coord2.z]]
+    # create square with normal facing +z direction
+    else:
+        v1, v2, v3, v4 = [bme.verts.new((x, y, coord1.z)) for x in [coord1.x, coord2.x] for y in [coord1.y, coord2.y]]
+    vList = [v1, v3, v4, v2]
+
+    # create face
+    if face:
+        bme.faces.new(vList[::-1] if flipNormal else vList)
+
+    return vList
+
+
 def makeCube(coord1:Vector, coord2:Vector, sides:list=[False]*6, flipNormals:bool=False, bme:bmesh=None):
     """
     create a cube with bmesh
@@ -15,6 +53,9 @@ def makeCube(coord1:Vector, coord2:Vector, sides:list=[False]*6, flipNormals:boo
         sides       -- draw sides [+z, -z, +x, -x, +y, -y]
         flipNormals -- flip the normals of the cube
         bme         -- bmesh object in which to create verts
+
+    Returns:
+        vList       -- list of vertices in the following x,y,z order: [---, -+-, ++-, +--, --+, +-+, +++, -++]
 
     """
 
@@ -51,7 +92,7 @@ def makeCube(coord1:Vector, coord2:Vector, sides:list=[False]*6, flipNormals:boo
             f.reverse()
         bme.faces.new(f)
 
-    return vList
+    return [v1, v3, v7, v5, v2, v6, v8, v4]
 
 
 def makeCircle(r:float, N:int, co:Vector=Vector((0,0,0)), face:bool=True, flipNormals:bool=False, bme:bmesh=None):
@@ -83,7 +124,7 @@ def makeCircle(r:float, N:int, co:Vector=Vector((0,0,0)), face:bool=True, flipNo
     if face:
         bme.faces.new(verts if not flipNormals else verts[::-1])
 
-    return bme, verts
+    return verts
 
 
 def makeCylinder(r:float, h:float, N:int, co:Vector=Vector((0,0,0)), botFace:bool=True, topFace:bool=True, flipNormals:bool=False, bme:bmesh=None):
@@ -130,7 +171,7 @@ def makeCylinder(r:float, h:float, N:int, co:Vector=Vector((0,0,0)), botFace:boo
     if botFace:
         bme.faces.new(botVerts[::-1] if not flipNormals else botVerts)
 
-    # return bmesh
+    # return bme & dictionary with lists of top and bottom vertices
     return bme, {"bottom":botVerts[::-1], "top":topVerts}
 
 

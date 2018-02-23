@@ -170,37 +170,40 @@ def getBrickExposure(cm, bricksDict, key=None, loc=None):
     for x in range(loc[0], size[0] + loc[0]):
         for y in range(loc[1], size[1] + loc[1]):
             for z in range(loc[2], size[2] + loc[2], zStep):
-                # get brick at x,y location
+                # get brick at x,y,z location
                 k0 = listToStr([x,y,z])
                 curBrick = bricksDict[k0]
                 # check if brick top or bottom is exposed
-                if curBrick["val"] == 1 or (cm.brickType == "Bricks and Plates" and size[2] == 3):
-                    returnVal0 = checkExposure(bricksDict, x, y, idxZa, 1)
-                    if returnVal0: topExposed = True
-                    returnVal1 = checkExposure(bricksDict, x, y, idxZb, 1)
-                    if returnVal1: botExposed = True
+                if curBrick["val"] != 1 and not (cm.brickType == "Bricks and Plates" and size[2] == 3):
+                    continue
+                topExposed = checkExposure(bricksDict, x, y, idxZa, 1, ignoredTypes=["STANDARD", "TILE", "SLOPE", "STUD"])
+                botExposed = checkExposure(bricksDict, x, y, idxZb, 1, ignoredTypes=["STANDARD", "TILE", "SLOPE_INVERTED"])
 
     return topExposed, botExposed
 
 
-def checkExposure(bricksDict, x, y, z, direction:int=1):
+def checkExposure(bricksDict, x, y, z, direction:int=1, ignoredTypes=["STANDARD"]):
     isExposed = False
     try:
         valKeysChecked = []
         k0 = listToStr([x,y,z])
         val = bricksDict[k0]["val"]
-        if val == 0:
+        parent_key = k0 if bricksDict[k0]["parent_brick"] == "self" else bricksDict[k0]["parent_brick"]
+        typ = bricksDict[parent_key]["type"]
+        if val == 0 or typ not in ignoredTypes:
             isExposed = True
         # Check bricks on Z axis [above or below depending on 'direction'] this brick until shell (1) hit. If ouside (0) hit first, [top or bottom depending on 'direction'] is exposed
         elif val > 0 and val < 1:
             zz = z
             while val > 0 and val < 1:
                 zz += direction
-                # NOTE: if key does not exist, we will be sent to 'except'
                 k1 = listToStr([x,y,zz])
+                # NOTE: if key 'k1' does not exist in bricksDict, we will be sent to 'except'
                 val = bricksDict[k1]["val"]
+                parent_key = k1 if bricksDict[k1]["parent_brick"] == "self" else bricksDict[k1]["parent_brick"]
+                typ = bricksDict[parent_key]["type"]
                 valKeysChecked.append(k1)
-                if val == 0:
+                if val == 0 or typ not in ignoredTypes:
                     isExposed = True
     except KeyError:
         isExposed = True

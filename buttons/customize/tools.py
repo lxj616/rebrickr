@@ -148,17 +148,17 @@ class splitBricks(Operator):
                     x0, y0, z0 = dictLoc
                     # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
+                    bricksDict[dictKey]["type"] = "STANDARD"
                     zStep = getZStep(cm)
 
                     # skip 1x1 bricks
                     if objSize[0] + objSize[1] + (objSize[2] / zStep) == 3:
                         continue
 
-                    # set size of active brick's bricksDict entries to 1x1x[lastZSize]
                     if self.vertical or self.horizontal:
                         # delete the current object
                         delete(bpy.data.objects.get(obj_name))
-                        # split the bricks in the matrix
+                        # split the bricks in the matrix and set size of active brick's bricksDict entries to 1x1x[lastZSize]
                         splitKeys = Bricks.split(bricksDict, dictKey, loc=dictLoc, cm=cm, v=self.vertical, h=self.horizontal)
                         # append new splitKeys to keysToUpdate
                         keysToUpdate = [k for k in splitKeys if k not in keysToUpdate]
@@ -474,7 +474,7 @@ class drawAdjacent(Operator):
                         self.toggleBrick(cm, dimensions, adjDictLoc, dictKey, objSize, i, j, keysToMerge, addBrick=createAdjBricks[i])
                     # after ALL bricks toggled, check exposure of bricks above and below new ones
                     for j,adjDictLoc in enumerate(self.adjDKLs[i]):
-                        self.verifyBrickExposureAboveAndBelow(adjDictLoc, decriment)
+                        self.bricksDict = verifyBrickExposureAboveAndBelow(adjDictLoc, self.bricksDict, decriment=decriment, zNeg=self.zNeg, zPos=self.zPos)
 
             # recalculate val for each bricksDict key in original brick
             for x in range(x0, x0 + objSize[0]):
@@ -661,25 +661,6 @@ class drawAdjacent(Operator):
         return not (brickNum == len(self.adjDKLs[side]) - 1 and
                     not any(self.adjBricksCreated[side])) # evaluates True if all values in this list are False
 
-    def verifyBrickExposureAboveAndBelow(self, adjDictLoc, decriment):
-        scn, cm, _ = getActiveContextInfo()
-        # double check exposure of bricks above/below new adjacent brick
-        if not self.zNeg:
-            adjDictLoc[2] += decriment + 1
-            k = listToStr(adjDictLoc)
-            if k in self.bricksDict and self.bricksDict[k]["parent_brick"] == "self":
-                topExposed, botExposed = getBrickExposure(cm, self.bricksDict, k, loc=adjDictLoc)
-                self.bricksDict[k]["top_exposed"] = topExposed
-                self.bricksDict[k]["bot_exposed"] = botExposed
-            adjDictLoc[2] -= 1 # reset adjDictLoc in case next conditional met
-        if not self.zPos:
-            adjDictLoc[2] -= 1
-            k = listToStr(adjDictLoc)
-            if k in self.bricksDict and self.bricksDict[k]["parent_brick"] == "self":
-                topExposed, botExposed = getBrickExposure(cm, self.bricksDict, k, loc=adjDictLoc)
-                self.bricksDict[k]["top_exposed"] = topExposed
-                self.bricksDict[k]["bot_exposed"] = botExposed
-
     def toggleBrick(self, cm, dimensions, adjDictLoc, dictKey, objSize, side, brickNum, keysToMerge, addBrick=True):
         # if brick height is 3 and 'Bricks and Plates'
         newBrickHeight = self.getNewBrickHeight()
@@ -736,8 +717,10 @@ class drawAdjacent(Operator):
             else:
                 adjBrickD["draw"] = False
                 adjBrickD["val"] = 0 # TODO: set val to 0 only if adjacent to another outside brick (else set to inside (-1?))
-                # adjBrickD["size"] = None
-                # adjBrickD["parent_brick"] = None
+                adjBrickD["size"] = None
+                adjBrickD["parent_brick"] = None
+                adjBrickD["bot_exposed"] = None
+                adjBrickD["top_exposed"] = None
                 brick = bpy.data.objects.get(adjBrickD["name"])
                 if brick: delete(brick)
                 self.adjBricksCreated[side][brickNum] = False
@@ -833,6 +816,7 @@ class changeBrickType(Operator):
             cm = scn.cmlist[self.cm_idx]
             self.undo_stack.iterateStates(cm)
             obj = scn.objects.active
+            initial_active_obj_name = obj.name if obj else ""
 
             # get dict key details of current obj
             dictKey, dictLoc = getDictKey(obj.name)
@@ -841,7 +825,9 @@ class changeBrickType(Operator):
             objSize = self.bricksDict[dictKey]["size"]
 
             # skip bricks that are already of type self.brickType
-            if self.bricksDict[dictKey]["type"] == self.brickType:
+            if (self.bricksDict[dictKey]["type"] == self.brickType and
+                self.bricksDict[dictKey]["flipped"] == self.flipBrick and
+                self.bricksDict[dictKey]["rotated"] == self.rotateBrick):
                 return {"CANCELLED"}
 
             # turn 1x1 & 1x2 plates into slopes
@@ -857,10 +843,9 @@ class changeBrickType(Operator):
                 self.report({"INFO"}, "turn 1x2 & 1x3 bricks into inverted slopes")
             # turn 1x2 & 1x3 bricks into slopes
             elif (self.brickType == "SLOPE" and
-                 objSize[2] == 3 and
-                 ((objSize[0] == 1 and objSize[1] in [2, 3, 4]) or
-                  (objSize[1] == 1 and objSize[0] in [2, 3, 4]))):
-                self.report({"INFO"}, "turn 1x2, 1x3 & 1x4 bricks into slopes")
+                  objSize[2] == 3 and
+                  (sum(objSize[:2]) in range(3,8))):
+                self.report({"INFO"}, "turn 1x2, 1x3, 1x4, 1x6, 2x2, 2x3, 2x4, and 3x4 bricks into slopes")
             # turn plates into tiles
             elif (self.brickType == "TILE" and
                   objSize[2] == 1):
@@ -881,11 +866,36 @@ class changeBrickType(Operator):
 
             # set type of parent_brick to self.brickType
             self.bricksDict[dictKey]["type"] = self.brickType
+            self.bricksDict[dictKey]["flipped"] = self.flipBrick
+            self.bricksDict[dictKey]["rotated"] = self.rotateBrick
+            brickSize = self.bricksDict[dictKey]["size"]
+            keysToUpdate = [dictKey]
+            for x in range(brickSize[0]):
+                for y in range(brickSize[1]):
+                    curLoc = [x0 + x, y0 + y, z0]
+                    self.bricksDict = verifyBrickExposureAboveAndBelow(curLoc, self.bricksDict)
+                    curLoc[2] = z0 + 1
+                    k0 = listToStr(curLoc)
+                    curLoc[2] = z0 - 1
+                    k1 = listToStr(curLoc)
+                    parent_key0 = k0 if self.bricksDict[k0]["parent_brick"] == "self" else self.bricksDict[k0]["parent_brick"]
+                    parent_key1 = k1 if self.bricksDict[k1]["parent_brick"] == "self" else self.bricksDict[k1]["parent_brick"]
+                    if parent_key0 not in keysToUpdate:
+                        keysToUpdate.append(parent_key0)
+                    if parent_key1 not in keysToUpdate:
+                        keysToUpdate.append(parent_key1)
 
-            # delete updated brick
-            delete(obj)
+            # delete objects to be updated
+            for k1 in keysToUpdate:
+                obj0 = bpy.data.objects.get(self.bricksDict[k1]["name"])
+                print(self.bricksDict[k1]["name"])
+                if obj0 is not None:
+                    delete(obj0)
             # draw updated brick
-            drawUpdatedBricks(cm, self.bricksDict, [dictKey], selectCreated=False)
+            drawUpdatedBricks(cm, self.bricksDict, keysToUpdate, selectCreated=False)
+            # select original brick
+            orig_obj = bpy.data.objects.get(initial_active_obj_name)
+            if orig_obj: select(orig_obj, active=orig_obj, only=False)
             # model is now customized
             cm.customized = True
         except:
@@ -913,6 +923,8 @@ class changeBrickType(Operator):
             self.cm_idx = cm.idx
             curBrickType = self.bricksDict[dictKey]["type"]
             self.brickType = curBrickType if curBrickType is not None else "STANDARD"
+            self.flipBrick = self.bricksDict[dictKey]["flipped"]
+            self.rotateBrick = self.bricksDict[dictKey]["rotated"]
         except:
             handle_exception()
 
@@ -936,10 +948,8 @@ class changeBrickType(Operator):
         objSize = bricksDict[dictKey]["size"]
         # Bricks
         if objSize[2] == 3:
-            # if ((sum(objSize[:2]) in range(3,8) or
-            #     (objSize[0] == 2 and objSize[1] == 6) or
-            #     (objSize[1] == 2 and objSize[0] == 6))):
-            #     items.append(("SLOPE", "Slope", ""))
+            if (objSize[2] == 3 and (sum(objSize[:2]) in range(3,8))):
+                items.append(("SLOPE", "Slope", ""))
             # if sum(objSize[:2]) in range(3,6):
             #     items.append(("SLOPE_INVERTED", "Slope Inverted", ""))
             if sum(objSize[:2]) == 2:
@@ -993,6 +1003,10 @@ class changeBrickType(Operator):
         name="Flip Brick Orientation",
         description="Flip the brick about the non-mirrored axis",
         default=False)
+    rotateBrick = bpy.props.BoolProperty(
+        name="Rotate 90 Degrees",
+        description="Rotate the brick about the Z axis (brick width & depth must be equivalent)",
+        default=False)
 
     #############################################
 
@@ -1021,10 +1035,7 @@ class redrawBricks(Operator):
             scn = bpy.context.scene
             selected_objects = bpy.context.selected_objects
             active_obj = scn.objects.active
-            if active_obj:
-                initial_active_obj_name = active_obj.name
-            else:
-                initial_active_obj_name = ""
+            initial_active_obj_name = active_obj.name if active_obj else ""
 
             # initialize objsD (key:cm_idx, val:list of brick objects)
             objsD = createObjsD(selected_objects)

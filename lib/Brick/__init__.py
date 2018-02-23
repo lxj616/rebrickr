@@ -30,15 +30,14 @@ import numpy as np
 from mathutils import Vector, Matrix
 
 # Rebrickr imports
-from .mesh_generators.standard_brick import *
-from .mesh_generators.round_1x1 import *
+from .mesh_generators import *
 from .get_brick_dimensions import *
 from ...functions.general import *
 from ...functions.common import *
 
 class Bricks:
     @staticmethod
-    def new_mesh(dimensions, size=[1,1,3], type="STANDARD", logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_inset=None, undersideDetail="Flat", stud=True, circleVerts=None):
+    def new_mesh(dimensions:list, size:list=[1,1,3], type:str="STANDARD", flip:bool=False, rotate90:bool=False, logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_inset=None, undersideDetail:str="FLAT", stud:bool=True, circleVerts:int=16):
         """ create unlinked Brick at origin """
 
         # create brick mesh
@@ -46,9 +45,17 @@ class Bricks:
             _,cm,_ = getActiveContextInfo()
             brickBM = makeStandardBrick(dimensions=dimensions, brickSize=size, brickType=cm.brickType, circleVerts=circleVerts, detail=undersideDetail, stud=stud)
         elif type in ["CYLINDER", "CONE", "STUD", "STUD_HOLLOW"]:
-            brickBM = makeRound1x1(dimensions=dimensions, circleVerts=circleVerts, type=type, detail=undersideDetail, stud=stud)
+            brickBM = makeRound1x1(dimensions=dimensions, circleVerts=circleVerts, type=type, detail=undersideDetail)
+        elif type == "SLOPE":
+            # determine brick direction
+            directions = ["+X", "+Y", "-X", "-Y"]
+            maxIdx = size.index(max(size[:2]))
+            maxIdx -= 2 if flip else 0
+            maxIdx += 1 if rotate90 else 0
+            # make slope brick bmesh
+            brickBM = makeSlope(dimensions=dimensions, brickSize=size, circleVerts=circleVerts, direction=directions[maxIdx], detail=undersideDetail, stud=stud)
         else:
-            raise ValueError("'new_mesh' function received unrecognized parameter '" + type + "'")
+            raise ValueError("'new_mesh' function received unrecognized value for parameter 'type': '" + str(type) + "'")
 
         # create list of brick bmesh variations
         if logo and stud and type in ["STANDARD", "STUD"]:
@@ -107,6 +114,7 @@ class Bricks:
                 for z0 in range(z, z + size[2], zStep):
                     curKey = listToStr([x0,y0,z0])
                     bricksDict[curKey]["size"] = newSize
+                    bricksDict[curKey]["type"] = "STANDARD"
                     bricksDict[curKey]["parent_brick"] = "self"
                     bricksDict[curKey]["top_exposed"] = bricksDict[key]["top_exposed"]
                     bricksDict[curKey]["bot_exposed"] = bricksDict[key]["bot_exposed"]

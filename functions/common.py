@@ -351,11 +351,13 @@ def delete(objList):
 
 
 def selectVerts(vertsList):
+    vertsList = confirmList(vertsList)
     for v in vertsList:
         v.select = True
 
 
 def smoothFaces(facesList):
+    facesList = confirmList(facesList)
     for f in facesList:
         f.smooth = True
 

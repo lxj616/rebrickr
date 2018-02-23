@@ -76,10 +76,13 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
         bm = getBrickMesh(cm, brickD, randS4, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.circleVerts)
     # apply random rotation to BMesh according to parameters
     if cm.randomRot > 0:
-        d = dimensions["width"]/2
+        # get half width
+        dX = dimensions["width"] / 2
+        # get scalar for d in both positive directions
         sX = (brickSize[0] * 2) - 1
         sY = (brickSize[1] * 2) - 1
-        center = (((d*sX)-d) / 2, ((d*sY)-d) / 2, 0.0)
+        # calculate center and rotate bm about center
+        center = (((dX*sX)-dX) / 2, ((dX*sY)-dX) / 2, 0.0)
         randRot = randomizeRot(randS3, center, brickSize, bm)
     # create new mesh and send bm to it
     m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
@@ -223,9 +226,10 @@ def randomizeRot(rand, center, brickSize, bm):
         denom = 0.75
     else:
         denom = brickSize[0] * brickSize[1]
-    x=rand.uniform(-0.1963495 * cm.randomRot / denom, 0.1963495 * cm.randomRot / denom)
-    y=rand.uniform(-0.1963495 * cm.randomRot / denom, 0.1963495 * cm.randomRot / denom)
-    z=rand.uniform(-0.785398 * cm.randomRot / denom, 0.785398 * cm.randomRot / denom)
+    mult = cm.randomRot / denom
+    x = rand.uniform(-math.radians(11.25) * mult, math.radians(11.25) * mult)
+    y = rand.uniform(-math.radians(11.25) * mult, math.radians(11.25) * mult)
+    z = rand.uniform(-math.radians(45)    * mult, math.radians(45)    * mult)
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(x, 3, 'X'))
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(y, 3, 'Y'))
     bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(z, 3, 'Z'))
@@ -264,7 +268,14 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
     bm_cache_string = ""
     if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
         custom_logo_used = logoToUse is not None and logo_type == "Custom Logo"
-        bm_cache_string = json.dumps((cm.brickHeight, brickSize, undersideDetail, cm.logoResolution if logoToUse is not None else None, hash_object(logoToUse) if custom_logo_used else None, logo_scale if custom_logo_used else None, logo_inset if custom_logo_used else None, useStud, cm.circleVerts, brickD["type"]))
+        bm_cache_string = json.dumps((cm.brickHeight, brickSize, undersideDetail,
+                                      cm.logoResolution if logoToUse is not None else None,
+                                      hash_object(logoToUse) if custom_logo_used else None,
+                                      logo_scale if custom_logo_used else None,
+                                      logo_inset if custom_logo_used else None,
+                                      useStud, cm.circleVerts, brickD["type"],
+                                      brickD["flipped"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None,
+                                      brickD["rotated"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None))
 
     # check for bmesh in cache
     bms = rebrickr_bm_cache.get(bm_cache_string)
@@ -273,7 +284,7 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
         bm = bms[rand.randint(0, len(bms))] if len(bms) > 1 else bms[0]
     # if not found in rebrickr_bm_cache, create new brick mesh(es) and store to cache
     else:
-        bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, type=brickD["type"], undersideDetail=undersideDetail, logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, circleVerts=cm.circleVerts)
+        bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, type=brickD["type"], undersideDetail=undersideDetail, flip=brickD["flipped"], rotate90=brickD["rotated"], logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, circleVerts=cm.circleVerts)
         if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
             rebrickr_bm_cache[bm_cache_string] = bms
         bm = bms[rand.randint(0, len(bms))]

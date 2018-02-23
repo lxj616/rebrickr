@@ -30,9 +30,10 @@ from mathutils import Vector
 
 # Rebrickr imports
 from .geometric_shapes import *
+from .standard_brick import *
 
 
-def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="Low Detail", stud=True, bme=None):
+def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="LOW", bme=None):
     """
     create round 1x1 brick with bmesh
 
@@ -40,8 +41,7 @@ def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="Low Deta
         dimensions  -- dictionary containing brick dimensions
         circleVerts -- number of vertices per circle of cylinders
         type        -- type of round 1x1 brick in ["CONE", "CYLINDER", "STUD", "STUD_HOLLOW"]
-        detail      -- level of brick detail (options: ["Flat", "Low Detail", "Medium Detail", "High Detail"])
-        stud        -- create stud on top of brick
+        detail      -- level of brick detail (options: ["FLAT", "LOW", "MEDIUM", "HIGH"])
         bme         -- bmesh object in which to create verts
 
     """
@@ -53,13 +53,13 @@ def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="Low Deta
     # store original detail amount
     origDetail = detail
     # cap detail level to medium detail
-    detail = "Medium Detail" if "High Detail" else detail
+    detail = "MEDIUM" if "HIGH" else detail
     # if making cone, detail should always be high
-    detail = "Medium Detail" if type == "CONE" else detail
+    detail = "MEDIUM" if type == "CONE" else detail
     # if making stud, detail should never get beyond low
-    detail = "Low Detail" if type == "STUD" and detail == "Medium Detail" else detail
+    detail = "LOW" if type == "STUD" and detail == "MEDIUM" else detail
     # if making hollow stud, detail should never get below medium
-    detail = "Medium Detail" if type == "STUD_HOLLOW" else detail
+    detail = "MEDIUM" if type == "STUD_HOLLOW" else detail
 
     # set brick height
     height = dimensions["height"] if "STUD" not in type else dimensions["height"] / 3
@@ -84,7 +84,7 @@ def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="Low Deta
     h = dimensions["stud_height"]
     t = (dimensions["width"] / 2 - r) / 2
     z = - (height / 2) + (dimensions["stud_height"] / 2)
-    if detail == "Flat":
+    if detail == "FLAT":
         bme, lowerCylinderVerts = makeCylinder(r + t, h, circleVerts, co=Vector((0, 0, z)), topFace=False, bme=bme)
         # select verts for exclusion from vert group
         selectVerts(lowerCylinderVerts["top"])
@@ -97,25 +97,13 @@ def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="Low Deta
         # select verts for exclusion from vert group
         selectVerts(lowerTubeVerts["outer"]["top"] + lowerTubeVerts["inner"]["top"])
 
-    # create stud
-    h = dimensions["stud_height"]
-    z = (height / 2) + (dimensions["stud_height"] / 2)
-    if detail in ["Flat", "Low Detail"]:
-        r = dimensions["stud_radius"]
-        bme, studVerts = makeCylinder(r, h, circleVerts, co=Vector((0, 0, z)), botFace=False, bme=bme)
-        # select verts for exclusion from vert group
-        selectVerts(studVerts["bottom"])
-    else:
-        r = dimensions["bar_radius"]
-        t = dimensions["stud_radius"] - r
-        bme, studVerts = makeTube(r, h, t, circleVerts, co=Vector((0, 0, z)), bme=bme)
-        # select verts for exclusion from vert group
-        selectVerts(studVerts["outer"]["bottom"] + studVerts["inner"]["bottom"])
+    # add stud
+    studVerts = addStuds(dimensions, [1, 1, 1], type, circleVerts, bme, hollow=detail in ["MEDIUM", "HIGH"])
 
     # make pointers to appropriate vertex lists
-    studVertsOuter = studVerts if detail in ["Flat", "Low Detail"] else studVerts["outer"]
-    studVertsInner = studVerts if detail in ["Flat", "Low Detail"] else studVerts["inner"]
-    lowerTubeVertsOuter = lowerCylinderVerts if detail == "Flat" else lowerTubeVerts["outer"]
+    studVertsOuter = studVerts if detail in ["FLAT", "LOW"] else studVerts["outer"]
+    studVertsInner = studVerts if detail in ["FLAT", "LOW"] else studVerts["inner"]
+    lowerTubeVertsOuter = lowerCylinderVerts if detail == "FLAT" else lowerTubeVerts["outer"]
 
     # create faces connecting bottom of stud to top of outer cylinder
     connectCircles(vertsOuterCylinder["top"], studVertsOuter["bottom"][::-1], bme)
@@ -124,12 +112,12 @@ def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="Low Deta
     connectCircles(lowerTubeVertsOuter["top"], vertsOuterCylinder["bottom"][::-1], bme)
 
     # add detailing inside brick
-    if detail != "Flat":
+    if detail != "FLAT":
         # create faces for cylinder inside brick
         _,faces = connectCircles(lowerTubeVerts["inner"]["bottom"], studVertsOuter["bottom"], bme)
         smoothFaces(faces)
         # create small inner cylinder inside stud for medium/high detail
-        if type == "STUD" and origDetail in ["Medium Detail", "High Detail"]:
+        if type == "STUD" and origDetail in ["MEDIUM", "HIGH"]:
             # make small inner cylinders
             r = dimensions["stud_radius"]-(2 * dimensions["thickness"])
             h = dimensions["thickness"] * 0.99
@@ -138,7 +126,7 @@ def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="Low Deta
             # create faces connecting bottom of inner cylinder with bottom of stud
             connectCircles(studVertsInner["bottom"], innerCylinderVerts["bottom"], bme, offset=circleVerts // 2)
         # create face at top of cylinder inside brick
-        elif detail == "Low Detail":
+        elif detail == "LOW":
             bme.faces.new(studVerts["bottom"])
 
     return bme

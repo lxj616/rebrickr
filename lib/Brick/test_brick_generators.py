@@ -26,8 +26,7 @@ import bpy
 # NONE!
 
 # Rebrickr imports
-from .mesh_generators.standard_brick import *
-from .mesh_generators.round_1x1 import *
+from .mesh_generators import *
 from .get_brick_dimensions import *
 from ...functions.common import *
 from ...functions.general import *
@@ -61,7 +60,7 @@ def newObjFromBmesh(layer, bme, meshName, objName=None, loc=(0,0,0), edgeSplit=T
     ob.location = loc
     # link and select object
     scn.objects.link(ob)
-    select(ob, only=False, active=ob)
+    select(ob, active=ob)
     scn.update()
 
     # send bmesh data to object data
@@ -87,20 +86,35 @@ def test_brick_generators():
 
     # create objects
     scn, cm, _ = getActiveContextInfo()
-    dimensions = get_brick_dimensions(zScale=getZStep(cm))
-    offset = -7.5
-    for detail in ["Flat", "Low Detail", "Medium Detail", "High Detail"]:
-        offset += 3
+    dimensions = get_brick_dimensions(height=0.5, zScale=getZStep(cm))
+    offset = -2.5
+    for detail in ["FLAT", "LOW", "MEDIUM", "HIGH"]:
+        offset += 1
+        # STANDARD BRICKS
         newObjFromBmesh(1,  makeStandardBrick(dimensions=dimensions, brickSize=[1,1,3], brickType=cm.brickType, circleVerts=16, detail=detail), "1x1 " + detail, loc=(offset,   0,0))
         newObjFromBmesh(2,  makeStandardBrick(dimensions=dimensions, brickSize=[1,2,3], brickType=cm.brickType, circleVerts=16, detail=detail), "1x2 " + detail, loc=(offset,   0,0))
         newObjFromBmesh(3,  makeStandardBrick(dimensions=dimensions, brickSize=[3,1,3], brickType=cm.brickType, circleVerts=16, detail=detail), "3x1 " + detail, loc=(0, offset,  0))
         newObjFromBmesh(4,  makeStandardBrick(dimensions=dimensions, brickSize=[1,8,3], brickType=cm.brickType, circleVerts=16, detail=detail), "1x8 " + detail, loc=(offset,   0,0))
         newObjFromBmesh(5,  makeStandardBrick(dimensions=dimensions, brickSize=[2,2,3], brickType=cm.brickType, circleVerts=16, detail=detail), "2x2 " + detail, loc=(offset*2, 0,0))
-        newObjFromBmesh(6,  makeStandardBrick(dimensions=dimensions, brickSize=[2,6,3], brickType=cm.brickType, circleVerts=16, detail=detail), "2x6 " + detail, loc=(offset*2, 0,0))
-        newObjFromBmesh(7,  makeStandardBrick(dimensions=dimensions, brickSize=[6,2,3], brickType=cm.brickType, circleVerts=15, detail=detail), "6x2 " + detail, loc=(0, offset*2,0))
-        newObjFromBmesh(8,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="CYLINDER",    detail=detail), "1x1 Round " + detail,  loc=(offset, 4.5,0))
-        newObjFromBmesh(8,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="CONE",        detail=detail), "1x1 Cone "  + detail,  loc=(offset, 1.5,0))
-        newObjFromBmesh(8,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="STUD",        detail=detail), "1x1 Stud "  + detail,  loc=(offset,-1.5,0))
-        newObjFromBmesh(8,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="STUD_HOLLOW", detail=detail), "1x1 Stud2 "  + detail, loc=(offset,-3.5,0))
+        newObjFromBmesh(11,  makeStandardBrick(dimensions=dimensions, brickSize=[2,6,3], brickType=cm.brickType, circleVerts=16, detail=detail), "2x6 " + detail, loc=(offset*2, 0,0))
+        newObjFromBmesh(12,  makeStandardBrick(dimensions=dimensions, brickSize=[6,2,3], brickType=cm.brickType, circleVerts=15, detail=detail), "6x2 " + detail, loc=(0, offset*2,0))
+        # ROUND BRICKS
+        newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="CYLINDER",    detail=detail), "1x1 Round " + detail,  loc=(offset, 4.5,0))
+        newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="CONE",        detail=detail), "1x1 Cone "  + detail,  loc=(offset, 1.5,0))
+        newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="STUD",        detail=detail), "1x1 Stud "  + detail,  loc=(offset,-1.5,0))
+        newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="STUD_HOLLOW", detail=detail), "1x1 Stud2 "  + detail, loc=(offset,-3.5,0))
+        # SLOPE BRICKS
+        i = 0
+        for posNeg in ["+", "-"]:
+            for j in [-1, 1]:
+                direction = posNeg + "X" if j == 1 else posNeg + "Y"
+                newObjFromBmesh(16 + i, makeSlope(dimensions=dimensions, brickSize=[2,1][::j] + [3], direction=direction, circleVerts=16, detail=detail), "2x1 Slope "  + detail, loc=[-5.5, offset][::j]               + [0])
+                newObjFromBmesh(16 + i, makeSlope(dimensions=dimensions, brickSize=[3,1][::j] + [3], direction=direction, circleVerts=16, detail=detail), "3x1 Slope "  + detail, loc=[-4,   offset][::j]               + [0])
+                newObjFromBmesh(16 + i, makeSlope(dimensions=dimensions, brickSize=[4,1][::j] + [3], direction=direction, circleVerts=16, detail=detail), "4x1 Slope "  + detail, loc=[-2,   offset][::j]               + [0])
+                newObjFromBmesh(16 + i, makeSlope(dimensions=dimensions, brickSize=[2,2][::j] + [3], direction=direction, circleVerts=16, detail=detail), "2x2 Slope "  + detail, loc=[0.25, offset * 1.5 - 0.25][::j]  + [0])
+                newObjFromBmesh(16 + i, makeSlope(dimensions=dimensions, brickSize=[3,2][::j] + [3], direction=direction, circleVerts=16, detail=detail), "3x2 Slope "  + detail, loc=[1.75, offset * 1.5 - 0.25][::j]  + [0])
+                newObjFromBmesh(16 + i, makeSlope(dimensions=dimensions, brickSize=[4,2][::j] + [3], direction=direction, circleVerts=16, detail=detail), "4x2 Slope "  + detail, loc=[3.75, offset * 1.5 - 0.25][::j]  + [0])
+                newObjFromBmesh(16 + i, makeSlope(dimensions=dimensions, brickSize=[3,4][::j] + [3], direction=direction, circleVerts=16, detail=detail), "4x3 Slope "  + detail, loc=[6.25, offset * 2.0 - 0.625][::j] + [0])
+                i += 1
 
-    openLayer(8)
+    openLayer(6)
