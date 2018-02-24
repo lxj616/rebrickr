@@ -148,7 +148,7 @@ class splitBricks(Operator):
                     x0, y0, z0 = dictLoc
                     # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
-                    bricksDict[dictKey]["type"] = "STANDARD"
+                    bricksDict[dictKey]["type"] = "BRICK" if objSize == 3 else "PLATE"
                     zStep = getZStep(cm)
 
                     # skip 1x1 bricks
@@ -441,9 +441,8 @@ class drawAdjacent(Operator):
             if self.orig_undo_stack_length == self.undo_stack.getLength():
                 self.undo_stack.undo_push('draw_adjacent')
             # initialize variables
-            scn = bpy.context.scene
+            scn, cm, _ = getActiveContextInfo()
             scn.update()
-            cm = scn.cmlist[scn.cmlist_index]
             self.undo_stack.iterateStates(cm)
             obj = scn.objects.active
             initial_active_obj_name = obj.name
@@ -521,8 +520,7 @@ class drawAdjacent(Operator):
         try:
             self.undo_stack = UndoStack.get_instance()
             self.orig_undo_stack_length = self.undo_stack.getLength()
-            scn = bpy.context.scene
-            cm = scn.cmlist[scn.cmlist_index]
+            scn, cm, _ = getActiveContextInfo()
             obj = scn.objects.active
 
             # initialize self.bricksDict
@@ -575,6 +573,10 @@ class drawAdjacent(Operator):
             self.adjBricksCreated = []
             for i in range(6):
                 self.adjBricksCreated.append([False]*len(self.adjDKLs[i]))
+
+            # initialize self.brickType
+            objType = self.bricksDict[dictKey]["type"]
+            self.brickType = objType if objType is not None else ("BRICK" if objSize[2] == 3 else "PLATE")
         except:
             handle_exception()
 
@@ -587,21 +589,7 @@ class drawAdjacent(Operator):
 
     # get items for brickType prop
     def get_items1(self, context):
-        scn = bpy.context.scene
-        obj = scn.objects.active
-        if obj is None: return [("NULL", "Null", "")]
-        cm = scn.cmlist[scn.cmlist_index]
-        bricksDict, _ = getBricksDict(cm=cm)
-        dictKey,_ = getDictKey(obj.name)
-        # build items
-        if bricksDict[dictKey]["size"][2] == 3:
-            items = [("BRICK", "Brick", "")]
-            if "Plates" in cm.brickType:
-                items.append(("PLATE", "Plate", ""))
-        elif bricksDict[dictKey]["size"][2] == 1:
-            items = [("PLATE", "Plate", "")]
-            if "Bricks" in cm.brickType and "BRICK" not in items:
-                items.append(("BRICK", "Brick", ""))
+        items = getAvailableTypes()
         return items
 
     # define props for popup
@@ -638,24 +626,24 @@ class drawAdjacent(Operator):
             return adjacent_key, False
 
     def getNewBrickHeight(self):
-        newBrickHeight = 1 if self.brickType == "PLATE" else 3
+        newBrickHeight = 1 if self.brickType in get1HighTypes() else 3
         return newBrickHeight
 
     def getNewCoord(self, co, dimensions, side):
-        co = list(co)
+        co = Vector(co)
         if side == 0:
-            co[0] += dimensions["width"]
+            co.x += dimensions["width"]
         if side == 1:
-            co[0] -= dimensions["width"]
+            co.x -= dimensions["width"]
         if side == 2:
-            co[1] += dimensions["width"]
+            co.y += dimensions["width"]
         if side == 3:
-            co[1] -= dimensions["width"]
+            co.y -= dimensions["width"]
         if side == 4:
-            co[2] += dimensions["height"]
+            co.z += dimensions["height"]
         if side == 5:
-            co[2] -= dimensions["height"]
-        return co
+            co.z -= dimensions["height"]
+        return co.to_tuple()
 
     def isBrickAlreadyCreated(self, brickNum, side):
         return not (brickNum == len(self.adjDKLs[side]) - 1 and
@@ -676,7 +664,6 @@ class drawAdjacent(Operator):
             n = cm.source_name
             cm.numBricksGenerated += 1
             j = cm.numBricksGenerated
-            zStep = getZStep(cm)
             newDictLoc = adjDictLoc.copy()
             if side == 0:
                 newDictLoc[0] = newDictLoc[0] - 1
@@ -691,8 +678,8 @@ class drawAdjacent(Operator):
             elif side == 5:
                 newDictLoc[2] = newDictLoc[2] + 1
             theKey = listToStr(newDictLoc)
-            co = self.bricksDict[theKey]["co"]
-            co = self.getNewCoord(co, dimensions, side)
+            co0 = self.bricksDict[theKey]["co"]
+            co = self.getNewCoord(co0, dimensions, side)
             self.bricksDict[adjacent_key] = createBricksDictEntry(
                 name=         'Rebrickr_%(n)s_brick_%(j)s__%(adjacent_key)s' % locals(),
                 co=           co,
@@ -751,6 +738,9 @@ class drawAdjacent(Operator):
                         return False
 
                 adjBrickD["draw"] = True
+                adjBrickD["type"] = self.brickType
+                adjBrickD["flipped"] = self.bricksDict[dictKey]["flipped"]
+                adjBrickD["rotated"] = self.bricksDict[dictKey]["rotated"]
                 setCurBrickVal(self.bricksDict, strToList(adjacent_key))
                 adjBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"]
                 adjBrickD["size"] = [1, 1, newBrickHeight]
@@ -812,8 +802,7 @@ class changeBrickType(Operator):
             self.undo_stack.matchPythonToBlenderState()
             if self.orig_undo_stack_length == self.undo_stack.getLength():
                 self.undo_stack.undo_push('change_type')
-            scn = bpy.context.scene
-            cm = scn.cmlist[self.cm_idx]
+            scn, cm, _ = getActiveContextInfo(self.cm_idx)
             self.undo_stack.iterateStates(cm)
             obj = scn.objects.active
             initial_active_obj_name = obj.name if obj else ""
@@ -830,39 +819,8 @@ class changeBrickType(Operator):
                 self.bricksDict[dictKey]["rotated"] == self.rotateBrick):
                 return {"CANCELLED"}
 
-            # turn 1x1 & 1x2 plates into slopes
-            if (self.brickType == "SLOPE" and
-               objSize[2] == 1 and
-               objSize[0] + objSize[1] in [2, 3]):
-                self.report({"INFO"}, "turn 1x1 & 1x2 plates into slopes")
-            # turn 1x2 & 1x3 bricks into inverted slopes
-            elif (self.brickType == "SLOPE_INVERTED" and
-                 objSize[2] == 3 and
-                 ((objSize[0] == 1 and objSize[1] in [2, 3]) or
-                  (objSize[1] == 1 and objSize[0] in [2, 3]))):
-                self.report({"INFO"}, "turn 1x2 & 1x3 bricks into inverted slopes")
-            # turn 1x2 & 1x3 bricks into slopes
-            elif (self.brickType == "SLOPE" and
-                  objSize[2] == 3 and
-                  (sum(objSize[:2]) in range(3,8))):
-                self.report({"INFO"}, "turn 1x2, 1x3, 1x4, 1x6, 2x2, 2x3, 2x4, and 3x4 bricks into slopes")
-            # turn plates into tiles
-            elif (self.brickType == "TILE" and
-                  objSize[2] == 1):
-                self.report({"INFO"}, "turn plates into tiles")
-            # turn 1x1 plates into studs
-            elif ("STUD" in self.brickType and
-                  objSize[0] + objSize[1] == 2 and
-                  objSize[2] == 1):
-                self.report({"INFO"}, "turn 1x1 plates into studs")
-            # turn 1x1 bricks into cylinders/cones
-            elif (self.brickType in ["CYLINDER", "CONE"] and
-                  objSize[0] + objSize[1] == 2 and
-                  objSize[2] == 3):
-                self.report({"INFO"}, "turn 1x1 bricks into " + self.brickType.lower() + "s")
-            # skip anything else
-            else:
-                return {"CANCELLED"}
+            # print helpful message to user in blender interface
+            self.report({"INFO"}, "turn active {brickSize} brick into {targetType}".format(brickSize=str(objSize)[1:-1], targetType=self.brickType))
 
             # set type of parent_brick to self.brickType
             self.bricksDict[dictKey]["type"] = self.brickType
@@ -907,18 +865,19 @@ class changeBrickType(Operator):
     def __init__(self):
         try:
             self.undo_stack = UndoStack.get_instance()
-            scn = bpy.context.scene
             self.orig_undo_stack_length = self.undo_stack.getLength()
+            scn = bpy.context.scene
             obj = scn.objects.active
-            cm = scn.cmlist[scn.cmlist_index]
             # get cmlist item referred to by object
             cm = getItemByID(scn.cmlist, obj.cmlist_id)
             # get bricksDict from cache
             self.bricksDict, _ = getBricksDict(cm=cm)
             dictKey, dictLoc = getDictKey(obj.name)
+            # initialize properties
             self.cm_idx = cm.idx
             curBrickType = self.bricksDict[dictKey]["type"]
-            self.brickType = curBrickType if curBrickType is not None else "STANDARD"
+            curBrickSize = self.bricksDict[dictKey]["size"]
+            self.brickType = curBrickType if curBrickType is not None else ("BRICK" if curBrickSize[2] == 3 else "PLATE")
             self.flipBrick = self.bricksDict[dictKey]["flipped"]
             self.rotateBrick = self.bricksDict[dictKey]["rotated"]
         except:
@@ -933,59 +892,7 @@ class changeBrickType(Operator):
 
     # get items for brickType prop
     def get_items(self, context):
-        scn = bpy.context.scene
-        obj = scn.objects.active
-        if obj is None: return []
-        cm = scn.cmlist[scn.cmlist_index]
-        items = [("STANDARD", "Standard", "")]
-
-        dictKey, dictLoc = getDictKey(obj.name)
-        bricksDict, _ = getBricksDict(cm=cm)
-        objSize = bricksDict[dictKey]["size"]
-        # Bricks
-        if objSize[2] == 3:
-            if (objSize[2] == 3 and (sum(objSize[:2]) in range(3,8))):
-                items.append(("SLOPE", "Slope", ""))
-            # if sum(objSize[:2]) in range(3,6):
-            #     items.append(("SLOPE_INVERTED", "Slope Inverted", ""))
-            if sum(objSize[:2]) == 2:
-                items.append(("CYLINDER", "Cylinder", ""))
-                items.append(("CONE", "Cone", ""))
-            #     items.append(("BRICK_STUD_ON_ONE_SIDE", "Brick Stud on One Side", ""))
-            #     items.append(("BRICK_INSET_STUD_ON_ONE_SIDE", "Brick Stud on One Side", ""))
-            #     items.append(("BRICK_STUD_ON_TWO_SIDES", "Brick Stud on Two Sides", ""))
-            #     items.append(("BRICK_STUD_ON_ALL_SIDES", "Brick Stud on All Sides", ""))
-            # if sum(objSize[:2]) == 3:
-            #     items.append(("TILE_WITH_HANDLE", "Tile with Handle", ""))
-            #     items.append(("BRICK_PATTERN", "Brick Pattern", ""))
-            # if objSize[0] == 2 and objSize[1] == 2:
-            #     items.append(("DOME", "Dome", ""))
-            #     items.append(("DOME_INVERTED", "Dome Inverted", ""))
-        # # Plates
-        elif objSize[2] == 1:
-            if objSize[2] == 1:
-                items.append(("STUD", "Stud", ""))
-                items.append(("STUD_HOLLOW", "Stud (hollow)", ""))
-        #         items.append(("ROUNDED_TILE", "Rounded Tile", ""))
-        #     if objSize[:2] in bpy.props.Rebrickr_legal_brick_sizes[0.9]:
-        #         items.append(("TILE", "Tile", ""))
-        #     if sum(objSize[:2]) == 3:
-        #         items.append(("TILE_GRILL", "Tile Grill", ""))
-        #     if objSize[0] == 2 and objSize[1] == 2:
-        #         items.append(("TILE_ROUNDED", "Tile Rounded", ""))
-        #         items.append(("PLATE_ROUNDED", "Plate Rounded", ""))
-        #         items.append(("DOME", "Dome", ""))
-        #     if ((objSize[0] == 2 and objSize[1] in [3,4]) or
-        #        (objSize[1] == 2 and objSize[0] in [3,4]) or
-        #        (objSize[0] == 3 and objSize[1] in [6,8,12]) or
-        #        (objSize[1] == 3 and objSize[0] in [6,8,12]) or
-        #        (objSize[0] == 4 and objSize[1] == 4) or
-        #        (objSize[0] == 6 and objSize[1] == 12) or
-        #        (objSize[1] == 6 and objSize[0] == 12) or
-        #        (objSize[0] == 7 and objSize[1] == 12) or
-        #        (objSize[1] == 7 and objSize[0] == 12)):
-        #         items.append(("WING", "Wing", ""))
-        # 1x2 brick pattern Brick
+        items = getAvailableTypes()
         return items
 
 

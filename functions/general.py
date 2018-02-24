@@ -204,3 +204,19 @@ def gammaCorrect(rgba, val):
     g = math.pow(g, val)
     b = math.pow(b, val)
     return [r, g, b, a]
+
+
+def get1HighTypes():
+    return ["PLATE", "STUD", "STUD_HOLLOW", "SHORT_SLOPE", "TILE", "TILE_GRILL", "TILE_ROUNDED", "PLATE_ROUNDED", "DOME", "WING"]
+
+
+def get3HighTypes():
+    return ["BRICK", "SLOPE", "SLOPE_INVERTED", "CONE", "CYLINDER", "BRICK_STUD_ON_ONE_SIDE", "BRICK_INSET_STUD_ON_ONE_SIDE", "BRICK_STUD_ON_TWO_SIDES", "BRICK_STUD_ON_ALL_SIDES", "BRICK_STUD_ON_ALL_SIDES", "TILE_WITH_HANDLE", "BRICK_PATTERN", "DOME", "DOME_INVERTED"]
+
+
+def getTypesObscuringAbove():
+    return ["BRICK", "PLATE", "TILE", "STUD", "SLOPE_INVERTED"]
+
+
+def getTypesObscuringBelow():
+    return ["BRICK", "PLATE", "TILE", "STUD", "SLOPE"]

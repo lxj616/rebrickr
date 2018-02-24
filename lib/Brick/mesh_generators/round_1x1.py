@@ -31,6 +31,7 @@ from mathutils import Vector
 # Rebrickr imports
 from .geometric_shapes import *
 from .generator_utils import *
+from ....functions.common import *
 
 
 def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="LOW", bme=None):
@@ -61,10 +62,10 @@ def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="LOW", bm
     # if making hollow stud, detail should never get below medium
     detail = "MEDIUM" if type == "STUD_HOLLOW" else detail
 
-    # set brick height
-    height = dimensions["height"] if "STUD" not in type else dimensions["height"] / 3
-
-    thick = Vector([dimensions["thickness"] * 3])
+    # set brick height and thickness
+    _, cm, _ = getActiveContextInfo()
+    height = dimensions["height"] if "STUD" in type or cm.brickType != "Bricks and Plates" else dimensions["height"] * 3
+    thick = Vector([dimensions["thickness"]] * 3)
 
     # create outer cylinder
     r = dimensions["width"] / 2

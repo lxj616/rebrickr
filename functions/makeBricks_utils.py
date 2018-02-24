@@ -60,6 +60,30 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
     useStud = (topExposed and cm.studDetail != "None") or cm.studDetail == "On All Bricks"
     undersideDetail = cm.exposedUndersideDetail if botExposed else cm.hiddenUndersideDetail
 
+    # adjust brick size if changing type from 3 tall to 1 tall
+    bricksToCreate = 1
+    if brickD["type"] == "BRICK" and brickSize[2] == 1:
+        brickSize = brickSize.copy()
+        brickSize[2] = 3
+        brickD["size"] = 3
+    if brickD["type"] == "PLATE" and brickSize[2] == 3:
+        brickSize = brickSize.copy()
+        brickSize[2] = 1
+        brickD["size"] = 1
+        bricksToCreate = 3
+        # update bricks dict entries above current brick
+        for i in range(1, 3):
+            newKey = listToStr([loc[0], loc[1], loc[2] + i])
+            # create new bricksDict entry if necessary
+            if newKey in self.bricksDict:
+                self.bricksDict[newKey] = brickD
+                n = cm.source_name
+                cm.numBricksGenerated += 1
+                j = cm.numBricksGenerated
+                self.bricksDict[newKey]["name"] = 'Rebrickr_%(n)s_brick_%(j)s__%(newKey)s' % locals(),
+                self.bricksDict[newKey]["co"] = [brickD["co"][0], brickD["co"][1], brickD["co"][2] + (i * dimensions["height"])]
+            self.bricksDict[newKey]["parent"] = key
+
     ### CREATE BRICK ###
 
     # add brick with new mesh data at original location
@@ -101,37 +125,39 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
         brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
     else:
         brickLoc = Vector(brickD["co"])
-    if split:
-        # create new object with mesh data
-        brick = bpy.data.objects.new(brickD["name"], m)
-        brick.cmlist_id = cm.id
-        # set brick's location
-        brick.location = brickLoc
-        # set brick's material
-        brick.data.materials.append(mat if mat is not None else internalMat)
-        # add edge split modifier
-        addEdgeSplitMod(brick)
-        # append to bricksCreated
-        bricksCreated.append(brick)
-    else:
-        # transform brick mesh to coordinate on matrix
-        addToMeshLoc(brickLoc, mesh=m)
-        # keep track of mats already use
-        if mat in mats:
-            matIdx = mats.index(mat)
-        elif mat is not None:
-            mats.append(mat)
-            matIdx = len(mats) - 1
-        # set material for mesh
-        if mat is not None:
-            m.materials.append(mat)
-            for p in m.polygons:
-                p.material_index = matIdx
+    for i in range(bricksToCreate):
+        brickLoc.z += i * dimensions["height"]
+        if split:
+            # create new object with mesh data
+            brick = bpy.data.objects.new(brickD["name"], m)
+            brick.cmlist_id = cm.id
+            # set brick's location
+            brick.location = brickLoc
+            # set brick's material
+            brick.data.materials.append(mat if mat is not None else internalMat)
+            # add edge split modifier
+            addEdgeSplitMod(brick)
+            # append to bricksCreated
+            bricksCreated.append(brick)
         else:
-            for p in m.polygons:
-                p.material_index = 0
-        # append mesh to allBrickMeshes list
-        allBrickMeshes.append(m)
+            # transform brick mesh to coordinate on matrix
+            addToMeshLoc(brickLoc, mesh=m)
+            # keep track of mats already use
+            if mat in mats:
+                matIdx = mats.index(mat)
+            elif mat is not None:
+                mats.append(mat)
+                matIdx = len(mats) - 1
+            # set material for mesh
+            if mat is not None:
+                m.materials.append(mat)
+                for p in m.polygons:
+                    p.material_index = matIdx
+            else:
+                for p in m.polygons:
+                    p.material_index = 0
+            # append mesh to allBrickMeshes list
+            allBrickMeshes.append(m)
 
 
 def addEdgeSplitMod(obj):

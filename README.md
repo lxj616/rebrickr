@@ -25,7 +25,8 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add support for smoke animations
       * Add support for rigid bodies
       * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
-      * simply calculate brick dimensions, then divide height by three if plate later on. (gets rid of zScale parameter in get_dimensions function)
+      * Simply calculate brick dimensions, then divide height by three if plate later on. (gets rid of zScale parameter in get_dimensions function)
+      * Capitalize "Bricks and Plates", "Plates", "Bricks", "Custom" brickTypes throughout code
   * Known issues:
       * In snapchat hotdog test file, when parents removed and transformation kept, then when model created then deleted, source shrinks
       * In bricks mode, bricks don't merge well
@@ -34,3 +35,4 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * In basketball test file, error occurs when attempting to generate model with materials based on UV map (index out of range)
       * For models created with Rebrickr v1.0, when opened in v1.1.1 and not-split model is selected and deleted with the 'x' key, model is not deleted
       * When customization applied to model, if model settings clicked on but not updated, 'Revert Settings' warning does not appear.
+      * "Bricks and Plates" and "Custom" brickTypes have many bugs; requires testing

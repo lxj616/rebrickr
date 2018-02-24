@@ -96,6 +96,7 @@ def setCurBrickVal(bricksDict, loc):
         newVal = highestAdjVal - 0.01
     bricksDict[listToStr(loc)]["val"] = newVal
 
+
 def verifyBrickExposureAboveAndBelow(origLoc, bricksDict, decriment=0, zNeg=False, zPos=False):
     scn, cm, _ = getActiveContextInfo()
     dictLocs = []
@@ -114,3 +115,72 @@ def verifyBrickExposureAboveAndBelow(origLoc, bricksDict, decriment=0, zNeg=Fals
             bricksDict[parent_key]["top_exposed"] = topExposed
             bricksDict[parent_key]["bot_exposed"] = botExposed
     return bricksDict
+
+
+def getAvailableTypes():
+    scn, cm, _ = getActiveContextInfo()
+    obj = scn.objects.active
+    if obj is None: return [("NULL", "Null", "")]
+    dictKey, dictLoc = getDictKey(obj.name)
+    bricksDict, _ = getBricksDict(cm=cm)
+    objSize = bricksDict[dictKey]["size"]
+    if objSize[2] not in [1, 3]: raise Exception("Custom Error Message: objSize not in [1, 3]")
+    # build items
+    if objSize[2] == 3:
+        items = [("BRICK", "Brick", "")]
+        if "Plates" in cm.brickType:
+            items.append(("PLATE", "Plate", ""))
+    elif objSize[2] == 1:
+        items = [("PLATE", "Plate", "")]
+        if "Bricks" in cm.brickType and "BRICK" not in items:
+            items.append(("BRICK", "Brick", ""))
+    # add more available brick types
+    # NOTE: update the following functions when including brand new type in code:
+    # get1HighTypes, get3HighTypes, getTypesObscuringAbove, getTypesObscuringBelow
+    if objSize[2] == 3 or "Bricks" in cm.brickType:
+        if (objSize[2] == 3 and (sum(objSize[:2]) in range(3,8))):
+            items.append(("SLOPE", "Slope", ""))
+        # if sum(objSize[:2]) in range(3,6):
+        #     items.append(("SLOPE_INVERTED", "Slope Inverted", ""))
+        if sum(objSize[:2]) == 2:
+            items.append(("CYLINDER", "Cylinder", ""))
+            items.append(("CONE", "Cone", ""))
+        #     items.append(("BRICK_STUD_ON_ONE_SIDE", "Brick Stud on One Side", ""))
+        #     items.append(("BRICK_INSET_STUD_ON_ONE_SIDE", "Brick Stud on One Side", ""))
+        #     items.append(("BRICK_STUD_ON_TWO_SIDES", "Brick Stud on Two Sides", ""))
+        #     items.append(("BRICK_STUD_ON_ALL_SIDES", "Brick Stud on All Sides", ""))
+        # if sum(objSize[:2]) == 3:
+        #     items.append(("TILE_WITH_HANDLE", "Tile with Handle", ""))
+        #     items.append(("BRICK_PATTERN", "Brick Pattern", ""))
+        # if objSize[0] == 2 and objSize[1] == 2:
+        #     items.append(("DOME", "Dome", ""))
+        #     items.append(("DOME_INVERTED", "Dome Inverted", ""))
+    # Plates
+    if objSize[2] == 1 or "Plates" in cm.brickType:
+        if sum(objSize[:2]) == 2:
+            items.append(("STUD", "Stud", ""))
+            items.append(("STUD_HOLLOW", "Stud (hollow)", ""))
+            # items.append(("ROUNDED_TILE", "Rounded Tile", ""))
+        if sum(objSize[:2]) in [2, 3]:
+            items.append(("SHORT_SLOPE", "Short Slope", ""))
+    #     if objSize[:2] in bpy.props.Rebrickr_legal_brick_sizes[0.9]:
+    #         items.append(("TILE", "Tile", ""))
+    #     if sum(objSize[:2]) == 3:
+    #         items.append(("TILE_GRILL", "Tile Grill", ""))
+    #     if objSize[0] == 2 and objSize[1] == 2:
+    #         items.append(("TILE_ROUNDED", "Tile Rounded", ""))
+    #         items.append(("PLATE_ROUNDED", "Plate Rounded", ""))
+    #         items.append(("DOME", "Dome", ""))
+    #     if ((objSize[0] == 2 and objSize[1] in [3,4]) or
+    #        (objSize[1] == 2 and objSize[0] in [3,4]) or
+    #        (objSize[0] == 3 and objSize[1] in [6,8,12]) or
+    #        (objSize[1] == 3 and objSize[0] in [6,8,12]) or
+    #        (objSize[0] == 4 and objSize[1] == 4) or
+    #        (objSize[0] == 6 and objSize[1] == 12) or
+    #        (objSize[1] == 6 and objSize[0] == 12) or
+    #        (objSize[0] == 7 and objSize[1] == 12) or
+    #        (objSize[1] == 7 and objSize[0] == 12)):
+    #         items.append(("WING", "Wing", ""))
+    # 1x2 brick pattern Brick
+
+    return items

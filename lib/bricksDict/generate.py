@@ -461,7 +461,7 @@ def getThreshold(cm):
     """ returns threshold (draw bricks if returned val >= threshold) """
     return 1.01 - (cm.shellThickness / 100)
 
-def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,0), nearest_face:int=None, nearest_intersection:int=None, rgba:tuple=None, mat_name:str=None, parent_brick:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, type:str="STANDARD", flipped:bool=False, rotated:bool=False):
+def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,0), nearest_face:int=None, nearest_intersection:int=None, rgba:tuple=None, mat_name:str=None, parent_brick:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, type:str=None, flipped:bool=False, rotated:bool=False):
     """
     create an entry in the dictionary of brick locations
 
@@ -574,7 +574,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                     nearest_intersection= ni if ni is None else tuple(ni),
                     rgba= rgba,
                     mat_name= "",  # defined in 'updateMaterials' function
-                    type= "STANDARD" if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"] else cm.brickType,
+                    type= "PLATE" if "Plates" in cm.brickType else ("BRICK" if cm.brickType == "Bricks" else cm.brickType),
                 )
     cm.numBricksGenerated = i
 

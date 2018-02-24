@@ -176,15 +176,15 @@ def getBrickExposure(cm, bricksDict, key=None, loc=None):
                 # check if brick top or bottom is exposed
                 if curBrick["val"] != 1 and not (cm.brickType == "Bricks and Plates" and size[2] == 3):
                     continue
-                returnVal0 = checkExposure(bricksDict, x, y, idxZa, 1, ignoredTypes=["STANDARD", "TILE", "SLOPE", "STUD"])
+                returnVal0 = checkExposure(bricksDict, x, y, idxZa, 1, ignoredTypes=getTypesObscuringBelow())
                 if returnVal0: topExposed = True
-                returnVal1 = checkExposure(bricksDict, x, y, idxZb, 1, ignoredTypes=["STANDARD", "TILE", "SLOPE_INVERTED"])
+                returnVal1 = checkExposure(bricksDict, x, y, idxZb, 1, ignoredTypes=getTypesObscuringAbove())
                 if returnVal1: botExposed = True
 
     return topExposed, botExposed
 
 
-def checkExposure(bricksDict, x, y, z, direction:int=1, ignoredTypes=["STANDARD"]):
+def checkExposure(bricksDict, x, y, z, direction:int=1, ignoredTypes=[]):
     isExposed = False
     try:
         valKeysChecked = []

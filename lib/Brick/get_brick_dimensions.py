@@ -16,8 +16,6 @@ def get_brick_dimensions(height=1, zScale=1, gap_percentage=0.01):
     brick_dimensions["gap"] = round(scale*9.6*gap_percentage, 8)
     brick_dimensions["stud_height"] = round(scale*1.8, 8)
     brick_dimensions["stud_radius"] = round(scale*2.4, 8)
-    brick_dimensions["stud_offset"] = round((brick_dimensions["height"] / 2) + (brick_dimensions["stud_height"] / 2), 8)
-    brick_dimensions["stud_offset_triple"] = round(((brick_dimensions["height"]*3) / 2) + (brick_dimensions["stud_height"] / 2), 8)
     brick_dimensions["thickness"] = round(scale*1.6, 8)
     brick_dimensions["tube_thickness"] = round(scale*0.855, 8)
     brick_dimensions["bar_radius"] = round(scale*1.6, 8)

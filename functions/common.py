@@ -42,9 +42,10 @@ def bversion():
     return bversion
 
 
-def getActiveContextInfo():
+def getActiveContextInfo(cm_idx=None):
     scn = bpy.context.scene
-    cm = scn.cmlist[scn.cmlist_index]
+    cm_idx = scn.cmlist_index if cm_idx is None else cm_idx
+    cm = scn.cmlist[cm_idx]
     n = cm.source_name
     return scn, cm, n
 

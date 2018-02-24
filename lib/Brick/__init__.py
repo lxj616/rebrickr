@@ -37,12 +37,12 @@ from ...functions.common import *
 
 class Bricks:
     @staticmethod
-    def new_mesh(dimensions:list, size:list=[1,1,3], type:str="STANDARD", flip:bool=False, rotate90:bool=False, logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_inset=None, undersideDetail:str="FLAT", stud:bool=True, circleVerts:int=16):
+    def new_mesh(dimensions:list, size:list=[1,1,3], type:str="BRICK", flip:bool=False, rotate90:bool=False, logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_inset=None, undersideDetail:str="FLAT", stud:bool=True, circleVerts:int=16):
         """ create unlinked Brick at origin """
 
         # create brick mesh
-        if type == "STANDARD":
-            _,cm,_ = getActiveContextInfo()
+        if type in ["BRICK", "PLATE"]:
+            _, cm, _ = getActiveContextInfo()
             brickBM = makeStandardBrick(dimensions=dimensions, brickSize=size, brickType=cm.brickType, circleVerts=circleVerts, detail=undersideDetail, stud=stud)
         elif type in ["CYLINDER", "CONE", "STUD", "STUD_HOLLOW"]:
             brickBM = makeRound1x1(dimensions=dimensions, circleVerts=circleVerts, type=type, detail=undersideDetail)
@@ -58,7 +58,7 @@ class Bricks:
             raise ValueError("'new_mesh' function received unrecognized value for parameter 'type': '" + str(type) + "'")
 
         # create list of brick bmesh variations
-        if logo and stud and type in ["STANDARD", "STUD", "SLOPE"]:
+        if logo and stud and type in ["BRICK", "PLATE", "STUD", "SLOPE"]:
             bms = makeLogoVariations(dimensions, size, directions[maxIdx] if type == "SLOPE" else "", all_vars, logo, logo_type, logo_details, logo_scale, logo_inset)
         else:
             bms = [bmesh.new()]
@@ -114,7 +114,7 @@ class Bricks:
                 for z0 in range(z, z + size[2], zStep):
                     curKey = listToStr([x0,y0,z0])
                     bricksDict[curKey]["size"] = newSize
-                    bricksDict[curKey]["type"] = "STANDARD"
+                    bricksDict[curKey]["type"] = "BRICK" if newSize == 3 else "PLATE"
                     bricksDict[curKey]["parent_brick"] = "self"
                     bricksDict[curKey]["top_exposed"] = bricksDict[key]["top_exposed"]
                     bricksDict[curKey]["bot_exposed"] = bricksDict[key]["bot_exposed"]
