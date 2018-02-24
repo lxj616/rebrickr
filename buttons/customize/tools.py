@@ -474,7 +474,7 @@ class drawAdjacent(Operator):
                         self.toggleBrick(cm, dimensions, adjDictLoc, dictKey, objSize, i, j, keysToMerge, addBrick=createAdjBricks[i])
                     # after ALL bricks toggled, check exposure of bricks above and below new ones
                     for j,adjDictLoc in enumerate(self.adjDKLs[i]):
-                        self.bricksDict = verifyBrickExposureAboveAndBelow(adjDictLoc, self.bricksDict, decriment=decriment, zNeg=self.zNeg, zPos=self.zPos)
+                        self.bricksDict = verifyBrickExposureAboveAndBelow(adjDictLoc.copy(), self.bricksDict, decriment=decriment, zNeg=self.zNeg, zPos=self.zPos)
 
             # recalculate val for each bricksDict key in original brick
             for x in range(x0, x0 + objSize[0]):
@@ -575,6 +575,7 @@ class drawAdjacent(Operator):
             self.adjBricksCreated = []
             for i in range(6):
                 self.adjBricksCreated.append([False]*len(self.adjDKLs[i]))
+            print("HEREEEE")
         except:
             handle_exception()
 

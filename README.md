@@ -17,8 +17,7 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Once you're satisfied with the settings, make adjustments to your model in the 'Customize Model' dropdown menu
   * Future improvements:
       * Add mode for selecting verts at locations next to bricks and adding bricks there
-      * Add functionality for changing brick type
-      * Add many more brick types, including sloped bricks, studs, and cylinders
+      * Add many more brick types, including inverted sloped bricks and tiles
       * For animation, if last frame's brickFreqMatrix matches current frame's brickFreqMatrix, save time by just keeping that model around for another frame or duplicating it for the next frame or something
       * Prefer overlapping and staggering over stacking of bricks
       * New feature: SNOT (studs not on top) functionality
@@ -35,4 +34,3 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * In basketball test file, error occurs when attempting to generate model with materials based on UV map (index out of range)
       * For models created with Rebrickr v1.0, when opened in v1.1.1 and not-split model is selected and deleted with the 'x' key, model is not deleted
       * When customization applied to model, if model settings clicked on but not updated, 'Revert Settings' warning does not appear.
-      * Toggling back and forth adding adjacent brick above causes errors
