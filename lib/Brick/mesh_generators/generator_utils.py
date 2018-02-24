@@ -38,7 +38,7 @@ def addStuds(dimensions, brickSize, brickType, circleVerts, bme, hollow=False, z
     r = dimensions["bar_radius" if hollow else "stud_radius"]
     h = dimensions["stud_height"]
     t = dimensions["stud_radius"] - dimensions["bar_radius"]
-    if brickType == "Bricks and Plates":
+    if brickType == "BRICKS AND PLATES":
         mult = brickSize[2]
     else:
         mult = 1
@@ -103,9 +103,10 @@ def addBars(dimensions, brickSize, circleVerts, type, detail, d, scalar, thick, 
 
 
 def addTubeSupports(dimensions, brickSize, circleVerts, type, detail, d, scalar, thick, bme):
+    _, cm, _ = getActiveContextInfo()
     addSupports = (brickSize[0] > 2 and brickSize[1] == 2) or (brickSize[1] > 2 and brickSize[0] == 2)
     # set z1/z2 values
-    bAndPBrick = type in ["Bricks and Plates"] and brickSize[2] == 3
+    bAndPBrick = cm.brickType == "BRICKS AND PLATES" and brickSize[2] == 3
     z1 = d.z - thick.z - dimensions["support_height_triple" if bAndPBrick else "support_height"]
     z2 = d.z - thick.z
     allTopVerts = []

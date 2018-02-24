@@ -195,7 +195,7 @@ def strToTuple(string, item_type=int, split_on=","):
 
 
 def getZStep(cm):
-    return 3 if cm.brickType in ["Bricks", "Custom"] else 1
+    return 3 if cm.brickType in ["BRICKS", "CUSTOM"] else 1
 
 
 def gammaCorrect(rgba, val):

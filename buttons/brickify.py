@@ -51,11 +51,11 @@ def updateCanRun(type):
         return False
     else:
         if type == "ANIMATION":
-            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
+            return (cm.logoDetail != "NONE" and cm.logoDetail != "LEGO") or cm.brickType == "CUSTOM" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "CUSTOM" and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
         elif type == "MODEL":
             # set up variables
             Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-            return (cm.logoDetail != "None" and cm.logoDetail != "LEGO Logo") or cm.brickType == "Custom" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "Custom" and not (cm.materialType == "Random" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
+            return (cm.logoDetail != "NONE" and cm.logoDetail != "LEGO") or cm.brickType == "CUSTOM" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "CUSTOM" and not (cm.materialType == "RANDOM" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
 
 
 def importLogo():
@@ -541,7 +541,7 @@ class RebrickrBrickify(bpy.types.Operator):
     def isValid(self, source, Rebrickr_bricks_gn):
         """ returns True if brickify action can run, else report WARNING/ERROR and return False """
         scn, cm, _ = getActiveContextInfo()
-        if cm.brickType == "Custom":
+        if cm.brickType == "CUSTOM":
             if cm.customObjectName == "":
                 self.report({"WARNING"}, "Custom brick type object not specified.")
                 return False
@@ -571,7 +571,7 @@ class RebrickrBrickify(bpy.types.Operator):
                     warningMsg = "Custom brick type object is to small on the following axes (<0.00001): '%(zeroDistAxes)s'. Please select another object or extrude it along the '%(zeroDistAxes)s' axes." % locals()
                 self.report({"WARNING"}, warningMsg)
                 return False
-        if cm.materialType == "Custom" and cm.materialName != "" and bpy.data.materials.find(cm.materialName) == -1:
+        if cm.materialType == "CUSTOM" and cm.materialName != "" and bpy.data.materials.find(cm.materialName) == -1:
             n = cm.materialName
             self.report({"WARNING"}, "Custom material '%(n)s' could not be found" % locals())
             return False
@@ -654,7 +654,7 @@ class RebrickrBrickify(bpy.types.Operator):
                 return False
 
         # check that custom logo object exists in current scene and is of type "MESH"
-        if cm.logoDetail == "Custom Logo" and cm.brickType != "Custom":
+        if cm.logoDetail == "CUSTOM" and cm.brickType != "CUSTOM":
             if cm.logoObjectName == "":
                 self.report({"WARNING"}, "Custom logo object not specified.")
                 return False
@@ -733,8 +733,8 @@ class RebrickrBrickify(bpy.types.Operator):
 
     @classmethod
     def getLogo(self, cm):
-        if cm.brickType != "Custom":
-            if cm.logoDetail == "LEGO Logo":
+        if cm.brickType != "CUSTOM":
+            if cm.logoDetail == "LEGO":
                 refLogo = self.getLegoLogo(self)
             else:
                 refLogo = bpy.data.objects.get(cm.logoObjectName)
@@ -745,7 +745,7 @@ class RebrickrBrickify(bpy.types.Operator):
     def getLegoLogo(self):
         scn, cm, _ = getActiveContextInfo()
         # update refLogo
-        if cm.logoDetail == "None":
+        if cm.logoDetail == "NONE":
             refLogo = None
         else:
             decimate = False

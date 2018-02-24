@@ -126,7 +126,7 @@ def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
         axes = "ZXY"
     # run initial intersection check
     intersections, firstDirection, firstIntersection, nextIntersection, lastIntersection, edgeIntersects = castRays(obj, point, direction, miniDist, edgeLen=edgeLen)
-    if cm.insidenessRayCastDir == "High Efficiency" or axes[0] in cm.insidenessRayCastDir:
+    if cm.insidenessRayCastDir == "HIGH EFFICIENCY" or axes[0] in cm.insidenessRayCastDir:
         outsideL.append(0)
         if intersections%2 == 0 and not (cm.useNormals and firstDirection > 0):
             outsideL[0] = 1
@@ -137,7 +137,7 @@ def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
                 outsideL[0] = 1
 
     # run more checks if verifyExposure is True
-    if cm.insidenessRayCastDir != "High Efficiency":
+    if cm.insidenessRayCastDir != "HIGH EFFICIENCY":
         dir0 = Vector((direction[2], direction[0], direction[1]))
         dir1 = Vector((direction[1], direction[2], direction[0]))
         miniDist0 = Vector((miniDist[2], miniDist[0], miniDist[1]))
@@ -180,13 +180,13 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, bric
         # define brick as inside shell
         brickFreqMatrix[x0][y0][z0] = -1
     if edgeIntersects:
-        if (origInside and brickShell == "Inside Mesh") or (not origInside and brickShell == "Outside Mesh") or brickShell == "Inside and Outside":
+        if (origInside and brickShell == "INSIDE") or (not origInside and brickShell == "OUTSIDE") or brickShell == "INSIDE AND OUTSIDE":
             # define brick as part of shell
             brickFreqMatrix[x0][y0][z0] = 1
             # set or update nearest face to brick
             if type(faceIdxMatrix[x0][y0][z0]) != dict or faceIdxMatrix[x0][y0][z0]["dist"] > firstIntersection["dist"]:
                 faceIdxMatrix[x0][y0][z0] = firstIntersection
-        if (not origInside and brickShell == "Inside Mesh") or (origInside and brickShell == "Outside Mesh") or brickShell == "Inside and Outside":
+        if (not origInside and brickShell == "INSIDE") or (origInside and brickShell == "OUTSIDE") or brickShell == "INSIDE AND OUTSIDE":
             # define brick as part of shell
             brickFreqMatrix[x1][y1][z1] = 1
             # set or update nearest face to brick
@@ -254,10 +254,10 @@ def updateInternal(bricksDict, cm, keys="ALL", clearExisting=False):
             if isInternal(bricksDict, key):
                 bricksDict[key]["draw"] = False
     # Draw column supports
-    if cm.internalSupports == "Columns":
+    if cm.internalSupports == "COLUMNS":
         addColumnSupports(cm, bricksDict, keys)
     # draw lattice supports
-    elif cm.internalSupports == "Lattice":
+    elif cm.internalSupports == "LATTICE":
         addLatticeSupports(cm, bricksDict, keys)
 
 def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", cursorStatus=False):
@@ -461,7 +461,7 @@ def getThreshold(cm):
     """ returns threshold (draw bricks if returned val >= threshold) """
     return 1.01 - (cm.shellThickness / 100)
 
-def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,0), nearest_face:int=None, nearest_intersection:int=None, rgba:tuple=None, mat_name:str=None, parent_brick:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, type:str=None, flipped:bool=False, rotated:bool=False):
+def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,0), nearest_face:int=None, nearest_intersection:int=None, rgba:tuple=None, mat_name:str=None, parent_brick:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, bType:str=None, flipped:bool=False, rotated:bool=False):
     """
     create an entry in the dictionary of brick locations
 
@@ -497,7 +497,7 @@ def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,
             "attempted_merge":attempted_merge,
             "top_exposed":top_exposed,
             "bot_exposed":bot_exposed,
-            "type":type,
+            "type":bType,
             "flipped":flipped,
             "rotated":rotated,
            }
@@ -523,10 +523,11 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
         offset = offset - source.parent.location
     # get coordinate list from intersections of edges with faces
     coordMatrix = generateLattice(brickScale, lScale, offset)
+    print(len(coordMatrix), len(coordMatrix[0]), len(coordMatrix[0][0]))
     if len(coordMatrix) == 0:
         coordMatrix.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
     # set calculationAxes
-    calculationAxes = cm.calculationAxes if cm.brickShell != "Inside Mesh" else "XYZ"
+    calculationAxes = cm.calculationAxes if cm.brickShell != "INSIDE" else "XYZ"
     # set up faceIdxMatrix and brickFreqMatrix
     faceIdxMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
     brickFreqMatrix = getBrickMatrix(source, faceIdxMatrix, coordMatrix, cm.brickShell, axes=calculationAxes, cursorStatus=cursorStatus)
@@ -574,7 +575,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                     nearest_intersection= ni if ni is None else tuple(ni),
                     rgba= rgba,
                     mat_name= "",  # defined in 'updateMaterials' function
-                    type= "PLATE" if "Plates" in cm.brickType else ("BRICK" if cm.brickType == "Bricks" else cm.brickType),
+                    bType= "PLATE" if "PLATES" in cm.brickType else ("BRICK" if cm.brickType == "BRICKS" else cm.brickType),
                 )
     cm.numBricksGenerated = i
 

@@ -52,7 +52,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
         cm = scn.cmlist[scn.cmlist_index]
     n = cm.source_name
     zStep = getZStep(cm)
-    BandP = cm.brickType == "Bricks and Plates"
+    BandP = cm.brickType == "BRICKS AND PLATES"
 
     # apply transformation to logo duplicate and get bounds(logo)
     logo_details, logo = prepareLogoAndGetDetails(logo)
@@ -80,7 +80,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
 
     brick_mats = []
     brick_materials_installed = hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
-    if cm.materialType == "Random" and brick_materials_installed:
+    if cm.materialType == "RANDOM" and brick_materials_installed:
         mats0 = bpy.data.materials.keys()
         brick_mats = [color for color in bpy.props.abs_plastic_materials if color in mats0 and color in getAbsPlasticMaterials]
 
@@ -105,7 +105,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
         internalMat = bpy.data.materials.get("Rebrickr_%(n)s_internal" % locals())
         if internalMat is None:
             internalMat = bpy.data.materials.new("Rebrickr_%(n)s_internal" % locals())
-    if cm.materialType == "Use Source Materials" and cm.matShellDepth < cm.shellThickness:
+    if cm.materialType == "SOURCE" and cm.matShellDepth < cm.shellThickness:
         mats.append(internalMat)
     # initialize supportBrickDs
     supportBrickDs = []
@@ -153,7 +153,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
                     pass
 
     # remove duplicate of original logoDetail
-    if cm.logoDetail != "LEGO Logo" and logo is not None:
+    if cm.logoDetail != "LEGO" and logo is not None:
         bpy.data.objects.remove(logo)
     # end progress bar in terminal
     if printStatus:
@@ -185,7 +185,8 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
 
             if bricksDict[key]["parent_brick"] == "self" and bricksDict[key]["draw"]:
                 name = bricksDict[key]["name"]
-                brick = bpy.data.objects[name]
+                print(name)
+                brick = bpy.data.objects.get(name)
                 # create vert group for bevel mod (assuming only logo verts are selected):
                 vg = brick.vertex_groups.new("%(name)s_bevel" % locals())
                 vertList = [v.index for v in brick.data.vertices if not v.select]
@@ -216,11 +217,11 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
         addEdgeSplitMod(allBricksObj)
         bGroup.objects.link(allBricksObj)
         allBricksObj.parent = parent
-        if cm.materialType == "Custom":
+        if cm.materialType == "CUSTOM":
             mat = bpy.data.materials.get(cm.materialName)
             if mat is not None:
                 allBricksObj.data.materials.append(mat)
-        elif cm.materialType == "Use Source Materials" or (cm.materialType == "Random" and len(brick_mats) > 0):
+        elif cm.materialType == "SOURCE" or (cm.materialType == "RANDOM" and len(brick_mats) > 0):
             for mat in mats:
                 allBricksObj.data.materials.append(mat)
         scn.objects.link(allBricksObj)

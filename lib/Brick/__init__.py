@@ -41,9 +41,9 @@ class Bricks:
         """ create unlinked Brick at origin """
 
         # create brick mesh
-        if type in ["BRICK", "PLATE"]:
+        if type in ["BRICK", "PLATE", "CUSTOM"]:
             _, cm, _ = getActiveContextInfo()
-            brickBM = makeStandardBrick(dimensions=dimensions, brickSize=size, brickType=cm.brickType, circleVerts=circleVerts, detail=undersideDetail, stud=stud)
+            brickBM = makeStandardBrick(dimensions=dimensions, brickSize=size, type=type, circleVerts=circleVerts, detail=undersideDetail, stud=stud)
         elif type in ["CYLINDER", "CONE", "STUD", "STUD_HOLLOW"]:
             brickBM = makeRound1x1(dimensions=dimensions, circleVerts=circleVerts, type=type, detail=undersideDetail)
         elif type == "SLOPE":
@@ -96,7 +96,7 @@ class Bricks:
         size = bricksDict[key]["size"]
         newSize = [1, 1, size[2]]
         zStep = getZStep(cm)
-        if cm.brickType == "Bricks and Plates":
+        if cm.brickType == "BRICKS AND PLATES":
             if not v:
                 zStep = 3
             else:
@@ -155,7 +155,7 @@ def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, l
     lw = dimensions["logo_width"] * logo_scale
     logoBM_ref = bmesh.new()
     logoBM_ref.from_mesh(logo.data)
-    if logo_type == "LEGO Logo":
+    if logo_type == "LEGO":
         smoothFaces(list(logoBM_ref.faces))
         # transform logo into place
         bmesh.ops.scale(logoBM_ref, vec=Vector((lw, lw, lw)), verts=logoBM_ref.verts)
@@ -186,7 +186,7 @@ def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, l
                     bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(0.0, 0.0, 1.0), matrix=Matrix.Rotation(math.radians(zRot), 3, 'Z'))
                 # transform logo to appropriate position
                 zOffset = dimensions["logo_offset"]
-                if logo_type != "LEGO Logo" and logo_details is not None:
+                if logo_type != "LEGO" and logo_details is not None:
                     zOffset += ((logo_details.z.dist * (lw / distMax)) / 2) * (1 - logo_inset * 2)
                 xyOffset = dimensions["width"] + dimensions["gap"]
                 for v in logoBM.verts:

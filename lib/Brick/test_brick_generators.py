@@ -91,13 +91,13 @@ def test_brick_generators():
     for detail in ["FLAT", "LOW", "MEDIUM", "HIGH"]:
         offset += 1
         # STANDARD BRICKS
-        newObjFromBmesh(1,  makeStandardBrick(dimensions=dimensions, brickSize=[1,1,3], brickType=cm.brickType, circleVerts=16, detail=detail), "1x1 " + detail, loc=(offset,   0,0))
-        newObjFromBmesh(2,  makeStandardBrick(dimensions=dimensions, brickSize=[1,2,3], brickType=cm.brickType, circleVerts=16, detail=detail), "1x2 " + detail, loc=(offset,   0,0))
-        newObjFromBmesh(3,  makeStandardBrick(dimensions=dimensions, brickSize=[3,1,3], brickType=cm.brickType, circleVerts=16, detail=detail), "3x1 " + detail, loc=(0, offset,  0))
-        newObjFromBmesh(4,  makeStandardBrick(dimensions=dimensions, brickSize=[1,8,3], brickType=cm.brickType, circleVerts=16, detail=detail), "1x8 " + detail, loc=(offset,   0,0))
-        newObjFromBmesh(5,  makeStandardBrick(dimensions=dimensions, brickSize=[2,2,3], brickType=cm.brickType, circleVerts=16, detail=detail), "2x2 " + detail, loc=(offset*2, 0,0))
-        newObjFromBmesh(11,  makeStandardBrick(dimensions=dimensions, brickSize=[2,6,3], brickType=cm.brickType, circleVerts=16, detail=detail), "2x6 " + detail, loc=(offset*2, 0,0))
-        newObjFromBmesh(12,  makeStandardBrick(dimensions=dimensions, brickSize=[6,2,3], brickType=cm.brickType, circleVerts=15, detail=detail), "6x2 " + detail, loc=(0, offset*2,0))
+        newObjFromBmesh(1,  makeStandardBrick(dimensions=dimensions, brickSize=[1,1,3], type=cm.brickType, circleVerts=16, detail=detail), "1x1 " + detail, loc=(offset,   0,0))
+        newObjFromBmesh(2,  makeStandardBrick(dimensions=dimensions, brickSize=[1,2,3], type=cm.brickType, circleVerts=16, detail=detail), "1x2 " + detail, loc=(offset,   0,0))
+        newObjFromBmesh(3,  makeStandardBrick(dimensions=dimensions, brickSize=[3,1,3], type=cm.brickType, circleVerts=16, detail=detail), "3x1 " + detail, loc=(0, offset,  0))
+        newObjFromBmesh(4,  makeStandardBrick(dimensions=dimensions, brickSize=[1,8,3], type=cm.brickType, circleVerts=16, detail=detail), "1x8 " + detail, loc=(offset,   0,0))
+        newObjFromBmesh(5,  makeStandardBrick(dimensions=dimensions, brickSize=[2,2,3], type=cm.brickType, circleVerts=16, detail=detail), "2x2 " + detail, loc=(offset*2, 0,0))
+        newObjFromBmesh(11,  makeStandardBrick(dimensions=dimensions, brickSize=[2,6,3], type=cm.brickType, circleVerts=16, detail=detail), "2x6 " + detail, loc=(offset*2, 0,0))
+        newObjFromBmesh(12,  makeStandardBrick(dimensions=dimensions, brickSize=[6,2,3], type=cm.brickType, circleVerts=15, detail=detail), "6x2 " + detail, loc=(0, offset*2,0))
         # ROUND BRICKS
         newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="CYLINDER",    detail=detail), "1x1 Round " + detail,  loc=(offset, 4.5,0))
         newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="CONE",        detail=detail), "1x1 Cone "  + detail,  loc=(offset, 1.5,0))

@@ -607,20 +607,20 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     studDetail = EnumProperty(
         name="Stud Detailing",
         description="Choose where to draw the studs",
-        items=[("On All Bricks", "On All Bricks", "Include Brick Logo only on bricks with studs exposed"),
-               ("On Exposed Bricks", "On Exposed Bricks", "Include Brick Logo only on bricks with studs exposed"),
-               ("None", "None", "Don't include Brick Logo on bricks")],
+        items=[("ALL", "On All Bricks", "Include Brick Logo only on bricks with studs exposed"),
+               ("EXPOSED", "On Exposed Bricks", "Include Brick Logo only on bricks with studs exposed"),
+               ("NONE", "None", "Don't include Brick Logo on bricks")],
         update=dirtyBricks,
-        default="On Exposed Bricks")
+        default="EXPOSED")
 
     logoDetail = EnumProperty(
         name="Logo Detailing",
         description="Choose where to draw the logo",
-        items=[("Custom Logo", "Custom Logo", "Choose a mesh object to use as the brick stud logo"),
-               ("LEGO Logo", "LEGO Logo", "Include a LEGO logo on each stud"),
-               ("None", "None", "Don't include Brick Logo on bricks")],
+        items=[("CUSTOM", "Custom Logo", "Choose a mesh object to use as the brick stud logo"),
+               ("LEGO", "LEGO Logo", "Include a LEGO logo on each stud"),
+               ("NONE", "None", "Don't include Brick Logo on bricks")],
         update=dirtyBricks,
-        default="None")
+        default="NONE")
 
     logoResolution = FloatProperty(
         name="Logo Resolution",
@@ -732,16 +732,16 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         min=0, max=1,
         default=0.025)
 
-    lastBrickType = StringProperty(default="Bricks")
+    lastBrickType = StringProperty(default="BRICKS")
     brickType = EnumProperty(
         name="Brick Type",
         description="Type of brick used to build the model",
-        items=[("Plates", "Plates", "Use plates to build the model"),
-               ("Bricks", "Bricks", "Use bricks to build the model"),
-               ("Bricks and Plates", "Bricks and Plates", "Use bricks and plates to build the model"),
-               ("Custom", "Custom", "Use custom object to build the model")],
+        items=[("PLATES", "Plates", "Use plates to build the model"),
+               ("BRICKS", "Bricks", "Use bricks to build the model"),
+               ("BRICKS AND PLATES", "Bricks and Plates", "Use bricks and plates to build the model"),
+               ("CUSTOM", "Custom", "Use custom object to build the model")],
         update=dirtyMatrix,
-        default="Bricks")
+        default="BRICKS")
     alignBricks = BoolProperty(
         name="Align Bricks Horizontally",
         description="Keep bricks aligned horizontally, and fill the gaps with plates",
@@ -822,11 +822,11 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     internalSupports = EnumProperty(
         name="Internal Supports",
         description="Choose what type of brick support structure to use inside your model",
-        items=[("None", "None", "No internal supports"),
-               ("Lattice", "Lattice", "Use latice inside model"),
-               ("Columns", "Columns", "Use columns inside model")],
+        items=[("NONE", "None", "No internal supports"),
+               ("LATTICE", "Lat tice", "Use latice inside model"),
+               ("COLUMNS", "Colu mns", "Use columns inside model")],
         update=dirtyInternal,
-        default="None")
+        default="NONE")
     latticeStep = IntProperty(
         name="Lattice Step",
         description="Distance between cross-beams",
@@ -856,12 +856,12 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     materialType = EnumProperty(
         name="Material Type",
         description="Choose what materials will be applied to model",
-        items=[("None", "None", "No material applied to bricks"),
-               ("Random", "Random", "Apply a random material from Brick materials to each generated brick"),
-               ("Custom", "Custom", "Choose a custom material to apply to all generated bricks"),
-               ("Use Source Materials", "Use Source Materials", "Apply material based on closest intersecting face")],
+        items=[("NONE", "None", "No material applied to bricks"),
+               ("RANDOM", "Rand om", "Apply a random material from Brick materials to each generated brick"),
+               ("CUSTOM", "Cust om", "Choose a custom material to apply to all generated bricks"),
+               ("SOURCE", "Use Source Materials", "Apply material based on closest intersecting face")],
         update=dirtyMaterial,
-        default="Use Source Materials")
+        default="SOURCE")
     materialName = StringProperty(
         name="Material Name",
         description="Name of the material to apply to all bricks",
@@ -925,13 +925,13 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     insidenessRayCastDir = EnumProperty(
         name="Insideness Ray Cast Direction",
         description="Choose which axis/axes to cast rays for calculation of insideness",
-        items=[("High Efficiency", "High Efficiency", "Reuses single ray casted in brickFreqMatrix calculations"),
+        items=[("HIGH EFFICIENCY", "High Efficiency", "Reuses single ray casted in brickFreqMatrix calculations"),
                ("X", "X", "Cast rays along X axis for insideness calculations"),
                ("Y", "Y", "Cast rays along Y axis for insideness calculations"),
                ("Z", "Z", "Cast rays along Z axis for insideness calculations"),
                ("XYZ", "XYZ (Best Result)", "Cast rays in all axis directions for insideness calculation (slowest; uses result consistent for at least 2 of the 3 rays)")],
         update=dirtyMatrix,
-        default="High Efficiency")
+        default="HIGH EFFICIENCY")
     castDoubleCheckRays = BoolProperty(
         name="Cast Both Directions",
         description="Cast rays in both positive and negative directions on the axes specified for insideness calculation (Favors outside; uncheck to cast only in positive direction)",
@@ -944,13 +944,13 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     isWaterTight = BoolProperty(default=False)
     maxDepthExceeded = BoolProperty(default=False)
 
-    lastLogoDetail = StringProperty(default="None")
+    lastLogoDetail = StringProperty(default="NONE")
     lastLogoResolution = FloatProperty(default=0)
     lastSplitModel = BoolProperty(default=False)
     lastStartFrame = IntProperty(default=-1)
     lastStopFrame = IntProperty(default=-1)
     lastSourceMid = StringProperty(default="-1,-1,-1")
-    lastMaterialType = StringProperty(default="Use Source Materials")
+    lastMaterialType = StringProperty(default="SOURCE")
 
     modelLoc = StringProperty(default="-1,-1,-1")
     modelRot = StringProperty(default="-1,-1,-1")
@@ -1029,11 +1029,11 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     brickShell = EnumProperty(
         name="Brick Shell",
         description="Choose whether the shell of the model will be inside or outside source mesh",
-        items=[("Inside Mesh", "Inside Mesh (recommended)", "Draw brick shell inside source mesh (Recommended)"),
-               ("Outside Mesh", "Outside Mesh", "Draw brick shell outside source mesh"),
-               ("Inside and Outside", "Inside and Outside", "Draw brick shell inside and outside source mesh (two layers)")],
+        items=[("INSIDE", "Inside Mesh (recommended)", "Draw brick shell inside source mesh (Recommended)"),
+               ("OUTSIDE", "Outside Mesh", "Draw brick shell outside source mesh"),
+               ("INSIDE AND OUTSIDE", "Inside and Outside", "Draw brick shell inside and outside source mesh (two layers)")],
         update=dirtyMatrix,
-        default="Inside Mesh")
+        default="INSIDE")
     calculationAxes = EnumProperty(
         name="Expanded Axes",
         description="The brick shell will be drawn on the outside in these directions",

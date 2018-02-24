@@ -377,13 +377,13 @@ class ModelSettingsPanel(Panel):
             s = Vector((cm.modelScaleX, cm.modelScaleY, cm.modelScaleZ))
         # draw Brick Model dimensions to UI if set
         if -1 not in s:
-            if cm.brickType in ["Bricks", "Plates", "Bricks and Plates"]:
+            if cm.brickType in ["BRICKS", "PLATES", "BRICKS AND PLATES"]:
                 dimensions = Bricks.get_dimensions(cm.brickHeight, getZStep(cm), cm.gap)
                 full_d = Vector((dimensions["width"],
                                  dimensions["width"],
                                  dimensions["height"]))
                 r = vector_div(s, full_d)
-            elif cm.brickType == "Custom":
+            elif cm.brickType == "CUSTOM":
                 customObjFound = False
                 customObj = bpy.data.objects.get(cm.customObjectName)
                 if customObj and customObj.type == "MESH":
@@ -395,7 +395,7 @@ class ModelSettingsPanel(Panel):
                                          cm.brickHeight))
                         r = vector_div(s, full_d)
                         customObjFound = True
-            if cm.brickType == "Custom" and not customObjFound:
+            if cm.brickType == "CUSTOM" and not customObjFound:
                 col.label("[Custom object not found]")
             else:
                 split = col.split(align=True, percentage=0.5)
@@ -430,7 +430,7 @@ class ModelSettingsPanel(Panel):
         row.label("Brick Shell:")
         row = col.row(align=True)
         row.prop(cm, "brickShell", text="")
-        if cm.brickShell != "Inside Mesh":
+        if cm.brickShell != "INSIDE":
             row = col.row(align=True)
             row.prop(cm, "calculationAxes", text="")
         row = col.row(align=True)
@@ -470,7 +470,7 @@ class BrickTypesPanel(Panel):
         row = col.row(align=True)
         row.prop(cm, "brickType", text="")
 
-        if cm.brickType == "Custom":
+        if cm.brickType == "CUSTOM":
             col = layout.column(align=True)
             split = col.split(align=True, percentage=0.85)
             col1 = split.column(align=True)
@@ -494,7 +494,7 @@ class BrickTypesPanel(Panel):
             row = col.row(align=True)
             row.prop(cm, "distOffsetZ", text="Z")
         else:
-            if cm.brickType == "Bricks and Plates":
+            if cm.brickType == "BRICKS AND PLATES":
                 col = layout.column(align=True)
                 row = col.row(align=True)
                 row.prop(cm, "alignBricks")
@@ -546,7 +546,7 @@ class MaterialsPanel(Panel):
         row.prop(cm, "materialType", text="")
 
 
-        if cm.materialType == "Custom":
+        if cm.materialType == "CUSTOM":
             col = layout.column(align=True)
             row = col.row(align=True)
             row.prop_search(cm, "materialName", bpy.data, "materials", text="")
@@ -562,7 +562,7 @@ class MaterialsPanel(Panel):
                 col = layout.column(align=True)
                 row = col.row(align=True)
                 row.operator("rebrickr.apply_material", icon="FILE_TICK")
-        elif cm.materialType == "Random":
+        elif cm.materialType == "RANDOM":
             col = layout.column(align=True)
             if bpy.context.scene.render.engine != 'CYCLES':
                 row = col.row(align=True)
@@ -592,7 +592,7 @@ class MaterialsPanel(Panel):
                 col.label("Requires the 'Brick Materials'")
                 col.label("addon, available for purchase")
                 col.label("at the Blender Market.")
-        elif cm.materialType == "Use Source Materials":
+        elif cm.materialType == "SOURCE":
             col = layout.column(align=True)
             row = col.row(align=True)
             row.prop(cm, "mergeInconsistentMats")
@@ -624,7 +624,7 @@ class MaterialsPanel(Panel):
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         else:
             obj = bpy.data.objects.get(cm.source_name)
-        if obj and cm.materialType == "Use Source Materials":
+        if obj and cm.materialType == "SOURCE":
             row1 = col.row(align=True)
             row1.prop(cm, "colorSnapAmount")
             row1.active = not snapToBrickColors()
@@ -681,13 +681,6 @@ class DetailingPanel(Panel):
         layout = self.layout
         scn, cm, _ = getActiveContextInfo()
 
-        if cm.brickType == "Custom":
-            col = layout.column(align=True)
-            col.scale_y = 0.7
-            col.label("Not available for custom")
-            col.label("brick types")
-            return
-
         col = layout.column(align=True)
         row = col.row(align=True)
         row.label("Studs:")
@@ -697,8 +690,8 @@ class DetailingPanel(Panel):
         row.label("Logo:")
         row = col.row(align=True)
         row.prop(cm, "logoDetail", text="")
-        if cm.logoDetail != "None":
-            if cm.logoDetail == "LEGO Logo":
+        if cm.logoDetail != "NONE":
+            if cm.logoDetail == "LEGO":
                 row = col.row(align=True)
                 row.prop(cm, "logoResolution", text="Logo Resolution")
             else:
@@ -725,7 +718,7 @@ class DetailingPanel(Panel):
         row.label("Cylinders:")
         row = col.row(align=True)
         row.prop(cm, "circleVerts")
-        row.active = not (cm.studDetail == "None" and cm.exposedUndersideDetail == "FLAT" and cm.hiddenUndersideDetail == "FLAT")
+        row.active = not (cm.studDetail == "NONE" and cm.exposedUndersideDetail == "FLAT" and cm.hiddenUndersideDetail == "FLAT")
 
 
 class SupportsPanel(Panel):
@@ -752,11 +745,11 @@ class SupportsPanel(Panel):
         row.prop(cm, "internalSupports", text="")
         col = layout.column(align=True)
         row = col.row(align=True)
-        if cm.internalSupports == "Lattice":
+        if cm.internalSupports == "LATTICE":
             row.prop(cm, "latticeStep")
             row = col.row(align=True)
             row.prop(cm, "alternateXY")
-        elif cm.internalSupports == "Columns":
+        elif cm.internalSupports == "COLUMNS":
             row.prop(cm, "colStep")
             row = col.row(align=True)
             row.prop(cm, "colThickness")
@@ -792,7 +785,7 @@ class BevelPanel(Panel):
         layout = self.layout
         scn, cm, n = getActiveContextInfo()
 
-        if cm.lastBrickType == "Custom":
+        if cm.lastBrickType == "CUSTOM":
             col = layout.column(align=True)
             col.scale_y = 0.7
             col.label("Not available for custom")

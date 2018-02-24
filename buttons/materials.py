@@ -61,11 +61,11 @@ class RebrickrApplyMaterial(bpy.types.Operator):
     def setAction(self):
         """ sets self.action """
         scn, cm, _ = getActiveContextInfo()
-        if cm.materialType == "Use Source Materials":
+        if cm.materialType == "SOURCE":
             self.action = "INTERNAL"
-        elif cm.materialType == "Custom":
+        elif cm.materialType == "CUSTOM":
             self.action = "CUSTOM"
-        elif cm.materialType == "Random":
+        elif cm.materialType == "RANDOM":
             self.action = "RANDOM"
 
     @classmethod

@@ -105,10 +105,10 @@ def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, p
     """ attempt to merge bricksDict[key] with adjacent bricks """
     assert len(brickSizes) > 0
 
-    if cm.brickType != "Custom":
+    if cm.brickType != "CUSTOM":
         # iterate through adjacent locs to find available brick sizes
-        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], mergeVertical and cm.brickType == "Bricks and Plates")
-        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], mergeVertical and cm.brickType == "Bricks and Plates")
+        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], mergeVertical and cm.brickType == "BRICKS AND PLATES")
+        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], mergeVertical and cm.brickType == "BRICKS AND PLATES")
         # sort brick types from smallest to largest
         order = randState.randint(0,2)
         if preferLargest:
@@ -161,7 +161,7 @@ def getBrickExposure(cm, bricksDict, key=None, loc=None):
 
     # set z-indices
     idxZb = loc[2] - 1
-    if cm.brickType == "Bricks and Plates" and size[2] == 3:
+    if cm.brickType == "BRICKS AND PLATES" and size[2] == 3:
         idxZa = loc[2] + 3
     else:
         idxZa = loc[2] + 1
@@ -174,7 +174,7 @@ def getBrickExposure(cm, bricksDict, key=None, loc=None):
                 k0 = listToStr([x,y,z])
                 curBrick = bricksDict[k0]
                 # check if brick top or bottom is exposed
-                if curBrick["val"] != 1 and not (cm.brickType == "Bricks and Plates" and size[2] == 3):
+                if curBrick["val"] != 1 and not (cm.brickType == "BRICKS AND PLATES" and size[2] == 3):
                     continue
                 returnVal0 = checkExposure(bricksDict, x, y, idxZa, 1, ignoredTypes=getTypesObscuringBelow())
                 if returnVal0: topExposed = True

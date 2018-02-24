@@ -34,14 +34,14 @@ from ....functions.common import *
 from ....functions.general import *
 
 
-def makeStandardBrick(dimensions:dict, brickSize:list, brickType:str, circleVerts:int=16, detail:str="LOW", logo:Object=None, stud:bool=True, bme:bmesh=None):
+def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int=16, detail:str="LOW", logo:Object=None, stud:bool=True, bme:bmesh=None):
     """
     create brick with bmesh
 
     Keyword Arguments:
         dimensions  -- dictionary containing brick dimensions
         brickSize   -- size of brick (e.g. standard 2x4 -> [2, 4, 3])
-        brickType   -- type of brick (e.g. Bricks, Plates)
+        type        -- type of brick (e.g. BRICK, PLATE, CUSTOM)
         circleVerts -- number of vertices per circle of cylinders
         detail      -- level of brick detail (options: ["FLAT", "LOW", "MEDIUM", "HIGH"])
         logo        -- logo object to create on top of studs
@@ -56,7 +56,7 @@ def makeStandardBrick(dimensions:dict, brickSize:list, brickType:str, circleVert
 
     # get halfScale
     d = Vector((dimensions["width"] / 2, dimensions["width"] / 2, dimensions["height"] / 2))
-    d.z = d.z * (brickSize[2] if brickType != "Bricks" else 1)
+    d.z = d.z * (brickSize[2] if cm.brickType not in ["BRICKS", "CUSTOM"] else 1)
     # get scalar for d in positive xyz directions
     scalar = Vector((brickSize[0] * 2 - 1,
                      brickSize[1] * 2 - 1,
@@ -71,7 +71,7 @@ def makeStandardBrick(dimensions:dict, brickSize:list, brickType:str, circleVert
     v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
 
     # add studs
-    if stud: addStuds(dimensions, brickSize, brickType, circleVerts, bme, zStep=getZStep(cm), inset=thick.z * 0.9)
+    if stud: addStuds(dimensions, brickSize, cm.brickType, circleVerts, bme, zStep=getZStep(cm), inset=thick.z * 0.9)
 
     # add details
     if detail != "FLAT":
@@ -91,9 +91,9 @@ def makeStandardBrick(dimensions:dict, brickSize:list, brickType:str, circleVert
 
 
         # make tubes
-        addTubeSupports(dimensions, brickSize, circleVerts, brickType, detail, d, scalar, thick, bme)
+        addTubeSupports(dimensions, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
         # Adding bar inside 1 by x bricks
-        addBars(dimensions, brickSize, circleVerts, brickType, detail, d, scalar, thick, bme)
+        addBars(dimensions, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
         # add small inner cylinders inside brick
         if detail in ["MEDIUM", "HIGH"]:
             addInnerCylinders(dimensions, brickSize, circleVerts, d, v13, v14, v15, v16, bme)

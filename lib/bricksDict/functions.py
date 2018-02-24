@@ -304,7 +304,7 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
         if source is None: source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
     if source_details is None or dimensions is None:
         source_details, dimensions = getDetailsAndBounds(source)
-    if cm.brickType == "Custom":
+    if cm.brickType == "CUSTOM":
         scn = bpy.context.scene
         customObj = bpy.data.objects[cm.customObjectName]
         oldLayers = list(scn.layers) # store scene layers for later reset

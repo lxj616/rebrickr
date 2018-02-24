@@ -124,20 +124,23 @@ def getAvailableTypes():
     dictKey, dictLoc = getDictKey(obj.name)
     bricksDict, _ = getBricksDict(cm=cm)
     objSize = bricksDict[dictKey]["size"]
+    items = []
     if objSize[2] not in [1, 3]: raise Exception("Custom Error Message: objSize not in [1, 3]")
     # build items
+    if cm.brickType == "CUSTOM":
+        items.append(("CUSTOM", "Custom", ""))
     if objSize[2] == 3:
-        items = [("BRICK", "Brick", "")]
-        if "Plates" in cm.brickType:
+        items.append(("BRICK", "Brick", ""))
+        if "PLATES" in cm.brickType:
             items.append(("PLATE", "Plate", ""))
     elif objSize[2] == 1:
-        items = [("PLATE", "Plate", "")]
-        if "Bricks" in cm.brickType and "BRICK" not in items:
+        items.append(("PLATE", "Plate", ""))
+        if "BRICKS" in cm.brickType and "BRICK" not in items:
             items.append(("BRICK", "Brick", ""))
     # add more available brick types
     # NOTE: update the following functions when including brand new type in code:
     # get1HighTypes, get3HighTypes, getTypesObscuringAbove, getTypesObscuringBelow
-    if objSize[2] == 3 or "Bricks" in cm.brickType:
+    if objSize[2] == 3 or "BRICKS" in cm.brickType:
         if (objSize[2] == 3 and (sum(objSize[:2]) in range(3,8))):
             items.append(("SLOPE", "Slope", ""))
         # if sum(objSize[:2]) in range(3,6):
@@ -156,13 +159,13 @@ def getAvailableTypes():
         #     items.append(("DOME", "Dome", ""))
         #     items.append(("DOME_INVERTED", "Dome Inverted", ""))
     # Plates
-    if objSize[2] == 1 or "Plates" in cm.brickType:
+    if objSize[2] == 1 or "PLATES" in cm.brickType:
         if sum(objSize[:2]) == 2:
             items.append(("STUD", "Stud", ""))
             items.append(("STUD_HOLLOW", "Stud (hollow)", ""))
             # items.append(("ROUNDED_TILE", "Rounded Tile", ""))
-        if sum(objSize[:2]) in [2, 3]:
-            items.append(("SHORT_SLOPE", "Short Slope", ""))
+    #     if sum(objSize[:2]) in [2, 3]:
+    #         items.append(("SHORT_SLOPE", "Short Slope", ""))
     #     if objSize[:2] in bpy.props.Rebrickr_legal_brick_sizes[0.9]:
     #         items.append(("TILE", "Tile", ""))
     #     if sum(objSize[:2]) == 3:

@@ -56,7 +56,7 @@ class splitBricks(Operator):
             if obj.isBrick:
                 # get cmlist item referred to by object
                 cm = getItemByID(scn.cmlist, obj.cmlist_id)
-                if cm.lastBrickType != "Custom":
+                if cm.lastBrickType != "CUSTOM":
                     return True
         return False
 
@@ -69,7 +69,7 @@ class splitBricks(Operator):
         # invoke props popup if conditions met
         for cm_idx in self.objNamesD.keys():
             cm = scn.cmlist[cm_idx]
-            if cm.brickType != "Bricks and Plates":
+            if cm.brickType != "BRICKS AND PLATES":
                 continue
             bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
             for obj_name in self.objNamesD[cm_idx]:
@@ -194,7 +194,7 @@ class mergeBricks(Operator):
             if obj.isBrick:
                 # get cmlist item referred to by object
                 cm = getItemByID(scn.cmlist, obj.cmlist_id)
-                if cm.lastBrickType != "Custom" and not cm.buildIsDirty:
+                if cm.lastBrickType != "CUSTOM" and not cm.buildIsDirty:
                     i += 1
                     if i == 2:
                         return True
@@ -319,7 +319,7 @@ class setExposure(Operator):
             if obj.isBrick:
                 # get cmlist item referred to by object
                 cm = getItemByID(scn.cmlist, obj.cmlist_id)
-                if cm.lastBrickType != "Custom":
+                if cm.lastBrickType != "CUSTOM":
                     return True
         return False
 
@@ -460,7 +460,7 @@ class drawAdjacent(Operator):
             # check all 6 directions for action to be executed
             for i in range(6):
                 # if checking beneath obj in 'Bricks and Plates', check 3 keys below instead of 1 key below
-                if i == 5 and cm.brickType == "Bricks and Plates":
+                if i == 5 and cm.brickType == "BRICKS AND PLATES":
                     newBrickHeight = self.getNewBrickHeight()
                     decriment = newBrickHeight - 1
                 # if action should be executed (value changed in direction prop)
@@ -559,7 +559,7 @@ class drawAdjacent(Operator):
                     self.adjDKLs[3].append(dkl)
             for x0 in range(x, x + objSize[0]):
                 for y0 in range(y, y + objSize[1]):
-                    if cm.brickType == "Bricks and Plates":
+                    if cm.brickType == "BRICKS AND PLATES":
                         dkl = [x0, y0, z + objSize[2]]
                     else:
                         dkl = [x0, y0, z + 1]
@@ -652,7 +652,7 @@ class drawAdjacent(Operator):
     def toggleBrick(self, cm, dimensions, adjDictLoc, dictKey, objSize, side, brickNum, keysToMerge, addBrick=True):
         # if brick height is 3 and 'Bricks and Plates'
         newBrickHeight = self.getNewBrickHeight()
-        if cm.brickType == "Bricks and Plates" and newBrickHeight == 3:
+        if cm.brickType == "BRICKS AND PLATES" and newBrickHeight == 3:
             checkTwoMoreAbove = True
         else:
             checkTwoMoreAbove = False
@@ -792,9 +792,6 @@ class changeBrickType(Operator):
             return False
         # get cmlist item referred to by object
         cm = getItemByID(scn.cmlist, active_obj.cmlist_id)
-        # confirm that active_obj brickType is not CUSTOM
-        if cm.lastBrickType == "Custom":
-            return False
         return True
 
     def execute(self, context):
