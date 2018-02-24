@@ -99,17 +99,17 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
         bme.faces.new((v10, v9, v1, v2))
     else:
         # add inside square at end of slope
-        coord1 = Vector(( d.x * sX - thick.x,
+        coord1 = Vector(( d.x * scalar.x - thick.x,
                          -d.y + thick.y,
                          -d.z))
-        coord2 = Vector(( d.x * sX - thick.x,
-                          d.y * sY - thick.y,
+        coord2 = Vector(( d.x * scalar.x - thick.x,
+                          d.y * scalar.y - thick.y,
                          -d.z + thick.z))
         v13, v14, v15, v16 = makeSquare(coord1, coord2, flipNormal=True, bme=bme)
         # add verts next to inside square at end of slope
         if adjustedBrickSize[0] in [3, 4]:
-            x = d.x * scalar.x + (thick.x * (brickSize[0] - 3))
-            x -= (dimensions["tube_thickness"] + dimensions["stud_radius"]) * (brickSize[0] - 2)
+            x = d.x * scalar.x + (thick.x * (adjustedBrickSize[0] - 3))
+            x -= (dimensions["tube_thickness"] + dimensions["stud_radius"]) * (adjustedBrickSize[0] - 2)
             v17 = bme.verts.new((x, coord1.y, coord2.z))
             v18 = bme.verts.new((x, coord2.y, coord2.z))
             bme.faces.new((v17, v18, v15, v16))

@@ -549,7 +549,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                     continue
 
                 # initialize variables
-                bKey = listToStr([x,y,z])
+                bKey = listToStr([x, y, z])
                 co = coordMatrix[x][y][z]
                 i += 1
 
@@ -569,7 +569,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                     name= 'Rebrickr_%(n)s_brick_%(i)s__%(bKey)s' % locals(),
                     val= brickFreqMatrix[x][y][z],
                     draw= drawBrick,
-                    co= (co[0]-source_details.x.mid, co[1]-source_details.y.mid, co[2]-source_details.z.mid),
+                    co= (co[0] - source_details.x.mid, co[1] - source_details.y.mid, co[2] - source_details.z.mid),
                     nearest_face= nf,
                     nearest_intersection= ni if ni is None else tuple(ni),
                     rgba= rgba,

@@ -36,5 +36,3 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * For models created with Rebrickr v1.0, when opened in v1.1.1 and not-split model is selected and deleted with the 'x' key, model is not deleted
       * When customization applied to model, if model settings clicked on but not updated, 'Revert Settings' warning does not appear.
       * Toggling back and forth adding adjacent brick above causes errors
-      * For "Brick" brickType, generate grid with keys offset by 3 instead of 1, removing the need for zScale stuff
-      * Slope bricks don't have the little platform underneath in inside when brickType changed to slope from standard brick
