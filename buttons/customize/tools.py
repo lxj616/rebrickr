@@ -575,7 +575,6 @@ class drawAdjacent(Operator):
             self.adjBricksCreated = []
             for i in range(6):
                 self.adjBricksCreated.append([False]*len(self.adjDKLs[i]))
-            print("HEREEEE")
         except:
             handle_exception()
 
@@ -877,6 +876,8 @@ class changeBrickType(Operator):
                     self.bricksDict = verifyBrickExposureAboveAndBelow(curLoc, self.bricksDict)
                     for i in [1, -1]:
                         k0 = listToStr([curLoc[0], curLoc[1], z0 + i])
+                        if k0 not in self.bricksDict:
+                            continue
                         parent_key = k0 if self.bricksDict[k0]["parent_brick"] == "self" else self.bricksDict[k0]["parent_brick"]
                         if parent_key not in keysToUpdate and parent_key is not None:
                             keysToUpdate.append(parent_key)
