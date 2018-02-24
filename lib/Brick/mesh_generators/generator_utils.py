@@ -60,13 +60,16 @@ def addBars(dimensions, brickSize, circleVerts, type, detail, d, scalar, thick, 
     z1 = -d.z
     z2 = d.z - thick.z
     r = dimensions["bar_radius"]
+    _, cm, _ = getActiveContextInfo()
+    bAndPBrick = cm.brickType == "BRICKS AND PLATES" and brickSize[2] == 3
+    height = dimensions["height"] * (3 if bAndPBrick else 1)
     barZ = -(thick.z / 2)
     sides = [0, 1] + ([0, 0, 1, 1] if brickSize[0] == 1 else [1, 1, 0, 0])
     allTopVerts = []
     if brickSize[0] == 1:
         for y in range(1, brickSize[1]):
             barY = (y * dimensions["width"]) - d.y
-            _,verts = makeCylinder(r=r, h=dimensions["height"] - thick.z, N=circleVerts, co=Vector((0, barY, barZ)), botFace=True, topFace=False, bme=bme)
+            _,verts = makeCylinder(r=r, h=height - thick.z, N=circleVerts, co=Vector((0, barY, barZ)), botFace=True, topFace=False, bme=bme)
             selectVerts(verts["top"])
             allTopVerts += verts["top"]
             if detail in ["FLAT", "LOW"] or brickSize[2] == 1:
@@ -83,7 +86,7 @@ def addBars(dimensions, brickSize, circleVerts, type, detail, d, scalar, thick, 
     elif brickSize[1] == 1:
         for x in range(1, brickSize[0]):
             barX = (x * dimensions["width"]) - d.x
-            _,verts = makeCylinder(r=r, h=dimensions["height"]-thick.z, N=circleVerts, co=Vector((barX, 0, barZ)), botFace=True, topFace=False, bme=bme)
+            _,verts = makeCylinder(r=r, h=height-thick.z, N=circleVerts, co=Vector((barX, 0, barZ)), botFace=True, topFace=False, bme=bme)
             selectVerts(verts["top"])
             allTopVerts += verts["top"]
             # add supports next to odd bars
@@ -105,8 +108,9 @@ def addBars(dimensions, brickSize, circleVerts, type, detail, d, scalar, thick, 
 def addTubeSupports(dimensions, brickSize, circleVerts, type, detail, d, scalar, thick, bme):
     _, cm, _ = getActiveContextInfo()
     addSupports = (brickSize[0] > 2 and brickSize[1] == 2) or (brickSize[1] > 2 and brickSize[0] == 2)
-    # set z1/z2 values
     bAndPBrick = cm.brickType == "BRICKS AND PLATES" and brickSize[2] == 3
+    height = dimensions["height"] * (3 if bAndPBrick else 1)
+    # set z1/z2 values
     z1 = d.z - thick.z - dimensions["support_height_triple" if bAndPBrick else "support_height"]
     z2 = d.z - thick.z
     allTopVerts = []
@@ -116,7 +120,7 @@ def addTubeSupports(dimensions, brickSize, circleVerts, type, detail, d, scalar,
             tubeY = (yNum * d.y * 2) + d.y
             tubeZ = (-thick.z / 2)
             r = dimensions["stud_radius"]
-            h = (dimensions["height"]) - thick.z
+            h = height - thick.z
             bme, tubeVerts = makeTube(r, h, dimensions["tube_thickness"], circleVerts, co=Vector((tubeX, tubeY, tubeZ)), botFace=True, topFace=False, bme=bme)
             # select verts for exclusion from vert group
             selectVerts(tubeVerts["outer"]["top"] + tubeVerts["inner"]["top"])

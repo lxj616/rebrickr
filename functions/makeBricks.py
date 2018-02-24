@@ -185,7 +185,6 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
 
             if bricksDict[key]["parent_brick"] == "self" and bricksDict[key]["draw"]:
                 name = bricksDict[key]["name"]
-                print(name)
                 brick = bpy.data.objects.get(name)
                 # create vert group for bevel mod (assuming only logo verts are selected):
                 vg = brick.vertex_groups.new("%(name)s_bevel" % locals())

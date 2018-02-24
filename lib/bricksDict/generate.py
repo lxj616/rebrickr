@@ -523,7 +523,6 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
         offset = offset - source.parent.location
     # get coordinate list from intersections of edges with faces
     coordMatrix = generateLattice(brickScale, lScale, offset)
-    print(len(coordMatrix), len(coordMatrix[0]), len(coordMatrix[0][0]))
     if len(coordMatrix) == 0:
         coordMatrix.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
     # set calculationAxes

@@ -200,6 +200,7 @@ def updateKeysNotChecked(brickSize, loc, zStep, keysNotChecked, key):
 
 
 def skipThisRow(timeThrough, lowestLoc, loc):
+    _, cm, _ = getActiveContextInfo()
     if timeThrough == 0:  # first time
         if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 in [1, 2]:
             return True

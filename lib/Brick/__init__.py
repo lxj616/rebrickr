@@ -127,6 +127,7 @@ class Bricks:
         return get_brick_dimensions(height, zScale, gap_percentage)
 
 def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, logo_details, logo_scale, logo_inset):
+    _, cm, _ = getActiveContextInfo()
     # get logo rotation angle based on size of brick
     rot_mult = 180
     rot_vars = 2
@@ -185,7 +186,7 @@ def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, l
                 if zRot != 0:
                     bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(0.0, 0.0, 1.0), matrix=Matrix.Rotation(math.radians(zRot), 3, 'Z'))
                 # transform logo to appropriate position
-                zOffset = dimensions["logo_offset"]
+                zOffset = dimensions["logo_offset"] + (dimensions["height"] if cm.brickType == "BRICKS AND PLATES" and size[2] == 3 else 0)
                 if logo_type != "LEGO" and logo_details is not None:
                     zOffset += ((logo_details.z.dist * (lw / distMax)) / 2) * (1 - logo_inset * 2)
                 xyOffset = dimensions["width"] + dimensions["gap"]
