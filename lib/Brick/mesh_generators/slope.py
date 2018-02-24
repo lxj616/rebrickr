@@ -42,7 +42,7 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
     Keyword Arguments:
         dimensions  -- dictionary containing brick dimensions
         brickSize   -- size of brick (e.g. 2x3 slope -> [2, 3, 3])
-        direction   -- direction slant faces in ["+X", "-X", "+Y", "-Y"]
+        direction   -- direction slant faces in ["X+", "X-", "Y+", "Y-"]
         circleVerts -- number of vertices per circle of cylinders
         detail      -- level of brick detail (options: ["FLAT", "LOW", "MEDIUM", "HIGH"])
         stud        -- create stud on top of brick
@@ -54,8 +54,8 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
 
     # set direction to longest side if None (defaults to X if sides are the same)
     maxIdx = brickSize.index(max(brickSize[:2]))
-    directions = ["+X", "+Y", "-X", "-Y"]
-    # default to "+X" if X is larger, "+Y" if Y is larger
+    directions = ["X+", "Y+", "X-", "Y-"]
+    # default to "X+" if X is larger, "Y+" if Y is larger
     direction = directions[maxIdx] if direction is None else direction
     # verify direction is valid
     assert direction in directions
@@ -158,8 +158,8 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
 
     # # translate slope to adjust for flipped brick
     for v in bme.verts:
-        v.co.y -= d.y * (scalar.y - 1) if direction in ["-X", "+Y"] else 0
-        v.co.x -= d.x * (scalar.x - 1) if direction in ["-X", "-Y"] else 0
+        v.co.y -= d.y * (scalar.y - 1) if direction in ["X-", "Y+"] else 0
+        v.co.x -= d.x * (scalar.x - 1) if direction in ["X-", "Y-"] else 0
     # rotate slope to the appropriate orientation
     mult = directions.index(direction)
     bmesh.ops.rotate(bme, verts=bme.verts, cent=(0, 0, 0), matrix=Matrix.Rotation(math.radians(90) * mult, 3, 'Z'))

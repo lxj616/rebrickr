@@ -48,7 +48,7 @@ class Bricks:
             brickBM = makeRound1x1(dimensions=dimensions, circleVerts=circleVerts, type=type, detail=undersideDetail)
         elif type == "SLOPE":
             # determine brick direction
-            directions = ["+X", "+Y", "-X", "-Y"]
+            directions = ["X+", "Y+", "X-", "Y-"]
             maxIdx = size.index(max(size[:2]))
             maxIdx -= 2 if flip else 0
             maxIdx += 1 if rotate90 else 0
@@ -58,8 +58,8 @@ class Bricks:
             raise ValueError("'new_mesh' function received unrecognized value for parameter 'type': '" + str(type) + "'")
 
         # create list of brick bmesh variations
-        if logo and stud and type in ["STANDARD", "STUD"]:
-            bms = makeLogoVariations(dimensions, size, all_vars, logo, logo_type, logo_details, logo_scale, logo_inset)
+        if logo and stud and type in ["STANDARD", "STUD", "SLOPE"]:
+            bms = makeLogoVariations(dimensions, size, directions[maxIdx] if type == "SLOPE" else "", all_vars, logo, logo_type, logo_details, logo_scale, logo_inset)
         else:
             bms = [bmesh.new()]
 
@@ -126,12 +126,16 @@ class Bricks:
     def get_dimensions(height=1, zScale=1, gap_percentage=0.01):
         return get_brick_dimensions(height, zScale, gap_percentage)
 
-def makeLogoVariations(dimensions, size, all_vars, logo, logo_type, logo_details, logo_scale, logo_inset):
+def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, logo_details, logo_scale, logo_inset):
     # get logo rotation angle based on size of brick
     rot_mult = 180
     rot_vars = 2
     rot_add = 0
-    if size[0] == 1 and size[1] == 1:
+    if direction != "":
+        directions = ["X+", "Y+", "X-", "Y-"]
+        rot_add = 90 * (directions.index(direction) + 1)
+        rot_vars = 1
+    elif size[0] == 1 and size[1] == 1:
         rot_mult = 90
         rot_vars = 4
     elif size[0] == 2 and size[1] > 2:
@@ -165,10 +169,17 @@ def makeLogoVariations(dimensions, size, all_vars, logo, logo_type, logo_details
         distMax = max(logo_details.x.dist, logo_details.y.dist)
         bmesh.ops.scale(logoBM_ref, vec=Vector((lw/distMax, lw/distMax, lw/distMax)), verts=logoBM_ref.verts)
 
+    # create new bmeshes for each logo variation
     bms = [bmesh.new() for zRot in zRots]
+    # cap x/y ranges so logos aren't created over slopes
+    xR0 = size[0] - 1 if direction == "X-" else 0
+    yR0 = size[1] - 1 if direction == "Y-" else 0
+    xR1 = 1 if direction == "X+" else size[0]
+    yR1 = 1 if direction == "Y+" else size[1]
+    # add logos on top of each stud
     for i,zRot in enumerate(zRots):
-        for x in range(size[0]):
-            for y in range(size[1]):
+        for x in range(xR0, xR1):
+            for y in range(yR0, yR1):
                 logoBM = logoBM_ref.copy()
                 # rotate logo around stud
                 if zRot != 0:
