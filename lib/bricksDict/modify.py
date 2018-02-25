@@ -136,6 +136,9 @@ def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, p
                 else:
                     # point deleted brick to original brick
                     curBrick["parent_brick"] = key
+                # set brick type to brick if merged vertically
+                if brickSize[2] == 3 and cm.brickType == "BRICKS AND PLATES":
+                    curBrick["type"] = "BRICK"
 
     return brickSize
 

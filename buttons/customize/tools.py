@@ -147,12 +147,12 @@ class splitBricks(Operator):
                     dictKey, dictLoc = getDictKey(obj_name)
                     x0, y0, z0 = dictLoc
                     # get size of current brick (e.g. [2, 4, 1])
-                    objSize = bricksDict[dictKey]["size"]
-                    bricksDict[dictKey]["type"] = "BRICK" if objSize == 3 else "PLATE"
+                    brickSize = bricksDict[dictKey]["size"]
+                    bricksDict[dictKey]["type"] = "BRICK" if brickSize == 3 else "PLATE"
                     zStep = getZStep(cm)
 
                     # skip 1x1 bricks
-                    if objSize[0] + objSize[1] + (objSize[2] / zStep) == 3:
+                    if brickSize[0] + brickSize[1] + (brickSize[2] / zStep) == 3:
                         continue
 
                     if self.vertical or self.horizontal:
@@ -222,7 +222,6 @@ class mergeBricks(Operator):
                     # initialize vars
                     dictKey, dictLoc = getDictKey(obj.name)
                     x0, y0, z0 = dictLoc
-                    objSize = bricksDict[dictKey]["size"]
 
                     # split brick in matrix
                     splitKeys = Bricks.split(bricksDict, dictKey, cm=cm)
@@ -629,7 +628,7 @@ class drawAdjacent(Operator):
         newBrickHeight = 1 if self.brickType in get1HighTypes() else 3
         return newBrickHeight
 
-    def getNewCoord(self, co, dimensions, side):
+    def getNewCoord(self, cm, co, dimensions, side, newBrickHeight):
         co = Vector(co)
         if side == 0:
             co.x += dimensions["width"]
@@ -642,7 +641,7 @@ class drawAdjacent(Operator):
         if side == 4:
             co.z += dimensions["height"]
         if side == 5:
-            co.z -= dimensions["height"]
+            co.z -= dimensions["height"] * (newBrickHeight if cm.brickType == "BRICKS AND PLATES" else 1)
         return co.to_tuple()
 
     def isBrickAlreadyCreated(self, brickNum, side):
@@ -665,21 +664,21 @@ class drawAdjacent(Operator):
             cm.numBricksGenerated += 1
             j = cm.numBricksGenerated
             newDictLoc = adjDictLoc.copy()
-            if side == 0:
+            if side == 0:    # ??
                 newDictLoc[0] = newDictLoc[0] - 1
-            elif side == 1:
+            elif side == 1:  # ??
                 newDictLoc[0] = newDictLoc[0] + 1
-            elif side == 2:
+            elif side == 2:  # ??
                 newDictLoc[1] = newDictLoc[1] - 1
-            elif side == 3:
+            elif side == 3:  # ??
                 newDictLoc[1] = newDictLoc[1] + 1
-            elif side == 4:
+            elif side == 4:  # ??
                 newDictLoc[2] = newDictLoc[2] - 1
-            elif side == 5:
-                newDictLoc[2] = newDictLoc[2] + 1
+            elif side == 5:  # bottom
+                newDictLoc[2] = newDictLoc[2] + (newBrickHeight if cm.brickType == "BRICKS AND PLATES" else 1)
             theKey = listToStr(newDictLoc)
             co0 = self.bricksDict[theKey]["co"]
-            co = self.getNewCoord(co0, dimensions, side)
+            co = self.getNewCoord(cm, co0, dimensions, side, newBrickHeight)
             self.bricksDict[adjacent_key] = createBricksDictEntry(
                 name=         'Rebrickr_%(n)s_brick_%(j)s__%(adjacent_key)s' % locals(),
                 co=           co,
@@ -809,6 +808,7 @@ class changeBrickType(Operator):
             x0,y0,z0 = dictLoc
             # get size of current brick (e.g. [2, 4, 1])
             objSize = self.bricksDict[dictKey]["size"]
+            bAndPBrick = cm.brickType == "BRICKS AND PLATES" and objSize[2] == 3
 
             # skip bricks that are already of type self.brickType
             if (self.bricksDict[dictKey]["type"] == self.brickType and
@@ -828,7 +828,7 @@ class changeBrickType(Operator):
             for x in range(brickSize[0]):
                 for y in range(brickSize[1]):
                     curLoc = [x0 + x, y0 + y, z0]
-                    self.bricksDict = verifyBrickExposureAboveAndBelow(curLoc, self.bricksDict)
+                    self.bricksDict = verifyBrickExposureAboveAndBelow(curLoc, self.bricksDict, decriment=2 if bAndPBrick else 0)
                     for i in [1, -1]:
                         k0 = listToStr([curLoc[0], curLoc[1], z0 + i])
                         if k0 not in self.bricksDict:

@@ -53,6 +53,8 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
     # create new bmesh object
     bme = bmesh.new() if not bme else bme
     _, cm, _ = getActiveContextInfo()
+    bAndPBrick = cm.brickType == "BRICKS AND PLATES" and brickSize[2] == 3
+    height = dimensions["height"]# * (3 if bAndPBrick else 1)
 
     # get halfScale
     d = Vector((dimensions["width"] / 2, dimensions["width"] / 2, dimensions["height"] / 2))
@@ -71,7 +73,7 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
     v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
 
     # add studs
-    if stud: addStuds(dimensions, brickSize, cm.brickType, circleVerts, bme, zStep=getZStep(cm), inset=thick.z * 0.9)
+    if stud: addStuds(dimensions, height, brickSize, cm.brickType, circleVerts, bme, zStep=getZStep(cm), inset=thick.z * 0.9)
 
     # add details
     if detail != "FLAT":
@@ -91,9 +93,9 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
 
 
         # make tubes
-        addTubeSupports(dimensions, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
+        addTubeSupports(dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
         # Adding bar inside 1 by x bricks
-        addBars(dimensions, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
+        addBars(dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
         # add small inner cylinders inside brick
         if detail in ["MEDIUM", "HIGH"]:
             addInnerCylinders(dimensions, brickSize, circleVerts, d, v13, v14, v15, v16, bme)

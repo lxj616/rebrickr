@@ -137,6 +137,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
                 brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, loc, brickSizes, zStep, randS1)
 
                 # create brick based on the current brickD information
+                lastBricksDict = bricksDict
                 drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, brickScale, keysNotChecked, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4)
 
                 # print build status to terminal

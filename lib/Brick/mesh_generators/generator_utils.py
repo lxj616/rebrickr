@@ -34,7 +34,7 @@ from ....functions.common import *
 from ....functions.general import *
 
 
-def addStuds(dimensions, brickSize, brickType, circleVerts, bme, hollow=False, zStep=1, inset=0):
+def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, hollow=False, zStep=1, inset=0):
     r = dimensions["bar_radius" if hollow else "stud_radius"]
     h = dimensions["stud_height"]
     t = dimensions["stud_radius"] - dimensions["bar_radius"]
@@ -42,7 +42,7 @@ def addStuds(dimensions, brickSize, brickType, circleVerts, bme, hollow=False, z
         mult = brickSize[2]
     else:
         mult = 1
-    z = ((dimensions["height"] * mult) / 2) + dimensions["stud_height"] / 2 - inset / 2
+    z = ((height * mult) / 2) + dimensions["stud_height"] / 2 - inset / 2
     for xNum in range(brickSize[0]):
         for yNum in range(brickSize[1]):
             x = dimensions["width"] * xNum
@@ -56,13 +56,12 @@ def addStuds(dimensions, brickSize, brickType, circleVerts, bme, hollow=False, z
     return studVerts
 
 
-def addBars(dimensions, brickSize, circleVerts, type, detail, d, scalar, thick, bme):
+def addBars(dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme):
     z1 = -d.z
     z2 = d.z - thick.z
     r = dimensions["bar_radius"]
     _, cm, _ = getActiveContextInfo()
     bAndPBrick = cm.brickType == "BRICKS AND PLATES" and brickSize[2] == 3
-    height = dimensions["height"] * (3 if bAndPBrick else 1)
     barZ = -(thick.z / 2)
     sides = [0, 1] + ([0, 0, 1, 1] if brickSize[0] == 1 else [1, 1, 0, 0])
     allTopVerts = []
@@ -102,14 +101,13 @@ def addBars(dimensions, brickSize, circleVerts, type, detail, d, scalar, thick, 
                 cubeVerts = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=sides, bme=bme)
                 allTopVerts += cubeVerts[4:]
     if type == "SLOPE":
-        cutVerts(dimensions, brickSize, allTopVerts, d, scalar, thick, bme)
+        cutVerts(dimensions, height, brickSize, allTopVerts, d, scalar, thick, bme)
 
 
-def addTubeSupports(dimensions, brickSize, circleVerts, type, detail, d, scalar, thick, bme):
+def addTubeSupports(dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme):
     _, cm, _ = getActiveContextInfo()
     addSupports = (brickSize[0] > 2 and brickSize[1] == 2) or (brickSize[1] > 2 and brickSize[0] == 2)
     bAndPBrick = cm.brickType == "BRICKS AND PLATES" and brickSize[2] == 3
-    height = dimensions["height"] * (3 if bAndPBrick else 1)
     # set z1/z2 values
     z1 = d.z - thick.z - dimensions["support_height_triple" if bAndPBrick else "support_height"]
     z2 = d.z - thick.z
@@ -156,11 +154,11 @@ def addTubeSupports(dimensions, brickSize, circleVerts, type, detail, d, scalar,
                     cubeVerts2 = makeCube(Vector((x3, y1, z1)), Vector((x4, y2, z2)), sides=[0, 1, 0, 0, 1, 1], bme=bme)
                     allTopVerts += cubeVerts1[4:] + cubeVerts2[4:]
     if type == "SLOPE":
-        cutVerts(dimensions, brickSize, allTopVerts, d, scalar, thick, bme)
+        cutVerts(dimensions, height, brickSize, allTopVerts, d, scalar, thick, bme)
 
 
-def cutVerts(dimensions, brickSize, verts, d, scalar, thick, bme):
-    minZ = -(dimensions["height"] / 2) + thick.z
+def cutVerts(dimensions, height, brickSize, verts, d, scalar, thick, bme):
+    minZ = -(height / 2) + thick.z
     for v in verts:
         numer = v.co.x - d.x
         denom = d.x * (scalar.x - 1) - (dimensions["tube_thickness"] + dimensions["stud_radius"]) * (brickSize[0] - 2) + (thick.z * (brickSize[0] - 3))

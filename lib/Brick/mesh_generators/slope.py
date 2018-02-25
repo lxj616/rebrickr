@@ -61,7 +61,10 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
     assert direction in directions
 
     # get halfScale
-    d = Vector((dimensions["width"] / 2, dimensions["width"] / 2, dimensions["height"] / 2))
+    _, cm, _ = getActiveContextInfo()
+    bAndPBrick = cm.brickType == "BRICKS AND PLATES" and brickSize[2] == 3
+    height = dimensions["height"] * (3 if bAndPBrick else 1)
+    d = Vector((dimensions["width"] / 2, dimensions["width"] / 2, height / 2))
     # get scalar for d in positive xyz directions
     adjustedBrickSize = (brickSize[:2] if "X" in direction else brickSize[1::-1]) + brickSize[2:]
     scalar = Vector((adjustedBrickSize[0] * 2 - 1,
@@ -81,7 +84,7 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
     bme.faces.new((v1, v5, v8, v2))
 
     # create stud
-    if stud: addStuds(dimensions, [1] + adjustedBrickSize[1:], "CONE", circleVerts, bme, inset=thick.z * 0.9)
+    if stud: addStuds(dimensions, height, [1] + adjustedBrickSize[1:], "CONE", circleVerts, bme, inset=thick.z * 0.9)
 
     # make square at end of slope
     coord1 = vector_mult(d, [scalar.x, -1, -1])
@@ -147,10 +150,10 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
         if detail in ["MEDIUM", "HIGH"]:
             # add bars
             if min(brickSize) == 1:
-                addBars(dimensions, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme)
+                addBars(dimensions, height, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme)
             # add tubes
             else:
-                addTubeSupports(dimensions, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme)
+                addTubeSupports(dimensions, height, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme)
         # add inner cylinders
         if detail == "HIGH":
             addInnerCylinders(dimensions, [1] + adjustedBrickSize[1:], circleVerts, d, v23, v24, v25, v26, bme)

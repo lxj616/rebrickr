@@ -39,7 +39,7 @@ from ..lib.Brick import Bricks
 from ..lib.bricksDict import *
 from .common import *
 from .wrappers import *
-from .general import bounds
+from .general import *
 from ..lib.caches import rebrickr_bm_cache
 
 
@@ -63,27 +63,41 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
 
     # # adjust brick size if changing type from 3 tall to 1 tall
     bricksToCreate = 1
-    # if brickD["type"] == "BRICK" and brickSize[2] == 1:
-    #     brickSize = brickSize.copy()
-    #     brickSize[2] = 3
-    #     brickD["size"] = 3
-    # if brickD["type"] == "PLATE" and brickSize[2] == 3:
-    #     brickSize = brickSize.copy()
-    #     brickSize[2] = 1
-    #     brickD["size"] = 1
-    #     bricksToCreate = 3
-    #     # update bricks dict entries above current brick
-    #     for i in range(1, 3):
-    #         newKey = listToStr([loc[0], loc[1], loc[2] + i])
-    #         # create new bricksDict entry if necessary
-    #         if newKey in bricksDict:
-    #             bricksDict[newKey] = copy.deepcopy(brickD)
-    #             n = cm.source_name
-    #             cm.numBricksGenerated += 1
-    #             j = cm.numBricksGenerated
-    #             bricksDict[newKey]["name"] = 'Rebrickr_%(n)s_brick_%(j)s__%(newKey)s' % locals(),
-    #             bricksDict[newKey]["co"] = [brickD["co"][0], brickD["co"][1], brickD["co"][2] + (i * dimensions["height"])]
-    #         bricksDict[newKey]["parent"] = key
+    if brickD["type"] == "BRICK" and brickSize[2] == 1:
+        n = cm.source_name
+        full_d = Vector((dimensions["width"], dimensions["width"], dimensions["height"]))
+        brickSize = brickSize.copy()
+        brickSize[2] = 3
+        brickD["size"][2] = 3
+        # update bricks dict entries above current brick
+        for x in range(brickSize[0]):
+            for y in range(brickSize[1]):
+                for z in range(1, brickSize[2]):
+                    newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z])
+                    # create new bricksDict entry if it doesn't exist
+                    if newKey not in bricksDict:
+                        cm.numBricksGenerated += 1
+                        j = cm.numBricksGenerated
+                        newName = "Rebrickr_%(n)s_brick_%(j)s__%(newKey)s" % locals()
+                        newCO = list(Vector(brickD["co"]) + vector_mult(Vector((x, y, z)), full_d))
+                        bricksDict[newKey] = createBricksDictEntry(
+                            name=         newName,
+                            co=           newCO,
+                        )
+                    # update bricksDict entry to point to new brick
+                    print(key)
+                    bricksDict[newKey]["nearest_face"] = brickD["nearest_face"]
+                    bricksDict[newKey]["nearest_intersection"] = brickD["nearest_intersection"]
+                    bricksDict[newKey]["mat_name"] = brickD["mat_name"]
+                    bricksDict[newKey]["parent_brick"] = key
+                    bricksDict[newKey]["draw"] = True
+                    if bricksDict[newKey]["val"] == 0:
+                        bricksDict[newKey]["val"] = brickD["val"]
+    if brickD["type"] == "PLATE" and brickSize[2] == 3:
+        brickSize = brickSize.copy()
+        brickSize[2] = 1
+        brickD["size"][2] = 1
+        bricksToCreate = 3
 
     ### CREATE BRICK ###
 
@@ -159,6 +173,8 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
                     p.material_index = 0
             # append mesh to allBrickMeshes list
             allBrickMeshes.append(m)
+
+    return bricksDict
 
 
 def addEdgeSplitMod(obj):
