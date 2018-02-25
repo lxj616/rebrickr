@@ -856,6 +856,16 @@ class CustomizeModel(Panel):
         #     return
 
         col1 = layout.column(align=True)
+        col1.label("Selection:")
+        split = col1.split(align=True, percentage=0.5)
+        # set top exposed
+        col = split.column(align=True)
+        col.operator("rebrickr.select_bricks_by_type", text="By Type")
+        # set bottom exposed
+        col = split.column(align=True)
+        col.operator("rebrickr.select_bricks_by_size", text="By Size")
+
+        col1 = layout.column(align=True)
         col1.label("Toggle Exposure:")
         split = col1.split(align=True, percentage=0.5)
         # set top exposed

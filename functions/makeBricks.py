@@ -57,6 +57,11 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
     # apply transformation to logo duplicate and get bounds(logo)
     logo_details, logo = prepareLogoAndGetDetails(logo)
 
+    # reset brickSizes/TypesUsed
+    if keys == "ALL":
+        cm.brickSizesUsed = ""
+        cm.brickTypesUsed = ""
+
     # get bricksDict dicts in seeded order
     if keys == "ALL":
         keys = list(bricksDict.keys())
@@ -135,6 +140,11 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
 
                 # merge current brick with available adjacent bricks
                 brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, loc, brickSizes, zStep, randS1)
+                # add brickSize to cm.brickSizesUsed if not already there
+                brickSizeStr = listToStr(sorted(brickSize[:2]) + [brickSize[2]])
+                cm.brickSizesUsed += brickSizeStr if cm.brickSizesUsed == "" else ("|" + brickSizeStr if brickSizeStr not in cm.brickSizesUsed.split("|") else "")
+                cm.brickTypesUsed += brickD["type"] if cm.brickTypesUsed == "" else ("|" + str(brickD["type"]) if brickD["type"] not in cm.brickTypesUsed.split("|") else "")
+
 
                 # create brick based on the current brickD information
                 lastBricksDict = bricksDict

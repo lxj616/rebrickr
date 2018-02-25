@@ -97,17 +97,7 @@ class splitBricks(Operator):
         self.vertical = False
         self.horizontal = False
         selected_objects = bpy.context.selected_objects
-        # initialize objsD (key:cm_idx, val:list of brick objects)
-        objsD = createObjsD(selected_objects)
-        for cm_idx in objsD.keys():
-            self.objNamesD[cm_idx] = [obj.name for obj in objsD[cm_idx]]
-        # initialize bricksDicts
-        for cm_idx in objsD.keys():
-            cm = scn.cmlist[cm_idx]
-            # get bricksDict from cache
-            bricksDict, _ = getBricksDict(cm=cm)
-            # add to bricksDicts
-            self.bricksDicts[cm_idx] = bricksDict
+        self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
 
     ###################################################
     # class variables

@@ -122,6 +122,23 @@ def verifyBrickExposureAboveAndBelow(origLoc, bricksDict, decriment=0, zNeg=Fals
     return bricksDict
 
 
+def getUsedSizes():
+    scn = bpy.context.scene
+    items = [("NONE", "None", "")]
+    for cm in scn.cmlist:
+        sortBy = lambda k: (strToList(k)[2], strToList(k)[0], strToList(k)[1])
+        items += [(s, s, "") for s in sorted(cm.brickSizesUsed.split("|"), reverse=True, key=sortBy) if (s, s, "") not in items]
+    return items
+
+
+def getUsedTypes():
+    scn = bpy.context.scene
+    items = [("NONE", "None", "")]
+    for cm in scn.cmlist:
+        items += [(t.upper(), t.title(), "") for t in sorted(cm.brickTypesUsed.split("|")) if (t.upper(), t.title(), "") not in items]
+    return items
+
+
 def getAvailableTypes():
     scn, cm, _ = getActiveContextInfo()
     obj = scn.objects.active
@@ -249,3 +266,20 @@ def createAddlBricksDictEntry(cm, bricksDict, source_key, key, full_d, x, y, z):
         mat_name=             brickD["mat_name"],
     )
     return bricksDict
+
+def createObjNamesAndBricksDictDs(objs):
+    objNamesD = {}
+    bricksDicts = {}
+    # initialize objsD (key:cm_idx, val:list of brick objects)
+    objsD = createObjsD(objs)
+    for cm_idx in objsD.keys():
+        objNamesD[cm_idx] = [obj.name for obj in objsD[cm_idx]]
+    # initialize bricksDicts
+    scn = bpy.context.scene
+    for cm_idx in objsD.keys():
+        cm = scn.cmlist[cm_idx]
+        # get bricksDict from cache
+        bricksDict, _ = getBricksDict(cm=cm)
+        # add to bricksDicts
+        bricksDicts[cm_idx] = bricksDict
+    return objNamesD, bricksDicts

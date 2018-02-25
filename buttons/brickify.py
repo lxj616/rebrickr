@@ -307,7 +307,7 @@ class RebrickrBrickify(bpy.types.Operator):
         refLogo = self.getLogo(cm)
 
         # create new bricks
-        self.runCreateNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, self.action)
+        self.createNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, self.action, curFrame=None, sceneCurFrame=None)
 
         bGroup = bpy.data.groups.get(Rebrickr_bricks_gn)  # redefine bGroup since it was removed
         if bGroup:
@@ -428,7 +428,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
             # create new bricks
             try:
-                group_name = self.runCreateNewBricks(source, parent, source_details, dimensions, refLogo, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame)
+                group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame)
                 self.createdGroups.append(group_name)
             except KeyboardInterrupt:
                 self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
@@ -477,16 +477,6 @@ class RebrickrBrickify(bpy.types.Operator):
         if cm.bevelAdded:
             bricks = getBricks()
             RebrickrBevel.runBevelAction(bricks, cm)
-
-    def runCreateNewBricks(self, source, parent, source_details, dimensions, refLogo, action, curFrame=None, sceneCurFrame=None):
-        group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, action, curFrame=curFrame, sceneCurFrame=sceneCurFrame)
-        if int(round((source_details.x.dist)/(dimensions["width"]+dimensions["gap"]))) == 0:
-            self.report({"WARNING"}, "Model is too small on X axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
-        if int(round((source_details.y.dist)/(dimensions["width"]+dimensions["gap"]))) == 0:
-            self.report({"WARNING"}, "Model is too small on Y axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
-        if int(round((source_details.z.dist)/(dimensions["height"]+dimensions["gap"]))) == 0:
-            self.report({"WARNING"}, "Model is too small on Z axis for an accurate calculation. Try scaling up your model or decreasing the brick size for a more accurate calculation.")
-        return group_name
 
     @classmethod
     def createNewBricks(self, source, parent, source_details, dimensions, refLogo, action, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False, printStatus=True, redraw=False):

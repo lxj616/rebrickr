@@ -174,12 +174,12 @@ def matrixReallyIsDirty(cm):
     return cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings()
 
 
-def listToStr(lst):
+def listToStr(lst, separate_by=","):
     assert type(lst) in [list, tuple]
     string = str(lst[0])
     for i in range(1, len(lst)):
         item = lst[i]
-        string = "%(string)s,%(item)s" % locals()
+        string = "%(string)s%(separate_by)s%(item)s" % locals()
     return string
 
 

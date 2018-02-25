@@ -1066,6 +1066,8 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     armature = BoolProperty(default=False)
     bevelAdded = BoolProperty(default=False)
     customized = BoolProperty(default=True)
+    brickSizesUsed = StringProperty(default="")  # list of brickSizes used separated by | (e.g. '5,4,3|7,4,5|8,6,5')
+    brickTypesUsed = StringProperty(default="")  # list of brickTypes used separated by | (e.g. 'PLATE|BRICK|STUD')
 
     animIsDirty = BoolProperty(default=True)
     materialIsDirty = BoolProperty(default=True)

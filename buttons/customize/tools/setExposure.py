@@ -115,13 +115,7 @@ class setExposure(Operator):
         self.undo_stack.undo_push('exposure')
         # initialize bricksDicts
         selected_objects = bpy.context.selected_objects
-        objsD = createObjsD(selected_objects)
-        for cm_idx in objsD.keys():
-            cm = scn.cmlist[cm_idx]
-            # get bricksDict from cache
-            bricksDict, _ = getBricksDict(cm=cm)
-            # add to bricksDicts
-            self.bricksDicts[cm_idx] = bricksDict
+        _, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
 
     ###################################################
     # class variables
