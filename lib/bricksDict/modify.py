@@ -101,7 +101,7 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, me
         if breakOuter2: break
 
 
-def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True, targetType="BRICK", height3Only=False):
+def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True, shortType="PLATE", tallType="BRICK", height3Only=False):
     """ attempt to merge bricksDict[key] with adjacent bricks """
     assert len(brickSizes) > 0
 
@@ -139,9 +139,9 @@ def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, p
                 else:
                     # point deleted brick to original brick
                     curBrick["parent_brick"] = key
-                # set brick type to brick if merged vertically
-                if brickSize[2] == 3 and cm.brickType == "BRICKS AND PLATES":
-                    curBrick["type"] = targetType
+                # set brick type if necessary
+                if cm.brickType == "BRICKS AND PLATES":
+                    curBrick["type"] = shortType if brickSize[2] == 1 else tallType
 
     return brickSize
 

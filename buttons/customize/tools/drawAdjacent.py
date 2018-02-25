@@ -366,6 +366,10 @@ class drawAdjacent(Operator):
                             adjBrickD["draw"] = False
                             return False
                         keysToMerge.append(listToStr([x0, y0, z0 + z]))
+                # update dictionary of locations above brick
+                if cm.brickType == "BRICKS AND PLATES":
+                    curType = self.adjBricksCreated[side][brickNum] if self.adjBricksCreated[side][brickNum] else "PLATE"
+                    updateBrickSizeAndDict(dimensions, cm, self.bricksDict, [1, 1, newBrickHeight], adjacent_key, adjDictLoc, curType=curType, targetType=self.brickType)
                 # update dictionary location of adjacent brick created
                 adjBrickD["draw"] = True
                 adjBrickD["type"] = self.brickType
@@ -382,10 +386,6 @@ class drawAdjacent(Operator):
                 adjBrickD["top_exposed"] = topExposed
                 adjBrickD["bot_exposed"] = botExposed
                 keysToMerge.append(adjacent_key)
-                # update dictionary of locations above brick
-                if cm.brickType == "BRICKS AND PLATES":
-                    curType = self.adjBricksCreated[side][brickNum] if self.adjBricksCreated[side][brickNum] else "PLATE"
-                    updateBrickSizeAndDict(dimensions, cm, self.bricksDict, [1, 1, newBrickHeight], adjacent_key, adjDictLoc, curType=curType, targetType=self.brickType)
                 # set adjBricksCreated to target brick type for current side
                 self.adjBricksCreated[side][brickNum] = self.brickType
 

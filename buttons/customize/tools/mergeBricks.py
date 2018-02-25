@@ -141,7 +141,10 @@ class mergeBricks(Operator):
                 # attempt to merge current brick with other bricks in keys, according to available brick types
                 # TODO: improve originalIsBrick argument (currently hardcoded to False)
                 loc = strToList(key)
-                brickSize = attemptMerge(cm, bricksDict, key, keys, loc, [bricksDict[getParentKey(bricksDict, key)]["size"]], zStep, randState, preferLargest=True, mergeVertical=mergeVertical, targetType=targetType, height3Only=height3Only)
+                parentD = bricksDict[getParentKey(bricksDict, key)]
+                tallType = targetType if targetType in get3HighTypes() else parentD["type"]
+                shortType = targetType if targetType in get1HighTypes() else parentD["type"]
+                brickSize = attemptMerge(cm, bricksDict, key, keys, loc, [parentD["size"]], zStep, randState, preferLargest=True, mergeVertical=mergeVertical, shortType=shortType, tallType=tallType, height3Only=height3Only)
                 # bricksDict[key]["size"] = brickSize
                 # set exposure of current [merged] brick
                 topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)

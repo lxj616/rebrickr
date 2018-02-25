@@ -51,7 +51,7 @@ class selectBricksByType(Operator):
     def execute(self, context):
         try:
             scn, cm, _ = getActiveContextInfo()
-            selectedSomething = selectBricks(self.objNamesD, self.bricksDicts, brickType=self.brickType, allModels=self.allModels, only=self.only)
+            selectedSomething = selectBricks(self.objNamesD, self.bricksDicts, brickType=self.brickType, allModels=self.allModels, only=self.only, includeInternals=self.includeInternals)
             # if no brickType bricks exist, remove from cm.brickTypesUsed
             if not selectedSomething and self.brickType != "NONE" and (self.allModels or len(scn.cmlist) == 1):
                 # turn brickTypesUsed into list of sizes
@@ -99,6 +99,10 @@ class selectBricksByType(Operator):
         name="All Models",
         description="Select bricks of given type/size from all models in file",
         default=False)
+    includeInternals = bpy.props.BoolProperty(
+        name="Include Internals",
+        description="Include bricks inside shell in selection",
+        default=False)
 
 
 class selectBricksBySize(Operator):
@@ -118,7 +122,7 @@ class selectBricksBySize(Operator):
     def execute(self, context):
         try:
             scn, cm, _ = getActiveContextInfo()
-            selectedSomething = selectBricks(self.objNamesD, self.bricksDicts, brickSize=self.brickSize, allModels=self.allModels, only=self.only)
+            selectedSomething = selectBricks(self.objNamesD, self.bricksDicts, brickSize=self.brickSize, allModels=self.allModels, only=self.only, includeInternals=self.includeInternals)
             # if no brickSize bricks exist, remove from cm.brickSizesUsed
             if not selectedSomething and self.brickSize != "NONE" and (self.allModels or len(scn.cmlist) == 1):
                 # turn brickSizesUsed into list of sizes
@@ -165,9 +169,13 @@ class selectBricksBySize(Operator):
         name="All Models",
         description="Select bricks of given type/size from all models in file",
         default=False)
+    includeInternals = bpy.props.BoolProperty(
+        name="Include Internals",
+        description="Include bricks inside shell in selection",
+        default=False)
 
 
-def selectBricks(objNamesD, bricksDicts, brickSize="NONE", brickType="NONE", allModels=False, only=False):
+def selectBricks(objNamesD, bricksDicts, brickSize="NONE", brickType="NONE", allModels=False, only=False, includeInternals=False):
     scn = bpy.context.scene
     selectedSomething = False
     # split all bricks in objNamesD[cm_idx]
@@ -183,12 +191,13 @@ def selectBricks(objNamesD, bricksDicts, brickSize="NONE", brickType="NONE", all
             siz = bricksDict[dictKey]["size"]
             sizeStr = listToStr(sorted(siz[:2]) + [siz[2]])
             typ = bricksDict[dictKey]["type"]
+            onShell = bricksDict[dictKey]["val"] == 1
             # get current brick object
             curObj = bpy.data.objects.get(obj_name)
             # if curObj is None:
             #     continue
             # select brick
-            if sizeStr == brickSize or typ == brickType:
+            if (sizeStr == brickSize or typ == brickType) and (includeInternals or onShell):
                 selectedSomething = True
                 curObj.select = True
             elif only:
