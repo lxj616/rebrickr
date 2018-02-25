@@ -102,7 +102,7 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
         brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
     else:
         brickLoc = Vector(brickD["co"])
-        
+
     if split:
         # create new object with mesh data
         brick = bpy.data.objects.new(brickD["name"], m)

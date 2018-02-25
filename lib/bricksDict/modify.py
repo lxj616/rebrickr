@@ -101,7 +101,7 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, me
         if breakOuter2: break
 
 
-def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True, targetType="BRICK"):
+def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True, targetType="BRICK", height3Only=False):
     """ attempt to merge bricksDict[key] with adjacent bricks """
     assert len(brickSizes) > 0
 
@@ -109,6 +109,9 @@ def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, p
         # iterate through adjacent locs to find available brick sizes
         updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], mergeVertical and cm.brickType == "BRICKS AND PLATES")
         updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], mergeVertical and cm.brickType == "BRICKS AND PLATES")
+        # only keep sizes with height 3
+        if height3Only:
+            brickSizes = [sz for sz in brickSizes if sz[2] == 3]
         # sort brick types from smallest to largest
         order = randState.randint(0,2)
         if preferLargest:
