@@ -73,8 +73,7 @@ class changeBrickType(Operator):
             dictKey, dictLoc = getDictKey(obj.name)
             x0,y0,z0 = dictLoc
             # get size of current brick (e.g. [2, 4, 1])
-            objSize = self.bricksDict[dictKey]["size"]
-            bAndPBrick = cm.brickType == "BRICKS AND PLATES" and objSize[2] == 3
+            brickSize = self.bricksDict[dictKey]["size"]
 
             # skip bricks that are already of type self.brickType
             if (self.bricksDict[dictKey]["type"] == self.brickType and
@@ -82,26 +81,44 @@ class changeBrickType(Operator):
                 self.bricksDict[dictKey]["rotated"] == self.rotateBrick):
                 return {"CANCELLED"}
 
+            # verify
+            if self.brickType in get3HighTypes() and brickSize[2] == 1:
+                for x in range(brickSize[0]):
+                    for y in range(brickSize[1]):
+                        for z in range(1, 3):
+                            curKey = listToStr([x0 + x, y0 + y, z0 + z])
+                            if curKey in self.bricksDict and self.bricksDict[curKey]["draw"]:
+                                self.report({"INFO"}, "Could not change to type {brickType}; some locations are occupied".format(brickType=self.brickType))
+                                self.brickType = self.bricksDict[dictKey]["type"]
+                                return {"CANCELLED"}
+
             # print helpful message to user in blender interface
-            self.report({"INFO"}, "turn active {brickSize} brick into {targetType}".format(brickSize=str(objSize)[1:-1], targetType=self.brickType))
+            self.report({"INFO"}, "turn active {brickSize} brick into {targetType}".format(brickSize=str(brickSize)[1:-1], targetType=self.brickType))
 
             # set type of parent_brick to self.brickType
             self.bricksDict[dictKey]["type"] = self.brickType
             self.bricksDict[dictKey]["flipped"] = self.flipBrick
             self.bricksDict[dictKey]["rotated"] = self.rotateBrick
-            brickSize = self.bricksDict[dictKey]["size"]
-            keysToUpdate = [dictKey]
+
+            # update height of brick if necessary, and update dictionary accordingly
+            if cm.brickType == "BRICKS AND PLATES":
+                dimensions = Bricks.get_dimensions(cm.brickHeight, getZStep(cm), cm.gap)
+                brickSize = updateBrickSizeAndDict(dimensions, cm, self.bricksDict, brickSize, dictKey, dictLoc)
+
+            # check if brick spans 3 matrix locations
+            bAndPBrick = cm.brickType == "BRICKS AND PLATES" and brickSize[2] == 3
+
+            # verify exposure
             for x in range(brickSize[0]):
                 for y in range(brickSize[1]):
-                    curLoc = [x0 + x, y0 + y, z0]
+                    curLoc = list(Vector(dictLoc) + Vector((x, y, 0)))
                     self.bricksDict = verifyBrickExposureAboveAndBelow(curLoc, self.bricksDict, decriment=2 if bAndPBrick else 0)
-                    for i in [1, -1]:
-                        k0 = listToStr([curLoc[0], curLoc[1], z0 + i])
-                        if k0 not in self.bricksDict:
-                            continue
-                        parent_key = k0 if self.bricksDict[k0]["parent_brick"] == "self" else self.bricksDict[k0]["parent_brick"]
-                        if parent_key not in keysToUpdate and parent_key is not None:
-                            keysToUpdate.append(parent_key)
+                    # add bricks to keysToUpdate
+                    keysToUpdate = [getParentKey(self.bricksDict, listToStr([x0 + x, y0 + y, z0 + z])) for z in [-1, 0, 3 if bAndPBrick else 1]]
+
+            # uniquify keysToUpdate and remove null keys
+            keysToUpdate = uniquify1(keysToUpdate)
+            keysToUpdate = [x for x in keysToUpdate if x != None]
 
             # delete objects to be updated
             for k1 in keysToUpdate:
@@ -175,3 +192,45 @@ class changeBrickType(Operator):
         default=False)
 
     #############################################
+
+def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc):
+    brickD = bricksDict[key]
+    # adjust brick size if changing type from 3 tall to 1 tall
+    if brickD["type"] in get1HighTypes() and brickSize[2] == 3:
+        for x in range(brickSize[0]):
+            for y in range(brickSize[1]):
+                for z in range(1, brickSize[2]):
+                    newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z])
+                    bricksDict[newKey]["parent_brick"] = None
+                    bricksDict[newKey]["draw"] = False
+                    bricksDict[newKey]["val"] = 0
+        brickSize[2] = 1
+    # adjust brick size if changing type from 1 tall to 3 tall
+    elif brickD["type"] in get3HighTypes() and brickSize[2] == 1:
+        brickSize[2] = 3
+        n = cm.source_name
+        full_d = Vector((dimensions["width"], dimensions["width"], dimensions["height"]))
+        # update bricks dict entries above current brick
+        for x in range(brickSize[0]):
+            for y in range(brickSize[1]):
+                for z in range(1, brickSize[2]):
+                    newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z])
+                    # create new bricksDict entry if it doesn't exist
+                    if newKey not in bricksDict:
+                        cm.numBricksGenerated += 1
+                        j = cm.numBricksGenerated
+                        newName = "Rebrickr_%(n)s_brick_%(j)s__%(newKey)s" % locals()
+                        newCO = list(Vector(brickD["co"]) + vector_mult(Vector((x, y, z)), full_d))
+                        bricksDict[newKey] = createBricksDictEntry(
+                            name=         newName,
+                            co=           newCO,
+                        )
+                    # update bricksDict entry to point to new brick
+                    bricksDict[newKey]["nearest_face"] = brickD["nearest_face"]
+                    bricksDict[newKey]["nearest_intersection"] = brickD["nearest_intersection"]
+                    bricksDict[newKey]["mat_name"] = brickD["mat_name"]
+                    bricksDict[newKey]["parent_brick"] = key
+                    bricksDict[newKey]["draw"] = True
+                    if bricksDict[newKey]["val"] == 0:
+                        bricksDict[newKey]["val"] = brickD["val"]
+    return brickSize

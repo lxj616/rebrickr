@@ -27,6 +27,7 @@ import bpy
 from bpy.types import Operator
 
 # Rebrickr imports
+from .mergeBricks import *
 from ..undo_stack import *
 from ..functions import *
 from ...brickify import *

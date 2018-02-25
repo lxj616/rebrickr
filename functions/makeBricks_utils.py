@@ -61,44 +61,6 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
     useStud = (topExposed and cm.studDetail != "NONE") or cm.studDetail == "ALL"
     undersideDetail = cm.exposedUndersideDetail if botExposed else cm.hiddenUndersideDetail
 
-    # # adjust brick size if changing type from 3 tall to 1 tall
-    bricksToCreate = 1
-    if brickD["type"] == "BRICK" and brickSize[2] == 1:
-        n = cm.source_name
-        full_d = Vector((dimensions["width"], dimensions["width"], dimensions["height"]))
-        brickSize = brickSize.copy()
-        brickSize[2] = 3
-        brickD["size"][2] = 3
-        # update bricks dict entries above current brick
-        for x in range(brickSize[0]):
-            for y in range(brickSize[1]):
-                for z in range(1, brickSize[2]):
-                    newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z])
-                    # create new bricksDict entry if it doesn't exist
-                    if newKey not in bricksDict:
-                        cm.numBricksGenerated += 1
-                        j = cm.numBricksGenerated
-                        newName = "Rebrickr_%(n)s_brick_%(j)s__%(newKey)s" % locals()
-                        newCO = list(Vector(brickD["co"]) + vector_mult(Vector((x, y, z)), full_d))
-                        bricksDict[newKey] = createBricksDictEntry(
-                            name=         newName,
-                            co=           newCO,
-                        )
-                    # update bricksDict entry to point to new brick
-                    print(key)
-                    bricksDict[newKey]["nearest_face"] = brickD["nearest_face"]
-                    bricksDict[newKey]["nearest_intersection"] = brickD["nearest_intersection"]
-                    bricksDict[newKey]["mat_name"] = brickD["mat_name"]
-                    bricksDict[newKey]["parent_brick"] = key
-                    bricksDict[newKey]["draw"] = True
-                    if bricksDict[newKey]["val"] == 0:
-                        bricksDict[newKey]["val"] = brickD["val"]
-    if brickD["type"] == "PLATE" and brickSize[2] == 3:
-        brickSize = brickSize.copy()
-        brickSize[2] = 1
-        brickD["size"][2] = 1
-        bricksToCreate = 3
-
     ### CREATE BRICK ###
 
     # add brick with new mesh data at original location
@@ -140,39 +102,38 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
         brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
     else:
         brickLoc = Vector(brickD["co"])
-    for i in range(bricksToCreate):
-        brickLoc.z += i * dimensions["height"]
-        if split:
-            # create new object with mesh data
-            brick = bpy.data.objects.new(brickD["name"], m)
-            brick.cmlist_id = cm.id
-            # set brick's location
-            brick.location = brickLoc
-            # set brick's material
-            brick.data.materials.append(mat if mat is not None else internalMat)
-            # add edge split modifier
-            addEdgeSplitMod(brick)
-            # append to bricksCreated
-            bricksCreated.append(brick)
+        
+    if split:
+        # create new object with mesh data
+        brick = bpy.data.objects.new(brickD["name"], m)
+        brick.cmlist_id = cm.id
+        # set brick's location
+        brick.location = brickLoc
+        # set brick's material
+        brick.data.materials.append(mat if mat is not None else internalMat)
+        # add edge split modifier
+        addEdgeSplitMod(brick)
+        # append to bricksCreated
+        bricksCreated.append(brick)
+    else:
+        # transform brick mesh to coordinate on matrix
+        addToMeshLoc(brickLoc, mesh=m)
+        # keep track of mats already use
+        if mat in mats:
+            matIdx = mats.index(mat)
+        elif mat is not None:
+            mats.append(mat)
+            matIdx = len(mats) - 1
+        # set material for mesh
+        if mat is not None:
+            m.materials.append(mat)
+            for p in m.polygons:
+                p.material_index = matIdx
         else:
-            # transform brick mesh to coordinate on matrix
-            addToMeshLoc(brickLoc, mesh=m)
-            # keep track of mats already use
-            if mat in mats:
-                matIdx = mats.index(mat)
-            elif mat is not None:
-                mats.append(mat)
-                matIdx = len(mats) - 1
-            # set material for mesh
-            if mat is not None:
-                m.materials.append(mat)
-                for p in m.polygons:
-                    p.material_index = matIdx
-            else:
-                for p in m.polygons:
-                    p.material_index = 0
-            # append mesh to allBrickMeshes list
-            allBrickMeshes.append(m)
+            for p in m.polygons:
+                p.material_index = 0
+        # append mesh to allBrickMeshes list
+        allBrickMeshes.append(m)
 
     return bricksDict
 

@@ -36,6 +36,7 @@ from .undo_stack import *
 
 def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     if len(keysToUpdate) == 0: return
+    if not isUnique(keysToUpdate): raise ValueError("keysToUpdate cannot contain duplicate values")
     print("redrawing...")
     # get arguments for createNewBricks
     n = cm.source_name
@@ -134,14 +135,14 @@ def getAvailableTypes():
         if "PLATES" in cm.brickType:
             items.append(("PLATE", "Plate", ""))
     elif objSize[2] == 1:
-        items.append(("PLATE", "Plate", ""))
         if "BRICKS" in cm.brickType and "BRICK" not in items:
             items.append(("BRICK", "Brick", ""))
+        items.append(("PLATE", "Plate", ""))
     # add more available brick types
     # NOTE: update the following functions when including brand new type in code:
     # get1HighTypes, get3HighTypes, getTypesObscuringAbove, getTypesObscuringBelow
     if objSize[2] == 3 or "BRICKS" in cm.brickType:
-        if (objSize[2] == 3 and (sum(objSize[:2]) in range(3,8))):
+        if sum(objSize[:2]) in range(3,8):
             items.append(("SLOPE", "Slope", ""))
         # if sum(objSize[:2]) in range(3,6):
         #     items.append(("SLOPE_INVERTED", "Slope Inverted", ""))
@@ -187,3 +188,9 @@ def getAvailableTypes():
     # 1x2 brick pattern Brick
 
     return items
+
+def getParentKey(bricksDict, key):
+    if key not in bricksDict:
+        return None
+    parent_key = key if bricksDict[key]["parent_brick"] == "self" else bricksDict[key]["parent_brick"]
+    return parent_key

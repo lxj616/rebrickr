@@ -23,6 +23,7 @@ Created by Christopher Gearhart
 import collections
 import json
 import math
+import numpy as np
 
 # Blender imports
 import bpy
@@ -192,6 +193,10 @@ def strToList(string, item_type=int, split_on=","):
 def strToTuple(string, item_type=int, split_on=","):
     tup = tuple(strToList(string, item_type, split_on))
     return tup
+
+
+def isUnique(lst):
+    return np.unique(lst).size == len(lst)
 
 
 def getZStep(cm):
