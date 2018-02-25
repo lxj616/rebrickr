@@ -377,6 +377,7 @@ class drawAdjacent(Operator):
                 adjBrickD["size"] = [1, 1, newBrickHeight]
                 adjBrickD["parent_brick"] = "self"
                 topExposed, botExposed = getBrickExposure(cm, self.bricksDict, adjacent_key)
+                print(topExposed, botExposed)
                 adjBrickD["top_exposed"] = topExposed
                 adjBrickD["bot_exposed"] = botExposed
                 keysToMerge.append(adjacent_key)

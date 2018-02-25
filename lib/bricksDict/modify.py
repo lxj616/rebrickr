@@ -164,10 +164,7 @@ def getBrickExposure(cm, bricksDict, key=None, loc=None):
 
     # set z-indices
     idxZb = loc[2] - 1
-    if cm.brickType == "BRICKS AND PLATES" and size[2] == 3:
-        idxZa = loc[2] + 3
-    else:
-        idxZa = loc[2] + 1
+    idxZa = loc[2] + (size[2] if cm.brickType == "BRICKS AND PLATES" else 1)
 
     # Iterate through brick locs in size to check top and bottom exposure
     for x in range(loc[0], size[0] + loc[0]):
