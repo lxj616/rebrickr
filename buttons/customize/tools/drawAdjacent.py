@@ -106,6 +106,8 @@ class drawAdjacent(Operator):
                         self.toggleBrick(cm, dimensions, adjDictLoc, dictKey, objSize, i, j, keysToMerge, addBrick=createAdjBricks[i])
                     # after ALL bricks toggled, check exposure of bricks above and below new ones
                     for j,adjDictLoc in enumerate(self.adjDKLs[i]):
+                        dictLoc2 = dictLoc
+                        dictLoc2[2] += 1
                         self.bricksDict = verifyBrickExposureAboveAndBelow(adjDictLoc.copy(), self.bricksDict, decriment=decriment, zNeg=self.zNeg, zPos=self.zPos)
 
             # recalculate val for each bricksDict key in original brick
@@ -116,7 +118,7 @@ class drawAdjacent(Operator):
                         setCurBrickVal(self.bricksDict, curKeyLoc)
 
             # attempt to merge created bricks
-            keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm, mergeVertical=self.brickType == "BRICK")
+            keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm, mergeVertical=self.brickType in get3HighTypes(), targetType=self.brickType)
 
             # if bricks created on top, set top_exposed of original brick to False
             if self.zPos:
@@ -285,10 +287,7 @@ class drawAdjacent(Operator):
     def toggleBrick(self, cm, dimensions, adjDictLoc, dictKey, objSize, side, brickNum, keysToMerge, addBrick=True):
         # if brick height is 3 and 'Bricks and Plates'
         newBrickHeight = self.getNewBrickHeight()
-        if cm.brickType == "BRICKS AND PLATES" and newBrickHeight == 3:
-            checkTwoMoreAbove = True
-        else:
-            checkTwoMoreAbove = False
+        checkTwoMoreAbove = cm.brickType == "BRICKS AND PLATES" and newBrickHeight == 3
 
         adjacent_key, adjBrickD = self.getBrickD(adjDictLoc)
 
@@ -336,7 +335,7 @@ class drawAdjacent(Operator):
             # if attempting to remove brick
             else:
                 adjBrickD["draw"] = False
-                adjBrickD["val"] = 0 # TODO: set val to 0 only if adjacent to another outside brick (else set to inside (-1?))
+                setCurBrickVal(self.bricksDict, adjDictLoc, action="REMOVE")
                 adjBrickD["size"] = None
                 adjBrickD["parent_brick"] = None
                 adjBrickD["bot_exposed"] = None
@@ -350,26 +349,25 @@ class drawAdjacent(Operator):
             # if attempting to add brick
             if addBrick:
                 if checkTwoMoreAbove:
-                    # verify two more locs available above current
-                    adjDictLoc0 = adjDictLoc.copy()
-                    for i in range(1, 3):
-                        adjDictLoc0[2] += 1
-                        nextKey,nextBrickD = self.getBrickD(adjDictLoc0)
-                        if not nextBrickD:
-                            self.setDirBool(side, False)
+                    # check if locs available above current
+                    x0, y0, z0 = adjDictLoc
+                    for z in range(1, 3):
+                        newKey = listToStr([x0, y0, z0 + z])
                         # if brick drawn in next loc and not just rerunning based on new direction selection
-                        elif (nextBrickD["draw"] and
-                              (not self.isBrickAlreadyCreated(brickNum, side) or
-                               self.adjBricksCreated[side][brickNum] != self.brickType)):
-                            self.report({"INFO"}, "Brick already exists in the following location: %(nextKey)s" % locals())
+                        if (newKey in self.bricksDict and self.bricksDict[newKey]["draw"] and
+                            (not self.isBrickAlreadyCreated(brickNum, side) or
+                             self.adjBricksCreated[side][brickNum] not in get3HighTypes())):
+                            self.report({"INFO"}, "Brick already exists in the following location: %(newKey)s" % locals())
                             self.setDirBool(side, False)
-                        else:
-                            continue
-                        # reset values at failed location, in case brick was previously drawn there
-                        self.adjBricksCreated[side][brickNum] = False
-                        adjBrickD["draw"] = False
-                        return False
-
+                            # reset values at failed location, in case brick was previously drawn there
+                            self.adjBricksCreated[side][brickNum] = False
+                            adjBrickD["draw"] = False
+                            return False
+                        keysToMerge.append(listToStr([x0, y0, z0 + z]))
+                # update dictionary of locations above brick
+                curType = self.adjBricksCreated[side][brickNum] if self.adjBricksCreated[side][brickNum] else "PLATE"
+                updateBrickSizeAndDict(dimensions, cm, self.bricksDict, [1, 1, newBrickHeight], adjacent_key, adjDictLoc, curType=curType, targetType=self.brickType)
+                # update dictionary location of adjacent brick created
                 adjBrickD["draw"] = True
                 adjBrickD["type"] = self.brickType
                 adjBrickD["flipped"] = self.bricksDict[dictKey]["flipped"]
@@ -383,17 +381,6 @@ class drawAdjacent(Operator):
                 adjBrickD["bot_exposed"] = botExposed
                 keysToMerge.append(adjacent_key)
                 self.adjBricksCreated[side][brickNum] = self.brickType
-                if checkTwoMoreAbove:
-                    # update matrix for two locations above adjacent_key
-                    adjDictLoc0 = adjDictLoc.copy()
-                    for i in range(1, 3):
-                        adjDictLoc0[2] += 1
-                        nextKey,nextBrickD = self.getBrickD(adjDictLoc0)
-                        nextBrickD["draw"] = True
-                        setCurBrickVal(self.bricksDict, strToList(nextKey))
-                        nextBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"]
-                        nextBrickD["parent_brick"] = adjacent_key
-                        keysToMerge.append(nextKey)
 
                 return True
             # if attempting to remove brick

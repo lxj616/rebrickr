@@ -135,7 +135,7 @@ class mergeBricks(Operator):
         return keys
 
     @staticmethod
-    def mergeBricks(bricksDict, keys, cm, mergeVertical=True):
+    def mergeBricks(bricksDict, keys, cm, mergeVertical=True, targetType="BRICK"):
         # initialize vars
         updatedKeys = []
         zStep = getZStep(cm)
@@ -148,7 +148,7 @@ class mergeBricks(Operator):
                 # attempt to merge current brick with other bricks in keys, according to available brick types
                 # TODO: improve originalIsBrick argument (currently hardcoded to False)
                 loc = strToList(key)
-                brickSize = attemptMerge(cm, bricksDict, key, keys, loc, [bricksDict[key]["size"]], zStep, randState, preferLargest=True, mergeVertical=mergeVertical)
+                brickSize = attemptMerge(cm, bricksDict, key, keys, loc, [bricksDict[key]["size"]], zStep, randState, preferLargest=True, mergeVertical=mergeVertical, targetType=targetType)
                 # bricksDict[key]["size"] = brickSize
                 # set exposure of current [merged] brick
                 topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)

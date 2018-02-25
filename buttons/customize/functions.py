@@ -88,10 +88,14 @@ def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
     return adjKeys, adjBrickVals
 
 
-def setCurBrickVal(bricksDict, loc):
+def setCurBrickVal(bricksDict, loc, action="ADD"):
     _, adjBrickVals = getAdjKeysAndBrickVals(bricksDict, loc=loc)
-    if 0 in adjBrickVals or len(adjBrickVals) == 0 or min(adjBrickVals) == 1:
+    if action == "ADD" and (0 in adjBrickVals or len(adjBrickVals) == 0 or min(adjBrickVals) == 1):
         newVal = 1
+    elif action == "REMOVE" and 0 in adjBrickVals:
+        newVal = 0
+    elif action == "REMOVE":
+        newVal = max(adjBrickVals)
     else:
         highestAdjVal = max(adjBrickVals)
         newVal = highestAdjVal - 0.01
@@ -194,3 +198,58 @@ def getParentKey(bricksDict, key):
         return None
     parent_key = key if bricksDict[key]["parent_brick"] == "self" else bricksDict[key]["parent_brick"]
     return parent_key
+
+
+def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, curHeight=None, curType=None, targetHeight=None, targetType=None):
+    brickD = bricksDict[key]
+    assert targetHeight is not None or targetType is not None
+    if targetHeight is None:
+        targetHeight = 1 if targetType in get1HighTypes() else 3
+    assert curHeight is not None or curType is not None
+    if curHeight is None:
+        curHeight = 1 if curType in get1HighTypes() else 3
+    # adjust brick size if changing type from 3 tall to 1 tall
+    if curHeight == 3 and targetHeight == 1:
+        brickSize[2] = 1
+        for x in range(brickSize[0]):
+            for y in range(brickSize[1]):
+                for z in range(1, curHeight):
+                    newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z])
+                    bricksDict[newKey]["parent_brick"] = None
+                    bricksDict[newKey]["draw"] = False
+                    setCurBrickVal(self.bricksDict, adjDictLoc, action="REMOVE")
+    # adjust brick size if changing type from 1 tall to 3 tall
+    elif curHeight == 1 and targetHeight == 3:
+        brickSize[2] = 3
+        full_d = Vector((dimensions["width"], dimensions["width"], dimensions["height"]))
+        # update bricks dict entries above current brick
+        for x in range(brickSize[0]):
+            for y in range(brickSize[1]):
+                for z in range(1, targetHeight):
+                    newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z])
+                    # create new bricksDict entry if it doesn't exist
+                    if newKey not in bricksDict:
+                        bricksDict = createAddlBricksDictEntry(cm, bricksDict, key, newKey, full_d, x, y, z)
+                    # update bricksDict entry to point to new brick
+                    bricksDict[newKey]["parent_brick"] = key
+                    bricksDict[newKey]["draw"] = True
+                    if bricksDict[newKey]["val"] == 0:
+                        setCurBrickVal(bricksDict, strToList(newKey))
+    return brickSize
+
+
+def createAddlBricksDictEntry(cm, bricksDict, source_key, key, full_d, x, y, z):
+    brickD = bricksDict[source_key]
+    cm.numBricksGenerated += 1
+    j = cm.numBricksGenerated
+    n = cm.source_name
+    newName = "Rebrickr_%(n)s_brick_%(j)s__%(key)s" % locals()
+    newCO = list(Vector(brickD["co"]) + vector_mult(Vector((x, y, z)), full_d))
+    bricksDict[key] = createBricksDictEntry(
+        name=                 newName,
+        co=                   newCO,
+        nearest_face=         brickD["nearest_face"],
+        nearest_intersection= brickD["nearest_intersection"],
+        mat_name=             brickD["mat_name"],
+    )
+    return bricksDict

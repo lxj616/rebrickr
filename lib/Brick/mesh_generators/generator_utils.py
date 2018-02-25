@@ -38,11 +38,7 @@ def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, hollow=
     r = dimensions["bar_radius" if hollow else "stud_radius"]
     h = dimensions["stud_height"]
     t = dimensions["stud_radius"] - dimensions["bar_radius"]
-    if brickType == "BRICKS AND PLATES":
-        mult = brickSize[2]
-    else:
-        mult = 1
-    z = ((height * mult) / 2) + dimensions["stud_height"] / 2 - inset / 2
+    z = height / 2 + dimensions["stud_height"] / 2 - inset / 2
     for xNum in range(brickSize[0]):
         for yNum in range(brickSize[1]):
             x = dimensions["width"] * xNum
