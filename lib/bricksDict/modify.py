@@ -190,7 +190,7 @@ def checkExposure(bricksDict, x, y, z, direction:int=1, ignoredTypes=[]):
         valKeysChecked = []
         k0 = listToStr([x,y,z])
         val = bricksDict[k0]["val"]
-        parent_key = k0 if bricksDict[k0]["parent_brick"] == "self" else bricksDict[k0]["parent_brick"]
+        parent_key = getParentKey(bricksDict, k0)
         typ = bricksDict[parent_key]["type"]
         if val == 0 or typ not in ignoredTypes:
             isExposed = True
@@ -202,7 +202,7 @@ def checkExposure(bricksDict, x, y, z, direction:int=1, ignoredTypes=[]):
                 k1 = listToStr([x,y,zz])
                 # NOTE: if key 'k1' does not exist in bricksDict, we will be sent to 'except'
                 val = bricksDict[k1]["val"]
-                parent_key = k1 if bricksDict[k1]["parent_brick"] == "self" else bricksDict[k1]["parent_brick"]
+                parent_key = getParentKey(bricksDict, k1)
                 typ = bricksDict[parent_key]["type"]
                 valKeysChecked.append(k1)
                 if val == 0 or typ not in ignoredTypes:

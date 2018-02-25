@@ -193,13 +193,6 @@ def getAvailableTypes():
 
     return items
 
-def getParentKey(bricksDict, key):
-    if key not in bricksDict:
-        return None
-    parent_key = key if bricksDict[key]["parent_brick"] == "self" else bricksDict[key]["parent_brick"]
-    return parent_key
-
-
 def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, curHeight=None, curType=None, targetHeight=None, targetType=None):
     brickD = bricksDict[key]
     assert targetHeight is not None or targetType is not None

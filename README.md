@@ -35,4 +35,3 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * In basketball test file, error occurs when attempting to generate model with materials based on UV map (index out of range)
       * For models created with Rebrickr v1.0, when opened in v1.1.1 and not-split model is selected and deleted with the 'x' key, model is not deleted
       * When customization applied to model, if model settings clicked on but not updated, 'Revert Settings' warning does not appear.
-      * "BRICKS AND PLATES" and "CUSTOM" brickTypes have many bugs; requires testing

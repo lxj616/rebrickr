@@ -211,6 +211,13 @@ def gammaCorrect(rgba, val):
     return [r, g, b, a]
 
 
+def getParentKey(bricksDict, key):
+    if key not in bricksDict:
+        return None
+    parent_key = key if bricksDict[key]["parent_brick"] == "self" else bricksDict[key]["parent_brick"]
+    return parent_key
+
+
 def get1HighTypes():
     return ["PLATE", "STUD", "STUD_HOLLOW", "SHORT_SLOPE", "TILE", "TILE_GRILL", "TILE_ROUNDED", "PLATE_ROUNDED", "DOME", "WING"]
 
