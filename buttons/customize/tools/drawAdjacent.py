@@ -314,10 +314,11 @@ class drawAdjacent(Operator):
             co0 = self.bricksDict[theKey]["co"]
             co = self.getNewCoord(cm, co0, dimensions, side, newBrickHeight)
             self.bricksDict[adjacent_key] = createBricksDictEntry(
-                name=         'Rebrickr_%(n)s_brick_%(j)s__%(adjacent_key)s' % locals(),
-                co=           co,
-                nearest_face= self.bricksDict[dictKey]["nearest_face"],
-                mat_name=     self.bricksDict[dictKey]["mat_name"],
+                name=                 'Rebrickr_%(n)s_brick_%(j)s__%(adjacent_key)s' % locals(),
+                co=                   co,
+                nearest_face=         self.bricksDict[dictKey]["nearest_face"],
+                nearest_intersection= self.bricksDict[dictKey]["nearest_intersection"],
+                mat_name=             self.bricksDict[dictKey]["mat_name"],
             )
             adjBrickD = self.bricksDict[adjacent_key]
             # self.report({"WARNING"}, "Matrix not available at the following location: %(adjacent_key)s" % locals())
@@ -365,10 +366,6 @@ class drawAdjacent(Operator):
                             adjBrickD["draw"] = False
                             return False
                         keysToMerge.append(listToStr([x0, y0, z0 + z]))
-                # update dictionary of locations above brick
-                if cm.brickType == "BRICKS AND PLATES":
-                    curType = self.adjBricksCreated[side][brickNum] if self.adjBricksCreated[side][brickNum] else "PLATE"
-                    updateBrickSizeAndDict(dimensions, cm, self.bricksDict, [1, 1, newBrickHeight], adjacent_key, adjDictLoc, curType=curType, targetType=self.brickType)
                 # update dictionary location of adjacent brick created
                 adjBrickD["draw"] = True
                 adjBrickD["type"] = self.brickType
@@ -378,10 +375,18 @@ class drawAdjacent(Operator):
                 adjBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"]
                 adjBrickD["size"] = [1, 1, newBrickHeight]
                 adjBrickD["parent_brick"] = "self"
+                adjBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"] if adjBrickD["mat_name"] == "" else adjBrickD["mat_name"]
+                adjBrickD["nearest_face"] = self.bricksDict[dictKey]["nearest_face"] if adjBrickD["nearest_face"] is None else adjBrickD["nearest_face"]
+                adjBrickD["nearest_intersection"] = self.bricksDict[dictKey]["nearest_intersection"] if adjBrickD["nearest_intersection"] is None else adjBrickD["nearest_intersection"]
                 topExposed, botExposed = getBrickExposure(cm, self.bricksDict, adjacent_key)
                 adjBrickD["top_exposed"] = topExposed
                 adjBrickD["bot_exposed"] = botExposed
                 keysToMerge.append(adjacent_key)
+                # update dictionary of locations above brick
+                if cm.brickType == "BRICKS AND PLATES":
+                    curType = self.adjBricksCreated[side][brickNum] if self.adjBricksCreated[side][brickNum] else "PLATE"
+                    updateBrickSizeAndDict(dimensions, cm, self.bricksDict, [1, 1, newBrickHeight], adjacent_key, adjDictLoc, curType=curType, targetType=self.brickType)
+                # set adjBricksCreated to target brick type for current side
                 self.adjBricksCreated[side][brickNum] = self.brickType
 
                 return True

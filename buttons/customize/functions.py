@@ -210,7 +210,7 @@ def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, curH
                     newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z])
                     bricksDict[newKey]["parent_brick"] = None
                     bricksDict[newKey]["draw"] = False
-                    setCurBrickVal(self.bricksDict, adjDictLoc, action="REMOVE")
+                    setCurBrickVal(bricksDict, strToList(newKey), action="REMOVE")
     # adjust brick size if changing type from 1 tall to 3 tall
     elif curHeight == 1 and targetHeight == 3:
         brickSize[2] = 3
@@ -226,6 +226,9 @@ def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, curH
                     # update bricksDict entry to point to new brick
                     bricksDict[newKey]["parent_brick"] = key
                     bricksDict[newKey]["draw"] = True
+                    bricksDict[newKey]["mat_name"] = brickD["mat_name"] if bricksDict[newKey]["mat_name"] == "" else bricksDict[newKey]["mat_name"]
+                    bricksDict[newKey]["nearest_face"] = brickD["nearest_face"] if bricksDict[newKey]["nearest_face"] is None else bricksDict[newKey]["nearest_face"]
+                    bricksDict[newKey]["nearest_intersection"] = brickD["nearest_intersection"] if bricksDict[newKey]["nearest_intersection"] is None else bricksDict[newKey]["nearest_intersection"]
                     if bricksDict[newKey]["val"] == 0:
                         setCurBrickVal(bricksDict, strToList(newKey))
     return brickSize
