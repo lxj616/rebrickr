@@ -27,6 +27,7 @@ import bpy
 
 # Rebrickr imports
 from ...functions.general import *
+from ..Brick.legal_brick_sizes import *
 from .functions import *
 
 
@@ -94,7 +95,7 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, me
                 # else, append current brick size to brickSizes
                 else:
                     newSize = [i+1, j+1, k+zStep]
-                    if newSize not in brickSizes and [newSize[0],newSize[1]] in bpy.props.Rebrickr_legal_brick_sizes[newSize[2]]:
+                    if newSize not in brickSizes and [newSize[0],newSize[1]] in bpy.props.Rebrickr_legal_brick_sizes[newSize[2]]["BRICK" if newSize[2] == 3 else "PLATE"]:
                         brickSizes.append(newSize)
             if breakOuter1: break
         breakOuter1 = False

@@ -133,12 +133,15 @@ def uniquify(seq, idfun=None):
     return result
 
 
+# Not order preserving
 def uniquify1(seq):
-    # Not order preserving
     keys = {}
     for e in seq:
         keys[e] = 1
     return keys.keys()
+    
+def uniquify2(seq):
+    return [list(x) for x in set(tuple(x) for x in seq)]
 
 
 def tag_redraw_areas(areaTypes=["ALL"]):

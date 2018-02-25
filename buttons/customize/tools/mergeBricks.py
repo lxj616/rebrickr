@@ -32,6 +32,7 @@ from ..functions import *
 from ...brickify import *
 from ...brickify import *
 from ....lib.bricksDict.functions import getDictKey
+from ....lib.Brick.legal_brick_sizes import *
 from ....functions import *
 
 
@@ -142,8 +143,8 @@ class mergeBricks(Operator):
                 # TODO: improve originalIsBrick argument (currently hardcoded to False)
                 loc = strToList(key)
                 parentD = bricksDict[getParentKey(bricksDict, key)]
-                tallType = targetType if targetType in get3HighTypes() else parentD["type"]
-                shortType = targetType if targetType in get1HighTypes() else parentD["type"]
+                tallType = targetType if targetType in getBrickTypes(height=3) else parentD["type"]
+                shortType = targetType if targetType in getBrickTypes(height=1) else parentD["type"]
                 brickSize = attemptMerge(cm, bricksDict, key, keys, loc, [parentD["size"]], zStep, randState, preferLargest=True, mergeVertical=mergeVertical, shortType=shortType, tallType=tallType, height3Only=height3Only)
                 # bricksDict[key]["size"] = brickSize
                 # set exposure of current [merged] brick

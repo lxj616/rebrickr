@@ -216,19 +216,3 @@ def getParentKey(bricksDict, key):
         return None
     parent_key = key if bricksDict[key]["parent_brick"] == "self" else bricksDict[key]["parent_brick"]
     return parent_key
-
-
-def get1HighTypes():
-    return ["PLATE", "STUD", "STUD_HOLLOW", "SHORT_SLOPE", "TILE", "TILE_GRILL", "TILE_ROUNDED", "PLATE_ROUNDED", "DOME", "WING"]
-
-
-def get3HighTypes():
-    return ["BRICK", "SLOPE", "SLOPE_INVERTED", "CONE", "CYLINDER", "BRICK_STUD_ON_ONE_SIDE", "BRICK_INSET_STUD_ON_ONE_SIDE", "BRICK_STUD_ON_TWO_SIDES", "BRICK_STUD_ON_ALL_SIDES", "BRICK_STUD_ON_ALL_SIDES", "TILE_WITH_HANDLE", "BRICK_PATTERN", "DOME", "DOME_INVERTED"]
-
-
-def getTypesObscuringAbove():
-    return ["BRICK", "PLATE", "TILE", "STUD", "SLOPE_INVERTED"]
-
-
-def getTypesObscuringBelow():
-    return ["BRICK", "PLATE", "TILE", "STUD", "SLOPE"]

@@ -31,6 +31,7 @@ from ...functions import *
 from ..brickify import *
 from ..brickify import *
 from ...lib.bricksDict.functions import getDictKey
+from ...lib.Brick.legal_brick_sizes import *
 from .undo_stack import *
 
 
@@ -146,78 +147,27 @@ def getAvailableTypes():
     dictKey, dictLoc = getDictKey(obj.name)
     bricksDict, _ = getBricksDict(cm=cm)
     objSize = bricksDict[dictKey]["size"]
-    items = []
+    legalBS = bpy.props.Rebrickr_legal_brick_sizes
     if objSize[2] not in [1, 3]: raise Exception("Custom Error Message: objSize not in [1, 3]")
     # build items
+    items = []
     if cm.brickType == "CUSTOM":
         items.append(("CUSTOM", "Custom", ""))
-    if objSize[2] == 3:
-        items.append(("BRICK", "Brick", ""))
-        if "PLATES" in cm.brickType:
-            items.append(("PLATE", "Plate", ""))
-    elif objSize[2] == 1:
-        if "BRICKS" in cm.brickType and "BRICK" not in items:
-            items.append(("BRICK", "Brick", ""))
-        items.append(("PLATE", "Plate", ""))
-    # add more available brick types
-    # NOTE: update the following functions when including brand new type in code:
-    # get1HighTypes, get3HighTypes, getTypesObscuringAbove, getTypesObscuringBelow
     if objSize[2] == 3 or "BRICKS" in cm.brickType:
-        if sum(objSize[:2]) in range(3,8):
-            items.append(("SLOPE", "Slope", ""))
-        # if sum(objSize[:2]) in range(3,6):
-        #     items.append(("SLOPE_INVERTED", "Slope Inverted", ""))
-        if sum(objSize[:2]) == 2:
-            items.append(("CYLINDER", "Cylinder", ""))
-            items.append(("CONE", "Cone", ""))
-        #     items.append(("BRICK_STUD_ON_ONE_SIDE", "Brick Stud on One Side", ""))
-        #     items.append(("BRICK_INSET_STUD_ON_ONE_SIDE", "Brick Stud on One Side", ""))
-        #     items.append(("BRICK_STUD_ON_TWO_SIDES", "Brick Stud on Two Sides", ""))
-        #     items.append(("BRICK_STUD_ON_ALL_SIDES", "Brick Stud on All Sides", ""))
-        # if sum(objSize[:2]) == 3:
-        #     items.append(("TILE_WITH_HANDLE", "Tile with Handle", ""))
-        #     items.append(("BRICK_PATTERN", "Brick Pattern", ""))
-        # if objSize[0] == 2 and objSize[1] == 2:
-        #     items.append(("DOME", "Dome", ""))
-        #     items.append(("DOME_INVERTED", "Dome Inverted", ""))
-    # Plates
+        items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[3] if objSize[:2] in legalBS[3][typ]]
     if objSize[2] == 1 or "PLATES" in cm.brickType:
-        if sum(objSize[:2]) == 2:
-            items.append(("STUD", "Stud", ""))
-            items.append(("STUD_HOLLOW", "Stud (hollow)", ""))
-            # items.append(("ROUNDED_TILE", "Rounded Tile", ""))
-    #     if sum(objSize[:2]) in [2, 3]:
-    #         items.append(("SHORT_SLOPE", "Short Slope", ""))
-    #     if objSize[:2] in bpy.props.Rebrickr_legal_brick_sizes[0.9]:
-    #         items.append(("TILE", "Tile", ""))
-    #     if sum(objSize[:2]) == 3:
-    #         items.append(("TILE_GRILL", "Tile Grill", ""))
-    #     if objSize[0] == 2 and objSize[1] == 2:
-    #         items.append(("TILE_ROUNDED", "Tile Rounded", ""))
-    #         items.append(("PLATE_ROUNDED", "Plate Rounded", ""))
-    #         items.append(("DOME", "Dome", ""))
-    #     if ((objSize[0] == 2 and objSize[1] in [3,4]) or
-    #        (objSize[1] == 2 and objSize[0] in [3,4]) or
-    #        (objSize[0] == 3 and objSize[1] in [6,8,12]) or
-    #        (objSize[1] == 3 and objSize[0] in [6,8,12]) or
-    #        (objSize[0] == 4 and objSize[1] == 4) or
-    #        (objSize[0] == 6 and objSize[1] == 12) or
-    #        (objSize[1] == 6 and objSize[0] == 12) or
-    #        (objSize[0] == 7 and objSize[1] == 12) or
-    #        (objSize[1] == 7 and objSize[0] == 12)):
-    #         items.append(("WING", "Wing", ""))
-    # 1x2 brick pattern Brick
-
+        items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[1] if objSize[:2] in legalBS[1][typ]]
+    items.sort(key=lambda k: k[0])
     return items
 
 def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, curHeight=None, curType=None, targetHeight=None, targetType=None):
     brickD = bricksDict[key]
     assert targetHeight is not None or targetType is not None
     if targetHeight is None:
-        targetHeight = 1 if targetType in get1HighTypes() else 3
+        targetHeight = 1 if targetType in getBrickTypes(height=1) else 3
     assert curHeight is not None or curType is not None
     if curHeight is None:
-        curHeight = 1 if curType in get1HighTypes() else 3
+        curHeight = 1 if curType in getBrickTypes(height=1) else 3
     # adjust brick size if changing type from 3 tall to 1 tall
     if curHeight == 3 and targetHeight == 1:
         brickSize[2] = 1

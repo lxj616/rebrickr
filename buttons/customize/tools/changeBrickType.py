@@ -32,6 +32,7 @@ from ..functions import *
 from ...brickify import *
 from ...brickify import *
 from ....lib.bricksDict.functions import getDictKey
+from ....lib.Brick.legal_brick_sizes import *
 from ....functions import *
 
 
@@ -82,7 +83,7 @@ class changeBrickType(Operator):
                 return {"CANCELLED"}
 
             # verify locations above are not obstructed
-            if self.brickType in get3HighTypes() and brickSize[2] == 1:
+            if self.brickType in getBrickTypes(height=3) and brickSize[2] == 1:
                 for x in range(brickSize[0]):
                     for y in range(brickSize[1]):
                         for z in range(1, 3):

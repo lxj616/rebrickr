@@ -33,6 +33,7 @@ from ..functions import *
 from ...brickify import *
 from ...brickify import *
 from ....lib.bricksDict.functions import getDictKey
+from ....lib.Brick.legal_brick_sizes import *
 from ....functions import *
 
 
@@ -118,8 +119,8 @@ class drawAdjacent(Operator):
                         setCurBrickVal(self.bricksDict, curKeyLoc)
 
             # attempt to merge created bricks
-            tallBandP = cm.brickType == "BRICKS AND PLATES" and self.brickType in get3HighTypes()
-            keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm, mergeVertical=self.brickType in get3HighTypes(), targetType=self.brickType, height3Only=tallBandP)
+            tallBandP = cm.brickType == "BRICKS AND PLATES" and self.brickType in getBrickTypes(height=3)
+            keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm, mergeVertical=self.brickType in getBrickTypes(height=3), targetType=self.brickType, height3Only=tallBandP)
 
             # if bricks created on top, set top_exposed of original brick to False
             if self.zPos:
@@ -262,7 +263,7 @@ class drawAdjacent(Operator):
             return adjacent_key, False
 
     def getNewBrickHeight(self):
-        newBrickHeight = 1 if self.brickType in get1HighTypes() else 3
+        newBrickHeight = 1 if self.brickType in getBrickTypes(height=1) else 3
         return newBrickHeight
 
     def getNewCoord(self, cm, co, dimensions, side, newBrickHeight):
@@ -358,7 +359,7 @@ class drawAdjacent(Operator):
                         # if brick drawn in next loc and not just rerunning based on new direction selection
                         if (newKey in self.bricksDict and self.bricksDict[newKey]["draw"] and
                             (not self.isBrickAlreadyCreated(brickNum, side) or
-                             self.adjBricksCreated[side][brickNum] not in get3HighTypes())):
+                             self.adjBricksCreated[side][brickNum] not in getBrickTypes(height=3))):
                             self.report({"INFO"}, "Brick already exists in the following location: %(newKey)s" % locals())
                             self.setDirBool(side, False)
                             # reset values at failed location, in case brick was previously drawn there

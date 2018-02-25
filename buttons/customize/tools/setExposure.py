@@ -101,7 +101,7 @@ class setExposure(Operator):
             # select original brick
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
             if orig_obj:
-                select(orig_obj, active=orig_obj, only=False)
+                scn.objects.active = orig_obj
         except:
             handle_exception()
         return {"FINISHED"}
