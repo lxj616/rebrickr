@@ -186,7 +186,7 @@ class RebrickrDelete(bpy.types.Operator):
             except KeyError:
                 pass
 
-        Caches.clearCaches()
+        Caches.clearCache(cm, brick_mesh=False)
 
         # reset default values for select items in cmlist
         cls.resetCmlistAttrs()

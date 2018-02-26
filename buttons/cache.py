@@ -39,44 +39,68 @@ class Caches(bpy.types.Operator):
     bl_label = "Clear Cache"
     bl_options = {"REGISTER", "UNDO"}
 
+    ################################################
+    # Blender Operator methods
+
     @classmethod
     def poll(self, context):
         if not bpy.props.rebrickr_initialized:
             return False
         return True
 
-    def __init__(self):
-        self.undo_stack = UndoStack.get_instance()
-        self.undo_stack.undo_push('clear_cache')
-
-    @staticmethod
-    def clearCaches():
-        scn = bpy.context.scene
-
-        # clear light caches
-        for key in rebrickr_bm_cache:
-            rebrickr_bm_cache[key] = None
-        for key in rebrickr_bfm_cache:
-            cm = getItemByID(scn.cmlist, key)
-            rebrickr_bfm_cache[key] = None
-
-        # clear deep matrix caches
-        for cm in scn.cmlist:
-            cm.BFMCache = ""
-
-    @staticmethod
-    def cacheExists(cm=None):
-        if cm is None:
-            scn, cm, _ = getActiveContextInfo()
-        return not (rebrickr_bfm_cache.get(cm.id) is None and cm.BFMCache == "")
-
     def execute(self, context):
         try:
-            self.clearCaches()
-            scn, cm, _ = getActiveContextInfo()
-            self.undo_stack.iterateStates(cm)
-            cm.matrixIsDirty = True
+            if self.clearAll:
+                self.clearCaches()
+                scn, cm, _ = getActiveContextInfo()
+                self.undo_stack.iterateStates(cm)
+                cm.matrixIsDirty = True
         except:
             handle_exception()
 
         return{"FINISHED"}
+
+    ################################################
+    # initialization method
+
+    def __init__(self):
+        self.undo_stack = UndoStack.get_instance()
+        self.undo_stack.undo_push('clear_cache')
+
+    ###################################################
+    # class variables
+
+    clearAll = bpy.props.BoolProperty(
+        name="Clear Caches",
+        description="Clear all caches stored for current file",
+        default=False)
+
+    #############################################
+    # class methods
+
+    @staticmethod
+    def clearCache(cm, brick_mesh=True, light_matrix=True, deep_matrix=True):
+        """clear caches for cmlist item"""
+        # clear light brick mesh cache
+        if brick_mesh:
+            rebrickr_bm_cache[cm.id] = None
+        # clear light matrix cache
+        if light_matrix:
+            rebrickr_bfm_cache[cm.id] = None
+        # clear deep matrix cache
+        if deep_matrix:
+            cm.BFMCache = ""
+
+    @staticmethod
+    def clearCaches(brick_mesh=True, light_matrix=True, deep_matrix=True):
+        """clear all caches in cmlist"""
+        scn = bpy.context.scene
+        for cm in scn.cmlist:
+            clearCache(cm, brick_mesh=brick_mesh, light_matrix=light_matrix, deep_matrix=deep_matrix)
+
+    @staticmethod
+    def cacheExists(cm=None):
+        """check if light or deep matrix cache exists for cmlist item"""
+        if cm is None:
+            scn, cm, _ = getActiveContextInfo()
+        return rebrickr_bfm_cache.get(cm.id) is not None or cm.BFMCache != ""
