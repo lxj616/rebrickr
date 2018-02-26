@@ -34,7 +34,7 @@ from .generator_utils import *
 from ....functions.common import *
 
 
-def makeRound1x1(dimensions, circleVerts=None, type="CYLINDER", detail="LOW", bme=None):
+def makeRound1x1(dimensions:dict, circleVerts:int=None, type:str="CYLINDER", detail:str="LOW", bme:bmesh=None):
     """
     create round 1x1 brick with bmesh
 
