@@ -64,7 +64,7 @@ def makeRound1x1(dimensions:dict, circleVerts:int=None, type:str="CYLINDER", det
 
     # set brick height and thickness
     _, cm, _ = getActiveContextInfo()
-    height = dimensions["height"] if "PLATES" in cm.brickType else dimensions["height"] * 3
+    height = dimensions["height"] if cm.brickType in ["BRICKS", "CUSTOM"] else dimensions["height"] * 3
     thick = Vector([dimensions["thickness"]] * 3)
 
     # create outer cylinder
