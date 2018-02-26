@@ -97,7 +97,7 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
     if cm.brickType != "CUSTOM" and cm.randomRot > 0:
         rotateBack(bm, center, randRot)
     # get brick's location
-    if brickSize[2] == 3 and cm.brickType == "BRICKS AND PLATES":
+    if brickSize[2] == 3 and "PLATES" in cm.brickType:
         brickLoc = Vector(brickD["co"])
         brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
     else:
@@ -143,10 +143,10 @@ def addEdgeSplitMod(obj):
     eMod = obj.modifiers.new('Edge Split', 'EDGE_SPLIT')
 
 
-def mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, brickSizes, zStep, randS1):
+def mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, brickSizes, zStep, randS1, mergeVertical=True):
     if brickD["size"] is None or (cm.buildIsDirty):
         preferLargest = brickD["val"] > 0 and brickD["val"] < 1
-        brickSize = attemptMerge(cm, bricksDict, key, keysNotChecked, brickSizes, zStep, randS1, preferLargest=preferLargest, mergeVertical=True)
+        brickSize = attemptMerge(cm, bricksDict, key, keysNotChecked, brickSizes, zStep, randS1, preferLargest=preferLargest, mergeVertical=mergeVertical)
     else:
         brickSize = brickD["size"]
     return brickSize
@@ -273,7 +273,7 @@ def prepareLogoAndGetDetails(logo):
 def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoToUse, logo_type, logo_details, logo_scale, logo_inset, useStud, circleVerts):
     # get bm_cache_string
     bm_cache_string = ""
-    if cm.brickType in ["BRICKS", "PLATES", "BRICKS AND PLATES"]:
+    if cm.brickType != "CUSTOM":
         custom_logo_used = logoToUse is not None and logo_type == "CUSTOM"
         bm_cache_string = json.dumps((cm.brickHeight, brickSize, undersideDetail,
                                       cm.logoResolution if logoToUse is not None else None,
@@ -292,7 +292,7 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
     # if not found in rebrickr_bm_cache, create new brick mesh(es) and store to cache
     else:
         bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, type=brickD["type"], undersideDetail=undersideDetail, flip=brickD["flipped"], rotate90=brickD["rotated"], logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, circleVerts=cm.circleVerts)
-        if cm.brickType in ["BRICKS", "PLATES", "BRICKS AND PLATES"]:
+        if cm.brickType != "CUSTOM":
             rebrickr_bm_cache[bm_cache_string] = bms
         bm = bms[rand.randint(0, len(bms))]
 

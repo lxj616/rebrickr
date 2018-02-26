@@ -736,8 +736,8 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
     brickType = EnumProperty(
         name="Brick Type",
         description="Type of brick used to build the model",
-        items=[("PLATES", "Plates", "Use plates to build the model"),
-               ("BRICKS", "Bricks", "Use bricks to build the model"),
+        items=[("PLATES", "Plates Only", "Use plates to build the model"),
+               ("BRICKS", "Bricks Only (fast)", "Use bricks to build the model"),
                ("BRICKS AND PLATES", "Bricks and Plates", "Use bricks and plates to build the model"),
                ("CUSTOM", "Custom", "Use custom object to build the model")],
         update=dirtyMatrix,

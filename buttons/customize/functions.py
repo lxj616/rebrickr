@@ -156,9 +156,8 @@ def getAvailableTypes(by="SELECTION", includeSizes=[]):
             objSize = bricksDict[dictKey]["size"]
             if objSize[2] not in [1, 3]: raise Exception("Custom Error Message: objSize not in [1, 3]")
             # build items
-            if objSize[2] == 3 or "BRICKS" in cm.brickType:
-                items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[3] if includeSizes == "ALL" or objSize[:2] in legalBS[3][typ] + includeSizes]
-            if objSize[2] == 1 or "PLATES" in cm.brickType:
+            items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[3] if includeSizes == "ALL" or objSize[:2] in legalBS[3][typ] + includeSizes]
+            if "PLATES" in cm.brickType:
                 items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[1] if includeSizes == "ALL" or objSize[:2] in legalBS[1][typ] + includeSizes]
     # clean up items
     items = uniquify2(items, innerType=tuple)

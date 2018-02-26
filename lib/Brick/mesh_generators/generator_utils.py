@@ -57,7 +57,7 @@ def addBars(dimensions, height, brickSize, circleVerts, type, detail, d, scalar,
     z2 = d.z - thick.z
     r = dimensions["bar_radius"]
     _, cm, _ = getActiveContextInfo()
-    bAndPBrick = cm.brickType == "BRICKS AND PLATES" and brickSize[2] == 3
+    bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
     barZ = -(thick.z / 2)
     sides = [0, 1] + ([0, 0, 1, 1] if brickSize[0] == 1 else [1, 1, 0, 0])
     allTopVerts = []
@@ -103,7 +103,7 @@ def addBars(dimensions, height, brickSize, circleVerts, type, detail, d, scalar,
 def addTubeSupports(dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme):
     _, cm, _ = getActiveContextInfo()
     addSupports = (brickSize[0] > 2 and brickSize[1] == 2) or (brickSize[1] > 2 and brickSize[0] == 2)
-    bAndPBrick = cm.brickType == "BRICKS AND PLATES" and brickSize[2] == 3
+    bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
     # set z1/z2 values
     z1 = d.z - thick.z - dimensions["support_height_triple" if bAndPBrick else "support_height"]
     z2 = d.z - thick.z

@@ -377,7 +377,7 @@ class ModelSettingsPanel(Panel):
             s = Vector((cm.modelScaleX, cm.modelScaleY, cm.modelScaleZ))
         # draw Brick Model dimensions to UI if set
         if -1 not in s:
-            if cm.brickType in ["BRICKS", "PLATES", "BRICKS AND PLATES"]:
+            if cm.brickType != "CUSTOM":
                 dimensions = Bricks.get_dimensions(cm.brickHeight, getZStep(cm), cm.gap)
                 full_d = Vector((dimensions["width"],
                                  dimensions["width"],

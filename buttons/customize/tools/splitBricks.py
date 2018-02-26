@@ -70,7 +70,7 @@ class splitBricks(Operator):
         # iterate through cm_idxs of selected objects
         for cm_idx in self.objNamesD.keys():
             cm = scn.cmlist[cm_idx]
-            if cm.brickType != "BRICKS AND PLATES":
+            if "PLATES" not in cm.brickType:
                 continue
             bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
             # iterate through names of selected objects

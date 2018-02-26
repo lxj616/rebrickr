@@ -96,7 +96,7 @@ class Bricks:
         size = bricksDict[key]["size"]
         newSize = [1, 1, size[2]]
         zStep = getZStep(cm)
-        if cm.brickType == "BRICKS AND PLATES":
+        if "PLATES" in cm.brickType:
             if not v:
                 zStep = 3
             else:
@@ -186,7 +186,7 @@ def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, l
                 if zRot != 0:
                     bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(0.0, 0.0, 1.0), matrix=Matrix.Rotation(math.radians(zRot), 3, 'Z'))
                 # transform logo to appropriate position
-                zOffset = dimensions["logo_offset"] + (dimensions["height"] if cm.brickType == "BRICKS AND PLATES" and size[2] == 3 else 0)
+                zOffset = dimensions["logo_offset"] + (dimensions["height"] if "PLATES" in cm.brickType and size[2] == 3 else 0)
                 if logo_type != "LEGO" and logo_details is not None:
                     zOffset += ((logo_details.z.dist * (lw / distMax)) / 2) * (1 - logo_inset * 2)
                 xyOffset = dimensions["width"] + dimensions["gap"]

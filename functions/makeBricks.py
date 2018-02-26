@@ -52,7 +52,6 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
         cm = scn.cmlist[scn.cmlist_index]
     n = cm.source_name
     zStep = getZStep(cm)
-    BandP = cm.brickType == "BRICKS AND PLATES"
 
     # apply transformation to logo duplicate and get bounds(logo)
     logo_details, logo = prepareLogoAndGetDetails(logo)
@@ -61,6 +60,8 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
     if keys == "ALL":
         cm.brickSizesUsed = ""
         cm.brickTypesUsed = ""
+
+    mergeVertical = not keys == "ALL" or cm.brickType == "BRICKS AND PLATES"
 
     # get bricksDict dicts in seeded order
     if keys == "ALL":
@@ -119,7 +120,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
     if printStatus:
         update_progress("Building", 0.0)
     # set number of times to run through all keys
-    numIters = 2 if BandP else 1
+    numIters = 2 if "PLATES" in cm.brickType else 1
     for timeThrough in range(numIters):
         # iterate through locations in bricksDict from bottom to top
         for i, key in enumerate(keys):
@@ -135,8 +136,8 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
             loc = strToList(key)
             brickSizes = [[1, 1, zStep]]
 
-            # if bricks and plates, skip second and third rows on first time through
-            if BandP and cm.alignBricks:
+            # skip second and third rows on first time through
+            if "PLATES" in cm.brickType and cm.alignBricks:
                 # initialize lowestLoc if not done already
                 if lowestLoc == -1:
                     lowestLoc = loc[2]
@@ -145,7 +146,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
                     continue
 
             # merge current brick with available adjacent bricks
-            brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, brickSizes, zStep, randS1)
+            brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, brickSizes, zStep, randS1, mergeVertical=mergeVertical)
             # add brickSize to cm.brickSizesUsed if not already there
             brickSizeStr = listToStr(sorted(brickSize[:2]) + [brickSize[2]])
             cm.brickSizesUsed += brickSizeStr if cm.brickSizesUsed == "" else ("|" + brickSizeStr if brickSizeStr not in cm.brickSizesUsed.split("|") else "")

@@ -97,6 +97,7 @@ class changeBrickType(Operator):
                         bricksDict[dictKey]["flipped"] == self.flipBrick and
                         bricksDict[dictKey]["rotated"] == self.rotateBrick):
                         # return {"CANCELLED"}
+                        self.report({"INFO"}, "brick {brickName} is already of type {brickType}".format(brickName=bricksDict[dictKey]["name"], brickType=self.brickType))
                         continue
                     # # skip bricks that can't be turned into the chosen brick type
                     # elif brickSize[:2] not in legalBrickSizes[3 if self.brickType in getBrickTypes(height=3) else 1][self.brickType]:
@@ -122,12 +123,12 @@ class changeBrickType(Operator):
                     bricksDict[dictKey]["rotated"] = self.rotateBrick
 
                     # update height of brick if necessary, and update dictionary accordingly
-                    if cm.brickType == "BRICKS AND PLATES":
+                    if "PLATES" in cm.brickType:
                         dimensions = Bricks.get_dimensions(cm.brickHeight, getZStep(cm), cm.gap)
                         brickSize = updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, dictKey, dictLoc, curHeight=brickSize[2], targetType=self.brickType)
 
                     # check if brick spans 3 matrix locations
-                    bAndPBrick = cm.brickType == "BRICKS AND PLATES" and brickSize[2] == 3
+                    bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
 
                     # verify exposure
                     brickLocs = [[x0 + x, y0 + y, z0] for y in range(brickSize[1]) for x in range(brickSize[0])]

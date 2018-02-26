@@ -53,7 +53,7 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
     # create new bmesh object
     bme = bmesh.new() if not bme else bme
     _, cm, _ = getActiveContextInfo()
-    bAndPBrick = cm.brickType == "BRICKS AND PLATES" and brickSize[2] == 3
+    bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
     height = dimensions["height"] * (3 if bAndPBrick else 1)
 
     # get halfScale
