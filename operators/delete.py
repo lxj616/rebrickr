@@ -131,6 +131,8 @@ class delete_override(Operator):
         # update matrix
         for i, cm_idx in enumerate(objsD.keys()):
             cm = scn.cmlist[cm_idx]
+            if cm.version[:3] == "1_0":
+                continue
             lastBlenderState = cm.blender_undo_state
             # get bricksDict from cache
             bricksDict, loadedFromCache = getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)

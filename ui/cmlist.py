@@ -823,8 +823,8 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Internal Supports",
         description="Choose what type of brick support structure to use inside your model",
         items=[("NONE", "None", "No internal supports"),
-               ("LATTICE", "Lat tice", "Use latice inside model"),
-               ("COLUMNS", "Colu mns", "Use columns inside model")],
+               ("LATTICE", "Lattice", "Use latice inside model"),
+               ("COLUMNS", "Columns", "Use columns inside model")],
         update=dirtyInternal,
         default="NONE")
     latticeStep = IntProperty(

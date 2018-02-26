@@ -99,15 +99,15 @@ def test_brick_generators():
         newObjFromBmesh(11,  makeStandardBrick(dimensions=dimensions, brickSize=[2,6,3], type=cm.brickType, circleVerts=16, detail=detail), "2x6 " + detail, loc=(offset*2, 0,0))
         newObjFromBmesh(12,  makeStandardBrick(dimensions=dimensions, brickSize=[6,2,3], type=cm.brickType, circleVerts=15, detail=detail), "6x2 " + detail, loc=(0, offset*2,0))
         # ROUND BRICKS
-        newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="CYLINDER",    detail=detail), "1x1 Round " + detail,  loc=(offset, 4.5,0))
-        newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="CONE",        detail=detail), "1x1 Cone "  + detail,  loc=(offset, 1.5,0))
-        newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="STUD",        detail=detail), "1x1 Stud "  + detail,  loc=(offset,-1.5,0))
-        newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="STUD_HOLLOW", detail=detail), "1x1 Stud2 "  + detail, loc=(offset,-3.5,0))
+        newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="CYLINDER",    detail=detail), "1x1 Round " + detail,  loc=(offset, 1.5,0))
+        newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="CONE",        detail=detail), "1x1 Cone "  + detail,  loc=(offset, 0.5,0))
+        newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="STUD",        detail=detail), "1x1 Stud "  + detail,  loc=(offset,-0.5,0))
+        newObjFromBmesh(6,  makeRound1x1(dimensions=dimensions, circleVerts=16, type="STUD_HOLLOW", detail=detail), "1x1 Stud2 "  + detail, loc=(offset,-1.5,0))
         # SLOPE BRICKS
         i = 0
         for posNeg in ["+", "-"]:
             for j in [-1, 1]:
-                direction = posNeg + "X" if j == 1 else posNeg + "Y"
+                direction = ("X" if j == 1 else "Y") + posNeg
                 newObjFromBmesh(16 + i, makeSlope(dimensions=dimensions, brickSize=[2,1][::j] + [3], direction=direction, circleVerts=16, detail=detail), "2x1 Slope "  + detail, loc=[-5.5, offset][::j]               + [0])
                 newObjFromBmesh(16 + i, makeSlope(dimensions=dimensions, brickSize=[3,1][::j] + [3], direction=direction, circleVerts=16, detail=detail), "3x1 Slope "  + detail, loc=[-4,   offset][::j]               + [0])
                 newObjFromBmesh(16 + i, makeSlope(dimensions=dimensions, brickSize=[4,1][::j] + [3], direction=direction, circleVerts=16, detail=detail), "4x1 Slope "  + detail, loc=[-2,   offset][::j]               + [0])

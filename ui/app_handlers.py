@@ -132,7 +132,7 @@ def handle_selections(scene):
         obj = bpy.data.objects.get(cm.source_name)
         if obj is None:
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
-        if obj:
+        if obj and cm.version[:3] != "1_0":
             if cm.modelCreated:
                 n = cm.source_name
                 bricks = getBricks()
@@ -178,18 +178,19 @@ def handle_selections(scene):
             scn.Rebrickr_active_object_name = scn.objects.active.name
         for i in range(len(scn.cmlist)):
             cm = scn.cmlist[i]
-            if cm.source_name == scn.Rebrickr_active_object_name and (not usingSource or not cm.modelCreated):
-                scn.cmlist_index = i
-                scn.Rebrickr_last_cmlist_index = scn.cmlist_index
-                active_obj = scn.objects.active
-                if active_obj.isBrick:
-                    # adjust scn.active_brick_detail based on active brick
-                    _, dictLoc = getDictKey(active_obj.name)
-                    x0, y0, z0 = dictLoc
-                    cm.activeKeyX = x0
-                    cm.activeKeyY = y0
-                    cm.activeKeyZ = z0
-                return
+            if cm.version[:3] == "1_0" or cm.source_name != scn.Rebrickr_active_object_name or (usingSource and cm.modelCreated):
+                continue
+            scn.cmlist_index = i
+            scn.Rebrickr_last_cmlist_index = scn.cmlist_index
+            active_obj = scn.objects.active
+            if active_obj.isBrick:
+                # adjust scn.active_brick_detail based on active brick
+                _, dictLoc = getDictKey(active_obj.name)
+                x0, y0, z0 = dictLoc
+                cm.activeKeyX = x0
+                cm.activeKeyY = y0
+                cm.activeKeyZ = z0
+            return
         # if no matching cmlist item found, set cmlist_index to -1
         scn.cmlist_index = -1
     if scn.cmlist_index != -1:
