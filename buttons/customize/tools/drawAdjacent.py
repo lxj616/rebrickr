@@ -64,11 +64,7 @@ class drawAdjacent(Operator):
             # store enabled/disabled values
             createAdjBricks = [self.xPos, self.xNeg, self.yPos, self.yNeg, self.zPos, self.zNeg]
             # if no sides were and are selected, don't execute (i.e. if only brick type changed)
-            shouldRun = False
-            for i in range(6):
-                if createAdjBricks[i] or self.adjBricksCreated[i][0]:
-                    shouldRun = True
-            if not shouldRun:
+            if True in [createAdjBricks[i] or self.adjBricksCreated[i][0] for i in range(6)]
                 return {"CANCELLED"}
             # push to undo stack
             self.undo_stack.matchPythonToBlenderState()
@@ -112,11 +108,9 @@ class drawAdjacent(Operator):
                         self.bricksDict = verifyBrickExposureAboveAndBelow(adjDictLoc.copy(), self.bricksDict, decriment=decriment, zNeg=self.zNeg, zPos=self.zPos)
 
             # recalculate val for each bricksDict key in original brick
-            for x in range(x0, x0 + objSize[0]):
-                for y in range(y0, y0 + objSize[1]):
-                    for z in range(z0, z0 + objSize[2], zStep):
-                        curKeyLoc = [x, y, z]
-                        setCurBrickVal(self.bricksDict, curKeyLoc)
+            brickLocs = [[x, y, z] for z in range(z0, z0 + objSize[2], zStep) for y in range(y0, y0 + objSize[1]) for x in range(x0, x0 + objSize[0])]
+            for curLoc in brickLocs:
+                setCurBrickVal(self.bricksDict, curLoc)
 
             # attempt to merge created bricks
             tallBandP = cm.brickType == "BRICKS AND PLATES" and self.brickType in getBrickTypes(height=3)

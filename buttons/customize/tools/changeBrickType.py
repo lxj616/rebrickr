@@ -84,14 +84,12 @@ class changeBrickType(Operator):
 
             # verify locations above are not obstructed
             if self.brickType in getBrickTypes(height=3) and brickSize[2] == 1:
-                for x in range(brickSize[0]):
-                    for y in range(brickSize[1]):
-                        for z in range(1, 3):
-                            curKey = listToStr([x0 + x, y0 + y, z0 + z])
-                            if curKey in self.bricksDict and self.bricksDict[curKey]["draw"]:
-                                self.report({"INFO"}, "Could not change to type {brickType}; some locations are occupied".format(brickType=self.brickType))
-                                self.brickType = self.bricksDict[dictKey]["type"]
-                                return {"CANCELLED"}
+                aboveKeys = [listToStr([x0 + x, y0 + y, z0 + z]) for z in range(brickSize[2]) for y in range(brickSize[1]) for x in range(1, 3)]
+                for curKey in aboveKeys:
+                    if curKey in self.bricksDict and self.bricksDict[curKey]["draw"]:
+                        self.report({"INFO"}, "Could not change to type {brickType}; some locations are occupied".format(brickType=self.brickType))
+                        self.brickType = self.bricksDict[dictKey]["type"]
+                        return {"CANCELLED"}
 
             # print helpful message to user in blender interface
             self.report({"INFO"}, "turn active {brickSize} brick into {targetType}".format(brickSize=str(brickSize)[1:-1], targetType=self.brickType))
@@ -110,12 +108,12 @@ class changeBrickType(Operator):
             bAndPBrick = cm.brickType == "BRICKS AND PLATES" and brickSize[2] == 3
 
             # verify exposure
-            for x in range(brickSize[0]):
-                for y in range(brickSize[1]):
-                    curLoc = list(Vector(dictLoc) + Vector((x, y, 0)))
-                    self.bricksDict = verifyBrickExposureAboveAndBelow(curLoc, self.bricksDict, decriment=2 if bAndPBrick else 0)
-                    # add bricks to keysToUpdate
-                    keysToUpdate = [getParentKey(self.bricksDict, listToStr([x0 + x, y0 + y, z0 + z])) for z in [-1, 0, 3 if bAndPBrick else 1]]
+            brickLocs = [list(Vector(dictLoc)) + Vector((x, y, 0)) for y in range(brickSize[1]) for x in range(brickSize[0])]
+            for curLoc in brickLocs:
+                # run verifyBrickExposure
+                self.bricksDict = verifyBrickExposureAboveAndBelow(curLoc, self.bricksDict, decriment=2 if bAndPBrick else 0)
+                # add bricks to keysToUpdate
+                keysToUpdate = [getParentKey(self.bricksDict, listToStr([x0 + x, y0 + y, z0 + z])) for z in [-1, 0, 3 if bAndPBrick else 1]]
 
             # uniquify keysToUpdate and remove null keys
             keysToUpdate = uniquify1(keysToUpdate)

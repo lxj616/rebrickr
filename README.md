@@ -27,6 +27,10 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
       * Simply calculate brick dimensions, then divide height by three if plate later on. (gets rid of zScale parameter in get_dimensions function)
       * Add 'Change Color' model customization option
+      * Add 'exclusion' functionality so that one model doesn’t create bricks where another model already did
+      * Add merge option that creates either biggest bricks possible or randomly sampled like normal.
+      * Add functionality for changing brick type of multiple objects at once
+      * Change offset in 'generate_lattice' back to the modulus equation from commit 1a5a85d (1/20/18) so that bricks fit together nicely between models
   * Known issues:
       * In snapchat hotdog test file, when parents removed and transformation kept, then when model created then deleted, source shrinks
       * In bricks mode, bricks don't merge well
