@@ -119,35 +119,28 @@ class mergeBricks(Operator):
     # class methods
 
     @staticmethod
-    def getSortedKeys(keys):
-        """ sort bricks by (x+y) location for best merge """
-        keys.sort(key=lambda k: (strToList(k)[0] * strToList(k)[1] * strToList(k)[2]))
-        return keys
-
-    @staticmethod
     def mergeBricks(bricksDict, keys, cm, mergeVertical=True, targetType="BRICK", height3Only=False):
         # initialize vars
         updatedKeys = []
         zStep = getZStep(cm)
         randState = np.random.RandomState(cm.mergeSeed)
 
-        keys = mergeBricks.getSortedKeys(keys)
+        # remove child bricks from keys list
+        keys = [k for k in keys if bricksDict[k]["parent_brick"] in [None, "self"]]
+        # sort keys
+        keys.sort(key=lambda k: (strToList(k)[0] * strToList(k)[1] * strToList(k)[2]))
 
         for key in keys:
-            if bricksDict[key]["parent_brick"] in [None, "self"]:
-                # attempt to merge current brick with other bricks in keys, according to available brick types
-                # TODO: improve originalIsBrick argument (currently hardcoded to False)
-                loc = strToList(key)
-                parentD = bricksDict[getParentKey(bricksDict, key)]
-                tallType = targetType if targetType in getBrickTypes(height=3) else parentD["type"]
-                shortType = targetType if targetType in getBrickTypes(height=1) else (parentD["type"] if parentD["type"] in getBrickTypes(height=1) else "PLATE")
-                brickSize = attemptMerge(cm, bricksDict, key, keys, loc, [parentD["size"]], zStep, randState, preferLargest=True, mergeVertical=mergeVertical, shortType=shortType, tallType=tallType, height3Only=height3Only)
-                # bricksDict[key]["size"] = brickSize
-                # set exposure of current [merged] brick
-                topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)
-                bricksDict[key]["top_exposed"] = topExposed
-                bricksDict[key]["bot_exposed"] = botExposed
-                updatedKeys.append(key)
+            # attempt to merge current brick with other bricks in keys, according to available brick types
+            parentD = bricksDict[getParentKey(bricksDict, key)]
+            tallType = targetType if targetType in getBrickTypes(height=3) else parentD["type"]
+            shortType = targetType if targetType in getBrickTypes(height=1) else (parentD["type"] if parentD["type"] in getBrickTypes(height=1) else "PLATE")
+            brickSize = attemptMerge(cm, bricksDict, key, keys, [parentD["size"]], zStep, randState, preferLargest=True, mergeVertical=mergeVertical, shortType=shortType, tallType=tallType, height3Only=height3Only)
+            # set exposure of current [merged] brick
+            topExposed, botExposed = getBrickExposure(cm, bricksDict, key)
+            bricksDict[key]["top_exposed"] = topExposed
+            bricksDict[key]["bot_exposed"] = botExposed
+            updatedKeys.append(key)
         return updatedKeys
 
     #############################################

@@ -98,9 +98,9 @@ class changeBrickType(Operator):
                         bricksDict[dictKey]["rotated"] == self.rotateBrick):
                         # return {"CANCELLED"}
                         continue
-                    # skip bricks that can't be turned into the chosen brick type
-                    elif brickSize[:2] not in legalBrickSizes[3 if self.brickType in getBrickTypes(height=3) else 1][self.brickType]:
-                        continue
+                    # # skip bricks that can't be turned into the chosen brick type
+                    # elif brickSize[:2] not in legalBrickSizes[3 if self.brickType in getBrickTypes(height=3) else 1][self.brickType]:
+                    #     continue
 
                     # verify locations above are not obstructed
                     if self.brickType in getBrickTypes(height=3) and brickSize[2] == 1:

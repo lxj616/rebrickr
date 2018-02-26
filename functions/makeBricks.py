@@ -124,44 +124,43 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
         # iterate through locations in bricksDict from bottom to top
         for i, key in enumerate(keys):
             brickD = bricksDict[key]
-            if brickD["draw"] and brickD["parent_brick"] in [None, "self"] and not brickD["attempted_merge"]:
-                # initialize vars
-                loc = strToList(key)
-                brickSizes = [[1, 1, zStep]]
-
-                # if bricks and plates, skip second and third rows on first time through
-                if BandP and cm.alignBricks:
-                    # initialize lowestLoc if not done already
-                    if lowestLoc == -1:
-                        lowestLoc = loc[2]
-                    # check if row should be skipped
-                    if skipThisRow(timeThrough, lowestLoc, loc):
-                        continue
-
-                # merge current brick with available adjacent bricks
-                brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, loc, brickSizes, zStep, randS1)
-                # add brickSize to cm.brickSizesUsed if not already there
-                brickSizeStr = listToStr(sorted(brickSize[:2]) + [brickSize[2]])
-                cm.brickSizesUsed += brickSizeStr if cm.brickSizesUsed == "" else ("|" + brickSizeStr if brickSizeStr not in cm.brickSizesUsed.split("|") else "")
-                cm.brickTypesUsed += brickD["type"] if cm.brickTypesUsed == "" else ("|" + str(brickD["type"]) if brickD["type"] not in cm.brickTypesUsed.split("|") else "")
-
-
-                # create brick based on the current brickD information
-                lastBricksDict = bricksDict
-                drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, brickScale, keysNotChecked, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4)
-
-                # print build status to terminal
-                old_percent = printBuildStatus(keys, printStatus, cursorStatus, keysNotChecked, old_percent)
-
-                # remove keys in new brick from keysNotChecked (for attemptMerge)
-                updateKeysNotChecked(brickSize, loc, zStep, keysNotChecked, key)
-
-            else:
-                # remove ignored key from keysNotChecked (for attemptMerge)
-                try:
+            # skip keys that are already drawn or have attempted merge
+            if not brickD["draw"] or brickD["parent_brick"] not in [None, "self"] or brickD["attempted_merge"]:
+                # remove ignored keys from keysNotChecked (for attemptMerge)
+                if key in keysNotChecked:
                     keysNotChecked.remove(key)
-                except ValueError:
-                    pass
+                continue
+
+            # initialize vars
+            loc = strToList(key)
+            brickSizes = [[1, 1, zStep]]
+
+            # if bricks and plates, skip second and third rows on first time through
+            if BandP and cm.alignBricks:
+                # initialize lowestLoc if not done already
+                if lowestLoc == -1:
+                    lowestLoc = loc[2]
+                # check if row should be skipped
+                if skipThisRow(timeThrough, lowestLoc, loc):
+                    continue
+
+            # merge current brick with available adjacent bricks
+            brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, brickSizes, zStep, randS1)
+            # add brickSize to cm.brickSizesUsed if not already there
+            brickSizeStr = listToStr(sorted(brickSize[:2]) + [brickSize[2]])
+            cm.brickSizesUsed += brickSizeStr if cm.brickSizesUsed == "" else ("|" + brickSizeStr if brickSizeStr not in cm.brickSizesUsed.split("|") else "")
+            cm.brickTypesUsed += brickD["type"] if cm.brickTypesUsed == "" else ("|" + str(brickD["type"]) if brickD["type"] not in cm.brickTypesUsed.split("|") else "")
+
+
+            # create brick based on the current brickD information
+            lastBricksDict = bricksDict
+            drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, brickScale, keysNotChecked, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4)
+
+            # print build status to terminal
+            old_percent = printBuildStatus(keys, printStatus, cursorStatus, keysNotChecked, old_percent)
+
+            # remove keys in new brick from keysNotChecked (for attemptMerge)
+            updateKeysNotChecked(brickSize, loc, zStep, keysNotChecked, key)
 
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO" and logo is not None:

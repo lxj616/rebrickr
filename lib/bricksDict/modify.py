@@ -102,9 +102,12 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, me
         if breakOuter2: break
 
 
-def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True, shortType="PLATE", tallType="BRICK", height3Only=False):
+def attemptMerge(cm, bricksDict, key, keys, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True, shortType="PLATE", tallType="BRICK", height3Only=False):
     """ attempt to merge bricksDict[key] with adjacent bricks """
     assert len(brickSizes) > 0
+
+    # get loc from key
+    loc = strToList(key)
 
     if cm.brickType != "CUSTOM":
         # iterate through adjacent locs to find available brick sizes
