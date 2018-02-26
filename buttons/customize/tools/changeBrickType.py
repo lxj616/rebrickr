@@ -82,6 +82,7 @@ class changeBrickType(Operator):
                 # initialize vars
                 bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
                 keysToUpdate = []
+                print(1)
 
                 # iterate through names of selected objects
                 for obj_name in self.objNamesD[cm_idx]:
@@ -98,6 +99,8 @@ class changeBrickType(Operator):
                         bricksDict[dictKey]["rotated"] == self.rotateBrick):
                         # return {"CANCELLED"}
                         self.report({"INFO"}, "brick {brickName} is already of type {brickType}".format(brickName=bricksDict[dictKey]["name"], brickType=self.brickType))
+                        keysToUpdate.append(dictKey)
+                        objNamesToSelect.append(bricksDict[dictKey]["name"])
                         continue
                     # # skip bricks that can't be turned into the chosen brick type
                     # elif brickSize[:2] not in legalBrickSizes[3 if self.brickType in getBrickTypes(height=3) else 1][self.brickType]:
