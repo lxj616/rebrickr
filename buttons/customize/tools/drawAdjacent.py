@@ -64,7 +64,7 @@ class drawAdjacent(Operator):
             # store enabled/disabled values
             createAdjBricks = [self.xPos, self.xNeg, self.yPos, self.yNeg, self.zPos, self.zNeg]
             # if no sides were and are selected, don't execute (i.e. if only brick type changed)
-            if True in [createAdjBricks[i] or self.adjBricksCreated[i][0] for i in range(6)]:
+            if True not in [createAdjBricks[i] or self.adjBricksCreated[i][0] for i in range(6)]:
                 return {"CANCELLED"}
             # push to undo stack
             self.undo_stack.matchPythonToBlenderState()
@@ -220,7 +220,7 @@ class drawAdjacent(Operator):
 
     # get items for brickType prop
     def get_items1(self, context):
-        items = getAvailableTypes()
+        items = getAvailableTypes(by="ACTIVE", includeSizes="ALL")
         return items
 
     # define props for popup

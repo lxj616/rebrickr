@@ -140,7 +140,7 @@ class mergeBricks(Operator):
                 loc = strToList(key)
                 parentD = bricksDict[getParentKey(bricksDict, key)]
                 tallType = targetType if targetType in getBrickTypes(height=3) else parentD["type"]
-                shortType = targetType if targetType in getBrickTypes(height=1) else parentD["type"]
+                shortType = targetType if targetType in getBrickTypes(height=1) else (parentD["type"] if parentD["type"] in getBrickTypes(height=1) else "PLATE")
                 brickSize = attemptMerge(cm, bricksDict, key, keys, loc, [parentD["size"]], zStep, randState, preferLargest=True, mergeVertical=mergeVertical, shortType=shortType, tallType=tallType, height3Only=height3Only)
                 # bricksDict[key]["size"] = brickSize
                 # set exposure of current [merged] brick

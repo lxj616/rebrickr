@@ -64,7 +64,7 @@ def updateMaterials(bricksDict, source):
     return bricksDict
 
 
-def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, mergeVertical=False):
+def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, mergeVertical=False, tallType="BRICK", shortType="PLATE"):
     """ update 'brickSizes' with available brick sizes surrounding bricksDict[key] """
     newMax1 = maxL[1]
     newMax2 = maxL[2]
@@ -95,7 +95,7 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, me
                 # else, append current brick size to brickSizes
                 else:
                     newSize = [i+1, j+1, k+zStep]
-                    if newSize not in brickSizes and [newSize[0],newSize[1]] in bpy.props.Rebrickr_legal_brick_sizes[newSize[2]]["BRICK" if newSize[2] == 3 else "PLATE"]:
+                    if newSize not in brickSizes and [newSize[0],newSize[1]] in bpy.props.Rebrickr_legal_brick_sizes[newSize[2]][tallType if newSize[2] == 3 else shortType]:
                         brickSizes.append(newSize)
             if breakOuter1: break
         breakOuter1 = False
@@ -108,8 +108,8 @@ def attemptMerge(cm, bricksDict, key, keys, loc, brickSizes, zStep, randState, p
 
     if cm.brickType != "CUSTOM":
         # iterate through adjacent locs to find available brick sizes
-        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], mergeVertical and cm.brickType == "BRICKS AND PLATES")
-        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], mergeVertical and cm.brickType == "BRICKS AND PLATES")
+        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], mergeVertical and cm.brickType == "BRICKS AND PLATES", tallType=tallType, shortType=shortType)
+        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], mergeVertical and cm.brickType == "BRICKS AND PLATES", tallType=tallType, shortType=shortType)
         # only keep sizes with height 3
         if height3Only:
             brickSizes = [sz for sz in brickSizes if sz[2] == 3]

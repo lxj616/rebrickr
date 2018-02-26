@@ -140,7 +140,7 @@ def getUsedTypes():
     return items
 
 
-def getAvailableTypes(by="SELECTION"):
+def getAvailableTypes(by="SELECTION", includeSizes=[]):
     items = []
     legalBS = bpy.props.Rebrickr_legal_brick_sizes
     scn = bpy.context.scene
@@ -156,9 +156,9 @@ def getAvailableTypes(by="SELECTION"):
             if objSize[2] not in [1, 3]: raise Exception("Custom Error Message: objSize not in [1, 3]")
             # build items
             if objSize[2] == 3 or "BRICKS" in cm.brickType:
-                items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[3] if objSize[:2] in legalBS[3][typ]]
+                items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[3] if includeSizes == "ALL" or objSize[:2] in legalBS[3][typ] + includeSizes]
             if objSize[2] == 1 or "PLATES" in cm.brickType:
-                items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[1] if objSize[:2] in legalBS[1][typ]]
+                items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[1] if includeSizes == "ALL" or objSize[:2] in legalBS[1][typ] + includeSizes]
     # clean up items
     items = uniquify2(items, innerType=tuple)
     items.sort(key=lambda k: k[0])
