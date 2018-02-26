@@ -139,9 +139,9 @@ def uniquify1(seq):
     for e in seq:
         keys[e] = 1
     return keys.keys()
-    
-def uniquify2(seq):
-    return [list(x) for x in set(tuple(x) for x in seq)]
+
+def uniquify2(seq, innerType=list):
+    return [innerType(x) for x in set(tuple(x) for x in seq)]
 
 
 def tag_redraw_areas(areaTypes=["ALL"]):

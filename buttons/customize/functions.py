@@ -140,25 +140,30 @@ def getUsedTypes():
     return items
 
 
-def getAvailableTypes():
-    scn, cm, _ = getActiveContextInfo()
-    obj = scn.objects.active
-    if obj is None: return [("NULL", "Null", "")]
-    dictKey, dictLoc = getDictKey(obj.name)
-    bricksDict, _ = getBricksDict(cm=cm)
-    objSize = bricksDict[dictKey]["size"]
-    legalBS = bpy.props.Rebrickr_legal_brick_sizes
-    if objSize[2] not in [1, 3]: raise Exception("Custom Error Message: objSize not in [1, 3]")
-    # build items
+def getAvailableTypes(by="SELECTION"):
     items = []
-    if cm.brickType == "CUSTOM":
-        items.append(("CUSTOM", "Custom", ""))
-    if objSize[2] == 3 or "BRICKS" in cm.brickType:
-        items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[3] if objSize[:2] in legalBS[3][typ]]
-    if objSize[2] == 1 or "PLATES" in cm.brickType:
-        items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[1] if objSize[:2] in legalBS[1][typ]]
+    legalBS = bpy.props.Rebrickr_legal_brick_sizes
+    scn = bpy.context.scene
+    objs = bpy.context.selected_objects if by == "SELECTION" else [scn.objects.active]
+    objNamesD, bricksDicts = createObjNamesAndBricksDictDs(objs)
+    for cm_idx in objNamesD.keys():
+        cm = scn.cmlist[cm_idx]
+        items += [("CUSTOM", "Custom", "")] if cm.brickType == "CUSTOM" else []
+        bricksDict = bricksDicts[cm_idx]
+        for obj_name in objNamesD[cm_idx]:
+            dictKey, dictLoc = getDictKey(obj_name)
+            objSize = bricksDict[dictKey]["size"]
+            if objSize[2] not in [1, 3]: raise Exception("Custom Error Message: objSize not in [1, 3]")
+            # build items
+            if objSize[2] == 3 or "BRICKS" in cm.brickType:
+                items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[3] if objSize[:2] in legalBS[3][typ]]
+            if objSize[2] == 1 or "PLATES" in cm.brickType:
+                items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[1] if objSize[:2] in legalBS[1][typ]]
+    # clean up items
+    items = uniquify2(items, innerType=tuple)
     items.sort(key=lambda k: k[0])
-    return items
+    # return items, or null if items was empty
+    return items if len(items) > 0 else [("NULL", "Null", "")]
 
 def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, curHeight=None, curType=None, targetHeight=None, targetType=None):
     brickD = bricksDict[key]
