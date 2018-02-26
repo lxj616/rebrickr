@@ -167,16 +167,16 @@ class drawAdjacent(Operator):
             sX, sY, sZ = objSize[0], objSize[1], objSize[2] // getZStep(cm)
             self.adjDKLs = [[],[],[],[],[],[]]
             # initialize ranges
-            rgs = Vector((range(x, x + sX),
-                          range(y, y + sY),
-                          range(z, z + sZ)))
+            rgs = [range(x, x + sX),
+                   range(y, y + sY),
+                   range(z, z + sZ)]
             # set up self.adjDKLs
-            self.adjDKLs[0] += [[x + sX, y0, z0] for z0 in rgs.z for y0 in rgs.y]
-            self.adjDKLs[1] += [[x - 1, y0, z0]  for z0 in rgs.z for y0 in rgs.y]
-            self.adjDKLs[2] += [[x0, y + sY, z0] for z0 in rgs.z for x0 in rgs.x]
-            self.adjDKLs[3] += [[x0, y - 1, z0]  for z0 in rgs.z for x0 in rgs.x]
-            self.adjDKLs[4] += [[x0, y0, z + sZ] for y0 in rgs.y for x0 in rgs.x]
-            self.adjDKLs[5] += [[x0, y0, z - 1]  for y0 in rgs.y for x0 in rgs.x]
+            self.adjDKLs[0] += [[x + sX, y0, z0] for z0 in rgs[2] for y0 in rgs[1]]
+            self.adjDKLs[1] += [[x - 1, y0, z0]  for z0 in rgs[2] for y0 in rgs[1]]
+            self.adjDKLs[2] += [[x0, y + sY, z0] for z0 in rgs[2] for x0 in rgs[0]]
+            self.adjDKLs[3] += [[x0, y - 1, z0]  for z0 in rgs[2] for x0 in rgs[0]]
+            self.adjDKLs[4] += [[x0, y0, z + sZ] for y0 in rgs[1] for x0 in rgs[0]]
+            self.adjDKLs[5] += [[x0, y0, z - 1]  for y0 in rgs[1] for x0 in rgs[0]]
 
             # initialize self.adjBricksCreated
             self.adjBricksCreated = [[False] * len(self.adjDKLs[i]) for i in range(6)]
