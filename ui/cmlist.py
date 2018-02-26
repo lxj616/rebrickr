@@ -211,13 +211,17 @@ class Rebrickr_Uilist_actions(bpy.types.Operator):
         scn = bpy.context.scene
         scn.cmlist.move(scn.cmlist_index, scn.cmlist_index+1)
         scn.cmlist_index += 1
-        item.idx = scn.cmlist_index
+        self.updateIdxs(scn.cmlist)
 
     def moveUp(self, item):
         scn = bpy.context.scene
         scn.cmlist.move(scn.cmlist_index, scn.cmlist_index-1)
         scn.cmlist_index -= 1
-        item.idx = scn.cmlist_index
+        self.updateIdxs(scn.cmlist)
+
+    def updateIdxs(self, cmlist):
+        for i,cm in enumerate(cmlist):
+            cm.idx = i
 
 
 # -------------------------------------------------------------------

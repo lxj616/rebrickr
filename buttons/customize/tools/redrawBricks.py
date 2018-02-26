@@ -61,27 +61,30 @@ class redrawBricks(Operator):
             selected_objects = bpy.context.selected_objects
             active_obj = scn.objects.active
             initial_active_obj_name = active_obj.name if active_obj else ""
+            objsToSelect = []
 
-            # iterate through cm_idxs of selected objects
-            for cm_idx in self.objNamesD.keys():
-                cm = scn.cmlist[cm_idx]
+            # iterate through cm_ids of selected objects
+            for cm_id in self.objNamesD.keys():
+                cm = getItemByID(scn.cmlist, cm_id)
                 # get bricksDict from cache
-                bricksDict, _ = self.bricksDicts[cm_idx]
+                bricksDict, _ = self.bricksDicts[cm_id]
                 keysToUpdate = []
 
                 # delete objects to be updated
-                for obj in self.objNamesD[cm_idx]:
+                for obj in self.objNamesD[cm_id]:
                     delete(obj)
 
                 # add keys for updated objects to simple bricksDict for drawing
-                keysToUpdate = [getDictKey(obj.name)[0] for obj in objsD[cm_idx]]
+                keysToUpdate = [getDictKey(obj.name)[0] for obj in self.objNamesD[cm_id]]
 
                 # draw modified bricks
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate)
 
-            # select original brick
+                # add selected objects to objects to select at the end
+                objsToSelect += bpy.context.selected_objects.copy()
+            # select the new objects created
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
-            if orig_obj: select(orig_obj, active=orig_obj, only=False)
+            select(objsToSelect, active=orig_obj)
         except:
             handle_exception()
         return {"FINISHED"}
@@ -91,7 +94,7 @@ class redrawBricks(Operator):
 
     def __init__(self):
         try:
-            self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
+            self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
         except:
             handle_exception()
 

@@ -148,7 +148,7 @@ class BrickModelsPanel(Panel):
                     col = layout.column(align=True)
                     row = col.row(align=True)
                     row.operator("rebrickr.brickify", text="Update Animation", icon="FILE_REFRESH")
-                    if cm.version[:3] == "1_0":
+                    if createdWithUnsupportedVersion():
                         col = layout.column(align=True)
                         col.scale_y = 0.7
                         col.label("Model was created with")
@@ -177,7 +177,7 @@ class BrickModelsPanel(Panel):
                     row.operator("rebrickr.delete", text="Delete Brickified Model", icon="CANCEL")
                     col = layout.column(align=True)
                     col.operator("rebrickr.brickify", text="Update Model", icon="FILE_REFRESH")
-                    if cm.version[:3] == "1_0":
+                    if createdWithUnsupportedVersion():
                         col = layout.column(align=True)
                         col.scale_y = 0.7
                         col.label("Model was created with")
@@ -826,7 +826,7 @@ class CustomizeModel(Panel):
         if not settingsCanBeDrawn():
             return False
         scn, cm, _ = getActiveContextInfo()
-        if cm.version[:3] == "1_0":
+        if createdWithUnsupportedVersion():
             return False
         if not (cm.modelCreated or cm.animated):
             return False
@@ -964,7 +964,7 @@ class BrickDetailsPanel(Panel):
         if not settingsCanBeDrawn():
             return False
         scn, cm, _ = getActiveContextInfo()
-        if cm.version[:3] == "1_0":
+        if createdWithUnsupportedVersion():
             return False
         if not (cm.modelCreated or cm.animated):
             return False

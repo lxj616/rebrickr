@@ -216,3 +216,8 @@ def getParentKey(bricksDict, key):
         return None
     parent_key = key if bricksDict[key]["parent_brick"] == "self" else bricksDict[key]["parent_brick"]
     return parent_key
+
+def createdWithUnsupportedVersion(cm=None):
+    if cm is None:
+        _, cm, _ = getActiveContextInfo()
+    return cm.version[:3] != bpy.props.rebrickr_version[:3]

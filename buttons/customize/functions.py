@@ -51,24 +51,6 @@ def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     RebrickrBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, action, cm=cm, bricksDict=bricksDict, keys=keysToUpdate, replaceExistingGroup=False, selectCreated=selectCreated, printStatus=False, redraw=True)
 
 
-def createObjsD(objs):
-    scn = bpy.context.scene
-    # initialize objsD
-    objsD = {}
-    # fill objsD with selected_objects
-    for obj in objs:
-        if obj.isBrick:
-            # get cmlist item referred to by object
-            cm = getItemByID(scn.cmlist, obj.cmlist_id)
-            if cm is None: continue
-            # add object to objsD
-            if cm.idx not in objsD:
-                objsD[cm.idx] = [obj]
-            else:
-                objsD[cm.idx].append(obj)
-    return objsD
-
-
 def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
     assert loc or key
     if loc:
@@ -146,12 +128,12 @@ def getAvailableTypes(by="SELECTION", includeSizes=[]):
     legalBS = bpy.props.Rebrickr_legal_brick_sizes
     scn = bpy.context.scene
     objs = bpy.context.selected_objects if by == "SELECTION" else [scn.objects.active]
-    objNamesD, bricksDicts = createObjNamesAndBricksDictDs(objs)
-    for cm_idx in objNamesD.keys():
-        cm = scn.cmlist[cm_idx]
+    objNamesD, bricksDicts = createObjNamesAndBricksDictsDs(objs)
+    for cm_id in objNamesD.keys():
+        cm = getItemByID(scn.cmlist, cm_id)
         items += [("CUSTOM", "Custom", "")] if cm.brickType == "CUSTOM" else []
-        bricksDict = bricksDicts[cm_idx]
-        for obj_name in objNamesD[cm_idx]:
+        bricksDict = bricksDicts[cm_id]
+        for obj_name in objNamesD[cm_id]:
             dictKey, dictLoc = getDictKey(obj_name)
             objSize = bricksDict[dictKey]["size"]
             if objSize[2] not in [1, 3]: raise Exception("Custom Error Message: objSize not in [1, 3]")
@@ -222,19 +204,85 @@ def createAddlBricksDictEntry(cm, bricksDict, source_key, key, full_d, x, y, z):
     )
     return bricksDict
 
-def createObjNamesAndBricksDictDs(objs):
+def createObjNamesD(objs):
+    scn = bpy.context.scene
+    # initialize objNamesD
     objNamesD = {}
+    # fill objNamesD with selected_objects
+    for obj in objs:
+        if obj.isBrick:
+            # get cmlist item referred to by object
+            cm = getItemByID(scn.cmlist, obj.cmlist_id)
+            if cm is None: continue
+            # add object to objNamesD
+            if cm.id not in objNamesD:
+                objNamesD[cm.id] = [obj.name]
+            else:
+                objNamesD[cm.id].append(obj.name)
+    return objNamesD
+
+
+def createObjNamesAndBricksDictsDs(objs):
     bricksDicts = {}
-    # initialize objsD (key:cm_idx, val:list of brick objects)
-    objsD = createObjsD(objs)
-    for cm_idx in objsD.keys():
-        objNamesD[cm_idx] = [obj.name for obj in objsD[cm_idx]]
+    objNamesD = createObjNamesD(objs)
     # initialize bricksDicts
     scn = bpy.context.scene
-    for cm_idx in objsD.keys():
-        cm = scn.cmlist[cm_idx]
+    for cm_id in objNamesD.keys():
+        cm = getItemByID(scn.cmlist, cm_id)
+        if cm is None: continue
         # get bricksDict from cache
         bricksDict, _ = getBricksDict(cm=cm)
         # add to bricksDicts
-        bricksDicts[cm_idx] = bricksDict
+        bricksDicts[cm_id] = bricksDict
     return objNamesD, bricksDicts
+
+
+def selectBricks(objNamesD, bricksDicts, brickSize="NULL", brickType="NULL", allModels=False, only=False, includeInternals=False):
+    scn = bpy.context.scene
+    # split all bricks in objNamesD[cm_id]
+    for cm_id in objNamesD.keys():
+        cm = getItemByID(scn.cmlist, cm_id)
+        if not (cm.idx == scn.cmlist_index or allModels):
+            continue
+        bricksDict = bricksDicts[cm_id]
+        selectedSomething = False
+
+        for obj_name in objNamesD[cm_id]:
+            # get dict key details of current obj
+            dictKey, dictLoc = getDictKey(obj_name)
+            siz = bricksDict[dictKey]["size"]
+            sizeStr = listToStr(sorted(siz[:2]) + [siz[2]])
+            typ = bricksDict[dictKey]["type"]
+            onShell = bricksDict[dictKey]["val"] == 1
+            # get current brick object
+            curObj = bpy.data.objects.get(obj_name)
+            # if curObj is None:
+            #     continue
+            # select brick
+            if (sizeStr == brickSize or typ == brickType) and (includeInternals or onShell):
+                selectedSomething = True
+                curObj.select = True
+            elif only:
+                curObj.select = False
+
+        # if no brickSize bricks exist, remove from cm.brickSizesUsed or cm.brickTypesUsed
+        removeUnusedFromList(cm, brickType=brickType, brickSize=brickSize, selectedSomething=selectedSomething)
+
+
+def removeUnusedFromList(cm, brickType="NULL", brickSize="NULL", selectedSomething=True):
+    item = brickType if brickType != "NULL" else brickSize
+    # if brickType/brickSize bricks exist, return None
+    if selectedSomething or item == "NULL":
+        return None
+    # turn brickTypesUsed into list of sizes
+    lst = (cm.brickTypesUsed if brickType is not None else cm.brickSizesUsed).split("|")
+    # remove unused item
+    if item in lst:
+        lst.remove(item)
+    # convert bTU back to string of sizes split by '|'
+    newLst = listToStr(lst, separate_by="|")
+    # store new list to current cmlist item
+    if brickSize != "NULL":
+        cm.brickSizesUsed = newLst
+    else:
+        cm.brickTypesUsed = newLst

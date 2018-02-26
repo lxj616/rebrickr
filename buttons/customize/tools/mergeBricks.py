@@ -37,7 +37,7 @@ from ....functions import *
 
 
 class mergeBricks(Operator):
-    """Merge selected bricks"""
+    """Merge selected bricks (converts brickType to either 'BRICK' or 'PLATE')"""
     bl_idname = "rebrickr.merge_bricks"
     bl_label = "Merge Bricks"
     bl_options = {"REGISTER", "UNDO"}
@@ -65,17 +65,18 @@ class mergeBricks(Operator):
     def execute(self, context):
         try:
             scn = bpy.context.scene
-            # iterate through cm_idxs of selected objects
-            for cm_idx in self.objNamesD.keys():
-                cm = scn.cmlist[cm_idx]
+            objsToSelect = []
+            # iterate through cm_ids of selected objects
+            for cm_id in self.objNamesD.keys():
+                cm = getItemByID(scn.cmlist, cm_id)
                 self.undo_stack.iterateStates(cm)
                 # initialize vars
-                bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
+                bricksDict = copy.deepcopy(self.bricksDicts[cm_id])
                 parent_brick = None
                 allSplitKeys = []
 
-                # iterate through cm_idxs of selected objects
-                for obj_name in self.objNamesD[cm_idx]:
+                # iterate through cm_ids of selected objects
+                for obj_name in self.objNamesD[cm_id]:
                     # initialize vars
                     dictKey, dictLoc = getDictKey(obj_name)
                     x0, y0, z0 = dictLoc
@@ -94,6 +95,11 @@ class mergeBricks(Operator):
 
                 # model is now customized
                 cm.customized = True
+
+                # add selected objects to objects to select at the end
+                objsToSelect += bpy.context.selected_objects.copy()
+            # select the new objects created
+            select(objsToSelect)
         except:
             handle_exception()
         return{"FINISHED"}
@@ -106,7 +112,7 @@ class mergeBricks(Operator):
         self.undo_stack = UndoStack.get_instance()
         self.undo_stack.undo_push('merge')
         selected_objects = bpy.context.selected_objects
-        self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
+        self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
 
     ###################################################
     # class variables

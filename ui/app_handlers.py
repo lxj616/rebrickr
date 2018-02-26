@@ -178,7 +178,7 @@ def handle_selections(scene):
             scn.Rebrickr_active_object_name = scn.objects.active.name
         for i in range(len(scn.cmlist)):
             cm = scn.cmlist[i]
-            if cm.version[:3] == "1_0" or cm.source_name != scn.Rebrickr_active_object_name or (usingSource and cm.modelCreated):
+            if createdWithUnsupportedVersion() or cm.source_name != scn.Rebrickr_active_object_name or (usingSource and cm.modelCreated):
                 continue
             scn.cmlist_index = i
             scn.Rebrickr_last_cmlist_index = scn.cmlist_index
@@ -317,7 +317,7 @@ def handle_upconversion(scene):
         return
     for cm in scn.cmlist:
         # convert from v1_0 to v1_1
-        if cm.version[:3] == "1_0":
+        if createdWithUnsupportedVersion():
             cm.brickWidth = 2 if cm.maxBrickScale2 > 1 else 1
             cm.brickDepth = cm.maxBrickScale2
             cm.matrixIsDirty = True

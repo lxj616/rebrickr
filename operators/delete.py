@@ -31,7 +31,7 @@ from bpy.props import *
 from ..lib.bricksDict import *
 from ..functions.common import *
 from ..functions.general import *
-from ..buttons.customize.functions import getAdjKeysAndBrickVals, drawUpdatedBricks, createObjsD
+from ..buttons.customize.functions import getAdjKeysAndBrickVals, drawUpdatedBricks
 from ..buttons.customize.undo_stack import *
 from ..buttons.delete import RebrickrDelete
 from ..lib.Brick import Bricks
@@ -102,13 +102,13 @@ class delete_override(Operator):
 
     def runDelete(self, context):
         if not bpy.props.rebrickr_initialized:
-            # initialize objsD (key:cm_idx, val:list of brick objects)
-            objsD = createObjsD(self.objsToDelete)
+            # initialize objNamesD (key:cm_id, val:list of brick objects)
+            objNamesD = createObjNamesD(self.objsToDelete)
             # remove brick type objects from selection
-            for val in objsD.values():
-                if len(val) > 0:
-                    for obj in val:
-                        self.objsToDelete.remove(obj)
+            for obj_names_list in objNamesD.values():
+                if len(obj_names_list) > 0:
+                    for obj_name in obj_names_list:
+                        self.objsToDelete.remove(bpy.data.objects.get(obj_name))
                     if not self.warnInitialize:
                         self.report({"WARNING"}, "Please initialize the Rebrickr [shift+i] before attempting to delete bricks")
                         self.warnInitialize = True
@@ -125,13 +125,13 @@ class delete_override(Operator):
         protected = []
         objNamesToDelete = [obj.name for obj in self.objsToDelete]
 
-        # initialize objsD (key:cm_idx, val:list of brick objects)
-        objsD = createObjsD(self.objsToDelete)
+        # initialize objNamesD (key:cm_id, val:list of brick objects)
+        objNamesD = createObjNamesD(self.objsToDelete)
 
         # update matrix
-        for i, cm_idx in enumerate(objsD.keys()):
-            cm = scn.cmlist[cm_idx]
-            if cm.version[:3] == "1_0":
+        for i, cm_id in enumerate(objNamesD.keys()):
+            cm = getItemByID(scn.cmlist, cm_id)
+            if createdWithUnsupportedVersion():
                 continue
             lastBlenderState = cm.blender_undo_state
             # get bricksDict from cache
@@ -142,9 +142,9 @@ class delete_override(Operator):
             keysToUpdate = []
             zStep = getZStep(cm)
 
-            for obj in objsD[cm_idx]:
+            for obj_name in objNamesD[cm_id]:
                 # get dict key details of current obj
-                dictKey, dictLoc = getDictKey(obj.name)
+                dictKey, dictLoc = getDictKey(obj_name)
                 x0, y0, z0 = dictLoc
                 # get size of current brick (e.g. [2, 4, 1])
                 objSize = bricksDict[dictKey]["size"]

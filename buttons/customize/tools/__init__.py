@@ -23,6 +23,7 @@ from .changeBrickType import *
 from .drawAdjacent import *
 from .mergeBricks import *
 from .redrawBricks import *
-from .selectBricks import *
 from .setExposure import *
 from .splitBricks import *
+from .select.bySize import *
+from .select.byType import *

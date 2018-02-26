@@ -64,16 +64,17 @@ class setExposure(Operator):
             selected_objects = bpy.context.selected_objects
             active_obj = scn.objects.active
             initial_active_obj_name = active_obj.name if active_obj else ""
+            objsToSelect = []
 
-            # iterate through cm_idxs of selected objects
-            for cm_idx in self.objNamesD.keys():
-                cm = scn.cmlist[cm_idx]
+            # iterate through cm_ids of selected objects
+            for cm_id in self.objNamesD.keys():
+                cm = getItemByID(scn.cmlist, cm_id)
                 self.undo_stack.iterateStates(cm)
-                bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
+                bricksDict = copy.deepcopy(self.bricksDicts[cm_id])
                 keysToUpdate = []
 
                 # iterate through names of selected objects
-                for obj_name in self.objNamesD[cm_idx]:
+                for obj_name in self.objNamesD[cm_id]:
                     # get dict key details of current obj
                     dictKey, dictLoc = getDictKey(obj_name)
                     # get size of current brick (e.g. [2, 4, 1])
@@ -96,10 +97,12 @@ class setExposure(Operator):
 
                 # model is now customized
                 cm.customized = True
-            # select original brick
+                # add selected objects to objects to select at the end
+                objsToSelect += bpy.context.selected_objects.copy()
+            # select the new objects created
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
-            if orig_obj:
-                scn.objects.active = orig_obj
+            # select the new objects created
+            select(objsToSelect, active=orig_obj)
         except:
             handle_exception()
         return {"FINISHED"}
@@ -113,7 +116,7 @@ class setExposure(Operator):
         self.undo_stack.undo_push('exposure')
         # initialize bricksDicts
         selected_objects = bpy.context.selected_objects
-        self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
+        self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
 
     ###################################################
     # class variables

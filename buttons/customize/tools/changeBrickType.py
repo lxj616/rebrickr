@@ -75,17 +75,16 @@ class changeBrickType(Operator):
             bricksWereGenerated = False
             brickType = self.brickType
 
-            # iterate through cm_idxs of selected objects
-            for cm_idx in self.objNamesD.keys():
-                cm = scn.cmlist[cm_idx]
+            # iterate through cm_ids of selected objects
+            for cm_id in self.objNamesD.keys():
+                cm = getItemByID(scn.cmlist, cm_id)
                 self.undo_stack.iterateStates(cm)
                 # initialize vars
-                bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
+                bricksDict = copy.deepcopy(self.bricksDicts[cm_id])
                 keysToUpdate = []
-                print(1)
 
                 # iterate through names of selected objects
-                for obj_name in self.objNamesD[cm_idx]:
+                for obj_name in self.objNamesD[cm_id]:
                     # initialize vars
                     dictKey, dictLoc = getDictKey(obj_name)
                     x0, y0, z0 = dictLoc
@@ -102,9 +101,9 @@ class changeBrickType(Operator):
                         keysToUpdate.append(dictKey)
                         objNamesToSelect.append(bricksDict[dictKey]["name"])
                         continue
-                    # # skip bricks that can't be turned into the chosen brick type
-                    # elif brickSize[:2] not in legalBrickSizes[3 if self.brickType in getBrickTypes(height=3) else 1][self.brickType]:
-                    #     continue
+                    # skip bricks that can't be turned into the chosen brick type
+                    elif brickSize[:2] not in legalBrickSizes[3 if self.brickType in getBrickTypes(height=3) else 1][self.brickType]:
+                        continue
 
                     # verify locations above are not obstructed
                     if self.brickType in getBrickTypes(height=3) and brickSize[2] == 1:
@@ -190,7 +189,7 @@ class changeBrickType(Operator):
             self.brickType = curBrickType if curBrickType is not None else ("BRICK" if curBrickSize[2] == 3 else "PLATE")
             self.flipBrick = bricksDict[dictKey]["flipped"]
             self.rotateBrick = bricksDict[dictKey]["rotated"]
-            self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
+            self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
         except:
             handle_exception()
 

@@ -67,12 +67,12 @@ def lightToDeepCache(rebrickr_bfm_cache):
     """ send bricksDict from blender cache to python cache for quick access """
     scn = bpy.context.scene
     numPushedIDs = 0
-    for cmlist_id in rebrickr_bfm_cache.keys():
+    for cm_id in rebrickr_bfm_cache.keys():
         # get cmlist item referred to by object
-        cm = getItemByID(scn.cmlist, cmlist_id)
+        cm = getItemByID(scn.cmlist, cm_id)
         if cm:
             # save last cache to cm.BFMCache
-            cm.BFMCache = json.dumps(rebrickr_bfm_cache[cmlist_id])
+            cm.BFMCache = json.dumps(rebrickr_bfm_cache[cm_id])
             numPushedIDs += 1
     if numPushedIDs > 0:
         print("pushed {numKeys} dicts from light cache to deep cache".format(numKeys=numPushedIDs))

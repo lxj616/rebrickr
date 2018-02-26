@@ -67,14 +67,14 @@ class splitBricks(Operator):
     def invoke(self, context, event):
         """invoke props popup if conditions met"""
         scn = context.scene
-        # iterate through cm_idxs of selected objects
-        for cm_idx in self.objNamesD.keys():
-            cm = scn.cmlist[cm_idx]
+        # iterate through cm_ids of selected objects
+        for cm_id in self.objNamesD.keys():
+            cm = getItemByID(scn.cmlist, cm_id)
             if "PLATES" not in cm.brickType:
                 continue
-            bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
+            bricksDict = copy.deepcopy(self.bricksDicts[cm_id])
             # iterate through names of selected objects
-            for obj_name in self.objNamesD[cm_idx]:
+            for obj_name in self.objNamesD[cm_id]:
                 dictKey, dictLoc = getDictKey(obj_name)
                 size = bricksDict[dictKey]["size"]
                 if size[2] <= 1:
@@ -99,7 +99,7 @@ class splitBricks(Operator):
         self.vertical = False
         self.horizontal = False
         selected_objects = bpy.context.selected_objects
-        self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
+        self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
 
     ###################################################
     # class variables
@@ -127,15 +127,16 @@ class splitBricks(Operator):
             if self.orig_undo_stack_length == self.undo_stack.getLength():
                 self.undo_stack.undo_push('split')
             scn = bpy.context.scene
-            # iterate through cm_idxs of selected objects
-            for cm_idx in self.objNamesD.keys():
-                cm = scn.cmlist[cm_idx]
+            objsToSelect = []
+            # iterate through cm_ids of selected objects
+            for cm_id in self.objNamesD.keys():
+                cm = getItemByID(scn.cmlist, cm_id)
                 self.undo_stack.iterateStates(cm)
-                bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
+                bricksDict = copy.deepcopy(self.bricksDicts[cm_id])
                 keysToUpdate = []
 
                 # iterate through names of selected objects
-                for obj_name in self.objNamesD[cm_idx]:
+                for obj_name in self.objNamesD[cm_id]:
                     # get dict key details of current obj
                     dictKey, dictLoc = getDictKey(obj_name)
                     x0, y0, z0 = dictLoc
@@ -161,6 +162,11 @@ class splitBricks(Operator):
 
                 # model is now customized
                 cm.customized = True
+
+                # add selected objects to objects to select at the end
+                objsToSelect += bpy.context.selected_objects.copy()
+            # select the new objects created
+            select(objsToSelect)
         except:
             handle_exception()
 
