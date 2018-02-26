@@ -72,6 +72,8 @@ class changeBrickType(Operator):
             initial_active_obj_name = active_obj.name if active_obj else ""
             selected_objects = bpy.context.selected_objects
             objNamesToSelect = []
+            bricksWereGenerated = False
+            brickType = self.brickType
 
             # iterate through cm_idxs of selected objects
             for cm_idx in self.objNamesD.keys():
@@ -103,12 +105,13 @@ class changeBrickType(Operator):
                     # verify locations above are not obstructed
                     if self.brickType in getBrickTypes(height=3) and brickSize[2] == 1:
                         aboveKeys = [listToStr([x0 + x, y0 + y, z0 + z]) for z in range(1, 3) for y in range(brickSize[1]) for x in range(brickSize[0])]
+                        obstructed = False
                         for curKey in aboveKeys:
                             if curKey in bricksDict and bricksDict[curKey]["draw"]:
                                 self.report({"INFO"}, "Could not change to type {brickType}; some locations are occupied".format(brickType=self.brickType))
-                                # self.brickType = brickType
-                                # return {"CANCELLED"}
-                                continue
+                                obstructed = True
+                                break
+                        if obstructed: continue
 
                     # print helpful message to user in blender interface
                     self.report({"INFO"}, "turn active {brickSize} brick into {targetType}".format(brickSize=str(brickSize)[1:-1], targetType=self.brickType))
@@ -138,6 +141,8 @@ class changeBrickType(Operator):
                 # uniquify keysToUpdate and remove null keys
                 keysToUpdate = uniquify1(keysToUpdate)
                 keysToUpdate = [x for x in keysToUpdate if x != None]
+                # if something was updated, set bricksWereGenerated
+                bricksWereGenerated = bricksWereGenerated or len(keysToUpdate) > 0
 
                 # delete objects to be updated
                 for k1 in keysToUpdate:
@@ -152,6 +157,7 @@ class changeBrickType(Operator):
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
             objsToSelect = [bpy.data.objects.get(n) for n in objNamesToSelect if bpy.data.objects.get(n) is not None]
             select(objsToSelect, active=orig_obj if orig_obj else None, only=False)
+            self.brickType = brickType if not bricksWereGenerated else self.brickType
         except:
             handle_exception()
         return {"FINISHED"}
