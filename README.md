@@ -29,13 +29,9 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add 'Change Color' model customization option
       * Add 'exclusion' functionality so that one model doesn’t create bricks where another model already did
       * Add merge option that creates either biggest bricks possible or randomly sampled like normal.
-      * Add functionality for changing brick type of multiple objects at once
       * Change offset in 'generate_lattice' back to the modulus equation from commit 1a5a85d (1/20/18) so that bricks fit together nicely between models
   * Known issues:
       * In snapchat hotdog test file, when parents removed and transformation kept, then when model created then deleted, source shrinks
-      * In bricks mode, bricks don't merge well
-      * In bricks mode, when adding adj bricks to object and then adding adj bricks to brick above, the adj bricks of the first don't get top exposure updated
       * For models with thin outer shells, Rebrickr may use color of inside face instead of outside face for brick material
       * In basketball test file, error occurs when attempting to generate model with materials based on UV map (index out of range)
       * For models created with Rebrickr v1.0, when opened in v1.1.1 and not-split model is selected and deleted with the 'x' key, model is not deleted
-      * When customization applied to model, if model settings clicked on but not updated, 'Revert Settings' warning does not appear.
