@@ -238,11 +238,12 @@ class drawAdjacent(Operator):
 
     def getNewCoord(self, cm, co, dimensions, side, newBrickHeight):
         full_d = [dimensions["width"], dimensions["width"], dimensions["height"]]
+        co = list(co)
         if side in [0, 2, 4]:  # positive directions
             co[side//2] += full_d[side//2]
         else:                  # negative directions
             co[side//2] -= full_d[side//2] * (newBrickHeight if side == 5 and cm.brickType == "BRICKS AND PLATES" else 1)
-        return co.to_tuple()
+        return tuple(co)
 
     def isBrickAlreadyCreated(self, brickNum, side):
         return not (brickNum == len(self.adjDKLs[side]) - 1 and
