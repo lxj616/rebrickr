@@ -71,22 +71,20 @@ class changeBrickType(Operator):
             active_obj = scn.objects.active
             initial_active_obj_name = active_obj.name if active_obj else ""
             selected_objects = bpy.context.selected_objects
-            # initialize objsD (key:cm_idx, val:list of brick objects)
-            objsD = createObjsD(selected_objects)
             objNamesToSelect = []
 
-            # iterate through keys in objsD
-            for cm_idx in objsD.keys():
+            # iterate through cm_idxs of selected objects
+            for cm_idx in self.objNamesD.keys():
                 cm = scn.cmlist[cm_idx]
                 self.undo_stack.iterateStates(cm)
                 # initialize vars
                 bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
                 keysToUpdate = []
 
-                # iterate through objects in objsD[cm_idx]
-                for obj in objsD[cm_idx]:
+                # iterate through names of selected objects
+                for obj_name in self.objNamesD[cm_idx]:
                     # initialize vars
-                    dictKey, dictLoc = getDictKey(obj.name)
+                    dictKey, dictLoc = getDictKey(obj_name)
                     x0, y0, z0 = dictLoc
                     # get size of current brick (e.g. [2, 4, 1])
                     brickSize = bricksDict[dictKey]["size"]
@@ -98,6 +96,7 @@ class changeBrickType(Operator):
                         bricksDict[dictKey]["rotated"] == self.rotateBrick):
                         # return {"CANCELLED"}
                         continue
+                    # skip bricks that can't be turned into the chosen brick type
                     elif brickSize[:2] not in legalBrickSizes[3 if self.brickType in getBrickTypes(height=3) else 1][self.brickType]:
                         continue
 
@@ -173,15 +172,15 @@ class changeBrickType(Operator):
             # get cmlist item referred to by object
             cm = getItemByID(scn.cmlist, obj.cmlist_id)
             # get bricksDict from cache
-            self.bricksDict, _ = getBricksDict(cm=cm)
+            bricksDict, _ = getBricksDict(cm=cm)
             dictKey, dictLoc = getDictKey(obj.name)
             # initialize properties
-            curBrickType = self.bricksDict[dictKey]["type"]
-            curBrickSize = self.bricksDict[dictKey]["size"]
+            curBrickType = bricksDict[dictKey]["type"]
+            curBrickSize = bricksDict[dictKey]["size"]
             self.brickType = curBrickType if curBrickType is not None else ("BRICK" if curBrickSize[2] == 3 else "PLATE")
-            self.flipBrick = self.bricksDict[dictKey]["flipped"]
-            self.rotateBrick = self.bricksDict[dictKey]["rotated"]
-            _, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
+            self.flipBrick = bricksDict[dictKey]["flipped"]
+            self.rotateBrick = bricksDict[dictKey]["rotated"]
+            self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
         except:
             handle_exception()
 
@@ -189,7 +188,9 @@ class changeBrickType(Operator):
     # class variables
 
     # vars
+    bricksDicts = {}
     bricksDict = {}
+    objNamesD = {}
 
     # get items for brickType prop
     def get_items(self, context):

@@ -65,13 +65,8 @@ class mergeBricks(Operator):
     def execute(self, context):
         try:
             scn = bpy.context.scene
-            selected_objects = bpy.context.selected_objects
-
-            # initialize objsD (key:cm_idx, val:list of brick objects)
-            objsD = createObjsD(selected_objects)
-
-            # iterate through keys in objsD
-            for cm_idx in objsD.keys():
+            # iterate through cm_idxs of selected objects
+            for cm_idx in self.objNamesD.keys():
                 cm = scn.cmlist[cm_idx]
                 self.undo_stack.iterateStates(cm)
                 # initialize vars
@@ -79,17 +74,17 @@ class mergeBricks(Operator):
                 parent_brick = None
                 allSplitKeys = []
 
-                # iterate through objects in objsD[cm_idx]
-                for obj in objsD[cm_idx]:
+                # iterate through cm_idxs of selected objects
+                for obj_name in self.objNamesD[cm_idx]:
                     # initialize vars
-                    dictKey, dictLoc = getDictKey(obj.name)
+                    dictKey, dictLoc = getDictKey(obj_name)
                     x0, y0, z0 = dictLoc
 
                     # split brick in matrix
                     splitKeys = Bricks.split(bricksDict, dictKey, cm=cm)
                     allSplitKeys += splitKeys
                     # delete the object that was split
-                    delete(obj)
+                    delete(bpy.data.objects.get(obj_name))
 
                 # run self.mergeBricks
                 keysToUpdate = mergeBricks.mergeBricks(bricksDict, allSplitKeys, cm)
@@ -111,13 +106,14 @@ class mergeBricks(Operator):
         self.undo_stack = UndoStack.get_instance()
         self.undo_stack.undo_push('merge')
         selected_objects = bpy.context.selected_objects
-        _, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
+        self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
 
     ###################################################
     # class variables
 
     # variables
     bricksDicts = {}
+    objNamesD = {}
 
     #############################################
     # class methods

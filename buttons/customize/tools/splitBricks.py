@@ -65,13 +65,15 @@ class splitBricks(Operator):
         return{"FINISHED"}
 
     def invoke(self, context, event):
+        """invoke props popup if conditions met"""
         scn = context.scene
-        # invoke props popup if conditions met
+        # iterate through cm_idxs of selected objects
         for cm_idx in self.objNamesD.keys():
             cm = scn.cmlist[cm_idx]
             if cm.brickType != "BRICKS AND PLATES":
                 continue
             bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
+            # iterate through names of selected objects
             for obj_name in self.objNamesD[cm_idx]:
                 dictKey, dictLoc = getDictKey(obj_name)
                 size = bricksDict[dictKey]["size"]
@@ -125,13 +127,14 @@ class splitBricks(Operator):
             if self.orig_undo_stack_length == self.undo_stack.getLength():
                 self.undo_stack.undo_push('split')
             scn = bpy.context.scene
-            # split all bricks in objNamesD[cm_idx]
+            # iterate through cm_idxs of selected objects
             for cm_idx in self.objNamesD.keys():
                 cm = scn.cmlist[cm_idx]
                 self.undo_stack.iterateStates(cm)
                 bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
                 keysToUpdate = []
 
+                # iterate through names of selected objects
                 for obj_name in self.objNamesD[cm_idx]:
                     # get dict key details of current obj
                     dictKey, dictLoc = getDictKey(obj_name)

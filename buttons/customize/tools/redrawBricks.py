@@ -62,18 +62,15 @@ class redrawBricks(Operator):
             active_obj = scn.objects.active
             initial_active_obj_name = active_obj.name if active_obj else ""
 
-            # initialize objsD (key:cm_idx, val:list of brick objects)
-            objsD = createObjsD(selected_objects)
-
-            # iterate through keys in objsD
-            for cm_idx in objsD.keys():
+            # iterate through cm_idxs of selected objects
+            for cm_idx in self.objNamesD.keys():
                 cm = scn.cmlist[cm_idx]
                 # get bricksDict from cache
-                bricksDict, _ = getBricksDict(cm=cm)
+                bricksDict, _ = self.bricksDicts[cm_idx]
                 keysToUpdate = []
 
                 # delete objects to be updated
-                for obj in objsD[cm_idx]:
+                for obj in self.objNamesD[cm_idx]:
                     delete(obj)
 
                 # add keys for updated objects to simple bricksDict for drawing
@@ -93,6 +90,16 @@ class redrawBricks(Operator):
     # initialization method
 
     def __init__(self):
-        pass
+        try:
+            self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
+        except:
+            handle_exception()
+
+    ###################################################
+    # class variables
+
+    # vars
+    bricksDicts = {}
+    objNamesD = {}
 
     #############################################

@@ -65,24 +65,22 @@ class setExposure(Operator):
             active_obj = scn.objects.active
             initial_active_obj_name = active_obj.name if active_obj else ""
 
-            # initialize objsD (key:cm_idx, val:list of brick objects)
-            objsD = createObjsD(selected_objects)
-
-            # iterate through keys in objsD
-            for cm_idx in objsD.keys():
+            # iterate through cm_idxs of selected objects
+            for cm_idx in self.objNamesD.keys():
                 cm = scn.cmlist[cm_idx]
                 self.undo_stack.iterateStates(cm)
                 bricksDict = copy.deepcopy(self.bricksDicts[cm_idx])
                 keysToUpdate = []
 
-                for obj in objsD[cm_idx]:
+                # iterate through names of selected objects
+                for obj_name in self.objNamesD[cm_idx]:
                     # get dict key details of current obj
-                    dictKey, dictLoc = getDictKey(obj.name)
+                    dictKey, dictLoc = getDictKey(obj_name)
                     # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
 
                     # delete the current object
-                    delete(obj)
+                    delete(bpy.data.objects.get(obj_name))
 
                     # set top as exposed
                     if self.side in ["TOP", "BOTH"]:
@@ -115,13 +113,14 @@ class setExposure(Operator):
         self.undo_stack.undo_push('exposure')
         # initialize bricksDicts
         selected_objects = bpy.context.selected_objects
-        _, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
+        self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictDs(selected_objects)
 
     ###################################################
     # class variables
 
     # variables
     bricksDicts = {}
+    objNamesD = {}
 
     # properties
     side = bpy.props.EnumProperty(
