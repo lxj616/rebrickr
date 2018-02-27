@@ -98,6 +98,9 @@ class splitBricks(Operator):
         self.orig_undo_stack_length = self.undo_stack.getLength()
         self.vertical = False
         self.horizontal = False
+        # get copy of objNamesD and bricksDicts
+        selected_objects = bpy.context.selected_objects
+        self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
 
     ###################################################
     # class variables
@@ -134,7 +137,7 @@ class splitBricks(Operator):
             for cm_id in self.objNamesD.keys():
                 cm = getItemByID(scn.cmlist, cm_id)
                 self.undo_stack.iterateStates(cm)
-                bricksDict = copy.deepcopy(self.bricksDicts[cm_id])
+                bricksDict = self.bricksDicts[cm_id]
                 keysToUpdate = []
 
                 # iterate through names of selected objects
