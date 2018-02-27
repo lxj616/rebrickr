@@ -27,6 +27,7 @@ import numpy as np
 
 # Blender imports
 from mathutils import Vector
+from bpy.types import CollectionProperty
 
 # Rebrickr imports
 from .geometric_shapes import *
@@ -34,7 +35,7 @@ from .generator_utils import *
 from ....functions.common import *
 
 
-def makeRound1x1(dimensions:dict, circleVerts:int=None, type:str="CYLINDER", detail:str="LOW", bme:bmesh=None):
+def makeRound1x1(dimensions:dict, circleVerts:int=None, type:str="CYLINDER", detail:str="LOW", cm:CollectionProperty=None, bme:bmesh=None):
     """
     create round 1x1 brick with bmesh
 
@@ -43,6 +44,7 @@ def makeRound1x1(dimensions:dict, circleVerts:int=None, type:str="CYLINDER", det
         circleVerts -- number of vertices per circle of cylinders
         type        -- type of round 1x1 brick in ["CONE", "CYLINDER", "STUD", "STUD_HOLLOW"]
         detail      -- level of brick detail (options: ["FLAT", "LOW", "MEDIUM", "HIGH"])
+        cm          -- cmlist item of model
         bme         -- bmesh object in which to create verts
 
     """
@@ -50,6 +52,7 @@ def makeRound1x1(dimensions:dict, circleVerts:int=None, type:str="CYLINDER", det
     assert type in ["CONE", "CYLINDER", "STUD", "STUD_HOLLOW"]
     # create new bmesh object
     bme = bmesh.new() if not bme else bme
+    cm = cm or getActiveContextInfo()[1]
 
     # store original detail amount
     origDetail = detail
@@ -63,7 +66,6 @@ def makeRound1x1(dimensions:dict, circleVerts:int=None, type:str="CYLINDER", det
     detail = "MEDIUM" if type == "STUD_HOLLOW" else detail
 
     # set brick height and thickness
-    _, cm, _ = getActiveContextInfo()
     height = dimensions["height"] if cm.brickType in ["BRICKS", "CUSTOM"] else dimensions["height"] * 3
     thick = Vector([dimensions["thickness"]] * 3)
 

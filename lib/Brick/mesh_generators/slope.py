@@ -27,13 +27,14 @@ import numpy as np
 
 # Blender imports
 from mathutils import Vector, Matrix
+from bpy.types import CollectionProperty
 
 # Rebrickr imports
 from .geometric_shapes import *
 from .generator_utils import *
 
 
-def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:int=None, detail:str="LOW", stud:bool=True, bme:bmesh=None):
+def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:int=None, detail:str="LOW", stud:bool=True, cm:CollectionProperty=None, bme:bmesh=None):
     """
     create slope brick with bmesh
 
@@ -46,11 +47,13 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
         circleVerts -- number of vertices per circle of cylinders
         detail      -- level of brick detail (options: ["FLAT", "LOW", "MEDIUM", "HIGH"])
         stud        -- create stud on top of brick
+        cm          -- cmlist item of model
         bme         -- bmesh object in which to create verts
 
     """
     # create new bmesh object
     bme = bmesh.new() if not bme else bme
+    cm = cm or getActiveContextInfo()[1]
 
     # set direction to longest side if None (defaults to X if sides are the same)
     maxIdx = brickSize.index(max(brickSize[:2]))
@@ -61,7 +64,6 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
     assert direction in directions
 
     # get halfScale
-    _, cm, _ = getActiveContextInfo()
     bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
     height = dimensions["height"] * (3 if bAndPBrick else 1)
     d = Vector((dimensions["width"] / 2, dimensions["width"] / 2, height / 2))
@@ -150,10 +152,10 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
         if detail in ["MEDIUM", "HIGH"]:
             # add bars
             if min(brickSize) == 1:
-                addBars(dimensions, height, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme)
+                addBars(cm, dimensions, height, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme)
             # add tubes
             else:
-                addTubeSupports(dimensions, height, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme)
+                addTubeSupports(cm, dimensions, height, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme)
         # add inner cylinders
         if detail == "HIGH":
             addInnerCylinders(dimensions, [1] + adjustedBrickSize[1:], circleVerts, d, v23, v24, v25, v26, bme)

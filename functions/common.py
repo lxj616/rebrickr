@@ -138,7 +138,7 @@ def uniquify1(seq):
     keys = {}
     for e in seq:
         keys[e] = 1
-    return keys.keys()
+    return list(keys.keys())
 
 def uniquify2(seq, innerType=list):
     return [innerType(x) for x in set(tuple(x) for x in seq)]

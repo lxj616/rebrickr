@@ -285,9 +285,9 @@ def getDictKey(name):
     return dictKey, dictLoc
 
 
-def getDetailsAndBounds(source):
+def getDetailsAndBounds(source, cm=None):
     """ returns dimensions and bounds of source object """
-    scn, cm, _ = getActiveContextInfo()
+    cm = cm or getActiveContextInfo()[1]
     source_details = bounds(source)
     zStep = getZStep(cm)
     dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)
@@ -298,7 +298,7 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
     """ returns arguments for makeBricksDict function """
     source = source or bpy.data.objects.get(cm.source_name) or bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
     if source_details is None or dimensions is None:
-        source_details, dimensions = getDetailsAndBounds(source)
+        source_details, dimensions = getDetailsAndBounds(source, cm)
     if cm.brickType == "CUSTOM":
         scn = bpy.context.scene
         customObj = bpy.data.objects[cm.customObjectName]

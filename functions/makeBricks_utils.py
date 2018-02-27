@@ -73,7 +73,6 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
         bmesh.ops.scale(bm, vec=Vector(((brickScale.x - dimensions["gap"]) / customObj_details.x.dist, (brickScale.y - dimensions["gap"]) / customObj_details.y.dist, (brickScale.z - dimensions["gap"]) / customObj_details.z.dist)), verts=bm.verts)
     else:
         # get brick mesh
-        # bm = Bricks.new_mesh(dimensions=dimensions, size=brickSize, undersideDetail=undersideDetail, logo=logoToUse, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, circleVerts=cm.circleVerts)
         bm = getBrickMesh(cm, brickD, randS4, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.circleVerts)
     # apply random rotation to BMesh according to parameters
     if cm.randomRot > 0:
@@ -177,7 +176,7 @@ def updateKeysNotChecked(brickSize, loc, zStep, keysNotChecked, key):
 
 
 def skipThisRow(timeThrough, lowestLoc, loc):
-    _, cm, _ = getActiveContextInfo()
+    cm = getActiveContextInfo()[1]
     if timeThrough == 0:  # first time
         if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 in [1, 2]:
             return True
@@ -291,7 +290,7 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
         bm = bms[rand.randint(0, len(bms))] if len(bms) > 1 else bms[0]
     # if not found in rebrickr_bm_cache, create new brick mesh(es) and store to cache
     else:
-        bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, type=brickD["type"], undersideDetail=undersideDetail, flip=brickD["flipped"], rotate90=brickD["rotated"], logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, circleVerts=cm.circleVerts)
+        bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, type=brickD["type"], undersideDetail=undersideDetail, flip=brickD["flipped"], rotate90=brickD["rotated"], logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, circleVerts=cm.circleVerts, cm=cm)
         if cm.brickType != "CUSTOM":
             rebrickr_bm_cache[bm_cache_string] = bms
         bm = bms[rand.randint(0, len(bms))]

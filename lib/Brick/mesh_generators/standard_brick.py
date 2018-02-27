@@ -25,7 +25,7 @@ import math
 
 # Blender imports
 from mathutils import Vector, Matrix
-from bpy.types import Object
+from bpy.types import Object, CollectionProperty
 
 # Rebrickr imports
 from .geometric_shapes import *
@@ -34,7 +34,7 @@ from ....functions.common import *
 from ....functions.general import *
 
 
-def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int=16, detail:str="LOW", logo:Object=None, stud:bool=True, bme:bmesh=None):
+def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int=16, detail:str="LOW", logo:Object=None, stud:bool=True, cm:CollectionProperty=None, bme:bmesh=None):
     """
     create brick with bmesh
 
@@ -46,13 +46,14 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
         detail      -- level of brick detail (options: ["FLAT", "LOW", "MEDIUM", "HIGH"])
         logo        -- logo object to create on top of studs
         stud        -- create stud on top of brick
+        cm          -- cmlist item of model
         bme         -- bmesh object in which to create verts
 
     """
     assert detail in ["FLAT", "LOW", "MEDIUM", "HIGH"]
     # create new bmesh object
     bme = bmesh.new() if not bme else bme
-    _, cm, _ = getActiveContextInfo()
+    cm = cm or getActiveContextInfo()[1]
     bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
     height = dimensions["height"] * (3 if bAndPBrick else 1)
 
@@ -93,9 +94,9 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
 
 
         # make tubes
-        addTubeSupports(dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
+        addTubeSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
         # Adding bar inside 1 by x bricks
-        addBars(dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
+        addBars(cm, dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
         # add small inner cylinders inside brick
         if detail in ["MEDIUM", "HIGH"]:
             addInnerCylinders(dimensions, brickSize, circleVerts, d, v13, v14, v15, v16, bme)

@@ -27,12 +27,13 @@ import numpy as np
 
 # Blender imports
 from mathutils import Vector
+from bpy.types import Object, CollectionProperty
 
 # Rebrickr imports
 from .geometric_shapes import *
 
 
-def makeTile(dimensions:dict, brickSize:list, circleVerts:int=None, detail:str="LOW", stud:bool=True, bme:bmesh=None):
+def makeTile(dimensions:dict, brickSize:list, circleVerts:int=None, detail:str="LOW", stud:bool=True, cm:CollectionProperty=None, bme:bmesh=None):
     """
     create inverted slope brick with bmesh
 
@@ -43,11 +44,13 @@ def makeTile(dimensions:dict, brickSize:list, circleVerts:int=None, detail:str="
         type        -- type of round 1x1 brick in ["CONE", "CYLINDER", "STUD", "STUD_HOLLOW"]
         detail      -- level of brick detail (options: ["FLAT", "LOW", "MEDIUM", "HIGH"])
         stud        -- create stud on top of brick
+        cm          -- cmlist item of model
         bme         -- bmesh object in which to create verts
 
     """
     # create new bmesh object
     bme = bmesh.new() if not bme else bme
+    cm = cm or getActiveContextInfo()[1]
 
 
     return bme

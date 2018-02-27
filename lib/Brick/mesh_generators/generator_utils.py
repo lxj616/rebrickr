@@ -52,11 +52,10 @@ def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, hollow=
     return studVerts
 
 
-def addBars(dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme):
+def addBars(cm, dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme):
     z1 = -d.z
     z2 = d.z - thick.z
     r = dimensions["bar_radius"]
-    _, cm, _ = getActiveContextInfo()
     bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
     barZ = -(thick.z / 2)
     sides = [0, 1] + ([0, 0, 1, 1] if brickSize[0] == 1 else [1, 1, 0, 0])
@@ -100,8 +99,7 @@ def addBars(dimensions, height, brickSize, circleVerts, type, detail, d, scalar,
         cutVerts(dimensions, height, brickSize, allTopVerts, d, scalar, thick, bme)
 
 
-def addTubeSupports(dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme):
-    _, cm, _ = getActiveContextInfo()
+def addTubeSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme):
     addSupports = (brickSize[0] > 2 and brickSize[1] == 2) or (brickSize[1] > 2 and brickSize[0] == 2)
     bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
     # set z1/z2 values

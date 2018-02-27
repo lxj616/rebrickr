@@ -42,7 +42,8 @@ def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     # get arguments for createNewBricks
     n = cm.source_name
     source = bpy.data.objects.get(n + " (DO NOT RENAME)")
-    source_details, dimensions = getDetailsAndBounds(source)
+    source_details, dimensions = getDetailsAndBounds(source, cm)
+    print(source.name, cm.id)
     Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
     parent = bpy.data.objects.get(Rebrickr_parent_on)
     refLogo = RebrickrBrickify.getLogo(cm)

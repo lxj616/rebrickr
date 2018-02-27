@@ -37,15 +37,15 @@ from ...functions.common import *
 
 class Bricks:
     @staticmethod
-    def new_mesh(dimensions:list, size:list=[1,1,3], type:str="BRICK", flip:bool=False, rotate90:bool=False, logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_inset=None, undersideDetail:str="FLAT", stud:bool=True, circleVerts:int=16):
+    def new_mesh(dimensions:list, size:list=[1,1,3], type:str="BRICK", flip:bool=False, rotate90:bool=False, logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_inset=None, undersideDetail:str="FLAT", stud:bool=True, circleVerts:int=16, cm=None):
         """ create unlinked Brick at origin """
+        cm = cm or getActiveContextInfo()[1]
 
         # create brick mesh
         if type in ["BRICK", "PLATE", "CUSTOM"]:
-            _, cm, _ = getActiveContextInfo()
-            brickBM = makeStandardBrick(dimensions=dimensions, brickSize=size, type=type, circleVerts=circleVerts, detail=undersideDetail, stud=stud)
+            brickBM = makeStandardBrick(dimensions=dimensions, brickSize=size, type=type, circleVerts=circleVerts, detail=undersideDetail, stud=stud, cm=cm)
         elif type in ["CYLINDER", "CONE", "STUD", "STUD_HOLLOW"]:
-            brickBM = makeRound1x1(dimensions=dimensions, circleVerts=circleVerts, type=type, detail=undersideDetail)
+            brickBM = makeRound1x1(dimensions=dimensions, circleVerts=circleVerts, type=type, detail=undersideDetail, cm=cm)
         elif type == "SLOPE":
             # determine brick direction
             directions = ["X+", "Y+", "X-", "Y-"]
@@ -53,7 +53,7 @@ class Bricks:
             maxIdx -= 2 if flip else 0
             maxIdx += 1 if rotate90 else 0
             # make slope brick bmesh
-            brickBM = makeSlope(dimensions=dimensions, brickSize=size, circleVerts=circleVerts, direction=directions[maxIdx], detail=undersideDetail, stud=stud)
+            brickBM = makeSlope(dimensions=dimensions, brickSize=size, circleVerts=circleVerts, direction=directions[maxIdx], detail=undersideDetail, stud=stud, cm=cm)
         else:
             raise ValueError("'new_mesh' function received unrecognized value for parameter 'type': '" + str(type) + "'")
 
@@ -84,6 +84,16 @@ class Bricks:
                 bricksDict[key]["size"] = [1, 1, getZStep(cm)]
 
     def split(bricksDict, key, loc=None, cm=None, v=True, h=True):
+        """split brick vertically and/or horizontally
+
+        Keyword Arguments:
+        bricksDict -- Matrix of bricks in model
+        key        -- key for brick in matrix
+        loc        -- xyz location of brick in matrix
+        cm         -- cmlist item of model
+        v          -- split brick vertically
+        h          -- split brick horizontally
+        """
         # set up unspecified paramaters
         cm = cm or getActiveContextInfo()[1]
         loc = loc or strToList(key)
@@ -109,7 +119,7 @@ class Bricks:
                 for z0 in range(z, z + size[2], zStep):
                     curKey = listToStr([x0,y0,z0])
                     bricksDict[curKey]["size"] = newSize
-                    bricksDict[curKey]["type"] = "BRICK" if newSize == 3 else "PLATE"
+                    bricksDict[curKey]["type"] = "BRICK" if newSize[2] == 3 else "PLATE"
                     bricksDict[curKey]["parent_brick"] = "self"
                     bricksDict[curKey]["top_exposed"] = bricksDict[key]["top_exposed"]
                     bricksDict[curKey]["bot_exposed"] = bricksDict[key]["bot_exposed"]

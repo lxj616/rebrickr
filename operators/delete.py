@@ -31,7 +31,7 @@ from bpy.props import *
 from ..lib.bricksDict import *
 from ..functions.common import *
 from ..functions.general import *
-from ..buttons.customize.functions import getAdjKeysAndBrickVals, drawUpdatedBricks
+from ..buttons.customize.functions import *
 from ..buttons.customize.undo_stack import *
 from ..buttons.delete import RebrickrDelete
 from ..lib.Brick import Bricks
@@ -137,7 +137,7 @@ class delete_override(Operator):
             # get bricksDict from cache
             bricksDict, loadedFromCache = getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)
             if not loadedFromCache:
-                self.report({"WARNING"}, "Adjacent bricks in '" + cm.name + "' could not be updated (matrix not cached)")
+                self.report({"WARNING"}, "Adjacent bricks in model '" + cm.name + "' could not be updated (matrix not cached)")
                 continue
             keysToUpdate = []
             zStep = getZStep(cm)
@@ -163,21 +163,19 @@ class delete_override(Operator):
             lastBuildIsDirty = cm.buildIsDirty
             if not lastBuildIsDirty:
                 cm.buildIsDirty = True
-            # draw modified bricks
+            # merge and draw modified bricks
             if len(keysToUpdate) > 0:
-                # delete bricks that didn't get deleted already
+                # split up bricks before drawUpdatedBricks calls attemptMerge
                 newKeysToUpdate = keysToUpdate.copy()
-                for k in keysToUpdate:
-                    splitKeys = Bricks.split(bricksDict, k, cm=cm)
-                    # append new splitKeys to newKeysToUpdate
-                    for k in splitKeys:
-                        if k not in newKeysToUpdate:
-                            newKeysToUpdate.append(k)
-                for k in newKeysToUpdate:
-                    brick = bpy.data.objects.get(bricksDict[k]["name"])
+                for k0 in keysToUpdate:
+                    newKeysToUpdate += Bricks.split(bricksDict, k0, cm=cm)
+                newKeysToUpdate = uniquify1(newKeysToUpdate)
+                # remove duplicate keys from the list and delete those objects
+                for k2 in newKeysToUpdate:
+                    brick = bpy.data.objects.get(bricksDict[k2]["name"])
                     delete(brick)
-                # create new bricks at all keysToUpdate locations
-                drawUpdatedBricks(cm, bricksDict, newKeysToUpdate)
+                # create new bricks at all keysToUpdate locations (attempts merge as well)
+                drawUpdatedBricks(cm, bricksDict, newKeysToUpdate, selectCreated=False)
                 iteratedStates = True
             if not lastBuildIsDirty:
                 cm.buildIsDirty = False
@@ -186,8 +184,6 @@ class delete_override(Operator):
                 # iterate undo states
                 self.undo_stack.iterateStates(cm)
             self.iteratedStatesAtLeastOnce = True
-            # store bricksDict to cache
-            cacheBricksDict("UPDATE_MODEL", cm, bricksDict)
             # model is now customized
             cm.customized = True
 
