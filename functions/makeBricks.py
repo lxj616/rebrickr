@@ -211,7 +211,9 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
         allBricksObj.cmlist_id = cm.id
         # create vert group for bevel mod (assuming only logo verts are selected):
         vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())
+        print(7)
         vertList = [v.index for v in allBricksObj.data.vertices if not v.select]
+        print(8)
         # vertList = []
         # for v in allBricksObj.data.vertices:
         #     if not v.select:

@@ -357,7 +357,8 @@ def select(objList=[], active=None, deselect=False, only=True, scene=None):
             deselectAll()
         # select/deselect objects in list
         for obj in objList:
-            obj.select = not deselect
+            if obj is not None:
+                obj.select = not deselect
 
         # set active object
         if active:
