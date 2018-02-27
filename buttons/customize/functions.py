@@ -252,7 +252,9 @@ def selectBricks(objNamesD, bricksDicts, brickSize="NULL", brickType="NULL", all
             siz = bricksDict[dictKey]["size"]
             sizeStr = listToStr(sorted(siz[:2]) + [siz[2]])
             typ = bricksDict[dictKey]["type"]
-            onShell = bricksDict[dictKey]["val"] == 1
+            x0, y0, z0 = dictLoc
+            onShell = bricksDict[dictKey]["val"] == 1 or (1 in [bricksDict[listToStr([x0 + x, y0 + y, z0 + z])]["val"] for z in range(siz[2]) for y in range(siz[1]) for x in range(siz[0])])
+
             # get current brick object
             curObj = bpy.data.objects.get(obj_name)
             # if curObj is None:
