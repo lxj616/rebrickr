@@ -138,8 +138,9 @@ class BrickModelsPanel(Panel):
                 row = col1.row(align=True)
                 row.operator("rebrickr.customize_model", text="Initialize Rebrickr", icon="MODIFIER")
                 # draw test brick generator button (for testing purposes only)
-                col = layout.column(align=True)
-                col.operator("rebrickr.test_brick_generators", text="Test Brick Generators", icon="OUTLINER_OB_MESH")
+                if testBrickGenerators.drawUIButton():
+                    col = layout.column(align=True)
+                    col.operator("rebrickr.test_brick_generators", text="Test Brick Generators", icon="OUTLINER_OB_MESH")
             # if use animation is selected, draw animation options
             elif cm.useAnimation:
                 if cm.animated:
@@ -819,7 +820,7 @@ class CustomizeModel(Panel):
     bl_region_type = "TOOLS"
     bl_label       = "Customize Model"
     bl_idname      = "VIEW3D_PT_tools_Rebrickr_customize_model"
-    # bl_context     = "objectmode"
+    bl_context     = "objectmode"
     bl_category    = "Rebrickr"
     bl_options     = {"DEFAULT_CLOSED"}
 
@@ -946,23 +947,23 @@ class AdvancedPanel(Panel):
             row = col.row(align=True)
             row.prop(cm, "useLocalOrient", text="Use Source Local")
         # draw test brick generator button (for testing purposes only)
-        col = layout.column(align=True)
-        col.operator("rebrickr.test_brick_generators", text="Test Brick Generators", icon="OUTLINER_OB_MESH")
+        if testBrickGenerators.drawUIButton():
+            col = layout.column(align=True)
+            col.operator("rebrickr.test_brick_generators", text="Test Brick Generators", icon="OUTLINER_OB_MESH")
 
 
 class BrickDetailsPanel(Panel):
-    """ for debugging purposes only """
+    """ Display Matrix details for specified brick location """
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Brick Details"
     bl_idname      = "VIEW3D_PT_tools_Rebrickr_brick_details"
-    # bl_context     = "objectmode"
+    bl_context     = "objectmode"
     bl_category    = "Rebrickr"
     bl_options     = {"DEFAULT_CLOSED"}
 
     @classmethod
     def poll(self, context):
-        # return False # for debugging purposes only
         if not settingsCanBeDrawn():
             return False
         scn, cm, _ = getActiveContextInfo()

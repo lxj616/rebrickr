@@ -46,6 +46,10 @@ class testBrickGenerators(bpy.types.Operator):
             handle_exception()
         return{"FINISHED"}
 
+    @staticmethod
+    def drawUIButton():
+        return False
+
 
 def newObjFromBmesh(layer, bme, meshName, objName=None, loc=(0,0,0), edgeSplit=True):
     scn = bpy.context.scene
