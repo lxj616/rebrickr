@@ -1,8 +1,8 @@
 bl_info = {
     "name"        : "Rebrickr",
     "author"      : "Christopher Gearhart <chris@bblanimation.com>",
-    "version"     : (1, 1, 1),
-    "blender"     : (2, 78, 0),
+    "version"     : (1, 2, 0),
+    "blender"     : (2, 79, 0),
     "description" : "Turn any mesh into a 3D brick sculpture or simulation with the click of a button",
     "location"    : "View3D > Tools > Rebrickr",
     "warning"     : "",  # used for warning icon and text in addons panel
