@@ -21,7 +21,6 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * For animation, if last frame's brickFreqMatrix matches current frame's brickFreqMatrix, save time by just keeping that model around for another frame or duplicating it for the next frame or something
       * Prefer overlapping and staggering over stacking of bricks
       * New feature: SNOT (studs not on top) functionality
-      * Add support for texture maps transferring to materials
       * Add support for smoke animations
       * Add support for rigid bodies
       * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
@@ -29,9 +28,7 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add 'Change Color' model customization option
       * Add 'exclusion' functionality so that one model doesn’t create bricks where another model already did
       * Add merge option that creates either biggest bricks possible or randomly sampled like normal.
-      * Change offset in 'generate_lattice' back to the modulus equation from commit 1a5a85d (1/20/18) so that bricks fit together nicely between models
   * Known issues:
       * In snapchat hotdog test file, when parents removed and transformation kept, then when model created then deleted, source shrinks
       * For models with thin outer shells, Rebrickr may use color of inside face instead of outside face for brick material
       * In basketball test file, error occurs when attempting to generate model with materials based on UV map (index out of range)
-      * For models created with Rebrickr v1.0, when opened in v1.1.1 and not-split model is selected and deleted with the 'x' key, model is not deleted
