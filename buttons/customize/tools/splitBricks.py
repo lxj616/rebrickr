@@ -61,7 +61,7 @@ class splitBricks(Operator):
         return False
 
     def execute(self, context):
-        self.splitBricks()
+        self.splitBricks(deepCopyMatrix=True)
         return{"FINISHED"}
 
     def invoke(self, context, event):
@@ -122,14 +122,11 @@ class splitBricks(Operator):
     #############################################
     # class methods
 
-    def splitBricks(self):
+    def splitBricks(self, deepCopyMatrix=False):
         try:
             self.undo_stack.matchPythonToBlenderState()
             if self.orig_undo_stack_length == self.undo_stack.getLength():
                 self.undo_stack.undo_push('split')
-            # get fresh copy of objNamesD and bricksDicts
-            selected_objects = bpy.context.selected_objects
-            self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
             # initialize vars
             scn = bpy.context.scene
             objsToSelect = []
@@ -137,7 +134,7 @@ class splitBricks(Operator):
             for cm_id in self.objNamesD.keys():
                 cm = getItemByID(scn.cmlist, cm_id)
                 self.undo_stack.iterateStates(cm)
-                bricksDict = self.bricksDicts[cm_id]
+                bricksDict = copy.deepcopy(self.bricksDicts[cm_id]) if deepCopyMatrix else self.bricksDicts[cm_id]
                 keysToUpdate = []
 
                 # iterate through names of selected objects
@@ -151,7 +148,7 @@ class splitBricks(Operator):
                     zStep = getZStep(cm)
 
                     # skip 1x1 bricks
-                    if brickSize[0] + brickSize[1] + (brickSize[2] / zStep) == 3:
+                    if brickSize[0] + brickSize[1] + brickSize[2] / zStep == 3:
                         continue
 
                     if self.vertical or self.horizontal:
