@@ -328,7 +328,7 @@ class drawAdjacent(Operator):
                         self.adjBricksCreated[side][brickNum] = False
                         adjBrickD["draw"] = False
                         return False
-                    else:
+                    elif side in [4, 5]:
                         keysToMerge.append(newKey)
             # update dictionary of locations above brick
             if "PLATES" in cm.brickType and side in [4, 5]:
