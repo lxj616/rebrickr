@@ -149,10 +149,11 @@ class BrickModelsPanel(Panel):
                     row = col.row(align=True)
                     row.operator("rebrickr.brickify", text="Update Animation", icon="FILE_REFRESH")
                     if createdWithUnsupportedVersion():
+                        v_str = cm.version[:3].replace("_", ".")
                         col = layout.column(align=True)
                         col.scale_y = 0.7
                         col.label("Model was created with")
-                        col.label("Rebrickr v1.0. Please")
+                        col.label("Rebrickr v%(v_str)s. Please" % locals())
                         col.label("run 'Update Model' so")
                         col.label("it is compatible with")
                         col.label("your current version.")
@@ -178,10 +179,11 @@ class BrickModelsPanel(Panel):
                     col = layout.column(align=True)
                     col.operator("rebrickr.brickify", text="Update Model", icon="FILE_REFRESH")
                     if createdWithUnsupportedVersion():
+                        v_str = cm.version[:4].replace(", ", ".")
                         col = layout.column(align=True)
                         col.scale_y = 0.7
                         col.label("Model was created with")
-                        col.label("Rebrickr v1.0. Please")
+                        col.label("Rebrickr v%(v_str)s. Please" % locals())
                         col.label("run 'Update Model' so")
                         col.label("it is compatible with")
                         col.label("your current version.")

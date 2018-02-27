@@ -750,14 +750,14 @@ class Rebrickr_CreatedModels(bpy.types.PropertyGroup):
         name="Align Bricks Horizontally",
         description="Keep bricks aligned horizontally, and fill the gaps with plates",
         update=dirtyBuild,
-        default=False)
+        default=True)
     offsetBrickLayers = IntProperty(
         name="Offset Brick Layers",
         description="Offset the layers that will be merged into bricks if possible",
         update=dirtyBuild,
         step=1,
         min=0, max=2,
-        default=0)
+        default=1)
 
     originSet = BoolProperty(
         name="Center brick origins",

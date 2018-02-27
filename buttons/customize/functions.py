@@ -43,13 +43,16 @@ def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     n = cm.source_name
     source = bpy.data.objects.get(n + " (DO NOT RENAME)")
     source_details, dimensions = getDetailsAndBounds(source, cm)
-    print(source.name, cm.id)
     Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
     parent = bpy.data.objects.get(Rebrickr_parent_on)
     refLogo = RebrickrBrickify.getLogo(cm)
     action = "UPDATE_MODEL"
     # actually draw the bricks
     RebrickrBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, action, cm=cm, bricksDict=bricksDict, keys=keysToUpdate, replaceExistingGroup=False, selectCreated=selectCreated, printStatus=False, redraw=True)
+    # add bevel if it was previously added
+    if cm.bevelAdded:
+        bricks = getBricks(cm)
+        RebrickrBevel.runBevelAction(bricks, cm)
 
 
 def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
