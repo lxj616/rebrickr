@@ -187,7 +187,7 @@ class drawAdjacent(Operator):
             objType = self.bricksDict[dictKey]["type"]
             try:
                 self.brickType = objType or ("BRICK" if objSize[2] == 3 else "PLATE")
-            except:
+            except TypeError:
                 pass
         except:
             handle_exception()

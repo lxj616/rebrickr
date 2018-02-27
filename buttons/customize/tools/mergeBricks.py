@@ -53,13 +53,15 @@ class mergeBricks(Operator):
         i = 0
         # check that at least 2 objects are selected and are bricks
         for obj in objs:
-            if obj.isBrick:
-                # get cmlist item referred to by object
-                cm = getItemByID(scn.cmlist, obj.cmlist_id)
-                if cm.lastBrickType != "CUSTOM" and not cm.buildIsDirty:
-                    i += 1
-                    if i == 2:
-                        return True
+            if not obj.isBrick:
+                continue
+            # get cmlist item referred to by object
+            cm = getItemByID(scn.cmlist, obj.cmlist_id)
+            if cm.lastBrickType == "CUSTOM" or cm.buildIsDirty:
+                continue
+            i += 1
+            if i == 2:
+                return True
         return False
 
     def execute(self, context):

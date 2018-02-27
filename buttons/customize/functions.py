@@ -213,15 +213,16 @@ def createObjNamesD(objs):
     objNamesD = {}
     # fill objNamesD with selected_objects
     for obj in objs:
-        if obj.isBrick:
-            # get cmlist item referred to by object
-            cm = getItemByID(scn.cmlist, obj.cmlist_id)
-            if cm is None: continue
-            # add object to objNamesD
-            if cm.id not in objNamesD:
-                objNamesD[cm.id] = [obj.name]
-            else:
-                objNamesD[cm.id].append(obj.name)
+        if not obj.isBrick:
+            continue
+        # get cmlist item referred to by object
+        cm = getItemByID(scn.cmlist, obj.cmlist_id)
+        if cm is None: continue
+        # add object to objNamesD
+        if cm.id not in objNamesD:
+            objNamesD[cm.id] = [obj.name]
+        else:
+            objNamesD[cm.id].append(obj.name)
     return objNamesD
 
 

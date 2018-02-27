@@ -48,17 +48,19 @@ class changeBrickType(Operator):
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
+        if not bpy.props.rebrickr_initialized:
+            return False
         scn = bpy.context.scene
-        active_obj = scn.objects.active
-        # check active object is not None
-        if active_obj is None:
-            return False
-        # check that active_object is brick
-        if not active_obj.isBrick:
-            return False
-        # get cmlist item referred to by object
-        cm = getItemByID(scn.cmlist, active_obj.cmlist_id)
-        return True
+        objs = bpy.context.selected_objects
+        # check that at least 1 selected object is a brick
+        for obj in objs:
+            if not obj.isBrick:
+                continue
+            # get cmlist item referred to by object
+            cm = getItemByID(scn.cmlist, obj.cmlist_id)
+            if cm.lastBrickType != "CUSTOM":
+                return True
+        return False
 
     def execute(self, context):
         try:
@@ -176,19 +178,25 @@ class changeBrickType(Operator):
             self.undo_stack = UndoStack.get_instance()
             self.orig_undo_stack_length = self.undo_stack.getLength()
             scn = bpy.context.scene
-            obj = scn.objects.active
             selected_objects = bpy.context.selected_objects
-            # get cmlist item referred to by object
-            cm = getItemByID(scn.cmlist, obj.cmlist_id)
-            # get bricksDict from cache
-            bricksDict, _ = getBricksDict(cm=cm)
-            dictKey, dictLoc = getDictKey(obj.name)
-            # initialize properties
-            curBrickType = bricksDict[dictKey]["type"]
-            curBrickSize = bricksDict[dictKey]["size"]
-            self.brickType = curBrickType or ("BRICK" if curBrickSize[2] == 3 else "PLATE")
-            self.flipBrick = bricksDict[dictKey]["flipped"]
-            self.rotateBrick = bricksDict[dictKey]["rotated"]
+            # initialize self.flipBrick, self.rotateBrick, and self.brickType
+            for obj in selected_objects:
+                if not obj.isBrick:
+                    continue
+                # get cmlist item referred to by object
+                cm = getItemByID(scn.cmlist, obj.cmlist_id)
+                # get bricksDict from cache
+                bricksDict, _ = getBricksDict(cm=cm)
+                dictKey, dictLoc = getDictKey(obj.name)
+                # initialize properties
+                curBrickType = bricksDict[dictKey]["type"]
+                curBrickSize = bricksDict[dictKey]["size"]
+                try:
+                    self.flipBrick = bricksDict[dictKey]["flipped"]
+                    self.rotateBrick = bricksDict[dictKey]["rotated"]
+                    self.brickType = curBrickType or ("BRICK" if curBrickSize[2] == 3 else "PLATE")
+                except TypeError:
+                    pass
             self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
         except:
             handle_exception()
@@ -203,7 +211,7 @@ class changeBrickType(Operator):
 
     # get items for brickType prop
     def get_items(self, context):
-        items = getAvailableTypes()
+        items = getAvailableTypes(by="SELECTION")
         return items
 
 

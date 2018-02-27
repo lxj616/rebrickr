@@ -51,11 +51,12 @@ class setExposure(Operator):
         objs = bpy.context.selected_objects
         # check that at least 1 selected object is a brick
         for obj in objs:
-            if obj.isBrick:
-                # get cmlist item referred to by object
-                cm = getItemByID(scn.cmlist, obj.cmlist_id)
-                if cm.lastBrickType != "CUSTOM":
-                    return True
+            if not obj.isBrick:
+                continue
+            # get cmlist item referred to by object
+            cm = getItemByID(scn.cmlist, obj.cmlist_id)
+            if cm.lastBrickType != "CUSTOM":
+                return True
         return False
 
     def execute(self, context):
