@@ -244,14 +244,32 @@ def most_common(L):
     return max(groups, key=_auxfun)[0]
 
 
-def vector_mult(v1, v2):
+def vec_mult(v1, v2):
     """ componentwise multiplication for vectors """
     return Vector(e1 * e2 for e1, e2 in zip(v1, v2))
 
 
-def vector_div(v1, v2):
+def vec_div(v1, v2):
     """ componentwise division for vectors """
     return Vector(e1 / e2 for e1, e2 in zip(v1, v2))
+
+
+def vec_remainder(v1, v2):
+    """ componentwise remainder for vectors """
+    return Vector(e1 % e2 for e1, e2 in zip(v1, v2))
+
+
+def vec_abs(v1):
+    """ componentwise absolute value for vectors """
+    return Vector(abs(e1) for e1 in v1)
+
+
+def round_up(num, divisor):
+    return num + divisor - (num % divisor)
+
+
+def round_down(num, divisor):
+    return num - (num % divisor)
 
 
 def confirmList(itemList):

@@ -21,13 +21,14 @@ Created by Christopher Gearhart
 
 # System imports
 import bmesh
+import math
 
 # Blender imports
 import bpy
 from mathutils import Vector
 
 # Rebrickr imports
-from .common import drawBMesh, vector_mult
+from .common import *
 
 
 def generateLattice(vertDist:Vector, scale:Vector, offset:Vector=(0, 0, 0), visualize:bool=False):
@@ -42,14 +43,15 @@ def generateLattice(vertDist:Vector, scale:Vector, offset:Vector=(0, 0, 0), visu
     """
 
     # shift offset to ensure lattice surrounds object
-    offset = offset - (vertDist / 2)
+    offset = offset - vec_remainder(offset, vertDist)
     # calculate res of lattice
     res = Vector((round(scale.x / vertDist.x),
                   round(scale.y / vertDist.y),
                   round(scale.z / vertDist.z)))
     # populate coord matrix
+    res = Vector(round_up(v, 2) for v in res)
     nx, ny, nz = int(res.x) + 2, int(res.y) + 2, int(res.z) + 2
-    create_coord = lambda v: vector_mult(v - res / 2, vertDist) + offset
+    create_coord = lambda v: vec_mult(v - res / 2, vertDist) + offset
     coordMatrix = [[[create_coord(Vector((x, y, z))) for z in range(nz)] for y in range(ny)] for x in range(nx)]
 
     if visualize:

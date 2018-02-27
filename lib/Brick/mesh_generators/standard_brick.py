@@ -70,7 +70,7 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
 
     # create cube
     coord1 = -d
-    coord2 = vector_mult(d, scalar)
+    coord2 = vec_mult(d, scalar)
     v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
 
     # add studs
@@ -80,7 +80,7 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
     if detail != "FLAT":
         # making verts for hollow portion
         coord1 = -d + Vector((thick.x, thick.y, 0))
-        coord2 = vector_mult(d, scalar) - thick
+        coord2 = vec_mult(d, scalar) - thick
         v9, v10, v11, v12, v13, v14, v15, v16 = makeCube(coord1, coord2, [1 if detail == "LOW" else 0, 0, 1, 1, 1, 1], flipNormals=True, bme=bme)
         # make tick marks inside 2 by x bricks
         if detail == "HIGH" and ((brickSize[0] == 2 and brickSize[1] > 1) or (brickSize[1] == 2 and brickSize[0] > 1)) and brickSize[2] != 1:
@@ -103,8 +103,8 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
 
 
     gap = Vector([dimensions["gap"]] * 2)
-    numer = vector_mult(d.xy * 2 + gap, brickSize[:2]) - gap
-    denom = vector_mult(d.xy * 2,       brickSize[:2])
+    numer = vec_mult(d.xy * 2 + gap, brickSize[:2]) - gap
+    denom = vec_mult(d.xy * 2,       brickSize[:2])
     if brickSize[0] != 1 or brickSize[1] != 1:
         bmesh.ops.scale(bme, verts=bme.verts, vec=(numer.x / denom.x, numer.y / denom.y, 1.0))
 

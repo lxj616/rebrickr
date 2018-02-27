@@ -79,7 +79,7 @@ def makeRound1x1(dimensions:dict, circleVerts:int=None, type:str="CYLINDER", det
         new_radius = dimensions["stud_radius"] * 1.075
         factor = new_radius / (dimensions["width"] / 2)
         for vert in vertsOuterCylinder["top"]:
-            vert.co.xy = vector_mult(vert.co.xy, [factor]*2)
+            vert.co.xy = vec_mult(vert.co.xy, [factor]*2)
     # select verts for exclusion from vert group
     selectVerts(vertsOuterCylinder["bottom"])
 

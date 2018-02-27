@@ -77,7 +77,7 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
 
     # make brick body cube
     coord1 = -d
-    coord2 = vector_mult(d, [1, scalar.y, 1])
+    coord2 = vec_mult(d, [1, scalar.y, 1])
     v1, v2, d0, d1, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1 if detail == "FLAT" else 0, 0, 0, 1, 1], bme=bme)
     # remove bottom verts on slope side
     bme.verts.remove(d0)
@@ -89,8 +89,8 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
     if stud: addStuds(dimensions, height, [1] + adjustedBrickSize[1:], "CONE", circleVerts, bme, inset=thick.z * 0.9)
 
     # make square at end of slope
-    coord1 = vector_mult(d, [scalar.x, -1, -1])
-    coord2 = vector_mult(d, [scalar.x, scalar.y, -1])
+    coord1 = vec_mult(d, [scalar.x, -1, -1])
+    coord2 = vec_mult(d, [scalar.x, scalar.y, -1])
     coord2.z += thick.z
     v9, v10, v11, v12 = makeSquare(coord1, coord2, bme=bme)
 
@@ -124,7 +124,7 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
         # add inside verts cube at deepest section
         coord1 = -d
         coord1.xy += thick.xy
-        coord2 = vector_mult(d, [1, scalar.y, 1])
+        coord2 = vec_mult(d, [1, scalar.y, 1])
         coord2.yz -= thick.yz
         v19, v20, d0, d1, v23, v24, v25, v26 = makeCube(coord1, coord2, [1 if detail != "HIGH" else 0, 1, 0, 1, 0, 0], flipNormals=True, bme=bme)
         # remove bottom verts on slope side

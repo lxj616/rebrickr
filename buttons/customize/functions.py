@@ -194,7 +194,7 @@ def createAddlBricksDictEntry(cm, bricksDict, source_key, key, full_d, x, y, z):
     j = cm.numBricksGenerated
     n = cm.source_name
     newName = "Rebrickr_%(n)s_brick_%(j)s__%(key)s" % locals()
-    newCO = list(Vector(brickD["co"]) + vector_mult(Vector((x, y, z)), full_d))
+    newCO = list(Vector(brickD["co"]) + vec_mult(Vector((x, y, z)), full_d))
     bricksDict[key] = createBricksDictEntry(
         name=                 newName,
         co=                   newCO,

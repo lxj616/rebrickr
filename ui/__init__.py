@@ -382,7 +382,7 @@ class ModelSettingsPanel(Panel):
                 full_d = Vector((dimensions["width"],
                                  dimensions["width"],
                                  dimensions["height"]))
-                r = vector_div(s, full_d)
+                r = vec_div(s, full_d)
             elif cm.brickType == "CUSTOM":
                 customObjFound = False
                 customObj = bpy.data.objects.get(cm.customObjectName)
@@ -393,7 +393,7 @@ class ModelSettingsPanel(Panel):
                         full_d = Vector((custom_details.x.dist * mult,
                                          custom_details.y.dist * mult,
                                          cm.brickHeight))
-                        r = vector_div(s, full_d)
+                        r = vec_div(s, full_d)
                         customObjFound = True
             if cm.brickType == "CUSTOM" and not customObjFound:
                 col.label("[Custom object not found]")

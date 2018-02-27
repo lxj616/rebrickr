@@ -83,7 +83,7 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
                          brickSize[1] * 2 - 1,
                          1))
         # calculate center and rotate bm about center
-        center = (vector_mult(d, scalar) - d) / 2
+        center = (vec_mult(d, scalar) - d) / 2
         center.z = 0
         randRot = randomizeRot(randS3, center.to_tuple(), brickSize, bm)
     # create new mesh and send bm to it
