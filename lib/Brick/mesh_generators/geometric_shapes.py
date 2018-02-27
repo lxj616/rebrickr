@@ -22,8 +22,7 @@ def makeSquare(coord1:Vector, coord2:Vector, face:bool=True, flipNormal:bool=Fal
 
     """
     # create new bmesh object
-    if bme is None:
-        bme = bmesh.new()
+    bme = bme or bmesh.new()
 
     # create square with normal facing +x direction
     if coord1.x == coord2.x:
@@ -65,8 +64,7 @@ def makeCube(coord1:Vector, coord2:Vector, sides:list=[False]*6, flipNormals:boo
     assert coord1.z < coord2.z
 
     # create new bmesh object
-    if bme is None:
-        bme = bmesh.new()
+    bme = bme or bmesh.new()
 
     # create vertices
     vList = [bme.verts.new((x, y, z)) for x in [coord1.x, coord2.x] for y in [coord1.y, coord2.y] for z in [coord1.z, coord2.z]]
@@ -108,10 +106,8 @@ def makeCircle(r:float, N:int, co:Vector=Vector((0,0,0)), face:bool=True, flipNo
         bme         -- bmesh object in which to create verts
 
     """
-    # create new bmesh object
-    if bme is None:
-        bme = bmesh.new()
-
+    # initialize vars
+    bme = bme or bmesh.new()
     verts = []
 
     # create verts around circumference of circle
@@ -143,11 +139,8 @@ def makeCylinder(r:float, h:float, N:int, co:Vector=Vector((0,0,0)), botFace:boo
         bme         -- bmesh object in which to create verts
 
     """
-    # create new bmesh object
-    if bme is None:
-        bme = bmesh.new()
-
-    # initialize lists
+    # initialize vars
+    bme = bme or bmesh.new()
     topVerts = []
     botVerts = []
     sideFaces = []

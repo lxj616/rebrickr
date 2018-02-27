@@ -174,8 +174,7 @@ def createNewMaterial(model_name, rgba, rgba_vals):
     mat_name = "Rebrickr_{}_mat_{}-{}-{}-{}".format(model_name, round(r0, 5), round(g0, 5), round(b0, 5), round(a0, 5))
     mat = bpy.data.materials.get(mat_name)
     mat_is_new = mat is None
-    if mat is None:
-        mat = bpy.data.materials.new(name=mat_name)
+    mat = mat or bpy.data.materials.new(name=mat_name)
     # set diffuse and transparency of material
     if scn.render.engine == "CYCLES":
         if mat_is_new:
@@ -220,9 +219,7 @@ def getUVImage(obj, face_idx):
     scn, cm, _ = getActiveContextInfo()
     image = bpy.data.images.get(cm.uvImageName)
     if image is None and obj.data.uv_textures.active:
-        image = obj.data.uv_textures.active.data[face_idx].image
-    if image is None:
-        image = getFirstImgTexNode(obj)
+        image = obj.data.uv_textures.active.data[face_idx].image or getFirstImgTexNode(obj)
     return image
 
 
@@ -299,9 +296,7 @@ def getDetailsAndBounds(source):
 
 def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=None):
     """ returns arguments for makeBricksDict function """
-    if source is None:
-        source = bpy.data.objects.get(cm.source_name)
-        if source is None: source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+    source = source or bpy.data.objects.get(cm.source_name) or bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
     if source_details is None or dimensions is None:
         source_details, dimensions = getDetailsAndBounds(source)
     if cm.brickType == "CUSTOM":

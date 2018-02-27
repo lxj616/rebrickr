@@ -121,8 +121,7 @@ def setOriginToObjOrigin(toObj, fromObj=None, fromLoc=None, deleteFromObj=False)
 
 def getBricks(cm=None):
     """ get bricks in 'cm' model """
-    if cm is None:
-        scn, cm, _ = getActiveContextInfo()
+    cm = cm or getActiveContextInfo()[1]
     n = cm.source_name
     if cm.modelCreated:
         gn = "Rebrickr_%(n)s_bricks" % locals()
@@ -159,14 +158,12 @@ def brick_materials_loaded():
 
 
 def snapToBrickColors(cm=None):
-    if cm is None:
-        _, cm, _ = getActiveContextInfo()
+    cm = cm or getActiveContextInfo()[1]
     return (brick_materials_loaded() and cm.snapToBrickColors)
 
 
 def getMatrixSettings(cm=None):
-    if cm is None:
-        scn, cm, _ = getActiveContextInfo()
+    cm = cm or getActiveContextInfo()[1]
     return listToStr([cm.brickHeight, cm.gap, cm.brickType, cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ, cm.customObjectName, cm.useNormals, cm.verifyExposure, cm.insidenessRayCastDir, cm.castDoubleCheckRays, cm.brickShell, cm.calculationAxes])
 
 
@@ -218,6 +215,5 @@ def getParentKey(bricksDict, key):
     return parent_key
 
 def createdWithUnsupportedVersion(cm=None):
-    if cm is None:
-        _, cm, _ = getActiveContextInfo()
+    cm = cm or getActiveContextInfo()[1]
     return cm.version[:3] != bpy.props.rebrickr_version[:3]

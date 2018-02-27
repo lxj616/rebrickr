@@ -56,8 +56,7 @@ class RebrickrRevertSettings(Operator):
         return{"FINISHED"}
 
     def revertMatrixSettings(self, cm=None):
-        if cm is None:
-            scn, cm, _ = getActiveContextInfo()
+        cm = cm or getActiveContextInfo()[1]
         settings = cm.lastMatrixSettings.split(",")
         cm.brickHeight = float(settings[0])
         cm.gap = float(settings[1])

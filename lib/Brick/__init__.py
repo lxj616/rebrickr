@@ -75,23 +75,18 @@ class Bricks:
 
     @staticmethod
     def splitAll(bricksDict, keys=None, cm=None):
-        if cm is None:
-            scn, cm, _ = getActiveContextInfo()
-        if keys is None:
-            keys = list(bricksDict.keys())
-        zStep = getZStep(cm)
+        cm = cm or getActiveContextInfo()[1]
+        keys = keys or list(bricksDict.keys())
         for key in keys:
             # set all bricks as unmerged
             if bricksDict[key]["draw"]:
                 bricksDict[key]["parent_brick"] = "self"
-                bricksDict[key]["size"] = [1, 1, zStep]
+                bricksDict[key]["size"] = [1, 1, getZStep(cm)]
 
     def split(bricksDict, key, loc=None, cm=None, v=True, h=True):
         # set up unspecified paramaters
-        if cm is None:
-            scn, cm, _ = getActiveContextInfo()
-        if loc is None:
-            loc = strToList(key)
+        cm = cm or getActiveContextInfo()[1]
+        loc = loc or strToList(key)
         # initialize vars
         size = bricksDict[key]["size"]
         newSize = [1, 1, size[2]]
@@ -127,7 +122,7 @@ class Bricks:
         return get_brick_dimensions(height, zScale, gap_percentage)
 
 def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, logo_details, logo_scale, logo_inset):
-    _, cm, _ = getActiveContextInfo()
+    cm = getActiveContextInfo()[1]
     # get logo rotation angle based on size of brick
     rot_mult = 180
     rot_vars = 2

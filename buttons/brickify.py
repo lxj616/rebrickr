@@ -278,8 +278,7 @@ class RebrickrBrickify(bpy.types.Operator):
             # get previously created source duplicate
             sourceDup = bpy.data.objects.get(n + "_duplicate")
         # if duplicate not created, sourceDup is just original source
-        if sourceDup is None:
-            sourceDup = self.source
+        sourceDup = sourceDup or self.source
 
         # link sourceDup if it isn't in scene
         if sourceDup.name not in scn.objects.keys():
@@ -482,8 +481,7 @@ class RebrickrBrickify(bpy.types.Operator):
     def createNewBricks(self, source, parent, source_details, dimensions, refLogo, action, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False, printStatus=True, redraw=False):
         """ gets/creates bricksDict, runs makeBricks, and caches the final bricksDict """
         scn = bpy.context.scene
-        if cm is None:
-            cm = scn.cmlist[scn.cmlist_index]
+        cm = cm or scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         _, _, _, brickScale, customData, customObj_details = getArgumentsForBricksDict(cm, source=source, source_details=source_details, dimensions=dimensions)
         updateCursor = action in ["CREATE", "UPDATE_MODEL"]  # evaluates to boolean value
@@ -868,9 +866,7 @@ class RebrickrBrickify(bpy.types.Operator):
         if self.action in ["UPDATE_MODEL", "UPDATE_ANIM"]:
             objToBrickify = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         elif self.action in ["CREATE", "ANIMATE"]:
-            objToBrickify = bpy.data.objects.get(cm.source_name)
-            if objToBrickify is None:
-                objToBrickify = bpy.context.active_object
+            objToBrickify = bpy.data.objects.get(cm.source_name) or bpy.context.active_object
         else:
             objToBrickify = bpy.data.objects.get(cm.source_name)
         return objToBrickify

@@ -56,7 +56,7 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
     maxIdx = brickSize.index(max(brickSize[:2]))
     directions = ["X+", "Y+", "X-", "Y-"]
     # default to "X+" if X is larger, "Y+" if Y is larger
-    direction = directions[maxIdx] if direction is None else direction
+    direction = direction or directions[maxIdx]
     # verify direction is valid
     assert direction in directions
 

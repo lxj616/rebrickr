@@ -50,8 +50,7 @@ class testBrickGenerators(bpy.types.Operator):
 def newObjFromBmesh(layer, bme, meshName, objName=None, loc=(0,0,0), edgeSplit=True):
     scn = bpy.context.scene
     # if only one name given, use it for both names
-    if objName is None:
-        objName = meshName
+    objName = objName or meshName
 
     # create mesh and object
     me = bpy.data.meshes.new(meshName)

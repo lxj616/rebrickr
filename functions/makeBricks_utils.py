@@ -110,7 +110,7 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
         # set brick's location
         brick.location = brickLoc
         # set brick's material
-        brick.data.materials.append(mat if mat is not None else internalMat)
+        brick.data.materials.append(mat or internalMat)
         # add edge split modifier
         addEdgeSplitMod(brick)
         # append to bricksCreated

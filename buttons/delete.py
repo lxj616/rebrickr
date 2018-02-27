@@ -35,8 +35,7 @@ from .cache import *
 def getModelType(self, cm=None):
     """ return 'MODEL' if modelCreated, 'ANIMATION' if animated """
     scn = bpy.context.scene
-    if cm is None:
-        cm = scn.cmlist[scn.cmlist_index]
+    cm = cm or scn.cmlist[scn.cmlist_index]
     if cm.animated:
         modelType = "ANIMATION"
     elif cm.modelCreated:
@@ -86,8 +85,7 @@ class RebrickrDelete(bpy.types.Operator):
         """ externally callable cleanup function for bricks, source, dupes, and parents """
         # set up variables
         scn = bpy.context.scene
-        if cm is None:
-            cm = scn.cmlist[scn.cmlist_index]
+        cm = cm or scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
         source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
@@ -130,8 +128,7 @@ class RebrickrDelete(bpy.types.Operator):
         """ externally callable cleanup function for full delete action (clears everything from memory) """
         scn = bpy.context.scene
         scn.Rebrickr_runningOperation = True
-        if cm is None:
-            cm = scn.cmlist[scn.cmlist_index]
+        cm = cm or scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
         parentOb = None
@@ -170,7 +167,7 @@ class RebrickrDelete(bpy.types.Operator):
             source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
             source.rotation_mode = "XYZ"
             if cm.useLocalOrient:
-                source.rotation_euler = brickRot if brickRot is not None else Euler(tuple(r), "XYZ")
+                source.rotation_euler = brickRot or Euler(tuple(r), "XYZ")
             else:
                 source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
 

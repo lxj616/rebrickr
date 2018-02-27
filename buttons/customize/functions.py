@@ -147,14 +147,12 @@ def getAvailableTypes(by="SELECTION", includeSizes=[]):
     # return items, or null if items was empty
     return items if len(items) > 0 else [("NULL", "Null", "")]
 
-def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, curHeight=None, curType=None, targetHeight=None, targetType=None):
+def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, curHeight=None, curType=None, targetHeight=None, targetType=None, createdFrom=None):
     brickD = bricksDict[key]
     assert targetHeight is not None or targetType is not None
-    if targetHeight is None:
-        targetHeight = 1 if targetType in getBrickTypes(height=1) else 3
+    targetHeight = targetHeight or (1 if targetType in getBrickTypes(height=1) else 3)
     assert curHeight is not None or curType is not None
-    if curHeight is None:
-        curHeight = 1 if curType in getBrickTypes(height=1) else 3
+    curHeight = curHeight or (1 if curType in getBrickTypes(height=1) else 3)
     # adjust brick size if changing type from 3 tall to 1 tall
     if curHeight == 3 and targetHeight == 1:
         brickSize[2] = 1
@@ -179,10 +177,11 @@ def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, curH
                         bricksDict = createAddlBricksDictEntry(cm, bricksDict, key, newKey, full_d, x, y, z)
                     # update bricksDict entry to point to new brick
                     bricksDict[newKey]["parent_brick"] = key
+                    bricksDict[newKey]["created_from"] = createdFrom
                     bricksDict[newKey]["draw"] = True
                     bricksDict[newKey]["mat_name"] = brickD["mat_name"] if bricksDict[newKey]["mat_name"] == "" else bricksDict[newKey]["mat_name"]
-                    bricksDict[newKey]["nearest_face"] = brickD["nearest_face"] if bricksDict[newKey]["nearest_face"] is None else bricksDict[newKey]["nearest_face"]
-                    bricksDict[newKey]["nearest_intersection"] = brickD["nearest_intersection"] if bricksDict[newKey]["nearest_intersection"] is None else bricksDict[newKey]["nearest_intersection"]
+                    bricksDict[newKey]["nearest_face"] = bricksDict[newKey]["nearest_face"] or brickD["nearest_face"]
+                    bricksDict[newKey]["nearest_intersection"] = bricksDict[newKey]["nearest_intersection"] or brickD["nearest_intersection"]
                     if bricksDict[newKey]["val"] == 0:
                         setCurBrickVal(bricksDict, strToList(newKey))
     return brickSize

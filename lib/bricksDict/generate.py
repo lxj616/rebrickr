@@ -461,7 +461,7 @@ def getThreshold(cm):
     """ returns threshold (draw bricks if returned val >= threshold) """
     return 1.01 - (cm.shellThickness / 100)
 
-def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,0), nearest_face:int=None, nearest_intersection:int=None, rgba:tuple=None, mat_name:str=None, parent_brick:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, bType:str=None, flipped:bool=False, rotated:bool=False):
+def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,0), nearest_face:int=None, nearest_intersection:int=None, rgba:tuple=None, mat_name:str=None, parent_brick:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
     """
     create an entry in the dictionary of brick locations
 
@@ -482,6 +482,7 @@ def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,
     type                 -- type of brick
     flipped              -- brick is flipped over non-mirrored axis
     rotated              -- brick is rotated 90 degrees about the Z axis
+    created_from         -- key of brick this brick was created from in drawAdjacent
 
     """
     return {"name":name,
@@ -500,6 +501,7 @@ def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,
             "type":bType,
             "flipped":flipped,
             "rotated":rotated,
+            "created_from":created_from,
            }
 
 @timed_call('Time Elapsed')

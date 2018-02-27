@@ -101,6 +101,5 @@ class Caches(bpy.types.Operator):
     @staticmethod
     def cacheExists(cm=None):
         """check if light or deep matrix cache exists for cmlist item"""
-        if cm is None:
-            scn, cm, _ = getActiveContextInfo()
+        cm = cm or getActiveContextInfo()[1]
         return rebrickr_bfm_cache.get(cm.id) is not None or cm.BFMCache != ""

@@ -64,7 +64,7 @@ def updateMaterials(bricksDict, source):
     return bricksDict
 
 
-def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, mergeVertical=False, tallType="BRICK", shortType="PLATE"):
+def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, height3Only=False, mergeVertical=False, tallType="BRICK", shortType="PLATE"):
     """ update 'brickSizes' with available brick sizes surrounding bricksDict[key] """
     newMax1 = maxL[1]
     newMax2 = maxL[2]
@@ -95,7 +95,7 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, me
                 # else, append current brick size to brickSizes
                 else:
                     newSize = [i+1, j+1, k+zStep]
-                    if newSize not in brickSizes and [newSize[0],newSize[1]] in bpy.props.Rebrickr_legal_brick_sizes[newSize[2]][tallType if newSize[2] == 3 else shortType]:
+                    if newSize not in brickSizes and not (newSize[2] == 1 and height3Only) and newSize[:2] in bpy.props.Rebrickr_legal_brick_sizes[newSize[2]][tallType if newSize[2] == 3 else shortType]:
                         brickSizes.append(newSize)
             if breakOuter1: break
         breakOuter1 = False
@@ -111,11 +111,8 @@ def attemptMerge(cm, bricksDict, key, keys, brickSizes, zStep, randState, prefer
 
     if cm.brickType != "CUSTOM":
         # iterate through adjacent locs to find available brick sizes
-        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
-        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
-        # only keep sizes with height 3
-        if height3Only:
-            brickSizes = [sz for sz in brickSizes if sz[2] == 3]
+        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
+        updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
         # sort brick types from smallest to largest
         order = randState.randint(0,2)
         if preferLargest:
@@ -158,11 +155,8 @@ def getBrickExposure(cm, bricksDict, key=None, loc=None):
     botExposed = False
     zStep = getZStep(cm)
     # initialize parameters unspecified
-    if loc is None:
-        loc = strToList(key)
-    elif key is None:
-        key = listToStr(loc)
-
+    loc = loc or strToList(key)
+    key = key or listToStr(loc)
 
     # get size of brick and break conditions
     if key not in bricksDict: return None, None

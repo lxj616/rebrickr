@@ -80,7 +80,7 @@ class changeBrickType(Operator):
                 cm = getItemByID(scn.cmlist, cm_id)
                 self.undo_stack.iterateStates(cm)
                 # initialize vars
-                bricksDict = copy.deepcopy(self.bricksDicts[cm_id])
+                bricksDict = self.bricksDicts[cm_id]
                 keysToUpdate = []
 
                 # iterate through names of selected objects
@@ -186,7 +186,7 @@ class changeBrickType(Operator):
             # initialize properties
             curBrickType = bricksDict[dictKey]["type"]
             curBrickSize = bricksDict[dictKey]["size"]
-            self.brickType = curBrickType if curBrickType is not None else ("BRICK" if curBrickSize[2] == 3 else "PLATE")
+            self.brickType = curBrickType or ("BRICK" if curBrickSize[2] == 3 else "PLATE")
             self.flipBrick = bricksDict[dictKey]["flipped"]
             self.rotateBrick = bricksDict[dictKey]["rotated"]
             self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)

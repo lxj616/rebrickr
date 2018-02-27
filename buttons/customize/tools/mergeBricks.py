@@ -71,7 +71,7 @@ class mergeBricks(Operator):
                 cm = getItemByID(scn.cmlist, cm_id)
                 self.undo_stack.iterateStates(cm)
                 # initialize vars
-                bricksDict = copy.deepcopy(self.bricksDicts[cm_id])
+                bricksDict = self.bricksDicts[cm_id]
                 parent_brick = None
                 allSplitKeys = []
 

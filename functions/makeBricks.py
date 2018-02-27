@@ -48,8 +48,7 @@ from .makeBricks_utils import *
 def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brickScale=None, customData=None, customObj_details=None, group_name=None, replaceExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True):
     # set up variables
     scn = bpy.context.scene
-    if cm is None:
-        cm = scn.cmlist[scn.cmlist_index]
+    cm = cm or scn.cmlist[scn.cmlist_index]
     n = cm.source_name
     zStep = getZStep(cm)
 
@@ -73,8 +72,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
     keys.sort(key=lambda x: strToList(x)[2])
 
     # get brick group
-    if group_name is None:
-        group_name = 'Rebrickr_%(n)s_bricks' % locals()
+    group_name = group_name or 'Rebrickr_%(n)s_bricks' % locals()
     bGroup = bpy.data.groups.get(group_name)
     # create new group if no existing group found
     if bGroup is None:
@@ -106,11 +104,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
     allBrickMeshes = []
     lowestLoc = -1
     # set up internal material for this object
-    internalMat = bpy.data.materials.get(cm.internalMatName)
-    if internalMat is None:
-        internalMat = bpy.data.materials.get("Rebrickr_%(n)s_internal" % locals())
-        if internalMat is None:
-            internalMat = bpy.data.materials.new("Rebrickr_%(n)s_internal" % locals())
+    internalMat = bpy.data.materials.get(cm.internalMatName) or bpy.data.materials.get("Rebrickr_%(n)s_internal" % locals()) or bpy.data.materials.new("Rebrickr_%(n)s_internal" % locals())
     if cm.materialType == "SOURCE" and cm.matShellDepth < cm.shellThickness:
         mats.append(internalMat)
     # initialize supportBrickDs

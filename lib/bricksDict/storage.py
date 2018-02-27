@@ -35,21 +35,16 @@ from ...functions import *
 def getBricksDict(action="UPDATE_MODEL", source=None, source_details=None, dimensions=None, brickScale=None, updateCursor=True, curFrame=None, cm=None, restrictContext=False):
     """ retrieve bricksDict from cache if possible, else create a new one """
     scn = bpy.context.scene
-    if cm is None:
-        cm = scn.cmlist[scn.cmlist_index]
+    cm = cm or scn.cmlist[scn.cmlist_index]
     loadedFromCache = False
     # if bricksDict can be pulled from cache
     if not cm.matrixIsDirty and not (cm.BFMCache == "" and rebrickr_bfm_cache.get(cm.id) is None) and not (cm.animIsDirty and action == "UPDATE_ANIM"):
-        # try getting bricksDict from light cache
-        bricksDict = rebrickr_bfm_cache.get(cm.id)
-        if bricksDict is None:
-            # get bricksDict from deep cache
-            bricksDict = json.loads(cm.BFMCache)
+        # try getting bricksDict from light cache, then deep cache
+        bricksDict = rebrickr_bfm_cache.get(cm.id) or json.loads(cm.BFMCache)
         loadedFromCache = True
         # if animated, index into that dict
         if action == "UPDATE_ANIM":
-            if curFrame is None:
-                curFrame = scn.frame_current
+            curFrame = curFrame or scn.frame_current
             bricksDict = bricksDict[str(curFrame)]
     # if context restricted, return nothing
     elif restrictContext:

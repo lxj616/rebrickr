@@ -44,7 +44,7 @@ def bversion():
 
 def getActiveContextInfo(cm_idx=None):
     scn = bpy.context.scene
-    cm_idx = scn.cmlist_index if cm_idx is None else cm_idx
+    cm_idx = cm_idx or scn.cmlist_index
     cm = scn.cmlist[cm_idx]
     n = cm.source_name
     return scn, cm, n
@@ -293,8 +293,7 @@ def getLayersList(layerList):
 def setLayers(layers, scn=None):
     """ set active layers of scn w/o 'dag ZERO' error """
     assert len(layers) == 20
-    if scn is None:
-        scn = bpy.context.scene
+    scn = scn or bpy.context.scene
     # set active scene (prevents dag ZERO errors)
     setActiveScn(scn)
     # set active layers of scn
@@ -303,8 +302,7 @@ def setLayers(layers, scn=None):
 
 def openLayer(layerNum, scn=None):
     assert type(layerNum) == int
-    if scn is None:
-        scn = bpy.context.scene
+    scn = scn or bpy.context.scene
     layerList = [i == layerNum - 1 for i in range(20)]
     scn.layers = layerList
     return layerList
@@ -345,7 +343,7 @@ def select(objList=[], active=None, deselect=False, only=True, scene=None):
 
         # set active object
         if active:
-            scene = bpy.context.scene if scene is None else scene
+            scene = scene or bpy.context.scene
             try:
                 scene.objects.active = objList[0] if type(active) == bool else active
             except:

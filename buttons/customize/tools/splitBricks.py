@@ -72,7 +72,7 @@ class splitBricks(Operator):
             cm = getItemByID(scn.cmlist, cm_id)
             if "PLATES" not in cm.brickType:
                 continue
-            bricksDict = copy.deepcopy(self.bricksDicts[cm_id])
+            bricksDict = self.bricksDicts[cm_id]
             # iterate through names of selected objects
             for obj_name in self.objNamesD[cm_id]:
                 dictKey, dictLoc = getDictKey(obj_name)
@@ -98,8 +98,6 @@ class splitBricks(Operator):
         self.orig_undo_stack_length = self.undo_stack.getLength()
         self.vertical = False
         self.horizontal = False
-        selected_objects = bpy.context.selected_objects
-        self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
 
     ###################################################
     # class variables
@@ -126,6 +124,10 @@ class splitBricks(Operator):
             self.undo_stack.matchPythonToBlenderState()
             if self.orig_undo_stack_length == self.undo_stack.getLength():
                 self.undo_stack.undo_push('split')
+            # get fresh copy of objNamesD and bricksDicts
+            selected_objects = bpy.context.selected_objects
+            self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
+            # initialize vars
             scn = bpy.context.scene
             objsToSelect = []
             # iterate through cm_ids of selected objects
