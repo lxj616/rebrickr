@@ -117,7 +117,7 @@ class changeBrickType(Operator):
                         if obstructed: continue
 
                     # print helpful message to user in blender interface
-                    self.report({"INFO"}, "turn active {brickSize} brick into {targetType}".format(brickSize=str(brickSize)[1:-1], targetType=self.brickType))
+                    self.report({"INFO"}, "Changed {brickSize} brick to {targetType}".format(brickSize=listToStr(brickSize).replace(",", "x"), targetType=self.brickType))
 
                     # set type of parent_brick to self.brickType
                     bricksDict[dictKey]["type"] = self.brickType
