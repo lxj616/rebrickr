@@ -279,6 +279,7 @@ def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme
 
 
 def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, v1, v2, v3, v4, v9, v10, v11, v12, bme):
+    joinVerts = {"X+":[], "Y+":[], "X-":[], "Y-":[]}
     # set edge vert refs (n=negative, p=positive, o=outer, i=inner)
     nno = v1
     npo = v2
@@ -303,16 +304,7 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, v1, v2, v
                 # CREATING SUPPORT BEAM
                 v1, v2, _, _, _, v6, v7, _ = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 0, 1, 1], bme=bme)
                 selectVerts([v1, v2, v6, v7])
-                if yNum == 0:
-                    bme.faces.new((v1, nni, nno))
-                else:
-                    bme.faces.new((v1, xN0v, nno))
-                if yNum == brickSize[1]-1:
-                    bme.faces.new((v2, npo, npi))
-                    bme.faces.new((v2, v1, nno, npo))
-                else:
-                    bme.faces.new((v2, v1, nno))
-                xN0v = v2
+                joinVerts["X-"] += [v1, v2]
             elif xNum == brickSize[0]-1:
                 # initialize x, y
                 x1 = xNum * d.x * 2 + d.x - thick.x - dimensions["tick_depth"]
@@ -322,16 +314,7 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, v1, v2, v
                 # CREATING SUPPORT BEAM
                 _, _, v3, v4, v5, _, _, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 0, 1, 1, 1], bme=bme)
                 selectVerts([v3, v4, v5, v8])
-                if yNum == 0:
-                    bme.faces.new((pni, v4, pno))
-                else:
-                    bme.faces.new((v4, pno, xN1v))
-                if yNum == brickSize[1]-1:
-                    bme.faces.new((ppo, v3, ppi))
-                    bme.faces.new((v4, v3, ppo, pno))
-                else:
-                    bme.faces.new((v4, v3, pno))
-                xN1v = v3
+                joinVerts["X+"] += [v4, v3]
             if yNum == 0:
                 # initialize x, y
                 y1 = -d.y + thick.y
@@ -341,16 +324,7 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, v1, v2, v
                 # CREATING SUPPORT BEAM
                 v1, _, _, v4, _, _, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 1, 1, 0], bme=bme)
                 selectVerts([v1, v4, v7, v8])
-                if xNum == 0:
-                    bme.faces.new((nni, v1, nno))
-                else:
-                    bme.faces.new((v4, nno, yN0v))
-                if xNum == brickSize[0]-1:
-                    bme.faces.new((pno, v4, pni))
-                    bme.faces.new((nno, v1, v4, pno))
-                else:
-                    bme.faces.new((v1, v4, nno))
-                yN0v = v4
+                joinVerts["Y-"] += [v1, v4]
             elif yNum == brickSize[1]-1:
                 # initialize x, y
                 x1 = xNum * d.x * 2 - dimensions["tick_width"] / 2
@@ -361,16 +335,12 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, v1, v2, v
                 _, v2, v3, _, v5, v6, _, _ = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 1, 0, 1], bme=bme)
                 # select bottom connecting verts for exclusion from vertex group
                 selectVerts([v2, v3, v5, v6])
-                if xNum == 0:
-                    bme.faces.new((v2, npi, npo))
-                else:
-                    bme.faces.new((npo, v2, yN1v))
-                if xNum == brickSize[0]-1:
-                    bme.faces.new((v3, ppo, ppi))
-                    bme.faces.new((v3, v2, npo, ppo))
-                else:
-                    bme.faces.new((v3, v2, npo))
-                yN1v = v3
+                joinVerts["Y+"] += [v2, v3]
+
+    bme.faces.new([nni, nno, npo, npi] + joinVerts["X-"][::-1])
+    bme.faces.new([ppi, ppo, pno, pni] + joinVerts["X+"])
+    bme.faces.new([pni, pno, nno, nni] + joinVerts["Y-"])
+    bme.faces.new([npi, npo, ppo, ppi] + joinVerts["Y+"][::-1])
 
 
 def createVertListBDict(verts):
