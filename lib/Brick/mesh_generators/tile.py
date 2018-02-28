@@ -68,23 +68,24 @@ def makeTile(dimensions:dict, brickSize:list, circleVerts:int=None, detail:str="
 
     # create cube
     coord1 = -d
-    coord1.z += dimensions["slit_height"] if detail != "FLAT" else 0
+    coord1.z += dimensions["slit_height"]
     coord2 = d_scaled
-    v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
+    v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1, 1, 1, 1, 1], bme=bme)
+
+    # make verts for slit
+    coord1 = -d
+    coord1.xy += Vector([dimensions["slit_depth"]]*2)
+    coord2 = Vector((d_scaled.x, d_scaled.y, -d.z + dimensions["slit_height"]))
+    coord2.xy -= Vector([dimensions["slit_depth"]]*2)
+    v9, v10, v11, v12, v13, v14, v15, v16 = makeCube(coord1, coord2, [0, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
+    # connect slit to outer cube
+    bme.faces.new((v14, v4, v1, v13))
+    bme.faces.new((v15, v3, v4, v14))
+    bme.faces.new((v16, v2, v3, v15))
+    bme.faces.new((v13, v1, v2, v16))
 
     # add details
     if detail != "FLAT":
-        # make verts for slit
-        coord1 = -d
-        coord1.xy += Vector([dimensions["slit_depth"]]*2)
-        coord2 = Vector((d_scaled.x, d_scaled.y, -d.z + dimensions["slit_height"]))
-        coord2.xy -= Vector([dimensions["slit_depth"]]*2)
-        v9, v10, v11, v12, v13, v14, v15, v16 = makeCube(coord1, coord2, [0, 0, 1, 1, 1, 1], bme=bme)
-        # connect slit to outer cube
-        bme.faces.new((v14, v4, v1, v13))
-        bme.faces.new((v15, v3, v4, v14))
-        bme.faces.new((v16, v2, v3, v15))
-        bme.faces.new((v13, v1, v2, v16))
 
         # making verts for hollow portion
         coord1 = -d + Vector((thick.x, thick.y, 0))

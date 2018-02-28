@@ -61,17 +61,17 @@ def getLegalBrickSizes():
                      [8, 11],
                      [8, 16],
                      [16, 16]],
-            # "TILE":[[1, 1],
-            #         [1, 2],
-            #         [1, 3],
-            #         [1, 4],
-            #         [1, 6],
-            #         [1, 8],
-            #         [2, 2],
-            #         [2, 4],
-            #         [3, 6],
-            #         [6, 6],
-            #         [8, 16]],
+            "TILE":[[1, 1],
+                    [1, 2],
+                    [1, 3],
+                    [1, 4],
+                    [1, 6],
+                    [1, 8],
+                    [2, 2],
+                    [2, 4],
+                    [3, 6],
+                    [6, 6],
+                    [8, 16]],
             "STUD":[[1, 1]],
             "STUD_HOLLOW":[[1, 1]],
             # "WING":[[2, 3],
@@ -138,6 +138,9 @@ def getLegalBrickSizes():
             # "DOME":[[2, 2]],
             # "DOME_INVERTED":[[2, 2]],
           },
+        # 9:{
+        #     "TALL_SLOPE":[[1, 2], [2, 2]]
+        # }
         }
     # add reverses of brick sizes
     for heightKey,types in legalBrickSizes.items():

@@ -46,6 +46,8 @@ class Bricks:
             brickBM = makeStandardBrick(dimensions=dimensions, brickSize=size, type=type, circleVerts=circleVerts, detail=undersideDetail, stud=stud, cm=cm)
         elif type in ["CYLINDER", "CONE", "STUD", "STUD_HOLLOW"]:
             brickBM = makeRound1x1(dimensions=dimensions, circleVerts=circleVerts, type=type, detail=undersideDetail, cm=cm)
+        elif type == "TILE":
+            brickBM = makeTile(dimensions=dimensions, brickSize=size, circleVerts=circleVerts, detail=undersideDetail, cm=cm)
         elif type in ["SLOPE", "TALL_SLOPE"]:
             # determine brick direction
             directions = ["X+", "Y+", "X-", "Y-"]
