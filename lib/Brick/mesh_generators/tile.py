@@ -70,7 +70,7 @@ def makeTile(dimensions:dict, brickSize:list, circleVerts:int=None, detail:str="
     coord1 = -d
     coord1.z += dimensions["slit_height"]
     coord2 = d_scaled
-    v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1, 1, 1, 1, 1], bme=bme)
+    v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
 
     # make verts for slit
     coord1 = -d
