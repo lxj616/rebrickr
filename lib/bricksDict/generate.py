@@ -559,9 +559,9 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                 nf = faceIdxMatrix[x][y][z]["idx"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 ni = faceIdxMatrix[x][y][z]["loc"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 rgba = getUVPixelColor(source, nf, ni, uv_images)
-                drawBrick = brickFreqMatrix[x][y][z] >= threshold
+                draw = brickFreqMatrix[x][y][z] >= threshold
                 # store first key to active keys
-                if cm.activeKeyX == -1 and drawBrick:
+                if cm.activeKeyX == -1 and draw:
                     keyVals = bKey.split(",")
                     cm.activeKeyX = int(keyVals[0])
                     cm.activeKeyY = int(keyVals[1])
@@ -570,7 +570,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                 bricksDict[bKey] = createBricksDictEntry(
                     name= 'Rebrickr_%(n)s_brick_%(i)s__%(bKey)s' % locals(),
                     val= brickFreqMatrix[x][y][z],
-                    draw= drawBrick,
+                    draw= draw,
                     co= (co[0] - source_details.x.mid, co[1] - source_details.y.mid, co[2] - source_details.z.mid),
                     nearest_face= nf,
                     nearest_intersection= ni if ni is None else tuple(ni),

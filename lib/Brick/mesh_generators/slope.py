@@ -86,7 +86,7 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
     bme.faces.new((v1, v5, v8, v2))
 
     # create stud
-    if stud: addStuds(dimensions, height, [1] + adjustedBrickSize[1:], "CONE", circleVerts, bme, inset=thick.z * 0.9)
+    if stud: addStuds(dimensions, height, [1] + adjustedBrickSize[1:], "CONE", circleVerts, bme, inset=thick.z * 0.9, hollow=brickSize[2] > 3)
 
     # make square at end of slope
     coord1 = vec_mult(d, [scalar.x, -1, -1])
@@ -126,7 +126,7 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
         coord1.xy += thick.xy
         coord2 = vec_mult(d, [1, scalar.y, 1])
         coord2.yz -= thick.yz
-        v19, v20, d0, d1, v23, v24, v25, v26 = makeCube(coord1, coord2, [1 if detail != "HIGH" else 0, 1, 0, 1, 0, 0], flipNormals=True, bme=bme)
+        v19, v20, d0, d1, v23, v24, v25, v26 = makeCube(coord1, coord2, [1 if detail not in ["MEDIUM", "HIGH"] else 0, 1, 0, 1, 0, 0], flipNormals=True, bme=bme)
         # remove bottom verts on slope side
         bme.verts.remove(d0)
         bme.verts.remove(d1)
@@ -149,15 +149,9 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
         bme.faces.new((v13, v9, v1, v19))
 
         # add supports
-        if detail in ["MEDIUM", "HIGH"]:
-            # add bars
-            if min(brickSize) == 1:
-                addBars(cm, dimensions, height, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme)
-            # add tubes
-            else:
-                addTubeSupports(cm, dimensions, height, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme)
+        addSupports(cm, dimensions, height, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme, add_beams=False, hollow=True)
         # add inner cylinders
-        if detail == "HIGH":
+        if detail in ["MEDIUM", "HIGH"]:
             addInnerCylinders(dimensions, [1] + adjustedBrickSize[1:], circleVerts, d, v23, v24, v25, v26, bme)
 
 

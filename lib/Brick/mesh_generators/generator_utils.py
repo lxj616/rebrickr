@@ -47,105 +47,70 @@ def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, hollow=
                 _, studVerts = makeTube(r, h, t, circleVerts, co=Vector((0, 0, z)), bme=bme)
                 selectVerts(studVerts["outer"]["bottom"] + studVerts["inner"]["bottom"])
             else:
-                _, studVerts = makeCylinder(r=r, h=h + inset, N=circleVerts, co=Vector((x, y, z)), botFace=False, bme=bme)
+                _, studVerts = makeCylinder(r, h + inset, circleVerts, co=Vector((x, y, z)), botFace=False, bme=bme)
                 selectVerts(studVerts["bottom"])
     return studVerts
 
 
-def addBars(cm, dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme):
-    z1 = -d.z
-    z2 = d.z - thick.z
-    r = dimensions["bar_radius"]
+def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme, hollow=None, add_beams=None):
+    # initialize vars
+    if hollow is None:
+        add_beams = brickSize[2] == 3 and (sum(brickSize[:2]) > 4 or min(brickSize[:2]) == 1 and max(brickSize[:2]) == 3) and detail in ["MEDIUM", "HIGH"]
+    if hollow is None:
+        hollow = brickSize[2] == 1 or min(brickSize[:2]) != 1
     bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
-    barZ = -(thick.z / 2)
-    sides = [0, 1] + ([0, 0, 1, 1] if brickSize[0] == 1 else [1, 1, 0, 0])
-    allTopVerts = []
-    if brickSize[0] == 1:
-        for y in range(1, brickSize[1]):
-            barY = (y * dimensions["width"]) - d.y
-            _,verts = makeCylinder(r=r, h=height - thick.z, N=circleVerts, co=Vector((0, barY, barZ)), botFace=True, topFace=False, bme=bme)
-            selectVerts(verts["top"])
-            allTopVerts += verts["top"]
-            if detail in ["FLAT", "LOW"] or brickSize[2] == 1:
-                continue
-            if brickSize[1] == 3 or brickSize[1] == 2 or y % 2 == 0 or ((y == 1 or y == brickSize[1] - 1) and brickSize[1] == 8):
-                # initialize x, y, z
-                x1 = -d.x + thick.x
-                x2 =  d.x - thick.x
-                y1 = barY - (dimensions["support_width"] / 2)
-                y2 = barY + (dimensions["support_width"] / 2)
-                # CREATING SUPPORT BEAM
-                cubeVerts = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=sides, bme=bme)
-                allTopVerts += cubeVerts[4:]
-    elif brickSize[1] == 1:
-        for x in range(1, brickSize[0]):
-            barX = (x * dimensions["width"]) - d.x
-            _,verts = makeCylinder(r=r, h=height-thick.z, N=circleVerts, co=Vector((barX, 0, barZ)), botFace=True, topFace=False, bme=bme)
-            selectVerts(verts["top"])
-            allTopVerts += verts["top"]
-            # add supports next to odd bars
-            if detail in ["FLAT", "LOW"] or brickSize[2] == 1:
-                continue
-            if brickSize[0] == 3 or brickSize[0] == 2 or x % 2 == 0 or ((x == 1 or x == brickSize[0] - 1) and brickSize[0] == 8):
-                # initialize x, y, z
-                x1 = barX - (dimensions["support_width"] / 2)
-                x2 = barX + (dimensions["support_width"] / 2)
-                y1 = -d.y + thick.y
-                y2 =  d.y - thick.y
-                # CREATING SUPPORT BEAM
-                cubeVerts = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=sides, bme=bme)
-                allTopVerts += cubeVerts[4:]
-    if type == "SLOPE":
-        cutVerts(dimensions, height, brickSize, allTopVerts, d, scalar, thick, bme)
-
-
-def addTubeSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme):
-    addSupports = (brickSize[0] > 2 and brickSize[1] == 2) or (brickSize[1] > 2 and brickSize[0] == 2)
-    bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
-    # set z1/z2 values
-    z1 = d.z - thick.z - dimensions["support_height_triple" if bAndPBrick else "support_height"]
+    sides = [0, 1] + ([0, 0, 1, 1] if brickSize[0] < brickSize[1] else [1, 1, 0, 0])
+    z1 = -d.z if not hollow else d.z - thick.z - dimensions["support_height_triple" if bAndPBrick else "support_height"]
     z2 = d.z - thick.z
+    r = dimensions["stud_radius"] if min(brickSize[:2]) != 1 else dimensions["bar_radius"] - (dimensions["tube_thickness"] if hollow else 0)
+    h = height - thick.z
+    t = dimensions["tube_thickness"]
+    tubeZ = -(thick.z / 2)
     allTopVerts = []
-    for xNum in range(brickSize[0]-1):
-        for yNum in range(brickSize[1]-1):
-            tubeX = (xNum * d.x * 2) + d.x
-            tubeY = (yNum * d.y * 2) + d.y
-            tubeZ = (-thick.z / 2)
-            r = dimensions["stud_radius"]
-            h = height - thick.z
-            bme, tubeVerts = makeTube(r, h, dimensions["tube_thickness"], circleVerts, co=Vector((tubeX, tubeY, tubeZ)), botFace=True, topFace=False, bme=bme)
-            # select verts for exclusion from vert group
-            selectVerts(tubeVerts["outer"]["top"] + tubeVerts["inner"]["top"])
-            allTopVerts += tubeVerts["outer"]["top"] + tubeVerts["inner"]["top"]
-
-            # add support next to odd tubes
-            if detail not in ["MEDIUM", "HIGH"] or not addSupports or brickSize[2] == 1:
+    startAtX = -1 if brickSize[0] == 1 else 0
+    startAtY = -1 if brickSize[1] == 1 else 0
+    # add supports for each appropriate underside location
+    for xNum in range(startAtX, brickSize[0] - 1):
+        for yNum in range(startAtY, brickSize[1] - 1):
+            # add support tubes
+            tubeX = (xNum * d.x * 2) + d.x * (2 if brickSize[0] == 1 else 1)
+            tubeY = (yNum * d.y * 2) + d.y * (2 if brickSize[1] == 1 else 1)
+            if hollow:
+                bme, tubeVerts = makeTube(r, h, t, circleVerts, co=Vector((tubeX, tubeY, tubeZ)), botFace=True, topFace=False, bme=bme)
+                selectVerts(tubeVerts["outer"]["top"] + tubeVerts["inner"]["top"])
+                allTopVerts += tubeVerts["outer"]["top"] + tubeVerts["inner"]["top"]
+            else:
+                bme, tubeVerts = makeCylinder(r, h, circleVerts, co=Vector((tubeX, tubeY, tubeZ)), botFace=True, topFace=False, bme=bme)
+                selectVerts(tubeVerts["top"])
+                allTopVerts += tubeVerts["top"]
+            # add support beams next to odd tubes
+            if not add_beams:
                 continue
             if brickSize[0] > brickSize[1]:
-                if brickSize[0] == 3 or xNum % 2 == 1:
+                if brickSize[0] == 3 or xNum % 2 == brickSize[1] - min(brickSize[:2]) + 1 or (brickSize == [8, 1, 3] and xNum in [0, brickSize[0] - 2]):
                     # initialize x, y
                     x1 = tubeX - (dimensions["support_width"] / 2)
                     x2 = tubeX + (dimensions["support_width"] / 2)
                     y1 = tubeY + r
-                    y2 = tubeY - thick.y + d.y * 2
-                    y3 = tubeY + thick.y - d.y * 2
+                    y2 = tubeY + d.y * min(brickSize[:2]) - thick.x
+                    y3 = tubeY - d.y * min(brickSize[:2]) + thick.y
                     y4 = tubeY - r
                     # CREATING SUPPORT BEAM
-                    cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 1, 0, 0], bme=bme)
-                    cubeVerts2 = makeCube(Vector((x1, y3, z1)), Vector((x2, y4, z2)), sides=[0, 1, 1, 1, 0, 0], bme=bme)
+                    cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=sides, bme=bme)
+                    cubeVerts2 = makeCube(Vector((x1, y3, z1)), Vector((x2, y4, z2)), sides=sides, bme=bme)
                     allTopVerts += cubeVerts1[4:] + cubeVerts2[4:]
-            elif brickSize[1] > brickSize[0]:
-                if brickSize[1] == 3 or yNum % 2 == 1:
+            if brickSize[1] > brickSize[0]:
+                if brickSize[1] == 3 or yNum % 2 == brickSize[0] - min(brickSize[:2]) + 1 or (brickSize == [1, 8, 3] and yNum in [0, brickSize[1] - 2]):
                     # initialize x, y
                     x1 = tubeX + r
-                    x2 = tubeX - thick.x + d.x * 2
-                    x3 = tubeX + thick.x - d.x * 2
+                    x2 = tubeX + d.x * min(brickSize[:2]) - thick.x
+                    x3 = tubeX - d.x * min(brickSize[:2]) + thick.y
                     x4 = tubeX - r
                     y1 = tubeY - (dimensions["support_width"] / 2)
                     y2 = tubeY + (dimensions["support_width"] / 2)
                     # CREATING SUPPORT BEAM
-                    cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 0, 0, 1, 1], bme=bme)
-                    cubeVerts2 = makeCube(Vector((x3, y1, z1)), Vector((x4, y2, z2)), sides=[0, 1, 0, 0, 1, 1], bme=bme)
+                    cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=sides, bme=bme)
+                    cubeVerts2 = makeCube(Vector((x3, y1, z1)), Vector((x4, y2, z2)), sides=sides, bme=bme)
                     allTopVerts += cubeVerts1[4:] + cubeVerts2[4:]
     if type == "SLOPE":
         cutVerts(dimensions, height, brickSize, allTopVerts, d, scalar, thick, bme)

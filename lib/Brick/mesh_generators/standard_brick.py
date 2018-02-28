@@ -74,7 +74,7 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
     v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
 
     # add studs
-    if stud: addStuds(dimensions, height, brickSize, cm.brickType, circleVerts, bme, zStep=getZStep(cm), inset=thick.z * 0.9)
+    if stud: addStuds(dimensions, height, brickSize, cm.brickType, circleVerts, bme, zStep=getZStep(cm), inset=thick.z * 0.9, hollow=brickSize[2] > 3 or "HOLES" in type)
 
     # add details
     if detail != "FLAT":
@@ -93,10 +93,9 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
             bme.faces.new((v11, v10, v2,  v3))
 
 
-        # make tubes
-        addTubeSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
-        # Adding bar inside 1 by x bricks
-        addBars(cm, dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
+        # add supports
+        if max(brickSize[:2]) > 1:
+            addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
         # add small inner cylinders inside brick
         if detail in ["MEDIUM", "HIGH"]:
             addInnerCylinders(dimensions, brickSize, circleVerts, d, v13, v14, v15, v16, bme)
