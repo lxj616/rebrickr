@@ -127,6 +127,6 @@ def test_brick_generators():
         newObjFromBmesh(7, makeTile(dimensions, brickSize=[2,4,1], circleVerts=16, detail=detail), "2x4 Tile "  + detail, loc=(offset*1.5, -0.2, 0))
         newObjFromBmesh(7, makeTile(dimensions, brickSize=[1,8,1], circleVerts=16, detail=detail), "1x8 Tile "  + detail, loc=(offset, -4.4, 0))
 
-    openLayer(11)
+    openLayer(17)
 
     cm.brickType = lastBrickType
