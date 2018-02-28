@@ -157,40 +157,20 @@ def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme
         bme.faces.new((vList[i], vList[i-1], v8))
 
     # Make edge faces
-    v = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"][0]
-    bme.faces.new((v8, v7, v))
-    v = botVertsDofDs[str(0) + "," + str(yNum)]["x-"][0]
-    bme.faces.new((v5, v8, v))
-    v = botVertsDofDs[str(0) + "," + str(0)]["y-"][0]
-    bme.faces.new((v6, v5, v))
-    v = botVertsDofDs[str(xNum) + "," + str(0)]["x+"][0]
-    bme.faces.new((v7, v6, v))
-    for xNum in range(1, brickSize[0]):
-        # try:
-        v1 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"][0]
-        v2 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"][0]
-        bme.faces.new((v1, v2, v8))
-        # except ???Error:
-        #     pass
-        # try:
-        v1 = botVertsDofDs[str(xNum) + "," + str(0)]["y-"][0]
-        v2 = botVertsDofDs[str(xNum-1) + "," + str(0)]["y-"][0]
-        bme.faces.new((v6, v2, v1))
-        # except ???Error:
-        #     pass
-    for yNum in range(1, brickSize[1]):
-        # try:
-        v1 = botVertsDofDs[str(xNum) + "," + str(yNum)]["x+"][0]
-        v2 = botVertsDofDs[str(xNum) + "," + str(yNum-1)]["x+"][0]
-        bme.faces.new((v7, v2, v1))
-        # except ???Error:
-        #     pass
-        # try:
-        v1 = botVertsDofDs[str(0) + "," + str(yNum)]["x-"][0]
-        v2 = botVertsDofDs[str(0) + "," + str(yNum-1)]["x-"][0]
-        bme.faces.new((v1, v2, v5))
-        # except ???Error:
-        #     pass
+    joinVerts = {"Y+":[v7, v8], "Y-":[v6, v5], "X+":[v7, v6], "X-":[v8, v5]}
+    for xNum in range(brickSize[0]):
+        vertD = botVertsDofDs[str(xNum) + "," + str(yNum)]
+        joinVerts["Y+"].append(vertD["y+"][0])
+        vertD = botVertsDofDs[str(xNum) + "," + str(0)]
+        joinVerts["Y-"].append(vertD["y-"][0])
+    for yNum in range(brickSize[1]):
+        vertD = botVertsDofDs[str(xNum) + "," + str(yNum)]
+        joinVerts["X+"].append(vertD["x+"][0])
+        vertD = botVertsDofDs[str(0) + "," + str(yNum)]
+        joinVerts["X-"].append(vertD["x-"][0])
+    for item in joinVerts:
+        step = -1 if item in ["Y+", "X-"] else 1
+        bme.faces.new(joinVerts[item][::step])
 
     # Make in-between-insets faces along x axis
     for xNum in range(1, brickSize[0]):
