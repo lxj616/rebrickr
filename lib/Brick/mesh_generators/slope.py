@@ -126,30 +126,58 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
         coord1.xy += thick.xy
         coord2 = vec_mult(d, [1, scalar.y, 1])
         coord2.yz -= thick.yz
-        v19, v20, d0, d1, v23, v24, v25, v26 = makeCube(coord1, coord2, [1 if detail not in ["MEDIUM", "HIGH"] else 0, 1, 0, 1, 0, 0], flipNormals=True, bme=bme)
-        # remove bottom verts on slope side
-        bme.verts.remove(d0)
-        bme.verts.remove(d1)
+        v19, v20, v21, v22, v23, v24, v25, v26 = makeCube(coord1, coord2, [1 if detail not in ["MEDIUM", "HIGH"] else 0, 0, 0, 1, 0, 0], flipNormals=True, bme=bme)
         # connect side faces from verts created above
-        bme.faces.new((v18, v25, v26, v20))
-        bme.faces.new((v19, v23, v24, v17))
+        bme.faces.new((v18, v25, v21))
+        bme.faces.new((v22, v24, v17))
         if adjustedBrickSize[0] in [3, 4]:
-            bme.faces.new((v14, v15, v18, v20))
-            bme.faces.new((v16, v13,  v19, v17))
+            bme.faces.new((v14, v15, v18, v21))
+            bme.faces.new((v16, v13,  v22, v17))
         else:
-            bme.faces.new((v14, v18, v20))
-            bme.faces.new((v13,  v19, v17))
+            bme.faces.new((v14, v18, v21))
+            bme.faces.new((v13,  v22, v17))
         # connect face for inner slope
         bme.faces.new((v24, v25, v18, v17))
 
-        # connect inner and outer verts
+        # add block supports under certain slopes
+        if adjustedBrickSize[0] in [3, 4] and adjustedBrickSize[1] == 1:
+            # add longer support
+            coord1 = Vector((d.x - thick.x, -d.y + thick.y, -d.z))
+            coord2 = Vector((d.x,            d.y - thick.y,  d.z - thick.z))
+            v27, v28, d0, d1, v31, d2, d3, v34 = makeCube(coord1, coord2, [0, 0, 0, 1, 0, 0], bme=bme)
+            # remove v32, v33, v29, v30 (same location as v24, v25, v21, v22)
+            bme.verts.remove(d0)
+            bme.verts.remove(d1)
+            bme.verts.remove(d2)
+            bme.verts.remove(d3)
+            # add short tick support
+            coord1 = Vector((d.x,          -thick.y / 2, -d.z))
+            coord2 = Vector((d.x + thick.x, thick.y / 2,  d.z - thick.z))
+            v35, v36, v37, v38, v39, v40, v41, v42 = makeCube(coord1, coord2, [0, 1, 1, 0, 1, 1], bme=bme)
+            # connect the two supports
+            bme.faces.new((v27, v28, v21, v36, v35, v22))
+            bme.faces.new((v24, v22, v35, v39))
+            bme.faces.new((v21, v25, v42, v36))
+            # connect inner and outer verts sides
+            bme.faces.new([v20, v2, v10, v14] + [v21, v28])
+            bme.faces.new([v13, v9, v1, v19] + [v27, v22])
+            # connect inner cube with block support
+            bme.faces.new((v19, v23, v31, v27))
+            bme.faces.new((v28, v34, v26, v20))
+        else:
+            # connect inner and outer verts sides
+            bme.faces.new((v20, v2, v10, v14))
+            bme.faces.new((v13, v9, v1, v19))
+            # connect inner cube to itself
+            bme.faces.new((v19, v23, v24, v22))
+            bme.faces.new((v21, v25, v26, v20))
+
+        # connect inner and outer verts front/back
         bme.faces.new((v13, v14, v10, v9))
-        bme.faces.new((v10, v14, v20, v2))
         bme.faces.new((v1, v2, v20, v19))
-        bme.faces.new((v13, v9, v1, v19))
 
         # add supports
-        addSupports(cm, dimensions, height, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme, add_beams=False, hollow=True)
+        addSupports(cm, dimensions, height, adjustedBrickSize, circleVerts, "SLOPE", detail, d, scalar, thick, bme, add_beams=False, hollow=brickSize[:2] not in [[1, 2], [2, 1]])
         # add inner cylinders
         if detail in ["MEDIUM", "HIGH"]:
             addInnerCylinders(dimensions, [1] + adjustedBrickSize[1:], circleVerts, d, v23, v24, v25, v26, bme)

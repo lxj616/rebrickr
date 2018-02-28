@@ -67,11 +67,13 @@ def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d,
     t = dimensions["tube_thickness"]
     tubeZ = -(thick.z / 2)
     allTopVerts = []
-    startAtX = -1 if brickSize[0] == 1 else 0
-    startAtY = -1 if brickSize[1] == 1 else 0
+    startX = -1 if brickSize[0] == 1 else 0
+    startY = -1 if brickSize[1] == 1 else 0
+    startX = 1 if type == "SLOPE" and brickSize[:2] in [[3, 1], [4, 1]] else startX
+    startY = 1 if type == "SLOPE" and brickSize[:2] in [[1, 3], [1, 4]] else startY
     # add supports for each appropriate underside location
-    for xNum in range(startAtX, brickSize[0] - 1):
-        for yNum in range(startAtY, brickSize[1] - 1):
+    for xNum in range(startX, brickSize[0] - 1):
+        for yNum in range(startY, brickSize[1] - 1):
             # add support tubes
             tubeX = (xNum * d.x * 2) + d.x * (2 if brickSize[0] == 1 else 1)
             tubeY = (yNum * d.y * 2) + d.y * (2 if brickSize[1] == 1 else 1)
