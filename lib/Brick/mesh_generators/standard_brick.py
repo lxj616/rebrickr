@@ -78,13 +78,16 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
 
     # add details
     if detail != "FLAT":
+        drawTickMarks = detail == "HIGH" and ((brickSize[0] == 2 and brickSize[1] > 1) or (brickSize[1] == 2 and brickSize[0] > 1)) and brickSize[2] != 1
         # making verts for hollow portion
         coord1 = -d + Vector((thick.x, thick.y, 0))
         coord2 = vec_mult(d, scalar) - thick
-        v9, v10, v11, v12, v13, v14, v15, v16 = makeCube(coord1, coord2, [1 if detail == "LOW" else 0, 0, 1, 1, 1, 1], flipNormals=True, bme=bme)
+        sides = [1 if detail == "LOW" else 0, 0] + ([0]*4 if drawTickMarks else [1]*4)
+        print(sides)
+        v9, v10, v11, v12, v13, v14, v15, v16 = makeCube(coord1, coord2, sides, flipNormals=True, bme=bme)
         # make tick marks inside 2 by x bricks
-        if detail == "HIGH" and ((brickSize[0] == 2 and brickSize[1] > 1) or (brickSize[1] == 2 and brickSize[0] > 1)) and brickSize[2] != 1:
-            addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, v1, v2, v3, v4, v9, v10, v11, v12, bme)
+        if drawTickMarks:
+            addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno=v1, npo=v2, ppo=v3, pno=v4, nni=v9, npi=v10, ppi=v11, pni=v12, nnt=v13, npt=v16, ppt=v15, pnt=v14, bme=bme)
         else:
             # make faces on bottom edges of brick
             bme.faces.new((v1,  v9,  v12, v4))

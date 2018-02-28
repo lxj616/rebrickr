@@ -278,17 +278,10 @@ def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme
             bme.faces.new((v1, v2, v3, v4))
 
 
-def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, v1, v2, v3, v4, v9, v10, v11, v12, bme):
-    joinVerts = {"X+":[], "Y+":[], "X-":[], "Y-":[]}
-    # set edge vert refs (n=negative, p=positive, o=outer, i=inner)
-    nno = v1
-    npo = v2
-    ppo = v3
-    pno = v4
-    nni = v9
-    npi = v10
-    ppi = v11
-    pni = v12
+def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo, ppo, pno, nni, npi, ppi, pni, nnt, npt, ppt, pnt, bme):
+    # for edge vert refs, n=negative, p=positive, o=outer, i=inner, t=top
+    joinVerts = {"X-":[npi, npo, nno, nni], "X+":[ppi, ppo, pno, pni], "Y-":[pni, pno, nno, nni], "Y+":[ppi, ppo, npo, npi]}
+    lastSideVerts = {"X-":[nnt, nni], "X+":[pni, pnt], "Y-":[nni, nnt], "Y+":[npt, npi]}
     # make tick marks
     for xNum in range(brickSize[0]):
         for yNum in range(brickSize[1]):
@@ -302,9 +295,11 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, v1, v2, v
                 y1 = yNum * d.y * 2 - dimensions["tick_width"] / 2
                 y2 = yNum * d.y * 2 + dimensions["tick_width"] / 2
                 # CREATING SUPPORT BEAM
-                v1, v2, _, _, _, v6, v7, _ = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 0, 1, 1], bme=bme)
-                selectVerts([v1, v2, v6, v7])
+                v1, v2, _, _, v5, v6, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 0, 1, 1], bme=bme)
+                selectVerts([v6, v7])
                 joinVerts["X-"] += [v1, v2]
+                bme.faces.new([v1, v5] + lastSideVerts["X-"])
+                lastSideVerts["X-"] = [v8, v2]
             elif xNum == brickSize[0]-1:
                 # initialize x, y
                 x1 = xNum * d.x * 2 + d.x - thick.x - dimensions["tick_depth"]
@@ -312,9 +307,11 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, v1, v2, v
                 y1 = yNum * d.y * 2 - dimensions["tick_width"] / 2
                 y2 = yNum * d.y * 2 + dimensions["tick_width"] / 2
                 # CREATING SUPPORT BEAM
-                _, _, v3, v4, v5, _, _, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 0, 1, 1, 1], bme=bme)
-                selectVerts([v3, v4, v5, v8])
+                _, _, v3, v4, v5, v6, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 0, 1, 1, 1], bme=bme)
+                selectVerts([v5, v8])
                 joinVerts["X+"] += [v4, v3]
+                bme.faces.new([v6, v4] + lastSideVerts["X+"])
+                lastSideVerts["X+"] = [v3, v7]
             if yNum == 0:
                 # initialize x, y
                 y1 = -d.y + thick.y
@@ -322,9 +319,11 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, v1, v2, v
                 x1 = xNum * d.x * 2 - dimensions["tick_width"] / 2
                 x2 = xNum * d.x * 2 + dimensions["tick_width"] / 2
                 # CREATING SUPPORT BEAM
-                v1, _, _, v4, _, _, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 1, 1, 0], bme=bme)
-                selectVerts([v1, v4, v7, v8])
+                v1, _, _, v4, v5, v6, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 1, 1, 0], bme=bme)
+                selectVerts([v7, v8])
                 joinVerts["Y-"] += [v1, v4]
+                bme.faces.new([v5, v1] + lastSideVerts["Y-"])
+                lastSideVerts["Y-"] = [v4, v6]
             elif yNum == brickSize[1]-1:
                 # initialize x, y
                 x1 = xNum * d.x * 2 - dimensions["tick_width"] / 2
@@ -332,15 +331,22 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, v1, v2, v
                 y1 = yNum * d.y * 2 + d.y - thick.y - dimensions["tick_depth"]
                 y2 = yNum * d.y * 2 + d.y - thick.y
                 # CREATING SUPPORT BEAM
-                _, v2, v3, _, v5, v6, _, _ = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 1, 0, 1], bme=bme)
+                _, v2, v3, _, v5, v6, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 1, 0, 1], bme=bme)
                 # select bottom connecting verts for exclusion from vertex group
-                selectVerts([v2, v3, v5, v6])
+                selectVerts([v5, v6])
                 joinVerts["Y+"] += [v2, v3]
+                bme.faces.new([v2, v8] + lastSideVerts["Y+"])
+                lastSideVerts["Y+"] = [v7, v3]
 
-    bme.faces.new([nni, nno, npo, npi] + joinVerts["X-"][::-1])
-    bme.faces.new([ppi, ppo, pno, pni] + joinVerts["X+"])
-    bme.faces.new([pni, pno, nno, nni] + joinVerts["Y-"])
-    bme.faces.new([npi, npo, ppo, ppi] + joinVerts["Y+"][::-1])
+    # draw faces between ticks and base
+    bme.faces.new(joinVerts["X-"][::-1])
+    bme.faces.new(joinVerts["X+"])
+    bme.faces.new(joinVerts["Y-"])
+    bme.faces.new(joinVerts["Y+"][::-1])
+    bme.faces.new([npi, npt] + lastSideVerts["X-"])
+    bme.faces.new([ppt, ppi] + lastSideVerts["X+"])
+    bme.faces.new([pnt, pni] + lastSideVerts["Y-"])
+    bme.faces.new([ppi, ppt] + lastSideVerts["Y+"])
 
 
 def createVertListBDict(verts):
