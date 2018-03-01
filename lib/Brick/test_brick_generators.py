@@ -122,11 +122,13 @@ def test_brick_generators():
                 newObjFromBmesh(16 + i, makeSlope(dimensions, brickSize=[3,4][::j] + [3], direction=direction, circleVerts=16, detail=detail), "4x3 Slope "  + detail, loc=[6.25, offset * 2.5 - 0.625][::j] + [0])
                 i += 1
         # TILES
-        newObjFromBmesh(7, makeTile(dimensions, brickSize=[1,2,1], circleVerts=16, detail=detail), "1x2 Tile "  + detail, loc=(offset, 4.2, 0))
-        newObjFromBmesh(7, makeTile(dimensions, brickSize=[1,4,1], circleVerts=16, detail=detail), "1x4 Tile "  + detail, loc=(offset, 2, 0))
-        newObjFromBmesh(7, makeTile(dimensions, brickSize=[2,4,1], circleVerts=16, detail=detail), "2x4 Tile "  + detail, loc=(offset*1.5, -0.2, 0))
-        newObjFromBmesh(7, makeTile(dimensions, brickSize=[1,8,1], circleVerts=16, detail=detail), "1x8 Tile "  + detail, loc=(offset, -4.4, 0))
+        newObjFromBmesh(7, makeTile(dimensions, brickSize=[1,2,1], circleVerts=16, type="TILE", detail=detail), "1x2 Tile "  + detail, loc=(offset, 6.4, 0))
+        newObjFromBmesh(7, makeTile(dimensions, brickSize=[1,2,1], circleVerts=16, type="TILE_GRILL", detail=detail), "1x2 Tile Grill "  + detail, loc=(offset, 5.3, 0))
+        newObjFromBmesh(7, makeTile(dimensions, brickSize=[2,1,1], circleVerts=16, type="TILE_GRILL", detail=detail), "1x2 Tile Grill "  + detail, loc=(offset * 1.5, 4.2, 0))
+        newObjFromBmesh(7, makeTile(dimensions, brickSize=[1,4,1], circleVerts=16, type="TILE", detail=detail), "1x4 Tile "  + detail, loc=(offset, 2, 0))
+        newObjFromBmesh(7, makeTile(dimensions, brickSize=[2,4,1], circleVerts=16, type="TILE", detail=detail), "2x4 Tile "  + detail, loc=(offset*1.5, -0.2, 0))
+        newObjFromBmesh(7, makeTile(dimensions, brickSize=[1,8,1], circleVerts=16, type="TILE", detail=detail), "1x8 Tile "  + detail, loc=(offset, -4.4, 0))
 
-    openLayer(17)
+    openLayer(7)
 
     cm.brickType = lastBrickType

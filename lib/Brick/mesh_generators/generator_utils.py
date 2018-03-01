@@ -345,3 +345,98 @@ def createVertListBDict(verts):
                      "x-":[verts["bottom"][idx4]]}
 
     return vertListBDict
+
+
+def addGrillDetails(dimensions, brickSize, thick, scalar, d, v1, v2, v3, v4, v9, v10, v11, v12, bme):
+    # NOTE: n=negative, p=positive, m=middle
+    # inner support in middle
+    x1 = dimensions["stud_radius"]
+    x2 = dimensions["stud_radius"] + (d.x - dimensions["stud_radius"]) * 2
+    y1 = -dimensions["thickness"] / 2
+    y2 =  dimensions["thickness"] / 2
+    z1 = -d.z
+    z2 = d.z - dimensions["thickness"]
+    mms = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), [0, 1, 1, 1, 1, 1], bme=bme)
+
+    z1 = d.z - dimensions["thickness"]
+    z2 = d.z
+    # upper middle x- grill
+    x1 = -d.x
+    x2 = -d.x + dimensions["thickness"]
+    nmg = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), [1, 0, 0, 1, 1, 1], bme=bme)
+    # upper y- x- grill
+    y3 = y1 - dimensions["thickness"] * 2
+    y4 = y2 - dimensions["thickness"] * 2
+    nng = makeCube(Vector((x1, y3, z1)), Vector((x2, y4, z2)), [1, 0, 0, 1, 1, 1], bme=bme)
+    bme.verts.remove(nng[3])
+    nng[3] = None
+    # upper y+ x- grill
+    y3 = y1 + dimensions["thickness"] * 2
+    y4 = y2 + dimensions["thickness"] * 2
+    npg = makeCube(Vector((x1, y3, z1)), Vector((x2, y4, z2)), [1, 0, 0, 1, 1, 1], bme=bme)
+    bme.verts.remove(npg[2])
+    npg[2] = None
+
+    # upper middle x+ grill
+    x1 = d.x * 3 - dimensions["thickness"]
+    x2 = d.x * 3
+    pmg = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), [1, 0, 1, 0, 1, 1], bme=bme)
+    # upper y- x+ grill
+    y3 = y1 - dimensions["thickness"] * 2
+    y4 = y2 - dimensions["thickness"] * 2
+    png = makeCube(Vector((x1, y3, z1)), Vector((x2, y4, z2)), [1, 0, 1, 0, 1, 1], bme=bme)
+    bme.verts.remove(png[0])
+    png[0] = None
+    # upper y+ x+ grill
+    y3 = y1 + dimensions["thickness"] * 2
+    y4 = y2 + dimensions["thickness"] * 2
+    ppg = makeCube(Vector((x1, y3, z1)), Vector((x2, y4, z2)), [1, 0, 1, 0, 1, 1], bme=bme)
+    bme.verts.remove(ppg[1])
+    ppg[1] = None
+
+    # connect grill tops
+    bme.faces.new((pmg[4], pmg[7], nmg[6], nmg[5]))
+    bme.faces.new((png[4], png[7], nng[6], nng[5]))
+    bme.faces.new((ppg[4], ppg[7], npg[6], npg[5]))
+    # connect outer sides
+    bme.faces.new((v4, png[3], png[5], nng[4], nng[0], v1))
+    bme.faces.new((v2, npg[1], npg[7], ppg[6], ppg[2], v3))
+    bme.faces.new((v3, ppg[2], ppg[3], pmg[2], pmg[3], png[2], png[3], v4))
+    bme.faces.new((v1, nng[0], nng[1], nmg[0], nmg[1], npg[0], npg[1], v2))
+    # connect grills together
+    bme.faces.new((nng[1], nng[2], nmg[3], nmg[0]))
+    bme.faces.new((nmg[1], nmg[2], npg[3], npg[0]))
+    bme.faces.new((png[1], png[2], pmg[3], pmg[0]))
+    bme.faces.new((pmg[1], pmg[2], ppg[3], ppg[0]))
+    bme.faces.new((nmg[5], nmg[3], mms[4], mms[5], pmg[0], pmg[4]))
+    bme.faces.new((pmg[7], pmg[1], mms[6], mms[7], nmg[2], nmg[6]))
+    # connect grill to base
+    bme.faces.new((nmg[2], mms[7], mms[4], nmg[3]))
+    bme.faces.new((pmg[0], mms[5], mms[6], pmg[1]))
+    # create square at inner base
+    coord1 = -d + Vector((thick.x, thick.y, 0))
+    coord2 = vec_mult(d, scalar) - thick
+    coord2.z = -d.z
+    v17, v18, v19, v20 = makeSquare(coord1, coord2, face=False, bme=bme)
+    # connect inner base to outer base
+    bme.faces.new((v17, v9, v10, v20))
+    bme.faces.new((v20, v10, v11, v19))
+    bme.faces.new((v19, v11, v12, v18))
+    bme.faces.new((v18, v12, v9, v17))
+    # create inner faces
+    if brickSize[0] < brickSize[1]:
+        bme.faces.new((v17, v20, ppg[0], ppg[4], npg[5], npg[4]))
+        bme.faces.new((v19, v18, nng[2], nng[6], png[7], png[1]))
+        bme.faces.new((v20, v19, png[1], pmg[0], pmg[1], ppg[0]))
+        bme.faces.new((v18, v17, npg[3], nmg[2], nmg[3], nng[2]))
+    else:
+        bme.faces.new((v20, v19, ppg[0], ppg[4], npg[5], npg[4]))
+        bme.faces.new((v18, v17, nng[2], nng[6], png[7], png[1]))
+        bme.faces.new((v19, v18, png[1], pmg[0], pmg[1], ppg[0]))
+        bme.faces.new((v17, v20, npg[3], nmg[2], nmg[3], nng[2]))
+
+    # rotate created vertices in to place if necessary
+    if brickSize[0] < brickSize[1]:
+        vertsCreated = nng + nmg + npg + png + pmg + ppg + mms
+        vertsCreated = [v for v in vertsCreated if v is not None]
+        bmesh.ops.rotate(bme, verts=vertsCreated, cent=(0, 0, 0), matrix=Matrix.Rotation(math.radians(90), 3, 'Z'))

@@ -85,7 +85,7 @@ def getLegalBrickSizes():
             # "ROUNDED_TILE":[[1, 1]],
             # "SHORT_SLOPE":[[1, 1],
             #             [1, 2]],
-            # "TILE_GRILL":[[1, 2]],
+            "TILE_GRILL":[[1, 2]],
             # "TILE_ROUNDED":[[2, 2]],
             # "PLATE_ROUNDED":[[2, 2]],
             },

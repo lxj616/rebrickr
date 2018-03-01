@@ -32,3 +32,4 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * In snapchat hotdog test file, when parents removed and transformation kept, then when model created then deleted, source shrinks
       * For models with thin outer shells, Rebrickr may use color of inside face instead of outside face for brick material
       * In basketball test file, error occurs when attempting to generate model with materials based on UV map (index out of range)
+      * When drawing adjacent bricks, exposure is incorrect when obstructed by ignored brick types
