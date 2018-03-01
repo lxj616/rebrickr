@@ -27,7 +27,7 @@ import math
 import bpy
 from mathutils import Vector
 
-# Rebrickr imports
+# Bricker imports
 from .common import *
 
 

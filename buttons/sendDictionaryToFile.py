@@ -28,7 +28,7 @@ import json
 import bpy
 from bpy.types import Operator
 
-# Rebrickr imports
+# Bricker imports
 from ..functions import *
 
 

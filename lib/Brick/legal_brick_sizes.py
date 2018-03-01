@@ -157,7 +157,7 @@ def getLegalBrickSizes():
 
 
 def getBrickTypes(height):
-    return bpy.props.Rebrickr_legal_brick_sizes[height].keys()
+    return bpy.props.Bricker_legal_brick_sizes[height].keys()
 
 
 def getTypesObscuringAbove():

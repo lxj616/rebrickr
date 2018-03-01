@@ -29,7 +29,7 @@ import numpy as np
 from mathutils import Vector
 from bpy.types import Object, CollectionProperty
 
-# Rebrickr imports
+# Bricker imports
 from .geometric_shapes import *
 from .generator_utils import *
 from ....functions.common import *

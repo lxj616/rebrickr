@@ -27,7 +27,7 @@ import bpy
 from bpy.app.handlers import persistent
 from mathutils import Vector, Euler
 
-# Rebrickr imports
+# Bricker imports
 from ..functions import *
 from ..lib.bricksDict import lightToDeepCache, deepToLightCache, getDictKey
 from ..lib.caches import rebrickr_bfm_cache
@@ -40,7 +40,7 @@ def rebrickrIsActive():
 
 def rebrickrRunningOp():
     scn = bpy.context.scene
-    return hasattr(scn, "Rebrickr_runningOperation") and scn.Rebrickr_runningOperation
+    return hasattr(scn, "Bricker_runningOperation") and scn.Bricker_runningOperation
 
 
 def getAnimAdjustedFrame(cm, frame):
@@ -63,7 +63,7 @@ def handle_animation(scene):
             continue
         n = cm.source_name
         for cf in range(cm.lastStartFrame, cm.lastStopFrame + 1):
-            curBricks = bpy.data.groups.get("Rebrickr_%(n)s_bricks_frame_%(cf)s" % locals())
+            curBricks = bpy.data.groups.get("Bricker_%(n)s_bricks_frame_%(cf)s" % locals())
             if curBricks is None:
                 continue
             adjusted_frame_current = getAnimAdjustedFrame(cm, scn.frame_current)
@@ -73,7 +73,7 @@ def handle_animation(scene):
                 if brick.hide == onCurF:
                     brick.hide = not onCurF
                     brick.hide_render = not onCurF
-                if scn.objects.active and "Rebrickr_%(n)s_bricks_combined_frame_" % locals() in scn.objects.active.name and onCurF:
+                if scn.objects.active and "Bricker_%(n)s_bricks_combined_frame_" % locals() in scn.objects.active.name and onCurF:
                     select(brick, active=brick)
                 # prevent bricks from being selected on frame change
                 elif brick.select:
@@ -87,7 +87,7 @@ def isObjVisible(scn, cm):
     scn, _, n = getActiveContextInfo()
     objVisible = False
     if cm.modelCreated or cm.animated:
-        gn = "Rebrickr_%(n)s_bricks" % locals()
+        gn = "Bricker_%(n)s_bricks" % locals()
         if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
             obj = bpy.data.groups[gn].objects[0]
         else:
@@ -108,8 +108,8 @@ def handle_selections(scene):
     if not rebrickrIsActive() or rebrickrRunningOp():
         return
     # if scn.layers changes and active object is no longer visible, set scn.cmlist_index to -1
-    if scn.Rebrickr_last_layers != str(list(scn.layers)):
-        scn.Rebrickr_last_layers = str(list(scn.layers))
+    if scn.Bricker_last_layers != str(list(scn.layers)):
+        scn.Bricker_last_layers = str(list(scn.layers))
         curObjVisible = False
         if scn.cmlist_index != -1:
             cm0 = scn.cmlist[scn.cmlist_index]
@@ -126,8 +126,8 @@ def handle_selections(scene):
             if not setIndex:
                 scn.cmlist_index = -1
     # select and make source or Brick Model active if scn.cmlist_index changes
-    elif scn.Rebrickr_last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
-        scn.Rebrickr_last_cmlist_index = scn.cmlist_index
+    elif scn.Bricker_last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
+        scn.Bricker_last_cmlist_index = scn.cmlist_index
         cm = scn.cmlist[scn.cmlist_index]
         obj = bpy.data.objects.get(cm.source_name)
         if obj is None:
@@ -138,7 +138,7 @@ def handle_selections(scene):
                 bricks = getBricks()
                 if bricks and len(bricks) > 0:
                     select(bricks, active=bricks[0])
-                    scn.Rebrickr_last_active_object_name = scn.objects.active.name
+                    scn.Bricker_last_active_object_name = scn.objects.active.name
             elif cm.animated:
                 n = cm.source_name
                 cf = scn.frame_current
@@ -146,23 +146,23 @@ def handle_selections(scene):
                     cf = cm.stopFrame
                 elif cf < cm.startFrame:
                     cf = cm.startFrame
-                gn = "Rebrickr_%(n)s_bricks_frame_%(cf)s" % locals()
+                gn = "Bricker_%(n)s_bricks_frame_%(cf)s" % locals()
                 if len(bpy.data.groups[gn].objects) > 0:
                     select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
-                    scn.Rebrickr_last_active_object_name = scn.objects.active.name
+                    scn.Bricker_last_active_object_name = scn.objects.active.name
             else:
                 select(obj, active=obj)
-            scn.Rebrickr_last_active_object_name = obj.name
+            scn.Bricker_last_active_object_name = obj.name
         else:
             for i in range(len(scn.cmlist)):
                 cm = scn.cmlist[i]
-                if cm.source_name == scn.Rebrickr_active_object_name:
+                if cm.source_name == scn.Bricker_active_object_name:
                     select(None)
                     break
     # open Brick Model settings for active object if active object changes
-    elif scn.objects.active and scn.Rebrickr_last_active_object_name != scn.objects.active.name and len(scn.cmlist) > 0 and (scn.cmlist_index == -1 or scn.cmlist[scn.cmlist_index].source_name != "") and scn.objects.active.type == "MESH":
-        scn.Rebrickr_last_active_object_name = scn.objects.active.name
-        beginningString = "Rebrickr_"
+    elif scn.objects.active and scn.Bricker_last_active_object_name != scn.objects.active.name and len(scn.cmlist) > 0 and (scn.cmlist_index == -1 or scn.cmlist[scn.cmlist_index].source_name != "") and scn.objects.active.type == "MESH":
+        scn.Bricker_last_active_object_name = scn.objects.active.name
+        beginningString = "Bricker_"
         if scn.objects.active.name.startswith(beginningString):
             usingSource = False
             if "_bricks" in scn.objects.active.name:
@@ -172,16 +172,16 @@ def handle_selections(scene):
             else:
                 frameLoc = None
             if frameLoc is not None:
-                scn.Rebrickr_active_object_name = scn.objects.active.name[len(beginningString):frameLoc]
+                scn.Bricker_active_object_name = scn.objects.active.name[len(beginningString):frameLoc]
         else:
             usingSource = True
-            scn.Rebrickr_active_object_name = scn.objects.active.name
+            scn.Bricker_active_object_name = scn.objects.active.name
         for i in range(len(scn.cmlist)):
             cm = scn.cmlist[i]
-            if createdWithUnsupportedVersion() or cm.source_name != scn.Rebrickr_active_object_name or (usingSource and cm.modelCreated):
+            if createdWithUnsupportedVersion() or cm.source_name != scn.Bricker_active_object_name or (usingSource and cm.modelCreated):
                 continue
             scn.cmlist_index = i
-            scn.Rebrickr_last_cmlist_index = scn.cmlist_index
+            scn.Bricker_last_cmlist_index = scn.cmlist_index
             active_obj = scn.objects.active
             if active_obj.isBrick:
                 # adjust scn.active_brick_detail based on active brick
@@ -212,12 +212,12 @@ def prevent_user_from_viewing_storage_scene(scene):
     scn = bpy.context.scene
     if not rebrickrIsActive() or rebrickrRunningOp():
         return
-    if scn.name == "Rebrickr_storage (DO NOT RENAME)":
+    if scn.name == "Bricker_storage (DO NOT RENAME)":
         i = 0
         if bpy.data.scenes[i].name == scn.name:
             i += 1
         bpy.context.screen.scene = bpy.data.scenes[i]
-        showErrorMessage("This scene is for Rebrickr internal use only")
+        showErrorMessage("This scene is for Bricker internal use only")
 
 
 bpy.app.handlers.scene_update_pre.append(prevent_user_from_viewing_storage_scene)
@@ -261,7 +261,7 @@ def find_3dview_space():
 # @persistent
 # def handle_snapping(scene):
 #     scn = bpy.context.scene
-#     if rebrickrIsActive() and scn.Rebrickr_snapping:
+#     if rebrickrIsActive() and scn.Bricker_snapping:
 #         # disable regular snapping if enabled
 #         if not scn.tool_settings.use_snap:
 #             scn.tool_settings.use_snap = True

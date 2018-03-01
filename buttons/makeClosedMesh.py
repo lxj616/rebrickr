@@ -34,7 +34,7 @@ import bpy
 from addon_utils import check, paths, enable
 props = bpy.props
 
-# Rebrickr imports
+# Bricker imports
 from ..functions import *
 
 
@@ -66,11 +66,11 @@ class MakeClosedMesh(bpy.types.Operator):
 
             obj = separatedObjs[0]
             for i in range(1, len(separatedObjs)):
-                bMod = obj.modifiers.new('Rebrickr_Boolean', type='BOOLEAN')
+                bMod = obj.modifiers.new('Bricker_Boolean', type='BOOLEAN')
                 bMod.object = separatedObjs[i]
                 bMod.operation = 'UNION'
                 select(obj, active=obj)
-                bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Rebrickr_Boolean')
+                bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Bricker_Boolean')
                 obj = scn.objects.active
                 delete(separatedObjs[i])
 

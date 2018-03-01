@@ -27,13 +27,13 @@ import bpy
 from bpy.types import Operator
 from bpy.props import *
 
-# Rebrickr imports
+# Bricker imports
 from ..lib.bricksDict import *
 from ..functions.common import *
 from ..functions.general import *
 from ..buttons.customize.functions import *
 from ..buttons.customize.undo_stack import *
-from ..buttons.delete import RebrickrDelete
+from ..buttons.delete import BrickerDelete
 from ..lib.Brick import Bricks
 from ..lib.bricksDict.functions import getDictKey
 
@@ -110,13 +110,13 @@ class delete_override(Operator):
                     for obj_name in obj_names_list:
                         self.objsToDelete.remove(bpy.data.objects.get(obj_name))
                     if not self.warnInitialize:
-                        self.report({"WARNING"}, "Please initialize the Rebrickr [shift+i] before attempting to delete bricks")
+                        self.report({"WARNING"}, "Please initialize the Bricker [shift+i] before attempting to delete bricks")
                         self.warnInitialize = True
         # run deleteUnprotected
         protected = self.deleteUnprotected(context, self.use_global)
         # alert user of protected objects
         if len(protected) > 0:
-            self.report({"WARNING"}, "Rebrickr is using the following object(s): " + str(protected)[1:-1])
+            self.report({"WARNING"}, "Bricker is using the following object(s): " + str(protected)[1:-1])
         # push delete action to undo stack
         bpy.ops.ed.undo_push(message="Delete")
 
@@ -260,12 +260,12 @@ class delete_override(Operator):
                 cm = cmCur
                 break
             elif obj.isBrick:
-                bGroup = bpy.data.groups.get("Rebrickr_%(n)s_bricks" % locals())
+                bGroup = bpy.data.groups.get("Bricker_%(n)s_bricks" % locals())
                 if bGroup and len(bGroup.objects) < 2:
                     cm = cmCur
                     break
         if cm:
-            RebrickrDelete.runFullDelete(cm=cm)
+            BrickerDelete.runFullDelete(cm=cm)
             scn.objects.active.select = False
         else:
             obj_users_scene = len(obj.users_scene)

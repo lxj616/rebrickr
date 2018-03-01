@@ -26,7 +26,7 @@ Created by Christopher Gearhart
 import bpy
 from mathutils import Vector, Euler
 
-# Rebrickr imports
+# Bricker imports
 from .common import confirmList
 from .general import *
 

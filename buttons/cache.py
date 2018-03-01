@@ -27,7 +27,7 @@ import os
 import bpy
 props = bpy.props
 
-# Rebrickr imports
+# Bricker imports
 from .customize.undo_stack import *
 from ..lib.caches import *
 from ..functions.common import *

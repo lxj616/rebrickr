@@ -34,7 +34,7 @@ from mathutils import Matrix
 from bpy.types import Operator, SpaceView3D, bpy_struct
 from bpy.app.handlers import persistent, load_post
 
-# Rebrickr imports
+# Bricker imports
 from ...functions import *
 from ...lib.caches import rebrickr_bfm_cache
 
@@ -42,7 +42,7 @@ python_undo_state = {}
 
 
 class UndoStack():
-    bl_category = "Rebrickr"
+    bl_category = "Bricker"
     bl_idname = "rebrickr.undo_stack"
     bl_label = "Undo Stack"
     bl_space_type  = 'VIEW_3D'

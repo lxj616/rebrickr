@@ -25,7 +25,7 @@ Created by Christopher Gearhart
 # Blender imports
 import bpy
 
-# Rebrickr imports
+# Bricker imports
 # NONE!
 
 

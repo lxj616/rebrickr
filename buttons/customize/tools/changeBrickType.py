@@ -26,7 +26,7 @@ import copy
 import bpy
 from bpy.types import Operator
 
-# Rebrickr imports
+# Bricker imports
 from ..undo_stack import *
 from ..functions import *
 from ...brickify import *
@@ -68,7 +68,7 @@ class changeBrickType(Operator):
             if self.orig_undo_stack_length == self.undo_stack.getLength():
                 self.undo_stack.undo_push('change_type')
             scn = bpy.context.scene
-            legalBrickSizes = bpy.props.Rebrickr_legal_brick_sizes
+            legalBrickSizes = bpy.props.Bricker_legal_brick_sizes
             # get original active and selected objects
             active_obj = scn.objects.active
             initial_active_obj_name = active_obj.name if active_obj else ""

@@ -26,7 +26,7 @@ import copy
 import bpy
 from bpy.types import Operator
 
-# Rebrickr imports
+# Bricker imports
 from ...functions import *
 from ....brickify import *
 from ....brickify import *

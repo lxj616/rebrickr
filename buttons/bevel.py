@@ -30,7 +30,7 @@ import bpy
 from mathutils import Matrix, Vector
 props = bpy.props
 
-# Rebrickr imports
+# Bricker imports
 from ..functions import *
 
 
@@ -76,7 +76,7 @@ def removeBevelMods(objs):
         obj.modifiers.remove(obj.modifiers[obj.name + "_bevel"])
 
 
-class RebrickrBevel(bpy.types.Operator):
+class BrickerBevel(bpy.types.Operator):
     """Execute bevel modifier to all bricks with above settings"""
     bl_idname = "rebrickr.bevel"
     bl_label = "Bevel Bricks"
@@ -117,7 +117,7 @@ class RebrickrBevel(bpy.types.Operator):
             # get bricks to bevel
             bricks = getBricks()
             # create or remove bevel
-            RebrickrBevel.runBevelAction(bricks, cm, action)
+            BrickerBevel.runBevelAction(bricks, cm, action)
         except:
             handle_exception()
         return{"FINISHED"}

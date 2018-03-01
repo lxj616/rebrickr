@@ -29,7 +29,7 @@ import numpy as np
 # Blender imports
 from mathutils import Vector, Matrix
 
-# Rebrickr imports
+# Bricker imports
 from .mesh_generators import *
 from .get_brick_dimensions import *
 from ...functions.general import *
@@ -66,7 +66,7 @@ class Bricks:
             bms = [bmesh.new()]
 
         # add brick mesh to bm mesh
-        junkMesh = bpy.data.meshes.new('Rebrickr_junkMesh')
+        junkMesh = bpy.data.meshes.new('Bricker_junkMesh')
         brickBM.to_mesh(junkMesh)
         for bm in bms:
             bm.from_mesh(junkMesh)
@@ -200,7 +200,7 @@ def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, l
                 for v in logoBM.verts:
                     v.co += Vector((x * xyOffset, y * xyOffset, zOffset))
                 # add logoBM mesh to bm mesh
-                junkMesh = bpy.data.meshes.new('Rebrickr_junkMesh')
+                junkMesh = bpy.data.meshes.new('Bricker_junkMesh')
                 logoBM.to_mesh(junkMesh)
                 bms[i].from_mesh(junkMesh)
                 bpy.data.meshes.remove(junkMesh, do_unlink=True)

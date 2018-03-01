@@ -32,7 +32,7 @@ import numpy as np
 import bpy
 from mathutils import Vector, Matrix
 
-# Rebrickr imports
+# Bricker imports
 from .hashObject import hash_object
 from ..lib.Brick import Bricks
 from ..lib.bricksDict import *
@@ -72,7 +72,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
     keys.sort(key=lambda x: strToList(x)[2])
 
     # get brick group
-    group_name = group_name or 'Rebrickr_%(n)s_bricks' % locals()
+    group_name = group_name or 'Bricker_%(n)s_bricks' % locals()
     bGroup = bpy.data.groups.get(group_name)
     # create new group if no existing group found
     if bGroup is None:
@@ -104,7 +104,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
     allBrickMeshes = []
     lowestLoc = -1
     # set up internal material for this object
-    internalMat = bpy.data.materials.get(cm.internalMatName) or bpy.data.materials.get("Rebrickr_%(n)s_internal" % locals()) or bpy.data.materials.new("Rebrickr_%(n)s_internal" % locals())
+    internalMat = bpy.data.materials.get(cm.internalMatName) or bpy.data.materials.get("Bricker_%(n)s_internal" % locals()) or bpy.data.materials.new("Bricker_%(n)s_internal" % locals())
     if cm.materialType == "SOURCE" and cm.matShellDepth < cm.shellThickness:
         mats.append(internalMat)
     # initialize supportBrickDs
@@ -204,7 +204,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
             update_progress("Linking to Scene", 1)
     else:
         m = combineMeshes(allBrickMeshes)
-        name = 'Rebrickr_%(n)s_bricks_combined' % locals()
+        name = 'Bricker_%(n)s_bricks_combined' % locals()
         if frameNum:
             name = "%(name)s_frame_%(frameNum)s" % locals()
         allBricksObj = bpy.data.objects.new(name, m)

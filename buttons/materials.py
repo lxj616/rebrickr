@@ -31,14 +31,14 @@ import bpy
 from mathutils import Matrix, Vector, Euler
 props = bpy.props
 
-# Rebrickr imports
+# Bricker imports
 from ..functions import *
 from ..functions.wrappers import *
-from .delete import RebrickrDelete
+from .delete import BrickerDelete
 from ..lib.abs_plastic_materials import getAbsPlasticMaterials
 
 
-class RebrickrApplyMaterial(bpy.types.Operator):
+class BrickerApplyMaterial(bpy.types.Operator):
     """Apply specified material to all bricks """
     bl_idname = "rebrickr.apply_material"
     bl_label = "Apply Material"
@@ -119,7 +119,7 @@ class RebrickrApplyMaterial(bpy.types.Operator):
         elif self.action == "INTERNAL":
             matName = cm.internalMatName
         elif self.action == "RANDOM":
-            RebrickrApplyMaterial.applyRandomMaterial(context, bricks)
+            BrickerApplyMaterial.applyRandomMaterial(context, bricks)
 
         if self.action != "RANDOM":
             mat = bpy.data.materials.get(matName)

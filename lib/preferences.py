@@ -27,7 +27,7 @@ from bpy.props import *
 # updater import
 from .. import addon_updater_ops
 
-class RebrickrPreferences(AddonPreferences):
+class BrickerPreferences(AddonPreferences):
     bl_idname = __package__[:__package__.index(".lib")]
 
     # # cacheing preferences

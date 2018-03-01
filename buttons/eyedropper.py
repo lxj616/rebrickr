@@ -24,7 +24,7 @@ import bpy
 from bpy_extras.view3d_utils import region_2d_to_location_3d, region_2d_to_origin_3d, region_2d_to_vector_3d
 from bpy.props import StringProperty
 
-# Rebrickr imports
+# Bricker imports
 from ..functions import *
 
 
@@ -60,7 +60,7 @@ class EyeDropper(bpy.types.Operator):
 
         result, loc, normal, idx, ob, mx = scn.ray_cast(ray_origin, ray_target)
 
-        if result and not ob.name.startswith('Rebrickr_' + source_name):
+        if result and not ob.name.startswith('Bricker_' + source_name):
             self.ob = ob
             context.area.header_text_set('Target object: ' + ob.name)
         else:

@@ -25,7 +25,7 @@ import time
 # Blender imports
 import bpy
 
-# Rebrickr imports
+# Bricker imports
 from ..functions.common import stopWatch
 
 

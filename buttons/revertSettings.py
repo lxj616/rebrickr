@@ -27,11 +27,11 @@ import os
 import bpy
 from bpy.types import Operator
 
-# Rebrickr imports
+# Bricker imports
 from ..functions import *
 
 
-class RebrickrRevertSettings(Operator):
+class BrickerRevertSettings(Operator):
     """Revert Matrix settings to save model customizations"""
     bl_idname = "rebrickr.revert_matrix_settings"
     bl_label = "Revert Matrix Settings"

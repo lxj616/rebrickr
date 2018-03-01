@@ -33,7 +33,7 @@ import numpy as np
 import bpy
 from mathutils import Vector, Matrix
 
-# Rebrickr imports
+# Bricker imports
 from .hashObject import hash_object
 from ..lib.Brick import Bricks
 from ..lib.bricksDict import *

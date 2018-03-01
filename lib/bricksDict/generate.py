@@ -29,7 +29,7 @@ import bpy
 from bpy.types import Object
 from mathutils import Matrix, Vector
 
-# Rebrickr imports
+# Bricker imports
 from .functions import *
 from ...functions.common import *
 from ...functions.general import *
@@ -277,7 +277,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
 
     def printMatrixStatus(lastPercent, num0, denom0):
         # print status to terminal
-        if scn.Rebrickr_printTimes:
+        if scn.Bricker_printTimes:
             return None
         percent = lastPercent + len(coordMatrix)/denom * (num0/(denom0-1))
         if percent < 100:
@@ -301,7 +301,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     else:
         percent0 = 0
     # print status to terminal
-    if scn.Rebrickr_printTimes:
+    if scn.Bricker_printTimes:
         stopWatch("X Axis", time.time()-ct)
         ct = time.time()
 
@@ -318,7 +318,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     else:
         percent1 = percent0
     # print status to terminal
-    if scn.Rebrickr_printTimes:
+    if scn.Bricker_printTimes:
         stopWatch("Y Axis", time.time()-ct)
         ct = time.time()
 
@@ -333,7 +333,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                     if intersections == 0:
                         break
     # print status to terminal
-    if scn.Rebrickr_printTimes:
+    if scn.Bricker_printTimes:
         stopWatch("Z Axis", time.time()-ct)
         ct = time.time()
 
@@ -393,7 +393,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                     brickFreqMatrix[x][y][z] = None
 
     # print status to terminal
-    if not scn.Rebrickr_printTimes:
+    if not scn.Bricker_printTimes:
         update_progress("Shell", 1)
         if cursorStatus: wm.progress_end()
 
@@ -406,7 +406,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     denom = max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)/2
     for i in range(100):
         # print status to terminal
-        if not scn.Rebrickr_printTimes:
+        if not scn.Bricker_printTimes:
             percent = i / denom
             if percent < 1:
                 update_progress("Internal", percent**0.9)
@@ -437,7 +437,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
             break
 
     # print status to terminal
-    if scn.Rebrickr_printTimes:
+    if scn.Bricker_printTimes:
         stopWatch("Internal", time.time()-ct)
         ct = time.time()
     update_progress("Internal", 1)
@@ -451,7 +451,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     # drawBMesh(bm)
 
     # print status to terminal
-    if scn.Rebrickr_printTimes:
+    if scn.Bricker_printTimes:
         stopWatch("Supports", time.time()-ct)
         ct = time.time()
 
@@ -568,7 +568,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                     cm.activeKeyZ = int(keyVals[2])
                 # create bricksDict entry for current brick
                 bricksDict[bKey] = createBricksDictEntry(
-                    name= 'Rebrickr_%(n)s_brick_%(i)s__%(bKey)s' % locals(),
+                    name= 'Bricker_%(n)s_brick_%(i)s__%(bKey)s' % locals(),
                     val= brickFreqMatrix[x][y][z],
                     draw= draw,
                     co= (co[0] - source_details.x.mid, co[1] - source_details.y.mid, co[2] - source_details.z.mid),

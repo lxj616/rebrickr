@@ -26,7 +26,7 @@ Created by Christopher Gearhart
 import bpy
 from bpy.types import Operator
 
-# Rebrickr imports
+# Bricker imports
 from .undo_stack import *
 from ...ui.app_handlers import rebrickrRunningOp
 from ...functions import *
@@ -34,7 +34,7 @@ from ...functions import *
 
 class CustomizeModel(Operator):
     """ starts custom undo stack for changes to the BFM cache """
-    bl_category = "Rebrickr"
+    bl_category = "Bricker"
     bl_idname = "rebrickr.customize_model"
     bl_label = "Customize Model"
     bl_space_type  = 'VIEW_3D'
@@ -84,8 +84,8 @@ class CustomizeModel(Operator):
     def __init__(self):
         self.undo_stack = UndoStack.get_instance()
         bpy.props.rebrickr_initialized = True
-        self.report({"INFO"}, "Rebrickr initialized")
-        # self.ui = Rebrickr_UI.get_instance()
+        self.report({"INFO"}, "Bricker initialized")
+        # self.ui = Bricker_UI.get_instance()
 
     ################################################
     # event handling functions

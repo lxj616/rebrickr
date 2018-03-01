@@ -29,14 +29,14 @@ import numpy as np
 import bpy
 from mathutils import Vector, Euler
 
-# Rebrickr imports
+# Bricker imports
 from .common import *
 
 
 def getSafeScn():
-    safeScn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
+    safeScn = bpy.data.scenes.get("Bricker_storage (DO NOT RENAME)")
     if safeScn == None:
-        safeScn = bpy.data.scenes.new("Rebrickr_storage (DO NOT RENAME)")
+        safeScn = bpy.data.scenes.new("Bricker_storage (DO NOT RENAME)")
     return safeScn
 
 
@@ -124,14 +124,14 @@ def getBricks(cm=None):
     cm = cm or getActiveContextInfo()[1]
     n = cm.source_name
     if cm.modelCreated:
-        gn = "Rebrickr_%(n)s_bricks" % locals()
+        gn = "Bricker_%(n)s_bricks" % locals()
         bGroup = bpy.data.groups.get(gn)
         if bGroup:
             bricks = list(bGroup.objects)
     elif cm.animated:
         bricks = []
         for cf in range(cm.lastStartFrame, cm.lastStopFrame+1):
-            gn = "Rebrickr_%(n)s_bricks_frame_%(cf)s" % locals()
+            gn = "Bricker_%(n)s_bricks_frame_%(cf)s" % locals()
             bGroup = bpy.data.groups.get(gn)
             if bGroup:
                 bricks += list(bGroup.objects)

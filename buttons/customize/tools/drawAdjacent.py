@@ -26,7 +26,7 @@ import copy
 import bpy
 from bpy.types import Operator
 
-# Rebrickr imports
+# Bricker imports
 from .mergeBricks import *
 from ..undo_stack import *
 from ..functions import *
@@ -275,7 +275,7 @@ class drawAdjacent(Operator):
             co0 = self.bricksDict[theKey]["co"]
             co = self.getNewCoord(cm, co0, dimensions, side, newBrickHeight)
             self.bricksDict[adjacent_key] = createBricksDictEntry(
-                name=                 'Rebrickr_%(n)s_brick_%(j)s__%(adjacent_key)s' % locals(),
+                name=                 'Bricker_%(n)s_brick_%(j)s__%(adjacent_key)s' % locals(),
                 co=                   co,
                 nearest_face=         self.bricksDict[dictKey]["nearest_face"],
                 nearest_intersection= self.bricksDict[dictKey]["nearest_intersection"],

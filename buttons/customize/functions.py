@@ -26,7 +26,7 @@
 import bpy
 from bpy.types import Operator
 
-# Rebrickr imports
+# Bricker imports
 from ...functions import *
 from ..brickify import *
 from ..brickify import *
@@ -43,16 +43,16 @@ def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     n = cm.source_name
     source = bpy.data.objects.get(n + " (DO NOT RENAME)")
     source_details, dimensions = getDetailsAndBounds(source, cm)
-    Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
-    parent = bpy.data.objects.get(Rebrickr_parent_on)
-    refLogo = RebrickrBrickify.getLogo(cm)
+    Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
+    parent = bpy.data.objects.get(Bricker_parent_on)
+    refLogo = BrickerBrickify.getLogo(cm)
     action = "UPDATE_MODEL"
     # actually draw the bricks
-    RebrickrBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, action, cm=cm, bricksDict=bricksDict, keys=keysToUpdate, replaceExistingGroup=False, selectCreated=selectCreated, printStatus=False, redraw=True)
+    BrickerBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, action, cm=cm, bricksDict=bricksDict, keys=keysToUpdate, replaceExistingGroup=False, selectCreated=selectCreated, printStatus=False, redraw=True)
     # add bevel if it was previously added
     if cm.bevelAdded:
         bricks = getBricks(cm)
-        RebrickrBevel.runBevelAction(bricks, cm)
+        BrickerBevel.runBevelAction(bricks, cm)
 
 
 def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
@@ -129,7 +129,7 @@ def getUsedTypes():
 
 def getAvailableTypes(by="SELECTION", includeSizes=[]):
     items = []
-    legalBS = bpy.props.Rebrickr_legal_brick_sizes
+    legalBS = bpy.props.Bricker_legal_brick_sizes
     scn = bpy.context.scene
     objs = bpy.context.selected_objects if by == "SELECTION" else [scn.objects.active]
     objNamesD, bricksDicts = createObjNamesAndBricksDictsDs(objs)
@@ -196,7 +196,7 @@ def createAddlBricksDictEntry(cm, bricksDict, source_key, key, full_d, x, y, z):
     cm.numBricksGenerated += 1
     j = cm.numBricksGenerated
     n = cm.source_name
-    newName = "Rebrickr_%(n)s_brick_%(j)s__%(key)s" % locals()
+    newName = "Bricker_%(n)s_brick_%(j)s__%(key)s" % locals()
     newCO = list(Vector(brickD["co"]) + vec_mult(Vector((x, y, z)), full_d))
     bricksDict[key] = createBricksDictEntry(
         name=                 newName,

@@ -25,7 +25,7 @@ Created by Christopher Gearhart
 # Blender imports
 import bpy
 
-# Rebrickr imports
+# Bricker imports
 from ...functions.general import *
 from ..Brick.legal_brick_sizes import *
 from .functions import *
@@ -41,7 +41,7 @@ def updateMaterials(bricksDict, source):
     rgba_vals = []
     # clear materials
     for mat in bpy.data.materials:
-        if mat.name.startswith("Rebrickr_{}_mat_".format(cm.source_name)):
+        if mat.name.startswith("Bricker_{}_mat_".format(cm.source_name)):
             bpy.data.materials.remove(mat)
     # get original matNames, and populate rgba_vals
     for key in bricksDict.keys():
@@ -95,7 +95,7 @@ def updateBrickSizes(cm, bricksDict, key, keys, loc, brickSizes, zStep, maxL, he
                 # else, append current brick size to brickSizes
                 else:
                     newSize = [i+1, j+1, k+zStep]
-                    if newSize not in brickSizes and not (newSize[2] == 1 and height3Only) and newSize[:2] in bpy.props.Rebrickr_legal_brick_sizes[newSize[2]][tallType if newSize[2] == 3 else shortType]:
+                    if newSize not in brickSizes and not (newSize[2] == 1 and height3Only) and newSize[:2] in bpy.props.Bricker_legal_brick_sizes[newSize[2]][tallType if newSize[2] == 3 else shortType]:
                         brickSizes.append(newSize)
             if breakOuter1: break
         breakOuter1 = False
@@ -230,7 +230,7 @@ def brickAvail(cm, sourceBrick, brick):
     if not brick:
         return False
     n = cm.source_name
-    Rebrickr_internal_mn = "Rebrickr_%(n)s_internal" % locals()
+    Bricker_internal_mn = "Bricker_%(n)s_internal" % locals()
     # This if statement ensures brick is present, brick isn't drawn already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal)
     if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats):
         return True

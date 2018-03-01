@@ -32,11 +32,11 @@ import bpy
 from mathutils import Matrix, Vector, Euler
 props = bpy.props
 
-# Rebrickr imports
+# Bricker imports
 from .customize.undo_stack import *
-from .materials import RebrickrApplyMaterial
-from .delete import RebrickrDelete
-from .bevel import RebrickrBevel
+from .materials import BrickerApplyMaterial
+from .delete import BrickerDelete
+from .bevel import BrickerBevel
 from .cache import *
 from ..lib.bricksDict import *
 from ..ui.cmlist import dirtyMatrix
@@ -45,7 +45,7 @@ from ..functions import *
 
 def updateCanRun(type):
     scn, cm, n = getActiveContextInfo()
-    if scn.name == "Rebrickr_storage (DO NOT RENAME)":
+    if scn.name == "Bricker_storage (DO NOT RENAME)":
         return True
     elif scn.cmlist_index == -1:
         return False
@@ -54,21 +54,21 @@ def updateCanRun(type):
             return (cm.logoDetail != "NONE" and cm.logoDetail != "LEGO") or cm.brickType == "CUSTOM" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "CUSTOM" and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
         elif type == "MODEL":
             # set up variables
-            Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-            return (cm.logoDetail != "NONE" and cm.logoDetail != "LEGO") or cm.brickType == "CUSTOM" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "CUSTOM" and not (cm.materialType == "RANDOM" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Rebrickr_bricks_gn) and len(bpy.data.groups[Rebrickr_bricks_gn].objects) == 0)
+            Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
+            return (cm.logoDetail != "NONE" and cm.logoDetail != "LEGO") or cm.brickType == "CUSTOM" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "CUSTOM" and not (cm.materialType == "RANDOM" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Bricker_bricks_gn) and len(bpy.data.groups[Bricker_bricks_gn].objects) == 0)
 
 
 def importLogo():
-    """ import logo object from Rebrickr addon folder """
+    """ import logo object from Bricker addon folder """
     addonsPath = bpy.utils.user_resource('SCRIPTS', "addons")
-    Rebrickr = bpy.props.rebrickr_module_name
-    logoObjPath = "%(addonsPath)s/%(Rebrickr)s/lego_logo.obj" % locals()
+    Bricker = bpy.props.rebrickr_module_name
+    logoObjPath = "%(addonsPath)s/%(Bricker)s/lego_logo.obj" % locals()
     bpy.ops.import_scene.obj(filepath=logoObjPath)
     logoObj = bpy.context.selected_objects[0]
     return logoObj
 
 
-class RebrickrBrickify(bpy.types.Operator):
+class BrickerBrickify(bpy.types.Operator):
     """ Create brick sculpture from source object mesh """
     bl_idname = "rebrickr.brickify"
     bl_label = "Create/Update Brick Model from Source Object"
@@ -135,9 +135,9 @@ class RebrickrBrickify(bpy.types.Operator):
     def runBrickify(self, context):
         # set up variables
         scn, cm, n = getActiveContextInfo()
-        scn.Rebrickr_runningOperation = True
+        scn.Bricker_runningOperation = True
         self.undo_stack.iterateStates(cm)
-        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+        Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
 
         # get source and initialize values
         source = self.getObjectToBrickify()
@@ -150,7 +150,7 @@ class RebrickrBrickify(bpy.types.Operator):
             if not matrixReallyIsDirty(cm) and loadedFromCache:
                 cm.matrixIsDirty = False
 
-        if not self.isValid(source, Rebrickr_bricks_gn):
+        if not self.isValid(source, Bricker_bricks_gn):
             return {"CANCELLED"}
 
         if self.action not in ["ANIMATE", "UPDATE_ANIM"]:
@@ -183,7 +183,7 @@ class RebrickrBrickify(bpy.types.Operator):
         cm.bricksAreDirty = False
         cm.matrixIsDirty = False
         cm.internalIsDirty = False
-        scn.Rebrickr_runningOperation = False
+        scn.Bricker_runningOperation = False
         cm.version = bpy.props.rebrickr_version
 
         # unlink source from scene and link to safe scene
@@ -198,13 +198,13 @@ class RebrickrBrickify(bpy.types.Operator):
         scn, cm, n = getActiveContextInfo()
         origFrame = None
         source = None
-        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-        Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
+        Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
+        Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
 
         # get or create parent group
-        pGroup = bpy.data.groups.get(Rebrickr_parent_on)
+        pGroup = bpy.data.groups.get(Bricker_parent_on)
         if pGroup is None:
-            pGroup = bpy.data.groups.new(Rebrickr_parent_on)
+            pGroup = bpy.data.groups.new(Bricker_parent_on)
             self.createdGroups.append(pGroup.name)
 
         if self.action == "CREATE":
@@ -218,7 +218,7 @@ class RebrickrBrickify(bpy.types.Operator):
         if self.action in ["UPDATE_MODEL"] and not updateCanRun("MODEL"):
             return{"FINISHED"}
 
-        sto_scn = bpy.data.scenes.get("Rebrickr_storage (DO NOT RENAME)")
+        sto_scn = bpy.data.scenes.get("Bricker_storage (DO NOT RENAME)")
         if sto_scn:
             sto_scn.update()
 
@@ -228,14 +228,14 @@ class RebrickrBrickify(bpy.types.Operator):
         # delete old bricks if present
         if self.action in ["UPDATE_MODEL"]:
             # skip source, dupes, and parents
-            RebrickrDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
+            BrickerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
         else:
             storeTransformData(None)
 
         if self.action == "CREATE":
             # create dupes group
-            Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
-            dGroup = bpy.data.groups.new(Rebrickr_source_dupes_gn)
+            Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
+            dGroup = bpy.data.groups.new(Bricker_source_dupes_gn)
             self.createdGroups.append(dGroup.name)
             # duplicate source and add duplicate to group
             select(self.source, active=self.source)
@@ -293,11 +293,11 @@ class RebrickrBrickify(bpy.types.Operator):
             cm.modelHeight = sourceDup_details.z.dist
 
         # get parent object
-        parent = bpy.data.objects.get(Rebrickr_parent_on)
+        parent = bpy.data.objects.get(Bricker_parent_on)
         # if parent doesn't exist, get parent with new location
         parentLoc = (sourceDup_details.x.mid, sourceDup_details.y.mid, sourceDup_details.z.mid)
         if parent is None:
-            parent = self.getParent(Rebrickr_parent_on, parentLoc)
+            parent = self.getParent(Bricker_parent_on, parentLoc)
             cm.parent_name = parent.name
             pGroup.objects.link(parent)
         self.createdObjects.append(parent.name)
@@ -308,7 +308,7 @@ class RebrickrBrickify(bpy.types.Operator):
         # create new bricks
         self.createNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, self.action, curFrame=None, sceneCurFrame=None)
 
-        bGroup = bpy.data.groups.get(Rebrickr_bricks_gn)  # redefine bGroup since it was removed
+        bGroup = bpy.data.groups.get(Bricker_bricks_gn)  # redefine bGroup since it was removed
         if bGroup:
             self.transformBricks(bGroup, cm, parent, self.source, self.action)
 
@@ -321,7 +321,7 @@ class RebrickrBrickify(bpy.types.Operator):
         # add bevel if it was previously added
         if cm.bevelAdded:
             bricks = getBricks()
-            RebrickrBevel.runBevelAction(bricks, cm)
+            BrickerBevel.runBevelAction(bricks, cm)
 
         # set active frame to original active frame
         if origFrame:
@@ -333,9 +333,9 @@ class RebrickrBrickify(bpy.types.Operator):
         """ create brick animation """
         # set up variables
         scn, cm, n = getActiveContextInfo()
-        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-        Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
-        Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
+        Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
+        Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
+        Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
         sceneCurFrame = scn.frame_current
         objsToSelect = []
 
@@ -362,23 +362,23 @@ class RebrickrBrickify(bpy.types.Operator):
             if self.updatedFramesOnly:
                 # preserve duplicates, parents, and bricks for frames that haven't changed
                 preservedFrames = [cm.startFrame, cm.stopFrame]
-            RebrickrDelete.cleanUp("ANIMATION", skipDupes=not self.updatedFramesOnly, skipParents=not self.updatedFramesOnly, preservedFrames=preservedFrames)
+            BrickerDelete.cleanUp("ANIMATION", skipDupes=not self.updatedFramesOnly, skipParents=not self.updatedFramesOnly, preservedFrames=preservedFrames)
             self.source.name = self.source.name + " (DO NOT RENAME)"
 
         # get or create duplicate and parent groups
-        dGroup = bpy.data.groups.get(Rebrickr_source_dupes_gn)
+        dGroup = bpy.data.groups.get(Bricker_source_dupes_gn)
         if dGroup is None:
-            dGroup = bpy.data.groups.new(Rebrickr_source_dupes_gn)
+            dGroup = bpy.data.groups.new(Bricker_source_dupes_gn)
             self.createdGroups.append(dGroup.name)
-        pGroup = bpy.data.groups.get(Rebrickr_parent_on)
+        pGroup = bpy.data.groups.get(Bricker_parent_on)
         if pGroup is None:
-            pGroup = bpy.data.groups.new(Rebrickr_parent_on)
+            pGroup = bpy.data.groups.new(Bricker_parent_on)
             self.createdGroups.append(pGroup.name)
 
         # get parent object
-        parent0 = bpy.data.objects.get(Rebrickr_parent_on)
+        parent0 = bpy.data.objects.get(Bricker_parent_on)
         if parent0 is None:
-            parent0 = self.getParent(Rebrickr_parent_on, self.source.location.to_tuple())
+            parent0 = self.getParent(Bricker_parent_on, self.source.location.to_tuple())
             pGroup.objects.link(parent0)
             cm.parent_name = parent0.name
         self.createdObjects.append(parent0.name)
@@ -412,11 +412,11 @@ class RebrickrBrickify(bpy.types.Operator):
 
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
-            pGroup = bpy.data.groups[Rebrickr_parent_on]  # redefine pGroup since it was removed
-            parent = bpy.data.objects.get(Rebrickr_parent_on + "_frame_" + str(curFrame))
+            pGroup = bpy.data.groups[Bricker_parent_on]  # redefine pGroup since it was removed
+            parent = bpy.data.objects.get(Bricker_parent_on + "_frame_" + str(curFrame))
             if parent is None:
-                m = bpy.data.meshes.new(Rebrickr_parent_on + "_frame_" + str(curFrame) + "_mesh")
-                parent = bpy.data.objects.new(Rebrickr_parent_on + "_frame_" + str(curFrame), m)
+                m = bpy.data.meshes.new(Bricker_parent_on + "_frame_" + str(curFrame) + "_mesh")
+                parent = bpy.data.objects.new(Bricker_parent_on + "_frame_" + str(curFrame), m)
                 parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
                 parent.parent = parent0
                 pGroup.objects.link(parent)
@@ -446,7 +446,7 @@ class RebrickrBrickify(bpy.types.Operator):
 
         # prepare bricks to be displayed
         for curFrame in range(cm.startFrame, cm.stopFrame + 1):
-            group_name = "Rebrickr_%(n)s_bricks_frame_%(curFrame)s" % locals()
+            group_name = "Bricker_%(n)s_bricks_frame_%(curFrame)s" % locals()
             for obj in bpy.data.groups[group_name].objects:
                 if (curFrame == cm.startFrame and sceneCurFrame < cm.startFrame) or curFrame == sceneCurFrame or (curFrame == cm.stopFrame and sceneCurFrame > cm.stopFrame):
                     objsToSelect = bpy.data.groups[group_name].objects
@@ -475,7 +475,7 @@ class RebrickrBrickify(bpy.types.Operator):
         # add bevel if it was previously added
         if cm.bevelAdded:
             bricks = getBricks()
-            RebrickrBevel.runBevelAction(bricks, cm)
+            BrickerBevel.runBevelAction(bricks, cm)
 
     @classmethod
     def createNewBricks(self, source, parent, source_details, dimensions, refLogo, action, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False, printStatus=True, redraw=False):
@@ -516,7 +516,7 @@ class RebrickrBrickify(bpy.types.Operator):
         # update materials in bricksDict
         bricksDict = updateMaterials(bricksDict, source)
         # make bricks
-        group_name = 'Rebrickr_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else None
+        group_name = 'Bricker_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else None
         bricksCreated, bricksDict = makeBricks(parent, refLogo, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
         if selectCreated:
             select(None)
@@ -526,7 +526,7 @@ class RebrickrBrickify(bpy.types.Operator):
         cacheBricksDict(action, cm, bricksDict, curFrame=curFrame)
         return group_name
 
-    def isValid(self, source, Rebrickr_bricks_gn):
+    def isValid(self, source, Bricker_bricks_gn):
         """ returns True if brickify action can run, else report WARNING/ERROR and return False """
         scn, cm, _ = getActiveContextInfo()
         if cm.brickType == "CUSTOM":
@@ -568,15 +568,15 @@ class RebrickrBrickify(bpy.types.Operator):
         source["ignored_mods"] = ""
         if self.action in ["CREATE", "ANIMATE"]:
             # verify function can run
-            if groupExists(Rebrickr_bricks_gn):
+            if groupExists(Bricker_bricks_gn):
                 self.report({"WARNING"}, "Brickified Model already created.")
                 return False
             # verify source exists and is of type mesh
             if cm.source_name == "":
                 self.report({"WARNING"}, "Please select a mesh to Brickify")
                 return False
-            if cm.source_name[:9] == "Rebrickr_" and (cm.source_name[-7:] == "_bricks" or cm.source_name[-9:] == "_combined"):
-                self.report({"WARNING"}, "Cannot Brickify models created with the Rebrickr")
+            if cm.source_name[:9] == "Bricker_" and (cm.source_name[-7:] == "_bricks" or cm.source_name[-9:] == "_combined"):
+                self.report({"WARNING"}, "Cannot Brickify models created with the Bricker")
                 return False
             if source is None:
                 n = cm.source_name
@@ -587,7 +587,7 @@ class RebrickrBrickify(bpy.types.Operator):
                 return False
             # verify source is not a rigid body
             if source.rigid_body is not None:
-                self.report({"WARNING"}, "Rebrickr: Rigid body physics not supported")
+                self.report({"WARNING"}, "Bricker: Rigid body physics not supported")
                 return False
             # verify all appropriate modifiers have been applied
             ignoredMods = []
@@ -602,7 +602,7 @@ class RebrickrBrickify(bpy.types.Operator):
                     ignoredMods.append(mod.name)
                 # these modifiers are unsupported - abort render if enabled
                 if mod.type in ["SMOKE"] and mod.show_viewport:
-                    self.report({"WARNING"}, "'" + str(mod.type) + "' modifier not supported by the Rebrickr.")
+                    self.report({"WARNING"}, "'" + str(mod.type) + "' modifier not supported by the Bricker.")
                     return False
                 # handle cloth modifier
                 if mod.type == "CLOTH" and mod.show_viewport:
@@ -636,8 +636,8 @@ class RebrickrBrickify(bpy.types.Operator):
             # TODO: Alert user to bake fluid/cloth simulation before attempting to Brickify
 
         if self.action in ["UPDATE_MODEL"]:
-            # make sure 'Rebrickr_[source name]_bricks' group exists
-            if not groupExists(Rebrickr_bricks_gn):
+            # make sure 'Bricker_[source name]_bricks' group exists
+            if not groupExists(Bricker_bricks_gn):
                 self.report({"WARNING"}, "Brickified Model doesn't exist. Create one with the 'Brickify Object' button.")
                 return False
 
@@ -738,18 +738,18 @@ class RebrickrBrickify(bpy.types.Operator):
         else:
             decimate = False
             r = cm.logoResolution
-            refLogoImport = bpy.data.objects.get("Rebrickr_refLogo")
+            refLogoImport = bpy.data.objects.get("Bricker_refLogo")
             if refLogoImport is not None:
-                refLogo = bpy.data.objects.get("Rebrickr_refLogo_%(r)s" % locals())
+                refLogo = bpy.data.objects.get("Bricker_refLogo_%(r)s" % locals())
                 if refLogo is None:
-                    refLogo = bpy.data.objects.new("Rebrickr_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
+                    refLogo = bpy.data.objects.new("Bricker_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
                     decimate = True
             else:
                 # import refLogo and add to group
                 refLogoImport = importLogo()
-                refLogoImport.name = "Rebrickr_refLogo"
+                refLogoImport.name = "Bricker_refLogo"
                 safeUnlink(refLogoImport)
-                refLogo = bpy.data.objects.new("Rebrickr_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
+                refLogo = bpy.data.objects.new("Bricker_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
                 decimate = True
             # decimate refLogo
             # TODO: Speed this up, if possible
@@ -775,7 +775,7 @@ class RebrickrBrickify(bpy.types.Operator):
             sourceDup = None
             if self.action == "UPDATE_ANIM":
                 # retrieve previously duplicated source
-                sourceDup = bpy.data.objects.get("Rebrickr_" + source_name + "_frame_" + str(curFrame))
+                sourceDup = bpy.data.objects.get("Bricker_" + source_name + "_frame_" + str(curFrame))
             if sourceDup:
                 duplicates[curFrame] = {"obj":sourceDup, "isReused":True}
                 continue
@@ -783,7 +783,7 @@ class RebrickrBrickify(bpy.types.Operator):
             select(lastObj, active=lastObj)
             bpy.ops.object.duplicate()
             sourceDup = scn.objects.active
-            sourceDup.name = "Rebrickr_" + cm.source_name + "_frame_" + str(curFrame)
+            sourceDup.name = "Bricker_" + cm.source_name + "_frame_" + str(curFrame)
             if sourceDup.name not in dGroup.objects.keys():
                 dGroup.objects.link(sourceDup)
             duplicates[curFrame] = {"obj":sourceDup, "isReused":False}
@@ -871,9 +871,9 @@ class RebrickrBrickify(bpy.types.Operator):
             objToBrickify = bpy.data.objects.get(cm.source_name)
         return objToBrickify
 
-    def getParent(self, Rebrickr_parent_on, loc):
-        m = bpy.data.meshes.new(Rebrickr_parent_on + "_mesh")
-        parent = bpy.data.objects.new(Rebrickr_parent_on, m)
+    def getParent(self, Bricker_parent_on, loc):
+        m = bpy.data.meshes.new(Bricker_parent_on + "_mesh")
+        parent = bpy.data.objects.new(Bricker_parent_on, m)
         parent.location = loc
         safeScn = getSafeScn()
         safeScn.objects.link(parent)

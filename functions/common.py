@@ -465,14 +465,14 @@ def showErrorMessage(message, wrap=80):
 
 
 def handle_exception():
-    errormsg = print_exception('Rebrickr_log')
+    errormsg = print_exception('Bricker_log')
     # if max number of exceptions occur within threshold of time, abort!
     print('\n'*5)
     print('-'*100)
-    print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)")
+    print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Bricker)")
     print('-'*100)
     print('\n'*5)
-    showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Rebrickr)", wrap=240)
+    showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Bricker)", wrap=240)
 
 
 # http://stackoverflow.com/questions/14519177/python-exception-handling-line-number
@@ -519,7 +519,7 @@ def writeErrorToFile(errorReportPath, txtName, addonVersion):
     # write error to log text object
     if not os.path.exists(errorReportPath):
         os.makedirs(errorReportPath)
-    fullFilePath = os.path.join(errorReportPath, "Rebrickr_error_report.txt")
+    fullFilePath = os.path.join(errorReportPath, "Bricker_error_report.txt")
     f = open(fullFilePath, "w")
     f.write("\nPlease copy the following form and paste it into a new issue at https://github.com/bblanimation/rebrickr/issues")
     f.write("\n\nDon't forget to include a description of your problem! The more information you provide (what you were trying to do, what action directly preceeded the error, etc.), the easier it will be for us to squash the bug.")

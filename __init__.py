@@ -1,10 +1,10 @@
 bl_info = {
-    "name"        : "Rebrickr",
+    "name"        : "Bricker",
     "author"      : "Christopher Gearhart <chris@bblanimation.com>",
     "version"     : (1, 2, 0),
     "blender"     : (2, 79, 0),
     "description" : "Turn any mesh into a 3D brick sculpture or simulation with the click of a button",
-    "location"    : "View3D > Tools > Rebrickr",
+    "location"    : "View3D > Tools > Bricker",
     "warning"     : "",  # used for warning icon and text in addons panel
     "wiki_url"    : "https://www.blendermarket.com/creator/products/rebrickr/",
     "tracker_url" : "https://github.com/bblanimation/rebrickr/issues",
@@ -38,7 +38,7 @@ Created by Christopher Gearhart
 import bpy
 from bpy.props import *
 
-# Rebrickr imports
+# Bricker imports
 from .ui import *
 from .buttons import *
 from .buttons.customize import *
@@ -70,24 +70,24 @@ def register():
     bpy.types.Object.cmlist_id = IntProperty(name='Custom Model ID', description="ID of cmlist entry to which this object refers", default=-1)
     bpy.types.Material.num_averaged = IntProperty(name='Colors Averaged', description="Number of colors averaged together", default=0)
 
-    bpy.types.Scene.Rebrickr_printTimes = BoolProperty(default=False)
+    bpy.types.Scene.Bricker_printTimes = BoolProperty(default=False)
 
-    bpy.types.Scene.Rebrickr_runningOperation = BoolProperty(default=False)
-    bpy.types.Scene.Rebrickr_last_layers = StringProperty(default="")
-    bpy.types.Scene.Rebrickr_last_cmlist_index = IntProperty(default=-2)
-    bpy.types.Scene.Rebrickr_active_object_name = StringProperty(default="")
-    bpy.types.Scene.Rebrickr_last_active_object_name = StringProperty(default="")
+    bpy.types.Scene.Bricker_runningOperation = BoolProperty(default=False)
+    bpy.types.Scene.Bricker_last_layers = StringProperty(default="")
+    bpy.types.Scene.Bricker_last_cmlist_index = IntProperty(default=-2)
+    bpy.types.Scene.Bricker_active_object_name = StringProperty(default="")
+    bpy.types.Scene.Bricker_last_active_object_name = StringProperty(default="")
 
-    bpy.types.Scene.Rebrickr_copy_from_id = IntProperty(default=-1)
+    bpy.types.Scene.Bricker_copy_from_id = IntProperty(default=-1)
 
     # define legal brick sizes (key:height, val:[width,depth])
-    bpy.props.Rebrickr_legal_brick_sizes = getLegalBrickSizes()
+    bpy.props.Bricker_legal_brick_sizes = getLegalBrickSizes()
 
-    # bpy.types.Scene.Rebrickr_snapping = BoolProperty(
-    #     name="Rebrickr Snap",
+    # bpy.types.Scene.Bricker_snapping = BoolProperty(
+    #     name="Bricker Snap",
     #     description="Snap to brick dimensions",
     #     default=False)
-    # bpy.types.VIEW3D_HT_header.append(Rebrickr_snap_button)
+    # bpy.types.VIEW3D_HT_header.append(Bricker_snap_button)
 
     # handle the keymap
     wm = bpy.context.window_manager
@@ -100,7 +100,7 @@ def register():
         addon_keymaps.append(km)
 
     # other things (UI List)
-    bpy.types.Scene.cmlist = CollectionProperty(type=Rebrickr_CreatedModels)
+    bpy.types.Scene.cmlist = CollectionProperty(type=Bricker_CreatedModels)
     bpy.types.Scene.cmlist_index = IntProperty(default=-1)
 
     # addon updater code and configurations
@@ -115,15 +115,15 @@ def unregister():
 
     del Scn.cmlist_index
     del Scn.cmlist
-    # bpy.types.VIEW3D_HT_header.remove(Rebrickr_snap_button)
-    # del Scn.Rebrickr_snapping
-    del Scn.Rebrickr_copy_from_id
-    del Scn.Rebrickr_last_active_object_name
-    del Scn.Rebrickr_active_object_name
-    del Scn.Rebrickr_last_cmlist_index
-    del Scn.Rebrickr_last_layers
-    del Scn.Rebrickr_runningOperation
-    del Scn.Rebrickr_printTimes
+    # bpy.types.VIEW3D_HT_header.remove(Bricker_snap_button)
+    # del Scn.Bricker_snapping
+    del Scn.Bricker_copy_from_id
+    del Scn.Bricker_last_active_object_name
+    del Scn.Bricker_active_object_name
+    del Scn.Bricker_last_cmlist_index
+    del Scn.Bricker_last_layers
+    del Scn.Bricker_runningOperation
+    del Scn.Bricker_printTimes
     del bpy.types.Object.isBrick
     del bpy.types.Object.isBrickifiedObject
     del bpy.types.Object.protected

@@ -24,7 +24,7 @@ import bpy
 import numpy as np
 import colorsys
 
-# Rebrickr imports
+# Bricker imports
 from .general import *
 
 

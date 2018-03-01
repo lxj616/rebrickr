@@ -29,13 +29,13 @@ from bpy.types import Panel
 from bpy.props import *
 props = bpy.props
 
-# Rebrickr imports
+# Bricker imports
 from .cmlist import *
 from .app_handlers import *
 from ..lib.bricksDict import *
 from ..lib.Brick.test_brick_generators import *
 from ..lib.abs_plastic_materials import getAbsPlasticMaterials
-from ..buttons.delete import RebrickrDelete
+from ..buttons.delete import BrickerDelete
 from ..buttons.revertSettings import *
 from ..buttons.cache import *
 from ..functions import *
@@ -56,7 +56,7 @@ def settingsCanBeDrawn():
 
 
 class BasicMenu(bpy.types.Menu):
-    bl_idname      = "Rebrickr_specials_menu"
+    bl_idname      = "Bricker_specials_menu"
     bl_label       = "Select"
 
     def draw(self, context):
@@ -71,9 +71,9 @@ class BrickModelsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Brick Models"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_brick_models"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_brick_models"
     bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
+    bl_category    = "Bricker"
 
     @classmethod
     def poll(self, context):
@@ -90,7 +90,7 @@ class BrickModelsPanel(Panel):
         if bversion() < '002.078.00':
             col = layout.column(align=True)
             col.label('ERROR: upgrade needed', icon='ERROR')
-            col.label('Rebrickr requires Blender 2.78+')
+            col.label('Bricker requires Blender 2.78+')
             return
 
         # draw UI list and list actions
@@ -99,12 +99,12 @@ class BrickModelsPanel(Panel):
         else:
             rows = 4
         row = layout.row()
-        row.template_list("Rebrickr_UL_items", "", scn, "cmlist", scn, "cmlist_index", rows=rows)
+        row.template_list("Bricker_UL_items", "", scn, "cmlist", scn, "cmlist_index", rows=rows)
 
         col = row.column(align=True)
         col.operator("cmlist.list_action", icon='ZOOMIN', text="").action = 'ADD'
         col.operator("cmlist.list_action", icon='ZOOMOUT', text="").action = 'REMOVE'
-        col.menu("Rebrickr_specials_menu", icon='DOWNARROW_HLT', text="")
+        col.menu("Bricker_specials_menu", icon='DOWNARROW_HLT', text="")
         if len(scn.cmlist) > 1:
             col.separator()
             col.operator("cmlist.list_action", icon='TRIA_UP', text="").action = 'UP'
@@ -136,7 +136,7 @@ class BrickModelsPanel(Panel):
             # if undo stack not initialized, draw initialize button
             if not bpy.props.rebrickr_initialized:
                 row = col1.row(align=True)
-                row.operator("rebrickr.customize_model", text="Initialize Rebrickr", icon="MODIFIER")
+                row.operator("rebrickr.customize_model", text="Initialize Bricker", icon="MODIFIER")
                 # draw test brick generator button (for testing purposes only)
                 if testBrickGenerators.drawUIButton():
                     col = layout.column(align=True)
@@ -154,7 +154,7 @@ class BrickModelsPanel(Panel):
                         col = layout.column(align=True)
                         col.scale_y = 0.7
                         col.label("Model was created with")
-                        col.label("Rebrickr v%(v_str)s. Please" % locals())
+                        col.label("Bricker v%(v_str)s. Please" % locals())
                         col.label("run 'Update Model' so")
                         col.label("it is compatible with")
                         col.label("your current version.")
@@ -184,7 +184,7 @@ class BrickModelsPanel(Panel):
                         col = layout.column(align=True)
                         col.scale_y = 0.7
                         col.label("Model was created with")
-                        col.label("Rebrickr v%(v_str)s. Please" % locals())
+                        col.label("Bricker v%(v_str)s. Please" % locals())
                         col.label("run 'Update Model' so")
                         col.label("it is compatible with")
                         col.label("your current version.")
@@ -199,7 +199,7 @@ class BrickModelsPanel(Panel):
         else:
             layout.operator("cmlist.list_action", icon='ZOOMIN', text="New Brick Model").action = 'ADD'
 
-        if bpy.data.texts.find('Rebrickr_log') >= 0:
+        if bpy.data.texts.find('Bricker_log') >= 0:
             split = layout.split(align=True, percentage=0.9)
             col = split.column(align=True)
             row = col.row(align=True)
@@ -217,9 +217,9 @@ class AnimationPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Animation"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_animation"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_animation"
     bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
+    bl_category    = "Bricker"
     bl_options     = {"DEFAULT_CLOSED"}
 
     @classmethod
@@ -229,12 +229,12 @@ class AnimationPanel(Panel):
         scn, cm, _ = getActiveContextInfo()
         if cm.modelCreated:
             return False
-        # groupExistsBool = groupExists(Rebrickr_bricks) or groupExists("Rebrickr_%(n)s" % locals()) or groupExists("Rebrickr_%(n)s_refBricks" % locals())
+        # groupExistsBool = groupExists(Bricker_bricks) or groupExists("Bricker_%(n)s" % locals()) or groupExists("Bricker_%(n)s_refBricks" % locals())
         # if groupExistsBool:
         #     return False
         # cm = scn.cmlist[scn.cmlist_index]
         # n = cm.source_name
-        # if not groupExists('Rebrickr_%(n)s' % locals()):
+        # if not groupExists('Bricker_%(n)s' % locals()):
         #     return False
         return True
 
@@ -305,9 +305,9 @@ class ModelTransformPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Model Transform"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_model_transform"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_model_transform"
     bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
+    bl_category    = "Bricker"
 
     @classmethod
     def poll(self, context):
@@ -330,7 +330,7 @@ class ModelTransformPanel(Panel):
             row = col.row(align=True)
             row.prop(cm, "exposeParent")
         row = col.row(align=True)
-        parent = bpy.data.objects['Rebrickr_%(n)s_parent' % locals()]
+        parent = bpy.data.objects['Bricker_%(n)s_parent' % locals()]
         row = layout.row()
         row.column().prop(parent, "location")
         if parent.rotation_mode == 'QUATERNION':
@@ -348,9 +348,9 @@ class ModelSettingsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Model Settings"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_model_settings"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_model_settings"
     bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
+    bl_category    = "Bricker"
 
     @classmethod
     def poll(self, context):
@@ -454,9 +454,9 @@ class BrickTypesPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Brick Types"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_brick_types"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_brick_types"
     bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
+    bl_category    = "Bricker"
     bl_options     = {"DEFAULT_CLOSED"}
 
     @classmethod
@@ -527,9 +527,9 @@ class MaterialsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Materials"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_materials"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_materials"
     bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
+    bl_category    = "Bricker"
     bl_options     = {"DEFAULT_CLOSED"}
     # COMPAT_ENGINES = {"CYCLES", "BLENDER_RENDER"}
 
@@ -669,9 +669,9 @@ class DetailingPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Detailing"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_detailing"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_detailing"
     bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
+    bl_category    = "Bricker"
     bl_options     = {"DEFAULT_CLOSED"}
 
     @classmethod
@@ -728,9 +728,9 @@ class SupportsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Supports"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_supports"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_supports"
     bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
+    bl_category    = "Bricker"
     bl_options     = {"DEFAULT_CLOSED"}
 
     @classmethod
@@ -770,9 +770,9 @@ class BevelPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Bevel"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_bevel"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_bevel"
     bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
+    bl_category    = "Bricker"
     bl_options     = {"DEFAULT_CLOSED"}
 
     @classmethod
@@ -819,9 +819,9 @@ class CustomizeModel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Customize Model"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_customize_model"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_customize_model"
     bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
+    bl_category    = "Bricker"
     bl_options     = {"DEFAULT_CLOSED"}
 
     @classmethod
@@ -905,9 +905,9 @@ class AdvancedPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Advanced"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_advanced"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_advanced"
     bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
+    bl_category    = "Bricker"
     bl_options     = {"DEFAULT_CLOSED"}
 
     @classmethod
@@ -924,8 +924,8 @@ class AdvancedPanel(Panel):
         if addon_updater_ops.updater.update_ready:
             col = layout.column(align=True)
             col.scale_y = 0.7
-            col.label("Rebrickr update available!", icon="INFO")
-            col.label("Install from Rebrickr addon prefs")
+            col.label("Bricker update available!", icon="INFO")
+            col.label("Install from Bricker addon prefs")
             layout.separator()
 
         col = layout.column(align=True)
@@ -957,9 +957,9 @@ class BrickDetailsPanel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Brick Details"
-    bl_idname      = "VIEW3D_PT_tools_Rebrickr_brick_details"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_brick_details"
     bl_context     = "objectmode"
-    bl_category    = "Rebrickr"
+    bl_category    = "Bricker"
     bl_options     = {"DEFAULT_CLOSED"}
 
     @classmethod

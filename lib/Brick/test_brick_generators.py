@@ -25,7 +25,7 @@ import bpy
 # Blender imports
 # NONE!
 
-# Rebrickr imports
+# Bricker imports
 from .mesh_generators import *
 from .get_brick_dimensions import *
 from ...functions.common import *

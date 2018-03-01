@@ -27,7 +27,7 @@ import bpy
 from mathutils import Vector, Euler
 props = bpy.props
 
-# Rebrickr imports
+# Bricker imports
 from ..functions import *
 from .cache import *
 
@@ -43,7 +43,7 @@ def getModelType(self, cm=None):
     return modelType
 
 
-class RebrickrDelete(bpy.types.Operator):
+class BrickerDelete(bpy.types.Operator):
     """ Delete Brickified model """
     bl_idname = "rebrickr.delete"
     bl_label = "Delete Brickified model from Blender"
@@ -87,19 +87,19 @@ class RebrickrDelete(bpy.types.Operator):
         scn = bpy.context.scene
         cm = cm or scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
+        Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
         source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
 
         # set layers to source layers temporarily
         curLayers = list(scn.layers)
         setLayers([True]*20)
 
-        # clean up 'Rebrickr_[source name]' group
+        # clean up 'Bricker_[source name]' group
         if not skipSource:
             cls.cleanSource(source, modelType)
 
-        # clean up 'Rebrickr_[source name]_dupes' group
-        if groupExists(Rebrickr_source_dupes_gn) and not skipDupes:
+        # clean up 'Bricker_[source name]_dupes' group
+        if groupExists(Bricker_source_dupes_gn) and not skipDupes:
             cls.cleanDupes(preservedFrames, modelType)
 
         if not skipParents:
@@ -127,7 +127,7 @@ class RebrickrDelete(bpy.types.Operator):
     def runFullDelete(cls, cm=None):
         """ externally callable cleanup function for full delete action (clears everything from memory) """
         scn = bpy.context.scene
-        scn.Rebrickr_runningOperation = True
+        scn.Bricker_runningOperation = True
         cm = cm or scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
@@ -139,7 +139,7 @@ class RebrickrDelete(bpy.types.Operator):
         lastLayers = list(scn.layers)
         # match source layers to brick layers
         brick = None
-        gn = "Rebrickr_%(n)s_bricks" % locals()
+        gn = "Bricker_%(n)s_bricks" % locals()
         if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
             brick = bpy.data.groups[gn].objects[0]
             source.layers = brick.layers
@@ -172,7 +172,7 @@ class RebrickrDelete(bpy.types.Operator):
                 source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
 
         # return open layers to original
-        scn.Rebrickr_runningOperation = False
+        scn.Bricker_runningOperation = False
         setLayers(lastLayers)
 
         # delete custom properties from source
@@ -197,15 +197,15 @@ class RebrickrDelete(bpy.types.Operator):
 
     def cleanSource(source, modelType):
         scn, cm, n = getActiveContextInfo()
-        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+        Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         # link source to scene
         if source not in list(scn.objects):
             safeLink(source)
         # set source layers to brick layers
         if modelType == "MODEL":
-            bGroup = bpy.data.groups.get(Rebrickr_bricks_gn)
+            bGroup = bpy.data.groups.get(Bricker_bricks_gn)
         elif modelType == "ANIMATION":
-            bGroup = bpy.data.groups.get(Rebrickr_bricks_gn + "_frame_" + str(cm.lastStartFrame))
+            bGroup = bpy.data.groups.get(Bricker_bricks_gn + "_frame_" + str(cm.lastStartFrame))
         if bGroup and len(bGroup.objects) > 0:
             source.layers = list(bGroup.objects[0].layers)
         # select source and reset cm.modelHeight
@@ -229,8 +229,8 @@ class RebrickrDelete(bpy.types.Operator):
 
     def cleanDupes(preservedFrames, modelType):
         scn, cm, n = getActiveContextInfo()
-        Rebrickr_source_dupes_gn = "Rebrickr_%(n)s_dupes" % locals()
-        dGroup = bpy.data.groups[Rebrickr_source_dupes_gn]
+        Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
+        dGroup = bpy.data.groups[Bricker_source_dupes_gn]
         dObjects = list(dGroup.objects)
         # if preserve frames, remove those objects from dObjects
         objsToRemove = []
@@ -249,15 +249,15 @@ class RebrickrDelete(bpy.types.Operator):
 
     def cleanParents(preservedFrames, modelType):
         scn, cm, n = getActiveContextInfo()
-        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
-        Rebrickr_parent_on = "Rebrickr_%(n)s_parent" % locals()
+        Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
+        Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
         brickLoc, brickRot, brickScl = None, None, None
         if preservedFrames is None:
-            p = bpy.data.objects.get(Rebrickr_parent_on)
+            p = bpy.data.objects.get(Bricker_parent_on)
             if modelType == "ANIMATION" or cm.lastSplitModel:
                 # store transform data of transformation parent object
                 storeTransformData(p)
-            if not cm.lastSplitModel and groupExists(Rebrickr_bricks_gn):
+            if not cm.lastSplitModel and groupExists(Bricker_bricks_gn):
                 bricks = getBricks()
                 if len(bricks) > 0:
                     b = bricks[0]
@@ -265,8 +265,8 @@ class RebrickrDelete(bpy.types.Operator):
                     brickLoc = b.matrix_world.to_translation().copy()
                     brickRot = b.matrix_world.to_euler().copy()
                     brickScl = b.matrix_world.to_scale().copy()  # currently unused
-        # clean up Rebrickr_parent objects
-        pGroup = bpy.data.groups.get(Rebrickr_parent_on)
+        # clean up Bricker_parent objects
+        pGroup = bpy.data.groups.get(Bricker_parent_on)
         if pGroup:
             for parent in pGroup.objects:
                 # if preserve frames, skip those parents
@@ -288,11 +288,11 @@ class RebrickrDelete(bpy.types.Operator):
     def cleanBricks(preservedFrames, modelType):
         scn, cm, n = getActiveContextInfo()
         wm = bpy.context.window_manager
-        Rebrickr_bricks_gn = "Rebrickr_%(n)s_bricks" % locals()
+        Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         if modelType == "MODEL":
-            # clean up Rebrickr_bricks group
-            if groupExists(Rebrickr_bricks_gn):
-                brickGroup = bpy.data.groups[Rebrickr_bricks_gn]
+            # clean up Bricker_bricks group
+            if groupExists(Bricker_bricks_gn):
+                brickGroup = bpy.data.groups[Bricker_bricks_gn]
                 bricks = getBricks()
                 if not cm.lastSplitModel:
                     if len(bricks) > 0:
@@ -311,7 +311,7 @@ class RebrickrDelete(bpy.types.Operator):
                 bpy.data.groups.remove(brickGroup, do_unlink=True)
             cm.modelCreated = False
         elif modelType == "ANIMATION":
-            # clean up Rebrickr_bricks group
+            # clean up Bricker_bricks group
             for i in range(cm.lastStartFrame, cm.lastStopFrame + 1):
                 if preservedFrames is not None and i >= preservedFrames[0] and i <= preservedFrames[1]:
                     continue
@@ -319,8 +319,8 @@ class RebrickrDelete(bpy.types.Operator):
                 if percent < 1:
                     update_progress("Deleting", percent)
                     wm.progress_update(percent*100)
-                Rebrickr_bricks_cur_frame_gn = Rebrickr_bricks_gn + "_frame_" + str(i)
-                brickGroup = bpy.data.groups.get(Rebrickr_bricks_cur_frame_gn)
+                Bricker_bricks_cur_frame_gn = Bricker_bricks_gn + "_frame_" + str(i)
+                brickGroup = bpy.data.groups.get(Bricker_bricks_cur_frame_gn)
                 if brickGroup:
                     bricks = list(brickGroup.objects)
                     if len(bricks) > 0:
