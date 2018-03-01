@@ -140,6 +140,11 @@ def getLegalBrickSizes():
           },
         # 9:{
         #     "TALL_SLOPE":[[1, 2], [2, 2]]
+        #     "TALL_SLOPE_INVERTED":[[1, 2]]
+        #     "TALL_BRICK":[[2, 2]]
+        # }
+        # 15:{
+        #     "TALL_BRICK":[[1, 2]]
         # }
         }
     # add reverses of brick sizes
