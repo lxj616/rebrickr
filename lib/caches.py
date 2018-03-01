@@ -20,10 +20,10 @@ Created by Christopher Gearhart
 '''
 
 # initialize the brick bmesh cache dictionary
-rebrickr_bm_cache = {}
+bricker_bm_cache = {}
 
 # initialize the source mesh cache dictionary
-rebrickr_source_mesh_cache = {}
+bricker_source_mesh_cache = {}
 
 # initialize the BFMCache
-rebrickr_bfm_cache = {}
+bricker_bfm_cache = {}

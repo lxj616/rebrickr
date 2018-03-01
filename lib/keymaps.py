@@ -20,11 +20,11 @@ Created by Christopher Gearhart
 '''
 
 def addKeymaps(km):
-    kmi = km.keymap_items.new("rebrickr.brickify", 'L', 'PRESS', alt=True, shift=True)
-    kmi = km.keymap_items.new("rebrickr.delete", 'D', 'PRESS', alt=True, shift=True)
-    kmi = km.keymap_items.new("rebrickr.draw_adjacent", 'EQUAL', 'PRESS', shift=True, alt=True)
-    kmi = km.keymap_items.new("rebrickr.split_bricks", 'S', 'PRESS', shift=True, alt=True)
-    kmi = km.keymap_items.new("rebrickr.merge_bricks", 'M', 'PRESS', shift=True, alt=True)
-    kmi = km.keymap_items.new("rebrickr.set_exposure", 'UP_ARROW', 'PRESS', shift=True, alt=True).properties.side = "TOP"
-    kmi = km.keymap_items.new("rebrickr.set_exposure", 'DOWN_ARROW', 'PRESS', shift=True, alt=True).properties.side = "BOTTOM"
-    kmi = km.keymap_items.new("rebrickr.customize_model", 'I', 'PRESS', shift=True)
+    kmi = km.keymap_items.new("bricker.brickify", 'L', 'PRESS', alt=True, shift=True)
+    kmi = km.keymap_items.new("bricker.delete", 'D', 'PRESS', alt=True, shift=True)
+    kmi = km.keymap_items.new("bricker.draw_adjacent", 'EQUAL', 'PRESS', shift=True, alt=True)
+    kmi = km.keymap_items.new("bricker.split_bricks", 'S', 'PRESS', shift=True, alt=True)
+    kmi = km.keymap_items.new("bricker.merge_bricks", 'M', 'PRESS', shift=True, alt=True)
+    kmi = km.keymap_items.new("bricker.set_exposure", 'UP_ARROW', 'PRESS', shift=True, alt=True).properties.side = "TOP"
+    kmi = km.keymap_items.new("bricker.set_exposure", 'DOWN_ARROW', 'PRESS', shift=True, alt=True).properties.side = "BOTTOM"
+    kmi = km.keymap_items.new("bricker.customize_model", 'I', 'PRESS', shift=True)

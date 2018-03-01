@@ -30,7 +30,7 @@ from ..functions import *
 
 class EyeDropper(bpy.types.Operator):
     '''Use Eyedropper To pick object from scene'''
-    bl_idname = "rebrickr.eye_dropper"
+    bl_idname = "bricker.eye_dropper"
     bl_label = "Eye Dropper"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'

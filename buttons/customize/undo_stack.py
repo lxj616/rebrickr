@@ -36,14 +36,14 @@ from bpy.app.handlers import persistent, load_post
 
 # Bricker imports
 from ...functions import *
-from ...lib.caches import rebrickr_bfm_cache
+from ...lib.caches import bricker_bfm_cache
 
 python_undo_state = {}
 
 
 class UndoStack():
     bl_category = "Bricker"
-    bl_idname = "rebrickr.undo_stack"
+    bl_idname = "bricker.undo_stack"
     bl_label = "Undo Stack"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -86,12 +86,12 @@ class UndoStack():
         """ iterate undo states """
         scn = bpy.context.scene
         global python_undo_state
-        bpy.props.rebrickr_undoUpdating = True
+        bpy.props.bricker_undoUpdating = True
         if cm.id not in python_undo_state:
             python_undo_state[cm.id] = 0
         python_undo_state[cm.id] += 1
         cm.blender_undo_state += 1
-        bpy.props.rebrickr_undoUpdating = False
+        bpy.props.bricker_undoUpdating = False
 
     def matchPythonToBlenderState(self):
         scn = bpy.context.scene
@@ -100,25 +100,25 @@ class UndoStack():
 
     def getLength(self): return len(self.undo)
 
-    def isUpdating(self): return bpy.props.rebrickr_undoUpdating
+    def isUpdating(self): return bpy.props.bricker_undoUpdating
 
     def _create_state(self, action):
         return {
             'action':       action,
-            'bfm_cache':    copy.deepcopy(rebrickr_bfm_cache),
+            'bfm_cache':    copy.deepcopy(bricker_bfm_cache),
             }
 
     def _restore_state(self, state):
-        global rebrickr_bfm_cache
+        global bricker_bfm_cache
         for key in state['bfm_cache'].keys():
-            rebrickr_bfm_cache[key] = state['bfm_cache'][key]
+            bricker_bfm_cache[key] = state['bfm_cache'][key]
 
     def undo_push(self, action, repeatable=False):
         # skip pushing to undo if action is repeatable and we are repeating actions
         if repeatable and self.undo and self.undo[-1]['action'] == action:
             return
-        # skip pushing to undo if rebrickr not initialized
-        if not bpy.props.rebrickr_initialized:
+        # skip pushing to undo if bricker not initialized
+        if not bpy.props.bricker_initialized:
             return
         self.undo.append(self._create_state(action))
         while len(self.undo) > self.undo_depth:

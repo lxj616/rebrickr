@@ -169,7 +169,7 @@ class Bricker_Uilist_actions(bpy.types.Operator):
         if active_object and active_object.type == "MESH" and not active_object.name.startswith("Bricker_"):
             item.source_name = active_object.name
             item.name = active_object.name
-            item.version = bpy.props.rebrickr_version
+            item.version = bpy.props.bricker_version
             # set up default brickHeight values
             source = bpy.data.objects.get(item.source_name)
             if source:
@@ -811,9 +811,9 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         min=1, max=24,
         default=10)
 
-    # used to check rebrickr version model was created with
+    # used to check bricker version model was created with
     version = StringProperty(default="1_0_4")
-    # left over from rebrickr v1.0
+    # left over from bricker v1.0
     maxBrickScale1 = IntProperty(default=-1)
     maxBrickScale2 = IntProperty(default=-1)
 

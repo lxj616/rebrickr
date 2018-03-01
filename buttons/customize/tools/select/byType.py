@@ -36,7 +36,7 @@ from .....functions import *
 
 class selectBricksByType(Operator):
     """Select bricks of specified type"""
-    bl_idname = "rebrickr.select_bricks_by_type"
+    bl_idname = "bricker.select_bricks_by_type"
     bl_label = "Select Bricks by Type"
     bl_options = {"REGISTER", "UNDO"}
 
@@ -46,7 +46,7 @@ class selectBricksByType(Operator):
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
-        return bpy.props.rebrickr_initialized
+        return bpy.props.bricker_initialized
 
     def execute(self, context):
         try:

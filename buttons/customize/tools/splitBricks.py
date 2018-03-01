@@ -37,7 +37,7 @@ from ....functions import *
 
 class splitBricks(Operator):
     """Split selected bricks into 1x1 bricks"""
-    bl_idname = "rebrickr.split_bricks"
+    bl_idname = "bricker.split_bricks"
     bl_label = "Split Brick(s)"
     bl_options = {"REGISTER", "UNDO"}
 
@@ -47,7 +47,7 @@ class splitBricks(Operator):
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
-        if not bpy.props.rebrickr_initialized:
+        if not bpy.props.bricker_initialized:
             return False
         scn = bpy.context.scene
         objs = bpy.context.selected_objects

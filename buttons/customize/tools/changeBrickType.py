@@ -38,7 +38,7 @@ from ....functions import *
 
 class changeBrickType(Operator):
     """change brick type of active brick"""
-    bl_idname = "rebrickr.change_brick_type"
+    bl_idname = "bricker.change_brick_type"
     bl_label = "Change Brick Type"
     bl_options = {"REGISTER", "UNDO"}
 
@@ -48,7 +48,7 @@ class changeBrickType(Operator):
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
-        if not bpy.props.rebrickr_initialized:
+        if not bpy.props.bricker_initialized:
             return False
         scn = bpy.context.scene
         objs = bpy.context.selected_objects

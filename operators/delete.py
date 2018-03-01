@@ -71,7 +71,7 @@ class delete_override(Operator):
             return confirmation_returned
         else:
             try:
-                if bpy.props.rebrickr_initialized:
+                if bpy.props.bricker_initialized:
                     for obj in self.objsToDelete:
                         if obj.isBrick:
                             self.undo_stack.undo_push('delete_override')
@@ -101,7 +101,7 @@ class delete_override(Operator):
     # class methods
 
     def runDelete(self, context):
-        if not bpy.props.rebrickr_initialized:
+        if not bpy.props.bricker_initialized:
             # initialize objNamesD (key:cm_id, val:list of brick objects)
             objNamesD = createObjNamesD(self.objsToDelete)
             # remove brick type objects from selection

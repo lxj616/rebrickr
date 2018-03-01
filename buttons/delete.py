@@ -45,7 +45,7 @@ def getModelType(self, cm=None):
 
 class BrickerDelete(bpy.types.Operator):
     """ Delete Brickified model """
-    bl_idname = "rebrickr.delete"
+    bl_idname = "bricker.delete"
     bl_label = "Delete Brickified model from Blender"
     bl_options = {"REGISTER", "UNDO"}
 
@@ -350,7 +350,7 @@ class BrickerDelete(bpy.types.Operator):
         cm.bricksAreDirty = True
         cm.armature = False
         cm.exposeParent = False
-        cm.version = bpy.props.rebrickr_version
+        cm.version = bpy.props.bricker_version
         cm.activeKeyX = -1
         cm.activeKeyY = -1
         cm.activeKeyZ = -1

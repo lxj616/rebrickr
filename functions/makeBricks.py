@@ -39,7 +39,7 @@ from ..lib.bricksDict import *
 from .common import *
 from .wrappers import *
 from .general import bounds
-from ..lib.caches import rebrickr_bm_cache
+from ..lib.caches import bricker_bm_cache
 from ..lib.abs_plastic_materials import getAbsPlasticMaterials
 from .makeBricks_utils import *
 

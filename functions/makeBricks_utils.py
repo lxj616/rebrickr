@@ -40,7 +40,7 @@ from ..lib.bricksDict import *
 from .common import *
 from .wrappers import *
 from .general import *
-from ..lib.caches import rebrickr_bm_cache
+from ..lib.caches import bricker_bm_cache
 
 
 def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, brickScale, keysNotChecked, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4):
@@ -284,15 +284,15 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
                                       brickD["rotated"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None))
 
     # check for bmesh in cache
-    bms = rebrickr_bm_cache.get(bm_cache_string)
+    bms = bricker_bm_cache.get(bm_cache_string)
     # if bmesh in cache
     if bms is not None:
         bm = bms[rand.randint(0, len(bms))] if len(bms) > 1 else bms[0]
-    # if not found in rebrickr_bm_cache, create new brick mesh(es) and store to cache
+    # if not found in bricker_bm_cache, create new brick mesh(es) and store to cache
     else:
         bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, type=brickD["type"], undersideDetail=undersideDetail, flip=brickD["flipped"], rotate90=brickD["rotated"], logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, circleVerts=cm.circleVerts, cm=cm)
         if cm.brickType != "CUSTOM":
-            rebrickr_bm_cache[bm_cache_string] = bms
+            bricker_bm_cache[bm_cache_string] = bms
         bm = bms[rand.randint(0, len(bms))]
 
     return bm

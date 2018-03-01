@@ -30,15 +30,15 @@ from mathutils import Vector, Euler
 # Bricker imports
 from ..functions import *
 from ..lib.bricksDict import lightToDeepCache, deepToLightCache, getDictKey
-from ..lib.caches import rebrickr_bfm_cache
+from ..lib.caches import bricker_bfm_cache
 from ..buttons.customize.tools import *
 
 
-def rebrickrIsActive():
-    return hasattr(bpy.props, "rebrickr_module_name") and bpy.props.rebrickr_module_name in bpy.context.user_preferences.addons.keys()
+def brickerIsActive():
+    return hasattr(bpy.props, "bricker_module_name") and bpy.props.bricker_module_name in bpy.context.user_preferences.addons.keys()
 
 
-def rebrickrRunningOp():
+def brickerRunningOp():
     scn = bpy.context.scene
     return hasattr(scn, "Bricker_runningOperation") and scn.Bricker_runningOperation
 
@@ -56,7 +56,7 @@ def getAnimAdjustedFrame(cm, frame):
 @persistent
 def handle_animation(scene):
     scn = scene
-    if not rebrickrIsActive():
+    if not brickerIsActive():
         return
     for i, cm in enumerate(scn.cmlist):
         if not cm.animated:
@@ -105,7 +105,7 @@ def isObjVisible(scn, cm):
 @persistent
 def handle_selections(scene):
     scn = bpy.context.scene
-    if not rebrickrIsActive() or rebrickrRunningOp():
+    if not brickerIsActive() or brickerRunningOp():
         return
     # if scn.layers changes and active object is no longer visible, set scn.cmlist_index to -1
     if scn.Bricker_last_layers != str(list(scn.layers)):
@@ -210,7 +210,7 @@ bpy.app.handlers.scene_update_pre.append(handle_selections)
 @persistent
 def prevent_user_from_viewing_storage_scene(scene):
     scn = bpy.context.scene
-    if not rebrickrIsActive() or rebrickrRunningOp():
+    if not brickerIsActive() or brickerRunningOp():
         return
     if scn.name == "Bricker_storage (DO NOT RENAME)":
         i = 0
@@ -226,7 +226,7 @@ bpy.app.handlers.scene_update_pre.append(prevent_user_from_viewing_storage_scene
 @persistent
 def keep_object_names_unique(scene):
     scn = bpy.context.scene
-    if not rebrickrIsActive() or rebrickrRunningOp():
+    if not brickerIsActive() or brickerRunningOp():
         return
     # for object in scene
     for obj_name in scn.objects.keys():
@@ -261,7 +261,7 @@ def find_3dview_space():
 # @persistent
 # def handle_snapping(scene):
 #     scn = bpy.context.scene
-#     if rebrickrIsActive() and scn.Bricker_snapping:
+#     if brickerIsActive() and scn.Bricker_snapping:
 #         # disable regular snapping if enabled
 #         if not scn.tool_settings.use_snap:
 #             scn.tool_settings.use_snap = True
@@ -279,10 +279,10 @@ def find_3dview_space():
 # clear light cache before file load
 @persistent
 def clear_bfm_cache(dummy):
-    if not rebrickrIsActive():
+    if not brickerIsActive():
         return
-    for key in rebrickr_bfm_cache.keys():
-        rebrickr_bfm_cache[key] = None
+    for key in bricker_bfm_cache.keys():
+        bricker_bfm_cache[key] = None
 
 
 bpy.app.handlers.load_pre.append(clear_bfm_cache)
@@ -291,9 +291,9 @@ bpy.app.handlers.load_pre.append(clear_bfm_cache)
 # pull dicts from deep cache to light cache on load
 @persistent
 def handle_loading_to_light_cache(dummy):
-    if not rebrickrIsActive():
+    if not brickerIsActive():
         return
-    deepToLightCache(rebrickr_bfm_cache)
+    deepToLightCache(bricker_bfm_cache)
 
 
 bpy.app.handlers.load_post.append(handle_loading_to_light_cache)
@@ -302,9 +302,9 @@ bpy.app.handlers.load_post.append(handle_loading_to_light_cache)
 # push dicts from light cache to deep cache on save
 @persistent
 def handle_storing_to_deep_cache(scene):
-    if not rebrickrIsActive():
+    if not brickerIsActive():
         return
-    lightToDeepCache(rebrickr_bfm_cache)
+    lightToDeepCache(bricker_bfm_cache)
 
 
 bpy.app.handlers.save_pre.append(handle_storing_to_deep_cache)
@@ -313,7 +313,7 @@ bpy.app.handlers.save_pre.append(handle_storing_to_deep_cache)
 @persistent
 def handle_upconversion(scene):
     scn = bpy.context.scene
-    if not rebrickrIsActive():
+    if not brickerIsActive():
         return
     for cm in scn.cmlist:
         # convert from v1_0 to v1_1

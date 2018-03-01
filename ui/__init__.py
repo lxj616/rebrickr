@@ -50,7 +50,7 @@ def settingsCanBeDrawn():
         return False
     if bversion() < '002.078.00':
         return False
-    if not bpy.props.rebrickr_initialized:
+    if not bpy.props.bricker_initialized:
         return False
     return True
 
@@ -123,7 +123,7 @@ class BrickModelsPanel(Panel):
                 col = split.column(align=True)
                 col.prop_search(cm, "source_name", scn, "objects", text='')
                 col = split.column(align=True)
-                col.operator("rebrickr.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'source_name'
+                col.operator("bricker.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'source_name'
                 # col.operator("cmlist.set_to_active", icon="EDIT", text="")
                 col1 = layout.column(align=True)
 
@@ -134,21 +134,21 @@ class BrickModelsPanel(Panel):
                 obj = bpy.data.objects.get(cm.source_name)
 
             # if undo stack not initialized, draw initialize button
-            if not bpy.props.rebrickr_initialized:
+            if not bpy.props.bricker_initialized:
                 row = col1.row(align=True)
-                row.operator("rebrickr.customize_model", text="Initialize Bricker", icon="MODIFIER")
+                row.operator("bricker.customize_model", text="Initialize Bricker", icon="MODIFIER")
                 # draw test brick generator button (for testing purposes only)
                 if testBrickGenerators.drawUIButton():
                     col = layout.column(align=True)
-                    col.operator("rebrickr.test_brick_generators", text="Test Brick Generators", icon="OUTLINER_OB_MESH")
+                    col.operator("bricker.test_brick_generators", text="Test Brick Generators", icon="OUTLINER_OB_MESH")
             # if use animation is selected, draw animation options
             elif cm.useAnimation:
                 if cm.animated:
                     row = col1.row(align=True)
-                    row.operator("rebrickr.delete", text="Delete Brick Animation", icon="CANCEL")
+                    row.operator("bricker.delete", text="Delete Brick Animation", icon="CANCEL")
                     col = layout.column(align=True)
                     row = col.row(align=True)
-                    row.operator("rebrickr.brickify", text="Update Animation", icon="FILE_REFRESH")
+                    row.operator("bricker.brickify", text="Update Animation", icon="FILE_REFRESH")
                     if createdWithUnsupportedVersion():
                         v_str = cm.version[:3].replace("_", ".")
                         col = layout.column(align=True)
@@ -164,7 +164,7 @@ class BrickModelsPanel(Panel):
                         row.active = obj.type == 'MESH'
                     else:
                         row.active = False
-                    row.operator("rebrickr.brickify", text="Brickify Animation", icon="MOD_REMESH")
+                    row.operator("bricker.brickify", text="Brickify Animation", icon="MOD_REMESH")
             # if use animation is not selected, draw modeling options
             else:
                 if not cm.animated and not cm.modelCreated:
@@ -173,12 +173,12 @@ class BrickModelsPanel(Panel):
                         row.active = obj.type == 'MESH'
                     else:
                         row.active = False
-                    row.operator("rebrickr.brickify", text="Brickify Object", icon="MOD_REMESH")
+                    row.operator("bricker.brickify", text="Brickify Object", icon="MOD_REMESH")
                 else:
                     row = col1.row(align=True)
-                    row.operator("rebrickr.delete", text="Delete Brickified Model", icon="CANCEL")
+                    row.operator("bricker.delete", text="Delete Brickified Model", icon="CANCEL")
                     col = layout.column(align=True)
-                    col.operator("rebrickr.brickify", text="Update Model", icon="FILE_REFRESH")
+                    col.operator("bricker.brickify", text="Update Model", icon="FILE_REFRESH")
                     if createdWithUnsupportedVersion():
                         v_str = cm.version[:4].replace(", ", ".")
                         col = layout.column(align=True)
@@ -192,7 +192,7 @@ class BrickModelsPanel(Panel):
                         row = col.row(align=True)
                         row.label("Customizations will be lost")
                         row = col.row(align=True)
-                        row.operator("rebrickr.revert_matrix_settings", text="Revert Settings", icon="LOOP_BACK")
+                        row.operator("bricker.revert_matrix_settings", text="Revert Settings", icon="LOOP_BACK")
 
             col = layout.column(align=True)
             row = col.row(align=True)
@@ -203,10 +203,10 @@ class BrickModelsPanel(Panel):
             split = layout.split(align=True, percentage=0.9)
             col = split.column(align=True)
             row = col.row(align=True)
-            row.operator("rebrickr.report_error", text="Report Error", icon="URL")
+            row.operator("bricker.report_error", text="Report Error", icon="URL")
             col = split.column(align=True)
             row = col.row(align=True)
-            row.operator("rebrickr.close_report_error", text="", icon="PANEL_CLOSE")
+            row.operator("bricker.close_report_error", text="", icon="PANEL_CLOSE")
 
 
 def is_baked(mod):
@@ -479,7 +479,7 @@ class BrickTypesPanel(Panel):
             col1 = split.column(align=True)
             col1.prop_search(cm, "customObjectName", scn, "objects", text='')
             col1 = split.column(align=True)
-            col1.operator("rebrickr.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'customObjectName'
+            col1.operator("bricker.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'customObjectName'
 
             col = layout.column(align=True)
             col.label("Distance Offset:")
@@ -564,7 +564,7 @@ class MaterialsPanel(Panel):
             if cm.modelCreated or cm.animated:
                 col = layout.column(align=True)
                 row = col.row(align=True)
-                row.operator("rebrickr.apply_material", icon="FILE_TICK")
+                row.operator("bricker.apply_material", icon="FILE_TICK")
         elif cm.materialType == "RANDOM":
             col = layout.column(align=True)
             if bpy.context.scene.render.engine != 'CYCLES':
@@ -585,7 +585,7 @@ class MaterialsPanel(Panel):
                         if not cm.brickMaterialsAreDirty and ((not cm.useAnimation and cm.lastSplitModel) or (cm.lastMaterialType == cm.materialType)):
                             col = layout.column(align=True)
                             row = col.row(align=True)
-                            row.operator("rebrickr.apply_material", icon="FILE_TICK")
+                            row.operator("bricker.apply_material", icon="FILE_TICK")
                         elif cm.materialIsDirty or cm.brickMaterialsAreDirty:
                             row = col.row(align=True)
                             row.label("Run 'Update Model' to apply changes")
@@ -621,7 +621,7 @@ class MaterialsPanel(Panel):
                     else:
                         col = layout.column(align=True)
                         row = col.row(align=True)
-                        row.operator("rebrickr.apply_material", icon="FILE_TICK")
+                        row.operator("bricker.apply_material", icon="FILE_TICK")
 
         if cm.modelCreated or cm.animated:
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
@@ -703,7 +703,7 @@ class DetailingPanel(Panel):
                 col1 = split.column(align=True)
                 col1.prop_search(cm, "logoObjectName", scn, "objects", text="")
                 col1 = split.column(align=True)
-                col1.operator("rebrickr.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'logoObjectName'
+                col1.operator("bricker.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'logoObjectName'
                 row = col.row(align=True)
                 row.prop(cm, "logoScale", text="Logo Scale")
                 row = col.row(align=True)
@@ -780,7 +780,7 @@ class BevelPanel(Panel):
         if not settingsCanBeDrawn():
             return False
         scn, cm, _ = getActiveContextInfo()
-        if not bpy.props.rebrickr_initialized:
+        if not bpy.props.bricker_initialized:
             return False
         return True
 
@@ -810,9 +810,9 @@ class BevelPanel(Panel):
             row = col.row(align=True)
             row.prop(cm, "bevelProfile", text="Profile")
             row = col.row(align=True)
-            row.operator("rebrickr.bevel", text="Remove Bevel", icon="CANCEL")
+            row.operator("bricker.bevel", text="Remove Bevel", icon="CANCEL")
         except (IndexError, KeyError):
-            row.operator("rebrickr.bevel", text="Bevel bricks", icon="MOD_BEVEL")
+            row.operator("bricker.bevel", text="Bevel bricks", icon="MOD_BEVEL")
 
 
 class CustomizeModel(Panel):
@@ -854,8 +854,8 @@ class CustomizeModel(Panel):
         if not Caches.cacheExists(cm):
             layout.label("Matrix not cached!")
             return
-        # if not bpy.props.rebrickr_initialized:
-        #     layout.operator("rebrickr.customize_model", icon="MODIFIER")
+        # if not bpy.props.bricker_initialized:
+        #     layout.operator("bricker.customize_model", icon="MODIFIER")
         #     return
 
         col1 = layout.column(align=True)
@@ -863,42 +863,42 @@ class CustomizeModel(Panel):
         split = col1.split(align=True, percentage=0.5)
         # set top exposed
         col = split.column(align=True)
-        col.operator("rebrickr.select_bricks_by_type", text="By Type")
+        col.operator("bricker.select_bricks_by_type", text="By Type")
         # set bottom exposed
         col = split.column(align=True)
-        col.operator("rebrickr.select_bricks_by_size", text="By Size")
+        col.operator("bricker.select_bricks_by_size", text="By Size")
 
         col1 = layout.column(align=True)
         col1.label("Toggle Exposure:")
         split = col1.split(align=True, percentage=0.5)
         # set top exposed
         col = split.column(align=True)
-        col.operator("rebrickr.set_exposure", text="Top").side = "TOP"
+        col.operator("bricker.set_exposure", text="Top").side = "TOP"
         # set bottom exposed
         col = split.column(align=True)
-        col.operator("rebrickr.set_exposure", text="Bottom").side = "BOTTOM"
+        col.operator("bricker.set_exposure", text="Bottom").side = "BOTTOM"
 
         col1 = layout.column(align=True)
         col1.label("Brick Operations:")
         split = col1.split(align=True, percentage=0.5)
         # split brick into 1x1s
         col = split.column(align=True)
-        col.operator("rebrickr.split_bricks", text="Split")
+        col.operator("bricker.split_bricks", text="Split")
         # merge selected bricks
         col = split.column(align=True)
-        col.operator("rebrickr.merge_bricks", text="Merge")
+        col.operator("bricker.merge_bricks", text="Merge")
         # Add identical brick on +/- x/y/z
         row = col1.row(align=True)
-        row.operator("rebrickr.draw_adjacent", text="Draw Adjacent Bricks")
+        row.operator("bricker.draw_adjacent", text="Draw Adjacent Bricks")
         # change brick type
         row = col1.row(align=True)
-        row.operator("rebrickr.change_brick_type", text="Change Type")
+        row.operator("bricker.change_brick_type", text="Change Type")
         # additional controls
         col = layout.column(align=True)
         row = col.row(align=True)
         row.prop(cm, "autoUpdateExposed")
         # row = col.row(align=True)
-        # row.operator("rebrickr.redraw_bricks")
+        # row.operator("bricker.redraw_bricks")
 
 
 class AdvancedPanel(Panel):
@@ -930,7 +930,7 @@ class AdvancedPanel(Panel):
 
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.operator("rebrickr.clear_cache", text="Clear Cache")
+        row.operator("bricker.clear_cache", text="Clear Cache")
         row = col.row(align=True)
         row.label("Insideness:")
         row = col.row(align=True)
@@ -949,7 +949,7 @@ class AdvancedPanel(Panel):
         # draw test brick generator button (for testing purposes only)
         if testBrickGenerators.drawUIButton():
             col = layout.column(align=True)
-            col.operator("rebrickr.test_brick_generators", text="Test Brick Generators", icon="OUTLINER_OB_MESH")
+            col.operator("bricker.test_brick_generators", text="Test Brick Generators", icon="OUTLINER_OB_MESH")
 
 
 class BrickDetailsPanel(Panel):
@@ -1045,4 +1045,4 @@ class BrickDetailsPanel(Panel):
 def drawSendToFileButton(layout):
     layout.separator()
     col = layout.column(align=True)
-    col.operator("rebrickr.send_dictionary_to_file", text="Send to File", icon="EXPORT")
+    col.operator("bricker.send_dictionary_to_file", text="Send to File", icon="EXPORT")

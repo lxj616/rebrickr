@@ -28,14 +28,14 @@ from bpy.types import Operator
 
 # Bricker imports
 from .undo_stack import *
-from ...ui.app_handlers import rebrickrRunningOp
+from ...ui.app_handlers import brickerRunningOp
 from ...functions import *
 
 
 class CustomizeModel(Operator):
     """ starts custom undo stack for changes to the BFM cache """
     bl_category = "Bricker"
-    bl_idname = "rebrickr.customize_model"
+    bl_idname = "bricker.customize_model"
     bl_label = "Customize Model"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -45,13 +45,13 @@ class CustomizeModel(Operator):
 
     @classmethod
     def poll(self, context):
-        if bpy.props.rebrickr_initialized:
+        if bpy.props.bricker_initialized:
             return False
         return True
 
     def modal(self, context, event):
         scn = bpy.context.scene
-        if not self.undo_stack.isUpdating() and not rebrickrRunningOp() and scn.cmlist_index != -1:
+        if not self.undo_stack.isUpdating() and not brickerRunningOp() and scn.cmlist_index != -1:
             global python_undo_state
             cm = scn.cmlist[scn.cmlist_index]
             # try:    print(python_undo_state[cm.id], cm.blender_undo_state, len(self.undo_stack.undo))
@@ -83,7 +83,7 @@ class CustomizeModel(Operator):
 
     def __init__(self):
         self.undo_stack = UndoStack.get_instance()
-        bpy.props.rebrickr_initialized = True
+        bpy.props.bricker_initialized = True
         self.report({"INFO"}, "Bricker initialized")
         # self.ui = Bricker_UI.get_instance()
 

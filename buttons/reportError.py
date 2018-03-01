@@ -32,7 +32,7 @@ from ..functions import *
 
 class reportError(bpy.types.Operator):
     """Report a bug via an automatically generated issue ticket"""
-    bl_idname = "rebrickr.report_error"
+    bl_idname = "bricker.report_error"
     bl_label = "Report Error"
     bl_options = {"REGISTER", "UNDO"}
 
@@ -41,7 +41,7 @@ class reportError(bpy.types.Operator):
             # set up file paths
             libraryServersPath = os.path.join(getLibraryPath(), "error_log")
             # write necessary debugging information to text file
-            writeErrorToFile(libraryServersPath, 'Bricker_log', bpy.props.rebrickr_version)
+            writeErrorToFile(libraryServersPath, 'Bricker_log', bpy.props.bricker_version)
             # open error report in UI with text editor
             changeContext(context, "TEXT_EDITOR")
             try:
@@ -58,7 +58,7 @@ class reportError(bpy.types.Operator):
 
 class closeReportError(bpy.types.Operator):
     """Deletes error report from blender's memory (still exists in file system)"""
-    bl_idname = "rebrickr.close_report_error"
+    bl_idname = "bricker.close_report_error"
     bl_label = "Close Report Error"
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 

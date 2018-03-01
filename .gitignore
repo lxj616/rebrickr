@@ -1,7 +1,7 @@
 .DS_Store
 __pycache__/
 error_log/
-rebrickr_updater/
-rebrickr_options.db
+bricker_updater/
+bricker_options.db
 textures/
 bricksDict_dump.py

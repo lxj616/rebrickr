@@ -78,7 +78,7 @@ def removeBevelMods(objs):
 
 class BrickerBevel(bpy.types.Operator):
     """Execute bevel modifier to all bricks with above settings"""
-    bl_idname = "rebrickr.bevel"
+    bl_idname = "bricker.bevel"
     bl_label = "Bevel Bricks"
     bl_options = {"REGISTER", "UNDO"}
 

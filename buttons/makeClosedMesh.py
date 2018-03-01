@@ -40,7 +40,7 @@ from ..functions import *
 
 class MakeClosedMesh(bpy.types.Operator):
     """Make source into single closed mesh (may take a while)"""
-    bl_idname = "rebrickr.make_closed_mesh"
+    bl_idname = "bricker.make_closed_mesh"
     bl_label = "Make Closed Mesh"
     bl_options = {"REGISTER", "UNDO"}
 

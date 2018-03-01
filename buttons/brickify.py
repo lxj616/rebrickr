@@ -61,7 +61,7 @@ def updateCanRun(type):
 def importLogo():
     """ import logo object from Bricker addon folder """
     addonsPath = bpy.utils.user_resource('SCRIPTS', "addons")
-    Bricker = bpy.props.rebrickr_module_name
+    Bricker = bpy.props.bricker_module_name
     logoObjPath = "%(addonsPath)s/%(Bricker)s/lego_logo.obj" % locals()
     bpy.ops.import_scene.obj(filepath=logoObjPath)
     logoObj = bpy.context.selected_objects[0]
@@ -70,7 +70,7 @@ def importLogo():
 
 class BrickerBrickify(bpy.types.Operator):
     """ Create brick sculpture from source object mesh """
-    bl_idname = "rebrickr.brickify"
+    bl_idname = "bricker.brickify"
     bl_label = "Create/Update Brick Model from Source Object"
     bl_options = {"REGISTER", "UNDO"}
 
@@ -184,7 +184,7 @@ class BrickerBrickify(bpy.types.Operator):
         cm.matrixIsDirty = False
         cm.internalIsDirty = False
         scn.Bricker_runningOperation = False
-        cm.version = bpy.props.rebrickr_version
+        cm.version = bpy.props.bricker_version
 
         # unlink source from scene and link to safe scene
         if source.name in scn.objects.keys():

@@ -35,7 +35,7 @@ from ...functions.makeBricks_utils import *
 
 class testBrickGenerators(bpy.types.Operator):
     """Draws some test bricks for testing of brick generators"""
-    bl_idname = "rebrickr.test_brick_generators"
+    bl_idname = "bricker.test_brick_generators"
     bl_label = "Test Brick Generators"
     bl_options = {"REGISTER", "UNDO"}
 

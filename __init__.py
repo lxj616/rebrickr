@@ -6,8 +6,8 @@ bl_info = {
     "description" : "Turn any mesh into a 3D brick sculpture or simulation with the click of a button",
     "location"    : "View3D > Tools > Bricker",
     "warning"     : "",  # used for warning icon and text in addons panel
-    "wiki_url"    : "https://www.blendermarket.com/creator/products/rebrickr/",
-    "tracker_url" : "https://github.com/bblanimation/rebrickr/issues",
+    "wiki_url"    : "https://www.blendermarket.com/creator/products/bricker/",
+    "tracker_url" : "https://github.com/bblanimation/bricker/issues",
     "category"    : "Object"}
 
 """
@@ -57,12 +57,12 @@ addon_keymaps = []
 def register():
     bpy.utils.register_module(__name__)
 
-    bpy.props.rebrickr_module_name = __name__
+    bpy.props.bricker_module_name = __name__
 
-    bpy.props.rebrickr_initialized = False
-    bpy.props.rebrickr_undoUpdating = False
+    bpy.props.bricker_initialized = False
+    bpy.props.bricker_undoUpdating = False
 
-    bpy.props.rebrickr_version = str(bl_info["version"])[1:-1].replace(", ", ".")
+    bpy.props.bricker_version = str(bl_info["version"])[1:-1].replace(", ", ".")
 
     bpy.types.Object.protected = BoolProperty(name='protected', default=False)
     bpy.types.Object.isBrickifiedObject = BoolProperty(name='Is Brickified Object', default=False)
@@ -127,10 +127,10 @@ def unregister():
     del bpy.types.Object.isBrick
     del bpy.types.Object.isBrickifiedObject
     del bpy.types.Object.protected
-    del bpy.props.rebrickr_version
-    del bpy.props.rebrickr_undoUpdating
-    del bpy.props.rebrickr_initialized
-    del bpy.props.rebrickr_module_name
+    del bpy.props.bricker_version
+    del bpy.props.bricker_undoUpdating
+    del bpy.props.bricker_initialized
+    del bpy.props.bricker_module_name
 
     # handle the keymaps
     wm = bpy.context.window_manager

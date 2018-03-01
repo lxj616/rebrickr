@@ -34,7 +34,7 @@ from ..functions import *
 
 class sendDictionaryToFile(Operator):
     """send bricksDict to external file"""
-    bl_idname = "rebrickr.send_dictionary_to_file"
+    bl_idname = "bricker.send_dictionary_to_file"
     bl_label = "Send Dictionary to File"
     bl_options = {"REGISTER", "UNDO"}
 

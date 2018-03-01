@@ -35,7 +35,7 @@ from ..functions.common import *
 
 class Caches(bpy.types.Operator):
     """Clear brick mesh and matrix cache (Model customizations will be lost)"""
-    bl_idname = "rebrickr.clear_cache"
+    bl_idname = "bricker.clear_cache"
     bl_label = "Clear Cache"
     bl_options = {"REGISTER", "UNDO"}
 
@@ -44,7 +44,7 @@ class Caches(bpy.types.Operator):
 
     @classmethod
     def poll(self, context):
-        if not bpy.props.rebrickr_initialized:
+        if not bpy.props.bricker_initialized:
             return False
         return True
 
@@ -83,10 +83,10 @@ class Caches(bpy.types.Operator):
         """clear caches for cmlist item"""
         # clear light brick mesh cache
         if brick_mesh:
-            rebrickr_bm_cache[cm.id] = None
+            bricker_bm_cache[cm.id] = None
         # clear light matrix cache
         if light_matrix:
-            rebrickr_bfm_cache[cm.id] = None
+            bricker_bfm_cache[cm.id] = None
         # clear deep matrix cache
         if deep_matrix:
             cm.BFMCache = ""
@@ -102,4 +102,4 @@ class Caches(bpy.types.Operator):
     def cacheExists(cm=None):
         """check if light or deep matrix cache exists for cmlist item"""
         cm = cm or getActiveContextInfo()[1]
-        return rebrickr_bfm_cache.get(cm.id) is not None or cm.BFMCache != ""
+        return bricker_bfm_cache.get(cm.id) is not None or cm.BFMCache != ""
