@@ -76,31 +76,65 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
     thick = Vector([dimensions["thickness"]] * 3)
 
     # make brick body cube
-    coord1 = -d
-    coord2 = vec_mult(d, [1, scalar.y, 1])
-    v1, v2, d0, d1, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1 if detail == "FLAT" else 0, 0, 0, 1, 1], bme=bme)
-    # remove bottom verts on slope side
-    bme.verts.remove(d0)
-    bme.verts.remove(d1)
-    # add face to opposite side from slope
-    bme.faces.new((v1, v5, v8, v2))
+    if max(brickSize[:2]) == 1:
+        coord1 = Vector((-d.x, -d.y, -d.z + dimensions["slit_height"]))
+        coord2 = Vector((-d.x,  d.y,  d.z * (4 / 3) - d.z))
+        v1, v2, v7, v6 = makeSquare(coord1, coord2, face=True, flipNormal=True, bme=bme)
+    else:
+        coord1 = -d
+        coord2 = vec_mult(d, [1, scalar.y, 1])
+        v1, v2, d0, d1, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1 if detail == "FLAT" else 0, 0, 0, 1, 1], bme=bme)
+        # remove bottom verts on slope side
+        bme.verts.remove(d0)
+        bme.verts.remove(d1)
+        # add face to opposite side from slope
+        bme.faces.new((v1, v5, v8, v2))
 
     # create stud
-    if stud: addStuds(dimensions, height, [1] + adjustedBrickSize[1:], "CONE", circleVerts, bme, inset=thick.z * 0.9, hollow=brickSize[2] > 3)
+    if stud and max(brickSize[:2]) != 1: addStuds(dimensions, height, [1] + adjustedBrickSize[1:], "CONE", circleVerts, bme, inset=thick.z * 0.9, hollow=brickSize[2] > 3)
 
     # make square at end of slope
-    coord1 = vec_mult(d, [scalar.x, -1, -1])
+    coord1 = Vector((d.x * scalar.x, -d.y, -d.z + (dimensions["slit_height"] if max(brickSize[:2]) == 1 else 0)))
     coord2 = vec_mult(d, [scalar.x, scalar.y, -1])
     coord2.z += thick.z
     v9, v10, v11, v12 = makeSquare(coord1, coord2, bme=bme)
 
     # connect square to body cube
-    bme.faces.new((v2, v8,  v7, v11, v10))
-    bme.faces.new((v9, v12, v6,  v5, v1))
+    bme.faces.new([v7, v11, v10, v2] + ([v8] if max(brickSize[:2]) != 1 else []))
+    bme.faces.new([v1, v9, v12, v6] + ([v5] if max(brickSize[:2]) != 1 else []))
     bme.faces.new((v12, v11, v7, v6))
 
     # add underside details
-    if detail == "FLAT":
+    if max(brickSize[:2]) == 1:
+        # make slit for 1x1 slope
+        coord1 = -d
+        coord1.xy += Vector([dimensions["slit_depth"]]*2)
+        coord2 = Vector((d.x * scalar.x, d.y * scalar.y, -d.z + dimensions["slit_height"]))
+        coord2.xy -= Vector([dimensions["slit_depth"]]*2)
+        v13, v14, v15, v16, v17, v18, v19, v20 = makeCube(coord1, coord2, [0, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
+        # connect slit to outer cube
+        bme.faces.new((v18, v10, v9, v17))
+        bme.faces.new((v19, v2, v10, v18))
+        bme.faces.new((v20, v1, v2, v19))
+        bme.faces.new((v17, v9, v1, v20))
+        # add underside detail
+        if detail != "FLAT":
+            # add inside verts of slope
+            coord1 = -d
+            coord1.xy += thick.xy
+            coord2 = Vector(( d.x - thick.x,
+                              d.y - thick.y,
+                              -thick.z * 0.2))
+            v19, v20, v21, v22, v23, v24, v25, v26 = makeCube(coord1, coord2, [1, 0, 1, 1, 1, 1], flipNormals=True, bme=bme)
+            # adjust z height of top verts at end of inner slope
+            v24.co.z = -d.z + thick.z
+            v25.co.z = -d.z + thick.z
+            # connect inner and outer verts
+            bme.faces.new((v19, v22, v16, v13))
+            bme.faces.new((v20, v19, v13, v14))
+            bme.faces.new((v21, v20, v14, v15))
+            bme.faces.new((v22, v21, v15, v16))
+    elif detail == "FLAT":
         bme.faces.new((v10, v9, v1, v2))
     else:
         addBlockSupports = adjustedBrickSize[0] in [3, 4] and adjustedBrickSize[1] == 1

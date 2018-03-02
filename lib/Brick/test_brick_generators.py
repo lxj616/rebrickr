@@ -48,7 +48,7 @@ class testBrickGenerators(bpy.types.Operator):
 
     @staticmethod
     def drawUIButton():
-        return False
+        return True
 
 
 def newObjFromBmesh(layer, bme, meshName, objName=None, loc=(0,0,0), edgeSplit=True):
@@ -113,6 +113,7 @@ def test_brick_generators():
         for posNeg in ["+", "-"]:
             for j in [-1, 1]:
                 direction = ("X" if j == 1 else "Y") + posNeg
+                newObjFromBmesh(16 + i, makeSlope(dimensions, brickSize=[1,1][::j] + [3], direction=direction, circleVerts=16, detail=detail), "1x1 Slope "  + detail, loc=[-6,   offset][::j]               + [0])
                 newObjFromBmesh(16 + i, makeSlope(dimensions, brickSize=[2,1][::j] + [3], direction=direction, circleVerts=16, detail=detail), "2x1 Slope "  + detail, loc=[-5.5, offset][::j]               + [0])
                 newObjFromBmesh(16 + i, makeSlope(dimensions, brickSize=[3,1][::j] + [3], direction=direction, circleVerts=16, detail=detail), "3x1 Slope "  + detail, loc=[-4,   offset][::j]               + [0])
                 newObjFromBmesh(16 + i, makeSlope(dimensions, brickSize=[4,1][::j] + [3], direction=direction, circleVerts=16, detail=detail), "4x1 Slope "  + detail, loc=[-2,   offset][::j]               + [0])
@@ -129,6 +130,6 @@ def test_brick_generators():
         newObjFromBmesh(7, makeTile(dimensions, brickSize=[2,4,1], circleVerts=16, type="TILE", detail=detail), "2x4 Tile "  + detail, loc=(offset*1.5, -0.2, 0))
         newObjFromBmesh(7, makeTile(dimensions, brickSize=[1,8,1], circleVerts=16, type="TILE", detail=detail), "1x8 Tile "  + detail, loc=(offset, -4.4, 0))
 
-    openLayer(7)
+    openLayer(16)
 
     cm.brickType = lastBrickType
