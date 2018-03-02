@@ -44,6 +44,9 @@ class BrickerApplyMaterial(bpy.types.Operator):
     bl_label = "Apply Material"
     bl_options = {"REGISTER", "UNDO"}
 
+    ################################################
+    # Blender Operator methods
+
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
@@ -55,8 +58,21 @@ class BrickerApplyMaterial(bpy.types.Operator):
             return False
         return True
 
+    def execute(self, context):
+        try:
+            self.runApplyMaterial(context)
+        except:
+            handle_exception()
+        return{"FINISHED"}
+
+    ################################################
+    # initialization method
+
     def __init__(self):
         self.setAction()
+
+    #############################################
+    # class methods
 
     def setAction(self):
         """ sets self.action """
@@ -67,6 +83,42 @@ class BrickerApplyMaterial(bpy.types.Operator):
             self.action = "CUSTOM"
         elif cm.materialType == "RANDOM":
             self.action = "RANDOM"
+
+    @timed_call('Total Time Elapsed')
+    def runApplyMaterial(self, context):
+
+        # set up variables
+        scn, cm, _ = getActiveContextInfo()
+        bricks = getBricks()
+        cm.lastMaterialType = cm.materialType
+        if self.action == "CUSTOM":
+            matName = cm.materialName
+        elif self.action == "INTERNAL":
+            bricksDict, _ = getBricksDict(cm=cm)
+            matName = cm.internalMatName
+        elif self.action == "RANDOM":
+            BrickerApplyMaterial.applyRandomMaterial(context, bricks)
+
+        if self.action != "RANDOM":
+            mat = bpy.data.materials.get(matName)
+            if mat is None: self.report({"WARNING"}, "Specified material doesn't exist")
+
+            for brick in bricks:
+                if self.action == "CUSTOM":
+                    if brick.data.materials:
+                        # clear existing materials
+                        brick.data.materials.clear(1)
+                    # Assign it to object
+                    brick.data.materials.append(mat)
+                elif self.action == "INTERNAL" and not isOnShell(bricksDict, brick.name.split("__")[1]):
+                    brick.data.materials.pop(0)
+                    # Assign it to object
+                    brick.data.materials.append(mat)
+                    for i in range(len(brick.data.materials)-1):
+                        brick.data.materials.append(brick.data.materials.pop(0))
+
+        tag_redraw_areas(["VIEW_3D", "PROPERTIES", "NODE_EDITOR"])
+        cm.materialIsDirty = False
 
     @classmethod
     def applyRandomMaterial(self, context, bricks):
@@ -106,46 +158,3 @@ class BrickerApplyMaterial(bpy.types.Operator):
                     matName = brick_mats_dup.pop(randIdx)
                     mat = bpy.data.materials.get(matName)
                     brick.data.materials[i] = mat
-
-    @timed_call('Total Time Elapsed')
-    def runApplyMaterial(self, context):
-
-        # set up variables
-        scn, cm, _ = getActiveContextInfo()
-        bricks = getBricks()
-        cm.lastMaterialType = cm.materialType
-        if self.action == "CUSTOM":
-            matName = cm.materialName
-        elif self.action == "INTERNAL":
-            matName = cm.internalMatName
-        elif self.action == "RANDOM":
-            BrickerApplyMaterial.applyRandomMaterial(context, bricks)
-
-        if self.action != "RANDOM":
-            mat = bpy.data.materials.get(matName)
-            if mat is None:
-                self.report({"WARNING"}, "Specified material doesn't exist")
-
-            for brick in bricks:
-                if self.action == "CUSTOM":
-                    if brick.data.materials:
-                        # clear existing materials
-                        brick.data.materials.clear(1)
-                    # Assign it to object
-                    brick.data.materials.append(mat)
-                elif self.action == "INTERNAL":
-                    brick.data.materials.pop(0)
-                    # Assign it to object
-                    brick.data.materials.append(mat)
-                    for i in range(len(brick.data.materials)-1):
-                        brick.data.materials.append(brick.data.materials.pop(0))
-
-        tag_redraw_areas(["VIEW_3D", "PROPERTIES", "NODE_EDITOR"])
-        cm.materialIsDirty = False
-
-    def execute(self, context):
-        try:
-            self.runApplyMaterial(context)
-        except:
-            handle_exception()
-        return{"FINISHED"}

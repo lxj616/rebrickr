@@ -214,6 +214,14 @@ def getParentKey(bricksDict, key):
     parent_key = key if bricksDict[key]["parent_brick"] in ["self", None] else bricksDict[key]["parent_brick"]
     return parent_key
 
+    
 def createdWithUnsupportedVersion(cm=None):
     cm = cm or getActiveContextInfo()[1]
     return cm.version[:3] != bpy.props.bricker_version[:3]
+
+
+def isOnShell(bricksDict, key, loc=None):
+    """ check if any locations in brick are on the shell """
+    x0, y0, z0 = loc or strToList(key)
+    size = bricksDict[key]["size"]
+    return bricksDict[key]["val"] == 1 or (1 in [bricksDict[listToStr([x0 + x, y0 + y, z0 + z])]["val"] for z in range(size[2]) for y in range(size[1]) for x in range(size[0])])

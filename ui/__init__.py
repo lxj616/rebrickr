@@ -308,6 +308,7 @@ class ModelTransformPanel(Panel):
     bl_idname      = "VIEW3D_PT_tools_Bricker_model_transform"
     bl_context     = "objectmode"
     bl_category    = "Bricker"
+    bl_options     = {"DEFAULT_CLOSED"}
 
     @classmethod
     def poll(self, context):
@@ -419,6 +420,8 @@ class ModelSettingsPanel(Panel):
         if not cm.useAnimation:
             row = col.row(align=True)
             row.prop(cm, "splitModel")
+        if cm.splitModel:
+            row.prop(cm, "originSet")
 
         row = col.row(align=True)
         row.label("Randomize:")
@@ -517,10 +520,91 @@ class BrickTypesPanel(Panel):
             row2 = col2.row(align=True)
             row2.prop(cm, "maxDepth", text="Depth")
 
-            if cm.splitModel:
-                col = layout.column(align=True)
-                row = col.row(align=True)
-                row.prop(cm, "originSet")
+
+class CustomizeModel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "Customize Model"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_customize_model"
+    bl_context     = "objectmode"
+    bl_category    = "Bricker"
+    bl_options     = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(self, context):
+        if not settingsCanBeDrawn():
+            return False
+        scn, cm, _ = getActiveContextInfo()
+        if createdWithUnsupportedVersion():
+            return False
+        if not (cm.modelCreated or cm.animated):
+            return False
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scn, cm, _ = getActiveContextInfo()
+
+        if cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings():
+            layout.label("Matrix is dirty!")
+            return
+        if cm.animated:
+            layout.label("Not available for animations")
+            return
+        if not cm.lastSplitModel:
+            layout.label("Split model to customize")
+            return
+        if cm.buildIsDirty:
+            layout.label("Run 'Update Model' to customize")
+            return
+        if not Caches.cacheExists(cm):
+            layout.label("Matrix not cached!")
+            return
+        # if not bpy.props.bricker_initialized:
+        #     layout.operator("bricker.customize_model", icon="MODIFIER")
+        #     return
+
+        col1 = layout.column(align=True)
+        col1.label("Selection:")
+        split = col1.split(align=True, percentage=0.5)
+        # set top exposed
+        col = split.column(align=True)
+        col.operator("bricker.select_bricks_by_type", text="By Type")
+        # set bottom exposed
+        col = split.column(align=True)
+        col.operator("bricker.select_bricks_by_size", text="By Size")
+
+        col1 = layout.column(align=True)
+        col1.label("Toggle Exposure:")
+        split = col1.split(align=True, percentage=0.5)
+        # set top exposed
+        col = split.column(align=True)
+        col.operator("bricker.set_exposure", text="Top").side = "TOP"
+        # set bottom exposed
+        col = split.column(align=True)
+        col.operator("bricker.set_exposure", text="Bottom").side = "BOTTOM"
+
+        col1 = layout.column(align=True)
+        col1.label("Brick Operations:")
+        split = col1.split(align=True, percentage=0.5)
+        # split brick into 1x1s
+        col = split.column(align=True)
+        col.operator("bricker.split_bricks", text="Split")
+        # merge selected bricks
+        col = split.column(align=True)
+        col.operator("bricker.merge_bricks", text="Merge")
+        # Add identical brick on +/- x/y/z
+        row = col1.row(align=True)
+        row.operator("bricker.draw_adjacent", text="Draw Adjacent Bricks")
+        # change brick type
+        row = col1.row(align=True)
+        row.operator("bricker.change_brick_type", text="Change Type")
+        # additional controls
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.prop(cm, "autoUpdateExposed")
+        # row = col.row(align=True)
+        # row.operator("bricker.redraw_bricks")
 
 
 class MaterialsPanel(Panel):
@@ -615,19 +699,15 @@ class MaterialsPanel(Panel):
                         row = col.row(align=True)
                         row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
                 if cm.modelCreated:
-                    if cm.splitModel:
-                        col = layout.column(align=True)
-                        col.label("Run 'Update Model' to apply changes")
-                    else:
-                        col = layout.column(align=True)
-                        row = col.row(align=True)
-                        row.operator("bricker.apply_material", icon="FILE_TICK")
+                    row = col.row(align=True)
+                    row.operator("bricker.apply_material", icon="FILE_TICK")
 
         if cm.modelCreated or cm.animated:
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         else:
             obj = bpy.data.objects.get(cm.source_name)
         if obj and cm.materialType == "SOURCE":
+            col = layout.column(align=True)
             row1 = col.row(align=True)
             row1.prop(cm, "colorSnapAmount")
             row1.active = not snapToBrickColors()
@@ -710,18 +790,41 @@ class DetailingPanel(Panel):
                 row.prop(cm, "logoInset", text="Logo Inset")
             col = layout.column(align=True)
         row = col.row(align=True)
-        row.label("Underside Hidden:")
+        row.label("Underside:")
         row = col.row(align=True)
         row.prop(cm, "hiddenUndersideDetail", text="")
-        row = col.row(align=True)
-        row.label("Underside Exposed:")
-        row = col.row(align=True)
         row.prop(cm, "exposedUndersideDetail", text="")
         row = col.row(align=True)
         row.label("Cylinders:")
         row = col.row(align=True)
         row.prop(cm, "circleVerts")
         row.active = not (cm.studDetail == "NONE" and cm.exposedUndersideDetail == "FLAT" and cm.hiddenUndersideDetail == "FLAT")
+
+        row = col.row(align=True)
+        row.label("Bevel:")
+        if cm.lastBrickType == "CUSTOM":
+            col = layout.column(align=True)
+            col.scale_y = 0.7
+            col.label("Not available for custom")
+            col.label("brick types")
+            return
+        row = col.row(align=True)
+        if not (cm.modelCreated or cm.animated):
+            row.prop(cm, "bevelAdded", text="Bevel Bricks")
+            return
+        try:
+            ff = cm.lastStartFrame
+            testBrick = getBricks()[0]
+            testBrick.modifiers[testBrick.name + '_bevel']
+            row.prop(cm, "bevelWidth", text="Width")
+            row = col.row(align=True)
+            row.prop(cm, "bevelSegments", text="Segments")
+            row = col.row(align=True)
+            row.prop(cm, "bevelProfile", text="Profile")
+            row = col.row(align=True)
+            row.operator("bricker.bevel", text="Remove Bevel", icon="CANCEL")
+        except (IndexError, KeyError):
+            row.operator("bricker.bevel", text="Bevel bricks", icon="MOD_BEVEL")
 
 
 class SupportsPanel(Panel):
@@ -753,9 +856,9 @@ class SupportsPanel(Panel):
             row = col.row(align=True)
             row.prop(cm, "alternateXY")
         elif cm.internalSupports == "COLUMNS":
-            row.prop(cm, "colStep")
-            row = col.row(align=True)
             row.prop(cm, "colThickness")
+            row = col.row(align=True)
+            row.prop(cm, "colStep")
         if cm.modelCreated or cm.animated:
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         else:
@@ -764,141 +867,6 @@ class SupportsPanel(Panel):
             row = col.row(align=True)
             # row.scale_y = 0.7
             row.label("(Source is NOT single closed mesh)")
-
-
-class BevelPanel(Panel):
-    bl_space_type  = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_label       = "Bevel"
-    bl_idname      = "VIEW3D_PT_tools_Bricker_bevel"
-    bl_context     = "objectmode"
-    bl_category    = "Bricker"
-    bl_options     = {"DEFAULT_CLOSED"}
-
-    @classmethod
-    def poll(self, context):
-        if not settingsCanBeDrawn():
-            return False
-        scn, cm, _ = getActiveContextInfo()
-        if not bpy.props.bricker_initialized:
-            return False
-        return True
-
-    def draw(self, context):
-        layout = self.layout
-        scn, cm, n = getActiveContextInfo()
-
-        if cm.lastBrickType == "CUSTOM":
-            col = layout.column(align=True)
-            col.scale_y = 0.7
-            col.label("Not available for custom")
-            col.label("brick types")
-            return
-
-        col = layout.column(align=True)
-        row = col.row(align=True)
-        if not (cm.modelCreated or cm.animated):
-            row.prop(cm, "bevelAdded", text="Bevel Bricks")
-            return
-        try:
-            ff = cm.lastStartFrame
-            testBrick = getBricks()[0]
-            testBrick.modifiers[testBrick.name + '_bevel']
-            row.prop(cm, "bevelWidth", text="Width")
-            row = col.row(align=True)
-            row.prop(cm, "bevelSegments", text="Segments")
-            row = col.row(align=True)
-            row.prop(cm, "bevelProfile", text="Profile")
-            row = col.row(align=True)
-            row.operator("bricker.bevel", text="Remove Bevel", icon="CANCEL")
-        except (IndexError, KeyError):
-            row.operator("bricker.bevel", text="Bevel bricks", icon="MOD_BEVEL")
-
-
-class CustomizeModel(Panel):
-    bl_space_type  = "VIEW_3D"
-    bl_region_type = "TOOLS"
-    bl_label       = "Customize Model"
-    bl_idname      = "VIEW3D_PT_tools_Bricker_customize_model"
-    bl_context     = "objectmode"
-    bl_category    = "Bricker"
-    bl_options     = {"DEFAULT_CLOSED"}
-
-    @classmethod
-    def poll(self, context):
-        if not settingsCanBeDrawn():
-            return False
-        scn, cm, _ = getActiveContextInfo()
-        if createdWithUnsupportedVersion():
-            return False
-        if not (cm.modelCreated or cm.animated):
-            return False
-        return True
-
-    def draw(self, context):
-        layout = self.layout
-        scn, cm, _ = getActiveContextInfo()
-
-        if cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings():
-            layout.label("Matrix is dirty!")
-            return
-        if cm.animated:
-            layout.label("Not available for animations")
-            return
-        if not cm.lastSplitModel:
-            layout.label("Split model to customize")
-            return
-        if cm.buildIsDirty:
-            layout.label("Run 'Update Model' to customize")
-            return
-        if not Caches.cacheExists(cm):
-            layout.label("Matrix not cached!")
-            return
-        # if not bpy.props.bricker_initialized:
-        #     layout.operator("bricker.customize_model", icon="MODIFIER")
-        #     return
-
-        col1 = layout.column(align=True)
-        col1.label("Selection:")
-        split = col1.split(align=True, percentage=0.5)
-        # set top exposed
-        col = split.column(align=True)
-        col.operator("bricker.select_bricks_by_type", text="By Type")
-        # set bottom exposed
-        col = split.column(align=True)
-        col.operator("bricker.select_bricks_by_size", text="By Size")
-
-        col1 = layout.column(align=True)
-        col1.label("Toggle Exposure:")
-        split = col1.split(align=True, percentage=0.5)
-        # set top exposed
-        col = split.column(align=True)
-        col.operator("bricker.set_exposure", text="Top").side = "TOP"
-        # set bottom exposed
-        col = split.column(align=True)
-        col.operator("bricker.set_exposure", text="Bottom").side = "BOTTOM"
-
-        col1 = layout.column(align=True)
-        col1.label("Brick Operations:")
-        split = col1.split(align=True, percentage=0.5)
-        # split brick into 1x1s
-        col = split.column(align=True)
-        col.operator("bricker.split_bricks", text="Split")
-        # merge selected bricks
-        col = split.column(align=True)
-        col.operator("bricker.merge_bricks", text="Merge")
-        # Add identical brick on +/- x/y/z
-        row = col1.row(align=True)
-        row.operator("bricker.draw_adjacent", text="Draw Adjacent Bricks")
-        # change brick type
-        row = col1.row(align=True)
-        row.operator("bricker.change_brick_type", text="Change Type")
-        # additional controls
-        col = layout.column(align=True)
-        row = col.row(align=True)
-        row.prop(cm, "autoUpdateExposed")
-        # row = col.row(align=True)
-        # row.operator("bricker.redraw_bricks")
 
 
 class AdvancedPanel(Panel):

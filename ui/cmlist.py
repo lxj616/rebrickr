@@ -658,21 +658,21 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=0.02)
 
     hiddenUndersideDetail = EnumProperty(
-        name="Hidden Underside Detailing",
-        description="Choose the level of detail to include for the underside of hidden bricks",
-        items=[("HIGH", "High Detail", "Draw intricate details on brick underside"),
-               ("MEDIUM", "Medium Detail", "Draw most details on brick underside"),
-               ("LOW", "Low Detail", "Draw minimal details on brick underside"),
-               ("FLAT", "Flat", "draw single face on brick underside")],
+        name="Underside Detailing of Obstructed Bricks",
+        description="Choose the level of detail to include for the underside of obstructed bricks",
+        items=[("FLAT", "Flat", "draw single face on brick underside"),
+               ("LOW", "Low", "Draw minimal details on brick underside"),
+               ("MEDIUM", "Medium", "Draw most details on brick underside"),
+               ("HIGH", "High", "Draw intricate details on brick underside")],
         update=dirtyBricks,
         default="FLAT")
     exposedUndersideDetail = EnumProperty(
-        name="Eposed Underside Detailing",
+        name="Underside Detailing of Exposed Bricks",
         description="Choose the level of detail to include for the underside of exposed bricks",
-        items=[("HIGH", "High Detail", "Draw intricate details on brick underside"),
-               ("MEDIUM", "Medium Detail", "Draw most details on brick underside"),
-               ("LOW", "Low Detail", "Draw minimal details on brick underside"),
-               ("FLAT", "Flat", "draw single face on brick underside")],
+        items=[("FLAT", "Flat", "draw single face on brick underside"),
+               ("LOW", "Low", "Draw minimal details on brick underside"),
+               ("MEDIUM", "Medium", "Draw most details on brick underside"),
+               ("HIGH", "High", "Draw intricate details on brick underside")],
         update=dirtyBricks,
         default="FLAT")
 
@@ -760,7 +760,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=1)
 
     originSet = BoolProperty(
-        name="Center brick origins",
+        name="Center origins",
         description="Set all brick origins to center of bricks (slower)",
         update=dirtyBricks,
         default=False)
@@ -832,7 +832,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyInternal,
         default="NONE")
     latticeStep = IntProperty(
-        name="Lattice Step",
+        name="Step",
         description="Distance between cross-beams",
         update=dirtyInternal,
         step=1,
@@ -844,13 +844,13 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyInternal,
         default=False)
     colThickness = IntProperty(
-        name="Column Thickness",
+        name="Thickness",
         description="Thickness of the columns",
         update=dirtyInternal,
         min=1, max=25,
         default=2)
     colStep = IntProperty(
-        name="Column Step",
+        name="Step",
         description="Distance between columns",
         update=dirtyInternal,
         step=1,
@@ -861,8 +861,8 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         name="Material Type",
         description="Choose what materials will be applied to model",
         items=[("NONE", "None", "No material applied to bricks"),
-               ("RANDOM", "Rand om", "Apply a random material from Brick materials to each generated brick"),
-               ("CUSTOM", "Cust om", "Choose a custom material to apply to all generated bricks"),
+               ("RANDOM", "Random", "Apply a random material from Brick materials to each generated brick"),
+               ("CUSTOM", "Custom", "Choose a custom material to apply to all generated bricks"),
                ("SOURCE", "Use Source Materials", "Apply material based on closest intersecting face")],
         update=dirtyMaterial,
         default="SOURCE")

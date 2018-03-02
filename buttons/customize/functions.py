@@ -256,7 +256,7 @@ def selectBricks(objNamesD, bricksDicts, brickSize="NULL", brickType="NULL", all
             dictKey, dictLoc = getDictKey(obj_name)
             siz = bricksDict[dictKey]["size"]
             typ = bricksDict[dictKey]["type"]
-            onShell = brickOnShell(bricksDict, dictKey, dictLoc)
+            onShell = isOnShell(bricksDict, dictKey, dictLoc)
 
             # get current brick object
             curObj = bpy.data.objects.get(obj_name)
@@ -272,13 +272,6 @@ def selectBricks(objNamesD, bricksDicts, brickSize="NULL", brickType="NULL", all
 
         # if no brickSize bricks exist, remove from cm.brickSizesUsed or cm.brickTypesUsed
         removeUnusedFromList(cm, brickType=brickType, brickSize=brickSize, selectedSomething=selectedSomething)
-
-
-def brickOnShell(bricksDict, key, loc=None):
-    """ check if any locations in brick are on the shell """
-    x0, y0, z0 = loc or strToList(key)
-    size = bricksDict[key]["size"]
-    return bricksDict[key]["val"] == 1 or (1 in [bricksDict[listToStr([x0 + x, y0 + y, z0 + z])]["val"] for z in range(size[2]) for y in range(size[1]) for x in range(size[0])])
 
 
 def removeUnusedFromList(cm, brickType="NULL", brickSize="NULL", selectedSomething=True):
