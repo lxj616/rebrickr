@@ -32,18 +32,18 @@ from .functions import *
 from ..caches import bricker_bfm_cache
 from ...functions import *
 
-def getBricksDict(action="UPDATE_MODEL", source=None, source_details=None, dimensions=None, brickScale=None, updateCursor=True, curFrame=None, cm=None, restrictContext=False):
+def getBricksDict(dType="MODEL", source=None, source_details=None, dimensions=None, brickScale=None, updateCursor=True, curFrame=None, cm=None, restrictContext=False):
     """ retrieve bricksDict from cache if possible, else create a new one """
     scn = bpy.context.scene
     cm = cm or scn.cmlist[scn.cmlist_index]
     loadedFromCache = False
     # if bricksDict can be pulled from cache
-    if not cm.matrixIsDirty and not (cm.BFMCache == "" and bricker_bfm_cache.get(cm.id) is None) and not (cm.animIsDirty and action == "UPDATE_ANIM"):
+    if not cm.matrixIsDirty and not (cm.BFMCache == "" and bricker_bfm_cache.get(cm.id) is None) and not (cm.animIsDirty and "ANIM" in dType):
         # try getting bricksDict from light cache, then deep cache
         bricksDict = bricker_bfm_cache.get(cm.id) or json.loads(cm.BFMCache)
         loadedFromCache = True
         # if animated, index into that dict
-        if action == "UPDATE_ANIM":
+        if "ANIM" in dType:
             curFrame = curFrame or scn.frame_current
             bricksDict = bricksDict[str(curFrame)]
     # if context restricted, return nothing

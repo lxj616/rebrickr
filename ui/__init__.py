@@ -918,6 +918,9 @@ class AdvancedPanel(Panel):
         if testBrickGenerators.drawUIButton():
             col = layout.column(align=True)
             col.operator("bricker.test_brick_generators", text="Test Brick Generators", icon="OUTLINER_OB_MESH")
+        if (cm.modelCreated or cm.animated) and cm.brickType != "CUSTOM":
+            col = layout.column(align=True)
+            col.operator("bricker.export_ldraw", text="Export Ldraw", icon="EXPORT")
 
 
 class BrickDetailsPanel(Panel):
@@ -962,7 +965,7 @@ class BrickDetailsPanel(Panel):
         col.prop(cm, "activeKeyZ", text="z")
 
         if cm.animated:
-            bricksDict, _ = getBricksDict(cm=cm, action="UPDATE_ANIM", curFrame=getAnimAdjustedFrame(cm, scn.frame_current), restrictContext=True)
+            bricksDict, _ = getBricksDict(dType="ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current), restrictContext=True)
         elif cm.modelCreated:
             bricksDict, _ = getBricksDict(cm=cm, restrictContext=True)
         if bricksDict is None:

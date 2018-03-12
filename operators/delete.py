@@ -135,7 +135,7 @@ class delete_override(Operator):
                 continue
             lastBlenderState = cm.blender_undo_state
             # get bricksDict from cache
-            bricksDict, loadedFromCache = getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)
+            bricksDict, loadedFromCache = getBricksDict(dType="MODEL", cm=cm, restrictContext=True)
             if not loadedFromCache:
                 self.report({"WARNING"}, "Adjacent bricks in model '" + cm.name + "' could not be updated (matrix not cached)")
                 continue

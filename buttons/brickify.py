@@ -146,7 +146,7 @@ class BrickerBrickify(bpy.types.Operator):
 
         # make sure matrix really is dirty
         if cm.matrixIsDirty:
-            _, loadedFromCache = getBricksDict("UPDATE_MODEL", cm=cm, restrictContext=True)
+            _, loadedFromCache = getBricksDict(dType="MODEL", cm=cm, restrictContext=True)
             if not matrixReallyIsDirty(cm) and loadedFromCache:
                 cm.matrixIsDirty = False
 
@@ -489,7 +489,7 @@ class BrickerBrickify(bpy.types.Operator):
             # multiply brickScale by offset distance
             brickScale2 = vec_mult(brickScale, Vector((cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ)))
             # get bricks dictionary
-            bricksDict, loadedFromCache = getBricksDict(action=action, source=source, source_details=source_details, dimensions=dimensions, brickScale=brickScale2, updateCursor=updateCursor, curFrame=curFrame)
+            bricksDict, loadedFromCache = getBricksDict(dType=action, source=source, source_details=source_details, dimensions=dimensions, brickScale=brickScale2, updateCursor=updateCursor, curFrame=curFrame)
         else:
             loadedFromCache = True
         # reset all values for certain keys in bricksDict dictionaries

@@ -5,3 +5,4 @@ bricker_updater/
 bricker_options.db
 textures/
 bricksDict_dump.py
+*.ldr
