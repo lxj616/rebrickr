@@ -77,8 +77,18 @@ class exportLdraw(Operator):
                     color = "0x2{hex}".format(hex=rgbToHex(rgb))
                 else:
                     color = 0
-                matrix = "1 0 0 0 1 0 -0 0 1" if size[0] > size[1] else "0 0 1 0 1 0 -1 0 0"
                 typ = bricksDict[key]["type"]
+                matrices = [" 0 0 -1 0 1 0  1 0  0",
+                            " 1 0  0 0 1 0  0 0  1",
+                            " 0 0  1 0 1 0 -1 0  0",
+                            "-1 0  0 0 1 0  0 0 -1"]
+                idx = 0 if typ == "SLOPE" else 1
+                idx += 2 if size[0] > size[1] else 0
+                idx -= 2 if bricksDict[key]["flipped"] and typ == "SLOPE" else 0
+                idx -= 1 if bricksDict[key]["rotated"] and typ == "SLOPE" else 0
+                if typ == "SLOPE":
+                    print(idx)
+                matrix = matrices[idx]
                 parts = legalBricks[size[2]][typ]
                 for i,part in enumerate(parts):
                     if parts[i]["s"] in [size[:2], size[1::-1]]:
@@ -100,7 +110,10 @@ def blendToLdrawUnits(cm, brickD):
     loc.z = loc.z * (h  / (dimensions["height"] + dimensions["gap"]))
     loc.x += ((size[0] - 1) * 20) / 2
     loc.y += ((size[1] - 1) * 20) / 2
-    loc.z += ((size[2] - 1) * 8)
+    if brickD["type"] == "SLOPE" and sum(size[:2]) == 2:
+        loc.z -= ((size[2] - 2) * 8)
+    else:
+        loc.z += ((size[2] - 1) * 8)
     # convert to right-handed co-ordinate system where -Y is "up"
     loc = Vector((loc.x, -loc.z, loc.y))
     return loc
