@@ -931,6 +931,8 @@ class BrickDetailsPanel(Panel):
 
     @classmethod
     def poll(self, context):
+        if bpy.props.bricker_developer_mode < 1:
+            return False
         if not settingsCanBeDrawn():
             return False
         scn, cm, _ = getActiveContextInfo()

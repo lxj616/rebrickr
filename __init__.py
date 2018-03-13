@@ -10,6 +10,8 @@ bl_info = {
     "tracker_url" : "https://github.com/bblanimation/rebrickr/issues",
     "category"    : "Object"}
 
+developer_mode = 1  # NOTE: Set to 0 for release, 1 for exposed dictionary, 2 for testBrickGenerators button
+
 """
 Copyright (C) 2017 Bricks Brought to Life
 http://bblanimation.com/
@@ -63,6 +65,8 @@ def register():
     bpy.props.bricker_undoUpdating = False
 
     bpy.props.bricker_version = str(bl_info["version"])[1:-1].replace(", ", ".")
+
+    bpy.props.bricker_developer_mode = developer_mode
 
     bpy.types.Object.protected = BoolProperty(name='protected', default=False)
     bpy.types.Object.isBrickifiedObject = BoolProperty(name='Is Brickified Object', default=False)
@@ -127,6 +131,7 @@ def unregister():
     del bpy.types.Object.isBrick
     del bpy.types.Object.isBrickifiedObject
     del bpy.types.Object.protected
+    del bpy.props.bricker_developer_mode
     del bpy.props.bricker_version
     del bpy.props.bricker_undoUpdating
     del bpy.props.bricker_initialized
