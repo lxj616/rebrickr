@@ -126,9 +126,11 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
         # set material for mesh
         if mat is not None:
             m.materials.append(mat)
+            brickD["mat_name"] = mat.name
             for p in m.polygons:
                 p.material_index = matIdx
         else:
+            brickD["mat_name"] = internalMat.name
             for p in m.polygons:
                 p.material_index = 0
         # append mesh to allBrickMeshes list

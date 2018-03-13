@@ -64,17 +64,27 @@ class exportLdraw(Operator):
         scn, cm, n = getActiveContextInfo()
         path = getExportFolder(filename=n + ".ldr")
         f = open(path, "w")
+        # write META commands
         f.write("0 %(n)s\n" % locals())
         f.write("0 Name:\n" % locals())
         f.write("0 Author: Unknown\n" % locals())
+        # initialize vars
         legalBricks = getLegalBricks()
         absMatCodes = getAbsPlasticMatCodes()
         bricksDict, _ = getBricksDict(dType="MODEL" if cm.modelCreated else "ANIM", curFrame=scn.frame_current, cm=cm, restrictContext=True)
+        # get small offset for model to get close to Ldraw units
+        offset = vec_conv(bricksDict[list(bricksDict.keys())[0]]["co"], int)
+        offset.x = offset.x % 10
+        offset.y = offset.z % 8
+        offset.z = offset.y % 10
         for key in bricksDict.keys():
+            # skip bricks that aren't displayed
             if not bricksDict[key]["draw"] or bricksDict[key]["parent_brick"] != "self":
                 continue
+            # initialize brick size and typ
             size = bricksDict[key]["size"]
             typ = bricksDict[key]["type"]
+            # get matrix for rotation of brick
             matrices = [" 0 0 -1 0 1 0  1 0  0",
                         " 1 0  0 0 1 0  0 0  1",
                         " 0 0  1 0 1 0 -1 0  0",
@@ -88,23 +98,31 @@ class exportLdraw(Operator):
                 idx = 1
             idx += 1 if size[1] > size[0] else 0
             matrix = matrices[idx]
+            # get coordinate for brick in Ldraw units
             co = self.blendToLdrawUnits(cm, bricksDict[key], idx)
+            # get color code of brick
             mat_name = bricksDict[key]["mat_name"]
             rgba = bricksDict[key]["rgba"]
-            if mat_name not in [None, ""]:
+            if rgba in [None, ""] and mat_name not in absMatCodes.keys() and bpy.data.materials.get(mat_name) is not None:
+                rgba = getMaterialColor(mat_name)
+            if rgba not in [None, ""] and mat_name not in absMatCodes.keys():
+                mat_name = findNearestBrickColorName(rgba)
+            if mat_name in absMatCodes.keys():
                 color = absMatCodes[mat_name]
-            elif rgba not in [None, ""]:
-                rgb = [rgba[0] * 255, rgba[1] * 255, rgba[2] * 255]
-                color = "0x2{hex}".format(hex=self.rgbToHex(rgb))
             else:
                 color = 0
+            # get part number and ldraw file name for brick
             parts = legalBricks[size[2]][typ]
             for i,part in enumerate(parts):
                 if parts[i]["s"] in [size[:2], size[1::-1]]:
                     part = parts[i]["pt2" if typ == "SLOPE" and size[:2] in [[4, 2], [2, 4], [3, 2], [2, 3]] and bricksDict[key]["rotated"] else "pt"]
                     break
             brickFile = "%(part)s.dat" % locals()
-            f.write("1 {color} {x} {y} {z} {matrix} {brickFile}\n".format(color=color, x=int(co.x), y=int(co.y), z=int(co.z), matrix=matrix, brickFile=brickFile))
+            # offset the coordinate and round to ensure appropriate Ldraw location
+            co += offset
+            co = Vector((round_nearest(co.x, 10), round_nearest(co.y, 8), round_nearest(co.z, 10)))
+            # write line to file for brick
+            f.write("1 {color} {x} {y} {z} {matrix} {brickFile}\n".format(color=color, x=co.x, y=co.y, z=co.z, matrix=matrix, brickFile=brickFile))
         f.close()
         self.report({"INFO"}, "Ldraw file saved to '%(path)s'" % locals())
 
@@ -137,10 +155,10 @@ class exportLdraw(Operator):
         loc = Vector((loc.x, -loc.z, loc.y))
         return loc
 
-    def rgbToHex(rgb):
+    def rgbToHex(self, rgb):
         """ convert RGB list to HEX string """
         def clamp(x):
-            return max(0, min(x, 255))
+            return int(max(0, min(x, 255)))
         r, g, b = rgb
         return "{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))
 

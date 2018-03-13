@@ -116,7 +116,15 @@ class BrickerApplyMaterial(bpy.types.Operator):
                     brick.data.materials.append(mat)
                     for i in range(len(brick.data.materials)-1):
                         brick.data.materials.append(brick.data.materials.pop(0))
-                bricksDict[brick.name.split("__")[1]]["mat_name"] = matName
+
+                # update bricksDict mat_name values for split models
+                if cm.lastSplitModel:
+                    bricksDict[brick.name.split("__")[1]]["mat_name"] = matName
+            # update bricksDict mat_name values for not split models
+            if self.action == "CUSTOM" and not cm.lastSplitModel:
+                for k in bricksDict.keys():
+                    if bricksDict[k]["draw"] and bricksDict[k]["parent_brick"] == "self":
+                        bricksDict[k]["mat_name"] = matName
 
         tag_redraw_areas(["VIEW_3D", "PROPERTIES", "NODE_EDITOR"])
         cm.materialIsDirty = False
@@ -144,7 +152,8 @@ class BrickerApplyMaterial(bpy.types.Operator):
                 # Assign random material to object
                 mat = bpy.data.materials.get(brick_mats[randIdx])
                 brick.data.materials.append(mat)
-                bricksDict[brick.name.split("__")[1]]["mat_name"] = mat.name
+                if cm.lastSplitModel:
+                    bricksDict[brick.name.split("__")[1]]["mat_name"] = mat.name
                 continue
             elif len(lastMatSlots) == len(brick_mats):
                 brick_mats_dup = brick_mats.copy()
@@ -159,4 +168,3 @@ class BrickerApplyMaterial(bpy.types.Operator):
                     matName = brick_mats_dup.pop(randIdx)
                     mat = bpy.data.materials.get(matName)
                     brick.data.materials[i] = mat
-                bricksDict[brick.name.split("__")[1]]["mat_name"] = mat.name

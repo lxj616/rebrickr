@@ -911,8 +911,8 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         name="Color Snap Amount",
         description="Amount to snap colors by",
         precision=3,
-        min=0.0, max=1.0,
-        default=0.0,
+        min=0.000001, max=1.0,
+        default=0.00001,
         update=dirtyBuild)
 
     lastMatrixSettings = StringProperty(default="")

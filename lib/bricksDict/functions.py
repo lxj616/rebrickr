@@ -199,7 +199,7 @@ def createNewMaterial(model_name, rgba, rgba_vals):
         if mat_is_new:
             mat.diffuse_color = rgba[:3]
             mat.diffuse_intensity = 1.0
-            if a < 1.0:
+            if a0 < 1.0:
                 mat.use_transparency = True
                 mat.alpha = rgba[3]
         else:
@@ -207,7 +207,7 @@ def createNewMaterial(model_name, rgba, rgba_vals):
                 mat.use_nodes = False
             r1, g1, b1 = mat.diffuse_color
             a1 = mat.alpha
-            r2, g2, b2, a2 = getAverage(rgba, [r1, g1, b1, a1], mat.num_averaged)
+            r2, g2, b2, a2 = getAverage(Vector(rgba), Vector((r1, g1, b1, a1)), mat.num_averaged)
             mat.diffuse_color = [r2, g2, b2]
             mat.alpha = a2
     mat.num_averaged += 1

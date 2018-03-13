@@ -264,6 +264,18 @@ def vec_abs(v1):
     return Vector(abs(e1) for e1 in v1)
 
 
+def vec_conv(v1, innerType=int, outerType=Vector):
+    return outerType([innerType(x) for x in v1])
+
+
+def round_nearest(num, divisor):
+    rem = num % divisor
+    if rem > divisor / 2:
+        return round_up(num, divisor)
+    else:
+        return round_down(num, divisor)
+
+
 def round_up(num, divisor):
     return num + divisor - (num % divisor)
 

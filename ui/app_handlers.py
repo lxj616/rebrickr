@@ -316,11 +316,21 @@ def handle_upconversion(scene):
     if not brickerIsActive():
         return
     for cm in scn.cmlist:
-        # convert from v1_0 to v1_1
         if createdWithUnsupportedVersion():
+            # convert from v1_0 to v1_1
             cm.brickWidth = 2 if cm.maxBrickScale2 > 1 else 1
             cm.brickDepth = cm.maxBrickScale2
             cm.matrixIsDirty = True
+            # convert from v1_2 to v1_3
+            for obj in bpy.data.objects:
+                if obj.name.startswith("Rebrickr"):
+                    obj.name = obj.name.replace("Rebrickr", "Bricker")
+            for scn in bpy.data.scenes:
+                if scn.name.startswith("Rebrickr"):
+                    scn.name = scn.name.replace("Rebrickr", "Bricker")
+            for group in bpy.data.groups:
+                if group.name.startswith("Rebrickr"):
+                    group.name = group.name.replace("Rebrickr", "Bricker")
 
 
 bpy.app.handlers.load_post.append(handle_upconversion)
