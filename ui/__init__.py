@@ -30,7 +30,8 @@ from bpy.props import *
 props = bpy.props
 
 # Bricker imports
-from .cmlist import *
+from .cmlist_attrs import *
+from .cmlist_actions import *
 from .app_handlers import *
 from ..lib.bricksDict import *
 from ..lib.Brick.test_brick_generators import *
@@ -123,7 +124,6 @@ class BrickModelsPanel(Panel):
                 col.prop_search(cm, "source_name", scn, "objects", text='')
                 col = split.column(align=True)
                 col.operator("bricker.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'source_name'
-                # col.operator("cmlist.set_to_active", icon="EDIT", text="")
                 col1 = layout.column(align=True)
 
             # initialize obj variable

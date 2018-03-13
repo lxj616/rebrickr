@@ -39,7 +39,7 @@ from .delete import BrickerDelete
 from .bevel import BrickerBevel
 from .cache import *
 from ..lib.bricksDict import *
-from ..ui.cmlist import dirtyMatrix
+from ..ui.cmlist_utils import dirtyMatrix
 from ..functions import *
 
 

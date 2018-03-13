@@ -152,7 +152,7 @@ class BrickerDelete(bpy.types.Operator):
         source, brickLoc, brickRot, brickScl = cls.cleanUp(modelType, cm=cm, skipSource=source is None)
 
         # select source
-        if source is None and not cm.imported:
+        if source is None:
             print("Source object for model could not be found")
         else:
             select(source, active=source)
