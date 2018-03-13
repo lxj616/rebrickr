@@ -60,7 +60,7 @@ class Bricks:
             raise ValueError("'new_mesh' function received unrecognized value for parameter 'type': '" + str(type) + "'")
 
         # create list of brick bmesh variations
-        if logo and stud and type in ["BRICK", "PLATE", "STUD"] or type == "SLOPE" and max(size[:2]) != 1:
+        if logo and stud and (type in ["BRICK", "PLATE", "STUD"] or type == "SLOPE" and max(size[:2]) != 1):
             bms = makeLogoVariations(dimensions, size, directions[maxIdx] if type == "SLOPE" else "", all_vars, logo, logo_type, logo_details, logo_scale, logo_inset)
         else:
             bms = [bmesh.new()]

@@ -23,7 +23,7 @@ absPlasticMaterials = {
     'ABS Plastic Black':0,
     'ABS Plastic Blue':1,
     'ABS Plastic Bright Green':10,
-    'ABS Plastic Bright Light Orange':25,
+    'ABS Plastic Bright Light Orange':366,
     'ABS Plastic Brown':6,
     'ABS Plastic Dark Azur':321,
     'ABS Plastic Dark Brown':308,
