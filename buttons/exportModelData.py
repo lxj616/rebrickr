@@ -32,10 +32,10 @@ from bpy.types import Operator
 from ..functions import *
 
 
-class sendDictionaryToFile(Operator):
+class exportModelData(Operator):
     """send bricksDict to external file"""
-    bl_idname = "bricker.send_dictionary_to_file"
-    bl_label = "Send Dictionary to File"
+    bl_idname = "bricker.export_model_data"
+    bl_label = "Export Model Data"
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
@@ -45,16 +45,23 @@ class sendDictionaryToFile(Operator):
 
     def execute(self, context):
         try:
-            scn, cm, _ = getActiveContextInfo()
+            scn, cm, n = getActiveContextInfo()
+            path = getExportFolder(filename=n + ".py")
+            # get model info
+            modelInfoStrings.append("# Model Name:  " + cm.name)
+            modelInfoStrings.append("# Bricker Version:  " + cm.version)
+            modelInfoStrings.append("# Brick Height:  " + cm.brickHeight)
+            modelInfoStrings.append("# Gap Between Bricks:  " + cm.gap + "\n")
+            # get bricksDict and separate into strings
             bricksDict, _ = getBricksDict(cm=cm, restrictContext=True)
-            bricksDictString = json.dumps(bricksDict)
-            bricksDictStrings = bricksDictString.split("}, ")
+            bricksDictStrings = json.dumps(bricksDict).split("}, ")
             for i,string in enumerate(bricksDictStrings):
                 whitespace = " " if string.startswith("\"") else ""
                 bricksDictStrings[i] = "%(whitespace)s%(string)s}," % locals()
-            filePath = os.path.join(getLibraryPath(), "bricksDict_dump.py")
-            self.writeToFile(bricksDictStrings, filePath)
-            self.report({"INFO"}, "Bricks Dictionary saved to '%(filePath)s'" % locals())
+            strings = modelInfoStrings + bricksDictStrings
+            # write these strings to the specified filepath
+            self.writeToFile(strings, path)
+            self.report({"INFO"}, "Model data saved to '%(path)s'" % locals())
         except:
             handle_exception()
         return{"FINISHED"}
@@ -63,5 +70,5 @@ class sendDictionaryToFile(Operator):
         # write error to log text object
         f = open(filePath, "w")
         for string in strings:
-            f.write("\n" + string)
+            f.write(string + "\n")
         f.close()

@@ -1055,6 +1055,12 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         description="When bricks are deleted, automatically update bricks that become exposed",
         default=False)
 
+    exportPath = StringProperty(
+        name="Export Path",
+        description="Destination path for exported files",
+        subtype="DIR_PATH",
+        default="//")
+
     activeKeyX = IntProperty(default=-1)
     activeKeyY = IntProperty(default=-1)
     activeKeyZ = IntProperty(default=-1)
@@ -1072,6 +1078,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     customized = BoolProperty(default=True)
     brickSizesUsed = StringProperty(default="")  # list of brickSizes used separated by | (e.g. '5,4,3|7,4,5|8,6,5')
     brickTypesUsed = StringProperty(default="")  # list of brickTypes used separated by | (e.g. 'PLATE|BRICK|STUD')
+    imported = BoolProperty(default=False)
 
     animIsDirty = BoolProperty(default=True)
     materialIsDirty = BoolProperty(default=True)

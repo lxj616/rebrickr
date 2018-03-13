@@ -88,7 +88,7 @@ class BrickerDelete(bpy.types.Operator):
         cm = cm or scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
-        source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
+        source = bpy.data.objects.get("%(n)s (DO NOT RENAME)" % locals())
 
         # set layers to source layers temporarily
         curLayers = list(scn.layers)
@@ -129,59 +129,63 @@ class BrickerDelete(bpy.types.Operator):
         scn = bpy.context.scene
         scn.Bricker_runningOperation = True
         cm = cm or scn.cmlist[scn.cmlist_index]
+        modelType = getModelType(cm)
         n = cm.source_name
-        source = bpy.data.objects["%(n)s (DO NOT RENAME)" % locals()]
+        source = bpy.data.objects.get("%(n)s (DO NOT RENAME)" % locals())
         parentOb = None
         origFrame = scn.frame_current
         scn.frame_set(cm.modelCreatedOnFrame)
 
-        # store last active layers
-        lastLayers = list(scn.layers)
-        # match source layers to brick layers
-        brick = None
-        gn = "Bricker_%(n)s_bricks" % locals()
-        if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
-            brick = bpy.data.groups[gn].objects[0]
-            source.layers = brick.layers
-        # set active layers to source layers
-        setLayers(source.layers)
+        # set scene layers for source adjustments
+        if source is not None:
+            # store last active layers
+            lastLayers = list(scn.layers)
+            # match source layers to brick layers
+            brick = None
+            gn = "Bricker_%(n)s_bricks" % locals()
+            if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
+                brick = bpy.data.groups[gn].objects[0]
+                source.layers = brick.layers
+            # set active layers to source layers
+            setLayers(source.layers)
 
-        modelType = getModelType(cm)
-
-        source, brickLoc, brickRot, brickScl = cls.cleanUp(modelType, cm=cm)
+        source, brickLoc, brickRot, brickScl = cls.cleanUp(modelType, cm=cm, skipSource=source is None)
 
         # select source
-        select(source, active=source)
+        if source is None and not cm.imported:
+            print("Source object for model could not be found")
+        else:
+            select(source, active=source)
 
-        # apply transformation to source
-        if not cm.armature and ((modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (modelType == "ANIMATION" and cm.applyToSourceObject)):
-            l, r, s = getTransformData()
-            if modelType == "MODEL":
-                loc = strToTuple(cm.lastSourceMid, float)
-                if brickLoc is not None:
-                    source.location = source.location + brickLoc - Vector(loc)
+            # apply transformation to source
+            if not cm.armature and ((modelType == "MODEL" and (cm.applyToSourceObject and cm.lastSplitModel) or not cm.lastSplitModel) or (modelType == "ANIMATION" and cm.applyToSourceObject)):
+                l, r, s = getTransformData()
+                if modelType == "MODEL":
+                    loc = strToTuple(cm.lastSourceMid, float)
+                    if brickLoc is not None:
+                        source.location = source.location + brickLoc - Vector(loc)
+                    else:
+                        source.location = Vector(l)# - Vector(loc)
                 else:
-                    source.location = Vector(l)# - Vector(loc)
-            else:
-                source.location = Vector(l)
-            source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
-            source.rotation_mode = "XYZ"
-            if cm.useLocalOrient:
-                source.rotation_euler = brickRot or Euler(tuple(r), "XYZ")
-            else:
-                source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
+                    source.location = Vector(l)
+                source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
+                source.rotation_mode = "XYZ"
+                if cm.useLocalOrient:
+                    source.rotation_euler = brickRot or Euler(tuple(r), "XYZ")
+                else:
+                    source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
 
-        # return open layers to original
-        scn.Bricker_runningOperation = False
-        setLayers(lastLayers)
+            # return open layers to original
+            scn.Bricker_runningOperation = False
+            setLayers(lastLayers)
 
-        # delete custom properties from source
-        customPropNames = ["ignored_mods", "frame_parent_cleared", "old_parent", "previous_location", "previous_rotation", "previous_scale", "before_edit_location", "before_origin_set_location"]
-        for cPN in customPropNames:
-            try:
-                del source[cPN]
-            except KeyError:
-                pass
+            # delete custom properties from source
+            customPropNames = ["ignored_mods", "frame_parent_cleared", "old_parent", "previous_location", "previous_rotation", "previous_scale", "before_edit_location", "before_origin_set_location"]
+            for cPN in customPropNames:
+                try:
+                    del source[cPN]
+                except KeyError:
+                    pass
 
         Caches.clearCache(cm, brick_mesh=False)
 

@@ -214,7 +214,7 @@ def getParentKey(bricksDict, key):
     parent_key = key if bricksDict[key]["parent_brick"] in ["self", None] else bricksDict[key]["parent_brick"]
     return parent_key
 
-    
+
 def createdWithUnsupportedVersion(cm=None):
     cm = cm or getActiveContextInfo()[1]
     return cm.version[:3] != bpy.props.bricker_version[:3]
@@ -225,3 +225,24 @@ def isOnShell(bricksDict, key, loc=None):
     x0, y0, z0 = loc or strToList(key)
     size = bricksDict[key]["size"]
     return bricksDict[key]["val"] == 1 or (1 in [bricksDict[listToStr([x0 + x, y0 + y, z0 + z])]["val"] for z in range(size[2]) for y in range(size[1]) for x in range(size[0])])
+
+
+def getExportFolder(filename):
+    cm = getActiveContextInfo()[1]
+    path = cm.exportPath
+    # setup the render dump folder based on user input
+    if path.startswith("//"):
+        path = os.path.join(bpy.path.abspath("//"), path[2:])
+    elif path != "" and len(path) > 2:
+        path = path[2:]
+    # if no user input, use default render location
+    else:
+        path = bpy.path.abspath("//")
+    # ensure it doesn't end in forwardslash
+    if path.endswith("/"):
+        path = path[:-1]
+    # check to make sure dumpLoc exists on local machine
+    if not os.path.exists(path):
+        os.mkdir(path)
+    path = os.path.join(path, filename)
+    return path

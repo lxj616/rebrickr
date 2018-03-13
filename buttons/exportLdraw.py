@@ -27,6 +27,7 @@ import json
 # Blender imports
 import bpy
 from bpy.types import Operator
+from bpy.props import StringProperty, CollectionProperty
 
 # Bricker imports
 from ..functions import *
@@ -47,23 +48,23 @@ class exportLdraw(Operator):
 
     def execute(self, context):
         try:
-            scn, cm, n = getActiveContextInfo()
-            bricksDict, _ = getBricksDict(dType="MODEL" if cm.modelCreated else "ANIM", curFrame=scn.frame_current, cm=cm, restrictContext=True)
-            filePath = os.path.join(getLibraryPath(), "test_file.ldr")
-            self.writeLdrawFile(bricksDict, filePath, n)
-            self.report({"INFO"}, "Ldraw file saved to '%(filePath)s'" % locals())
+            self.writeLdrawFile()
         except:
             handle_exception()
         return{"FINISHED"}
 
-    def writeLdrawFile(self, bricksDict, path, n):
-        cm = getActiveContextInfo()[1]
+
+    def writeLdrawFile(self):
+        """ create and write Ldraw file in user specified location """
+        scn, cm, n = getActiveContextInfo()
+        path = getExportFolder(filename=n + ".ldr")
         f = open(path, "w")
         f.write("0 %(n)s\n" % locals())
         f.write("0 Name:\n" % locals())
         f.write("0 Author: Unknown\n" % locals())
         legalBricks = getLegalBricks()
         absMatCodes = getAbsPlasticMatCodes()
+        bricksDict, _ = getBricksDict(dType="MODEL" if cm.modelCreated else "ANIM", curFrame=scn.frame_current, cm=cm, restrictContext=True)
         for key in bricksDict.keys():
             if not bricksDict[key]["draw"] or bricksDict[key]["parent_brick"] != "self":
                 continue
@@ -73,18 +74,21 @@ class exportLdraw(Operator):
                         " 1 0  0 0 1 0  0 0  1",
                         " 0 0  1 0 1 0 -1 0  0",
                         "-1 0  0 0 1 0  0 0 -1"]
-            idx = 1 if typ != "SLOPE" else 0
-            idx -= 2 if bricksDict[key]["flipped"] and typ == "SLOPE" else 0
-            idx += 2 if typ == "SLOPE" and ((size[:2] in [[1, 2], [1, 3], [1, 4], [2, 3]] and not bricksDict[key]["rotated"]) or size[:2] == [2, 4]) else 0
-            idx -= 1 if bricksDict[key]["rotated"] and typ == "SLOPE" else 0
+            if typ == "SLOPE":
+                idx = 0
+                idx -= 2 if bricksDict[key]["flipped"] else 0
+                idx -= 1 if bricksDict[key]["rotated"] else 0
+                idx += 2 if (size[:2] in [[1, 2], [1, 3], [1, 4], [2, 3]] and not bricksDict[key]["rotated"]) or size[:2] == [2, 4] else 0
+            else:
+                idx = 1
             idx += 1 if size[1] > size[0] else 0
             matrix = matrices[idx]
             co = blendToLdrawUnits(cm, bricksDict[key], idx)
             mat_name = bricksDict[key]["mat_name"]
             rgba = bricksDict[key]["rgba"]
-            if mat_name:
+            if mat_name not in [None, ""]:
                 color = absMatCodes[mat_name]
-            elif rgba:
+            elif rgba not in [None, ""]:
                 rgb = [rgba[0] * 255, rgba[1] * 255, rgba[2] * 255]
                 color = "0x2{hex}".format(hex=rgbToHex(rgb))
             else:
@@ -92,14 +96,12 @@ class exportLdraw(Operator):
             parts = legalBricks[size[2]][typ]
             for i,part in enumerate(parts):
                 if parts[i]["s"] in [size[:2], size[1::-1]]:
-                    if typ == "SLOPE" and size[:2] in [[4, 2], [2, 4], [3, 2], [2, 3]] and bricksDict[key]["rotated"]:
-                        part = parts[i]["pt2"]
-                    else:
-                        part = parts[i]["pt"]
+                    part = parts[i]["pt2" if typ == "SLOPE" and size[:2] in [[4, 2], [2, 4], [3, 2], [2, 3]] and bricksDict[key]["rotated"] else "pt"]
                     break
             brickFile = "%(part)s.dat" % locals()
             f.write("1 {color} {x} {y} {z} {matrix} {brickFile}\n".format(color=color, x=int(co.x), y=int(co.y), z=int(co.z), matrix=matrix, brickFile=brickFile))
         f.close()
+        self.report({"INFO"}, "Ldraw file saved to '%(path)s'" % locals())
 
 
 def blendToLdrawUnits(cm, brickD, idx):

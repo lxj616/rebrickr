@@ -917,9 +917,6 @@ class AdvancedPanel(Panel):
         if testBrickGenerators.drawUIButton():
             col = layout.column(align=True)
             col.operator("bricker.test_brick_generators", text="Test Brick Generators", icon="OUTLINER_OB_MESH")
-        if (cm.modelCreated or cm.animated) and cm.brickType != "CUSTOM":
-            col = layout.column(align=True)
-            col.operator("bricker.export_ldraw", text="Export Ldraw", icon="EXPORT")
 
 
 class BrickDetailsPanel(Panel):
@@ -987,7 +984,6 @@ class BrickDetailsPanel(Panel):
                 print("Key not set (entered else)")
             else:
                 print("Error fetching brickD:", e)
-            drawSendToFileButton(layout)
             return
 
         col1 = layout.column(align=True)
@@ -1010,9 +1006,37 @@ class BrickDetailsPanel(Panel):
         for key in keys:
             row = col.row(align=True)
             row.label(str(brickD[key]))
-        drawSendToFileButton(layout)
 
-def drawSendToFileButton(layout):
-    layout.separator()
-    col = layout.column(align=True)
-    col.operator("bricker.send_dictionary_to_file", text="Send to File", icon="EXPORT")
+class ExportPanel(Panel):
+    """ Export Bricker Model """
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "Export"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_export"
+    bl_context     = "objectmode"
+    bl_category    = "Bricker"
+    bl_options     = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(self, context):
+        if not settingsCanBeDrawn():
+            return False
+        scn, cm, _ = getActiveContextInfo()
+        if createdWithUnsupportedVersion():
+            return False
+        if not (cm.modelCreated or cm.animated):
+            return False
+        return True
+
+    def draw(self, context):
+        layout = self.layout
+        scn, cm, _ = getActiveContextInfo()
+
+        col = layout.column(align=True)
+        col.prop(cm, "exportPath", text="")
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.operator("bricker.export_model_data", text="Export Model Data", icon="EXPORT")
+        if (cm.modelCreated or cm.animated) and cm.brickType != "CUSTOM":
+            row = col.row(align=True)
+            row.operator("bricker.export_ldraw", text="Export Ldraw", icon="EXPORT")
