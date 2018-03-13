@@ -41,6 +41,9 @@ class exportLdraw(Operator):
     bl_label = "Export to Ldraw File"
     bl_options = {"REGISTER", "UNDO"}
 
+    ################################################
+    # Blender Operator methods
+
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
@@ -53,9 +56,11 @@ class exportLdraw(Operator):
             handle_exception()
         return{"FINISHED"}
 
+    #############################################
+    # class methods
 
     def writeLdrawFile(self):
-        """ create and write Ldraw file in user specified location """
+        """ create and write Ldraw file """
         scn, cm, n = getActiveContextInfo()
         path = getExportFolder(filename=n + ".ldr")
         f = open(path, "w")
@@ -83,14 +88,14 @@ class exportLdraw(Operator):
                 idx = 1
             idx += 1 if size[1] > size[0] else 0
             matrix = matrices[idx]
-            co = blendToLdrawUnits(cm, bricksDict[key], idx)
+            co = self.blendToLdrawUnits(cm, bricksDict[key], idx)
             mat_name = bricksDict[key]["mat_name"]
             rgba = bricksDict[key]["rgba"]
             if mat_name not in [None, ""]:
                 color = absMatCodes[mat_name]
             elif rgba not in [None, ""]:
                 rgb = [rgba[0] * 255, rgba[1] * 255, rgba[2] * 255]
-                color = "0x2{hex}".format(hex=rgbToHex(rgb))
+                color = "0x2{hex}".format(hex=self.rgbToHex(rgb))
             else:
                 color = 0
             parts = legalBricks[size[2]][typ]
@@ -103,38 +108,40 @@ class exportLdraw(Operator):
         f.close()
         self.report({"INFO"}, "Ldraw file saved to '%(path)s'" % locals())
 
+    def blendToLdrawUnits(self, cm, brickD, idx):
+        """ convert location of brick from blender units to ldraw units """
+        loc = Vector(brickD["co"])
+        size = brickD["size"]
+        zStep = getZStep(cm)
+        dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)
+        h = 8 * (zStep % 4)
+        loc.x = loc.x * (20 / (dimensions["width"] + dimensions["gap"]))
+        loc.y = loc.y * (20 / (dimensions["width"] + dimensions["gap"]))
+        loc.z = loc.z * (h  / (dimensions["height"] + dimensions["gap"]))
+        loc.x += ((size[0] - 1) * 20) / 2
+        loc.y += ((size[1] - 1) * 20) / 2
+        if brickD["type"] == "SLOPE":
+            if idx == 0:
+                loc.x -= ((size[0] - 1) * 20) / 2
+            elif idx in [1, -3]:
+                loc.y += ((size[1] - 1) * 20) / 2
+            elif idx in [2, -2]:
+                loc.x += ((size[0] - 1) * 20) / 2
+            elif idx in [3, -1]:
+                loc.y -= ((size[1] - 1) * 20) / 2
+        if brickD["type"] == "SLOPE" and sum(size[:2]) == 2:
+            loc.z -= ((size[2] - 2) * 8)
+        else:
+            loc.z += ((size[2] - 1) * 8)
+        # convert to right-handed co-ordinate system where -Y is "up"
+        loc = Vector((loc.x, -loc.z, loc.y))
+        return loc
 
-def blendToLdrawUnits(cm, brickD, idx):
-    loc = Vector(brickD["co"])
-    size = brickD["size"]
-    zStep = getZStep(cm)
-    dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)
-    h = 8 * (zStep % 4)
-    loc.x = loc.x * (20 / (dimensions["width"] + dimensions["gap"]))
-    loc.y = loc.y * (20 / (dimensions["width"] + dimensions["gap"]))
-    loc.z = loc.z * (h  / (dimensions["height"] + dimensions["gap"]))
-    loc.x += ((size[0] - 1) * 20) / 2
-    loc.y += ((size[1] - 1) * 20) / 2
-    if brickD["type"] == "SLOPE":
-        if idx == 0:
-            loc.x -= ((size[0] - 1) * 20) / 2
-        elif idx in [1, -3]:
-            loc.y += ((size[1] - 1) * 20) / 2
-        elif idx in [2, -2]:
-            loc.x += ((size[0] - 1) * 20) / 2
-        elif idx in [3, -1]:
-            loc.y -= ((size[1] - 1) * 20) / 2
-    if brickD["type"] == "SLOPE" and sum(size[:2]) == 2:
-        loc.z -= ((size[2] - 2) * 8)
-    else:
-        loc.z += ((size[2] - 1) * 8)
-    # convert to right-handed co-ordinate system where -Y is "up"
-    loc = Vector((loc.x, -loc.z, loc.y))
-    return loc
+    def rgbToHex(rgb):
+        """ convert RGB list to HEX string """
+        def clamp(x):
+            return max(0, min(x, 255))
+        r, g, b = rgb
+        return "{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))
 
-
-def rgbToHex(rgb):
-    def clamp(x):
-        return max(0, min(x, 255))
-    r, g, b = rgb
-    return "{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))
+    #############################################

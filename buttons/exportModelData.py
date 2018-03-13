@@ -38,6 +38,9 @@ class exportModelData(Operator):
     bl_label = "Export Model Data"
     bl_options = {"REGISTER", "UNDO"}
 
+    ################################################
+    # Blender Operator methods
+
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns False) """
@@ -48,10 +51,11 @@ class exportModelData(Operator):
             scn, cm, n = getActiveContextInfo()
             path = getExportFolder(filename=n + ".py")
             # get model info
+            modelInfoStrings = []
             modelInfoStrings.append("# Model Name:  " + cm.name)
             modelInfoStrings.append("# Bricker Version:  " + cm.version)
-            modelInfoStrings.append("# Brick Height:  " + cm.brickHeight)
-            modelInfoStrings.append("# Gap Between Bricks:  " + cm.gap + "\n")
+            modelInfoStrings.append("# Brick Height:  " + str(round(cm.brickHeight, 3)))
+            modelInfoStrings.append("# Gap Between Bricks:  " + str(round(cm.gap, 3)) + "\n")
             # get bricksDict and separate into strings
             bricksDict, _ = getBricksDict(cm=cm, restrictContext=True)
             bricksDictStrings = json.dumps(bricksDict).split("}, ")
@@ -66,9 +70,14 @@ class exportModelData(Operator):
             handle_exception()
         return{"FINISHED"}
 
+    #############################################
+    # class methods
+
     def writeToFile(self, strings, filePath):
         # write error to log text object
         f = open(filePath, "w")
         for string in strings:
             f.write(string + "\n")
         f.close()
+
+    #############################################
