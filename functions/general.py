@@ -157,11 +157,6 @@ def brick_materials_loaded():
     return True
 
 
-def snapToBrickColors(cm=None):
-    cm = cm or getActiveContextInfo()[1]
-    return (brick_materials_loaded() and cm.snapToBrickColors)
-
-
 def getMatrixSettings(cm=None):
     cm = cm or getActiveContextInfo()[1]
     return listToStr([cm.brickHeight, cm.gap, cm.brickType, cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ, cm.customObjectName, cm.useNormals, cm.verifyExposure, cm.insidenessRayCastDir, cm.castDoubleCheckRays, cm.brickShell, cm.calculationAxes])

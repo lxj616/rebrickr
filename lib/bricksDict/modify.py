@@ -55,9 +55,9 @@ def updateMaterials(bricksDict, source):
         # get material with snapped RGBA value
         if rgba is None:
             matName = ""
-        elif snapToBrickColors():
+        elif cm.colorSnap == "ABS" and brick_materials_loaded():
             matName = findNearestBrickColorName(rgba)
-        elif cm.colorSnapAmount > 0:
+        elif cm.colorSnap == "RGB" or cm.useUVMap:
             matName = createNewMaterial(cm.source_name, rgba, rgba_vals)
         rgba_vals.append(rgba)
         bricksDict[key]["mat_name"] = matName

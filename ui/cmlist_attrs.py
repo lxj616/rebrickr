@@ -279,11 +279,14 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         description="UV Image to use for UV Map color transfer (defaults to active UV if left blank)",
         default="",
         update=dirtyBuild)
-    snapToBrickColors = BoolProperty(
-        name="Snap to Brick Colors",
-        description="Snap nearest material to brick material",
-        default=False,
-        update=dirtyMaterial)
+    colorSnap = EnumProperty(
+        name="Color Snaping",
+        description="Snap nearest source materials",
+        items=[("NONE", "None", "Use source materials as is"),
+               ("ABS", "ABS Plastic", "Use ABS Plastic Materials"),
+               ("RGB", "RGB Average", "Use average RGB value of snapped colors")],
+        update=dirtyMaterial,
+        default="NONE")
     colorSnapAmount = FloatProperty(
         name="Color Snap Amount",
         description="Amount to snap colors by",

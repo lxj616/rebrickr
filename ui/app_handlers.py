@@ -318,12 +318,12 @@ def handle_upconversion(scene):
     for cm in scn.cmlist:
         if createdWithUnsupportedVersion():
             # convert from v1_0 to v1_1
-            if int(cm.version[2]) < 1:
+            if int(cm.version[3]) < 1:
                 cm.brickWidth = 2 if cm.maxBrickScale2 > 1 else 1
                 cm.brickDepth = cm.maxBrickScale2
                 cm.matrixIsDirty = True
             # convert from v1_2 to v1_3
-            if int(cm.version[2]) < 3:
+            if int(cm.version[3]) < 3:
                 if cm.colorSnapAmount == 0:
                     cm.colorSnapAmount = 0.00001
                 for obj in bpy.data.objects:

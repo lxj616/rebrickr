@@ -691,7 +691,7 @@ class MaterialsPanel(Panel):
                 row = col.row(align=True)
                 row.prop_search(cm, "internalMatName", bpy.data, "materials", text="")
                 if brick_materials_installed:
-                    if bpy.context.scene.render.engine != 'CYCLES':
+                    if scn.render.engine != 'CYCLES':
                         row = col.row(align=True)
                         row.label("Switch to 'Cycles' for Brick materials")
                     elif not brick_materials_loaded():
@@ -706,16 +706,41 @@ class MaterialsPanel(Panel):
         else:
             obj = bpy.data.objects.get(cm.source_name)
         if obj and cm.materialType == "SOURCE":
+            if len(obj.data.uv_layers) > 0:
+                row = col.row(align=True)
+                row.prop(cm, "useUVMap")
+                if cm.useUVMap:
+                    row = col.row(align=True)
+                    split = row.split(align=True, percentage=0.65)
+                    split.prop_search(cm, "uvImageName", bpy.data, "images", text="")
+                    split.operator("image.open", icon="FILESEL", text="Open")
+                elif scn.render.engine == "CYCLES" and cm.colorSnap != "NONE" and not cm.useUVMap:
+                    col.separator()
+                    col.separator()
+                    col.separator()
+            if len(obj.data.vertex_colors) > 0:
+                col = layout.column(align=True)
+                col.scale_y = 0.7
+                col.label("(Vertex colors not supported)")
+                layout.separator()
             col = layout.column(align=True)
-            row1 = col.row(align=True)
-            row1.prop(cm, "colorSnapAmount")
-            row1.active = not snapToBrickColors()
             row = col.row(align=True)
-            if not brick_materials_loaded():
-                row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
-            else:
-                row.prop(cm, "snapToBrickColors")
-            if scn.render.engine == "CYCLES" and (snapToBrickColors() or cm.colorSnapAmount > 0) and not cm.useUVMap:
+            row.label("Color Snapping:")
+            row = col.row(align=True)
+            row.prop(cm, "colorSnap", text="")
+            if cm.colorSnap == "RGB":
+                row = col.row(align=True)
+                row.prop(cm, "colorSnapAmount")
+            elif cm.colorSnap == "ABS":
+                row = col.row(align=True)
+                if not brick_materials_installed:
+                    row.label("'ABS Plastic Materials' not installed")
+                elif not brick_materials_loaded():
+                    row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
+                elif scn.render.engine != 'CYCLES':
+                    row.label("Switch to 'Cycles' for ABS Materials")
+
+            if scn.render.engine == "CYCLES" and cm.colorSnap != "NONE" and not cm.useUVMap:
                 col = layout.column(align=True)
                 col.scale_y = 0.5
                 col.label("Color snap based on default RGB")
@@ -726,22 +751,6 @@ class MaterialsPanel(Panel):
                 col.separator()
                 col.separator()
                 col.separator()
-            if len(obj.data.uv_layers) > 0:
-                row = col.row(align=True)
-                row.prop(cm, "useUVMap")
-                if cm.useUVMap:
-                    row = col.row(align=True)
-                    split = row.split(align=True, percentage=0.65)
-                    split.prop_search(cm, "uvImageName", bpy.data, "images", text="")
-                    split.operator("image.open", icon="FILESEL", text="Open")
-                elif scn.render.engine == "CYCLES" and (snapToBrickColors() or cm.colorSnapAmount > 0) and not cm.useUVMap:
-                    col.separator()
-                    col.separator()
-                    col.separator()
-            col = layout.column(align=True)
-            col.scale_y = 0.7
-            if len(obj.data.vertex_colors) > 0:
-                col.label("(Vertex colors not supported)")
 
 
 class DetailingPanel(Panel):
