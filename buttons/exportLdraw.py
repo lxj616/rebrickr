@@ -65,41 +65,44 @@ class exportLdraw(Operator):
         legalBricks = getLegalBricks()
         absMatCodes = getAbsPlasticMatCodes()
         for key in bricksDict.keys():
-            if bricksDict[key]["draw"] and bricksDict[key]["parent_brick"] == "self":
-                co = blendToLdrawUnits(cm, bricksDict[key])
-                size = bricksDict[key]["size"]
-                mat_name = bricksDict[key]["mat_name"]
-                rgba = bricksDict[key]["rgba"]
-                if mat_name:
-                    color = absMatCodes[mat_name]
-                elif rgba:
-                    rgb = [rgba[0] * 255, rgba[1] * 255, rgba[2] * 255]
-                    color = "0x2{hex}".format(hex=rgbToHex(rgb))
-                else:
-                    color = 0
-                typ = bricksDict[key]["type"]
-                matrices = [" 0 0 -1 0 1 0  1 0  0",
-                            " 1 0  0 0 1 0  0 0  1",
-                            " 0 0  1 0 1 0 -1 0  0",
-                            "-1 0  0 0 1 0  0 0 -1"]
-                idx = 0 if typ == "SLOPE" else 1
-                idx += 2 if size[0] > size[1] else 0
-                idx -= 2 if bricksDict[key]["flipped"] and typ == "SLOPE" else 0
-                idx -= 1 if bricksDict[key]["rotated"] and typ == "SLOPE" else 0
-                if typ == "SLOPE":
-                    print(idx)
-                matrix = matrices[idx]
-                parts = legalBricks[size[2]][typ]
-                for i,part in enumerate(parts):
-                    if parts[i]["s"] in [size[:2], size[1::-1]]:
+            if not bricksDict[key]["draw"] or bricksDict[key]["parent_brick"] != "self":
+                continue
+            size = bricksDict[key]["size"]
+            typ = bricksDict[key]["type"]
+            matrices = [" 0 0 -1 0 1 0  1 0  0",
+                        " 1 0  0 0 1 0  0 0  1",
+                        " 0 0  1 0 1 0 -1 0  0",
+                        "-1 0  0 0 1 0  0 0 -1"]
+            idx = 1 if typ != "SLOPE" else 0
+            idx -= 2 if bricksDict[key]["flipped"] and typ == "SLOPE" else 0
+            idx += 2 if typ == "SLOPE" and ((size[:2] in [[1, 2], [1, 3], [1, 4], [2, 3]] and not bricksDict[key]["rotated"]) or size[:2] == [2, 4]) else 0
+            idx -= 1 if bricksDict[key]["rotated"] and typ == "SLOPE" else 0
+            idx += 1 if size[1] > size[0] else 0
+            matrix = matrices[idx]
+            co = blendToLdrawUnits(cm, bricksDict[key], idx)
+            mat_name = bricksDict[key]["mat_name"]
+            rgba = bricksDict[key]["rgba"]
+            if mat_name:
+                color = absMatCodes[mat_name]
+            elif rgba:
+                rgb = [rgba[0] * 255, rgba[1] * 255, rgba[2] * 255]
+                color = "0x2{hex}".format(hex=rgbToHex(rgb))
+            else:
+                color = 0
+            parts = legalBricks[size[2]][typ]
+            for i,part in enumerate(parts):
+                if parts[i]["s"] in [size[:2], size[1::-1]]:
+                    if typ == "SLOPE" and size[:2] in [[4, 2], [2, 4], [3, 2], [2, 3]] and bricksDict[key]["rotated"]:
+                        part = parts[i]["pt2"]
+                    else:
                         part = parts[i]["pt"]
-                        break
-                brickFile = "%(part)s.dat" % locals()
-                f.write("1 {color} {x} {y} {z} {matrix} {brickFile}\n".format(color=color, x=int(co.x), y=int(co.y), z=int(co.z), matrix=matrix, brickFile=brickFile))
+                    break
+            brickFile = "%(part)s.dat" % locals()
+            f.write("1 {color} {x} {y} {z} {matrix} {brickFile}\n".format(color=color, x=int(co.x), y=int(co.y), z=int(co.z), matrix=matrix, brickFile=brickFile))
         f.close()
 
 
-def blendToLdrawUnits(cm, brickD):
+def blendToLdrawUnits(cm, brickD, idx):
     loc = Vector(brickD["co"])
     size = brickD["size"]
     zStep = getZStep(cm)
@@ -110,6 +113,15 @@ def blendToLdrawUnits(cm, brickD):
     loc.z = loc.z * (h  / (dimensions["height"] + dimensions["gap"]))
     loc.x += ((size[0] - 1) * 20) / 2
     loc.y += ((size[1] - 1) * 20) / 2
+    if brickD["type"] == "SLOPE":
+        if idx == 0:
+            loc.x -= ((size[0] - 1) * 20) / 2
+        elif idx in [1, -3]:
+            loc.y += ((size[1] - 1) * 20) / 2
+        elif idx in [2, -2]:
+            loc.x += ((size[0] - 1) * 20) / 2
+        elif idx in [3, -1]:
+            loc.y -= ((size[1] - 1) * 20) / 2
     if brickD["type"] == "SLOPE" and sum(size[:2]) == 2:
         loc.z -= ((size[2] - 2) * 8)
     else:

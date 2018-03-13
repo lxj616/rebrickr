@@ -124,7 +124,7 @@ class changeBrickType(Operator):
                     # set type of parent_brick to self.brickType
                     bricksDict[dictKey]["type"] = self.brickType
                     bricksDict[dictKey]["flipped"] = self.flipBrick
-                    bricksDict[dictKey]["rotated"] = self.rotateBrick
+                    bricksDict[dictKey]["rotated"] = False if min(brickSize[:2]) == 1 and max(brickSize[:2]) > 1 else self.rotateBrick
 
                     # update height of brick if necessary, and update dictionary accordingly
                     if "PLATES" in cm.brickType:
