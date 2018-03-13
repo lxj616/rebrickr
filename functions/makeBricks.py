@@ -40,7 +40,7 @@ from .common import *
 from .wrappers import *
 from .general import bounds
 from ..lib.caches import bricker_bm_cache
-from ..lib.abs_plastic_materials import getAbsPlasticMaterials
+from ..lib.abs_plastic_materials import getAbsPlasticMaterialNames
 from .makeBricks_utils import *
 
 
@@ -86,7 +86,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
     brick_materials_installed = hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
     if cm.materialType == "RANDOM" and brick_materials_installed:
         mats0 = bpy.data.materials.keys()
-        brick_mats = [color for color in bpy.props.abs_plastic_materials if color in mats0 and color in getAbsPlasticMaterials]
+        brick_mats = [color for color in bpy.props.abs_plastic_materials if color in mats0 and color in getAbsPlasticMaterialNames]
 
     # initialize progress bar around cursor
     old_percent = 0

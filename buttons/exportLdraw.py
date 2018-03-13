@@ -31,6 +31,7 @@ from bpy.types import Operator
 # Bricker imports
 from ..functions import *
 from ..lib.Brick import *
+from ..lib.abs_plastic_materials import *
 
 
 class exportLdraw(Operator):
@@ -62,12 +63,21 @@ class exportLdraw(Operator):
         f.write("0 Name:\n" % locals())
         f.write("0 Author: Unknown\n" % locals())
         legalBricks = getLegalBricks()
+        absMatCodes = getAbsPlasticMatCodes()
         for key in bricksDict.keys():
             if bricksDict[key]["draw"] and bricksDict[key]["parent_brick"] == "self":
                 co = blendToLdrawUnits(cm, bricksDict[key])
                 size = bricksDict[key]["size"]
+                mat_name = bricksDict[key]["mat_name"]
+                rgba = bricksDict[key]["rgba"]
+                if mat_name:
+                    color = absMatCodes[mat_name]
+                elif rgba:
+                    rgb = [rgba[0] * 255, rgba[1] * 255, rgba[2] * 255]
+                    color = "0x2{hex}".format(hex=rgbToHex(rgb))
+                else:
+                    color = 0
                 matrix = "1 0 0 0 1 0 -0 0 1" if size[0] > size[1] else "0 0 1 0 1 0 -1 0 0"
-                color = 4
                 typ = bricksDict[key]["type"]
                 parts = legalBricks[size[2]][typ]
                 for i,part in enumerate(parts):
@@ -90,6 +100,14 @@ def blendToLdrawUnits(cm, brickD):
     loc.z = loc.z * (h  / (dimensions["height"] + dimensions["gap"]))
     loc.x += ((size[0] - 1) * 20) / 2
     loc.y += ((size[1] - 1) * 20) / 2
+    loc.z += ((size[2] - 1) * 8)
     # convert to right-handed co-ordinate system where -Y is "up"
-    loc = Vector((-loc.x, loc.z, -loc.y))
+    loc = Vector((loc.x, -loc.z, loc.y))
     return loc
+
+
+def rgbToHex(rgb):
+    def clamp(x):
+        return max(0, min(x, 255))
+    r, g, b = rgb
+    return "{0:02x}{1:02x}{2:02x}".format(clamp(r), clamp(g), clamp(b))

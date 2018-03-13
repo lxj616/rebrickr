@@ -35,7 +35,7 @@ props = bpy.props
 from ..functions import *
 from ..functions.wrappers import *
 from .delete import BrickerDelete
-from ..lib.abs_plastic_materials import getAbsPlasticMaterials
+from ..lib.abs_plastic_materials import getAbsPlasticMaterialNames
 
 
 class BrickerApplyMaterial(bpy.types.Operator):
@@ -89,15 +89,15 @@ class BrickerApplyMaterial(bpy.types.Operator):
 
         # set up variables
         scn, cm, _ = getActiveContextInfo()
+        bricksDict, _ = getBricksDict(cm=cm)
         bricks = getBricks()
         cm.lastMaterialType = cm.materialType
         if self.action == "CUSTOM":
             matName = cm.materialName
         elif self.action == "INTERNAL":
-            bricksDict, _ = getBricksDict(cm=cm)
             matName = cm.internalMatName
         elif self.action == "RANDOM":
-            BrickerApplyMaterial.applyRandomMaterial(context, bricks)
+            BrickerApplyMaterial.applyRandomMaterial(context, bricks, bricksDict)
 
         if self.action != "RANDOM":
             mat = bpy.data.materials.get(matName)
@@ -116,18 +116,19 @@ class BrickerApplyMaterial(bpy.types.Operator):
                     brick.data.materials.append(mat)
                     for i in range(len(brick.data.materials)-1):
                         brick.data.materials.append(brick.data.materials.pop(0))
+                bricksDict[brick.name.split("__")[1]]["mat_name"] = matName
 
         tag_redraw_areas(["VIEW_3D", "PROPERTIES", "NODE_EDITOR"])
         cm.materialIsDirty = False
 
     @classmethod
-    def applyRandomMaterial(self, context, bricks):
+    def applyRandomMaterial(self, context, bricks, bricksDict):
         scn, cm, _ = getActiveContextInfo()
         # initialize list of brick materials
         brick_mats = []
         mats = bpy.data.materials.keys()
         for color in bpy.props.abs_plastic_materials:
-            if color in mats and color in getAbsPlasticMaterials():
+            if color in mats and color in getAbsPlasticMaterialNames():
                 brick_mats.append(color)
         randS0 = np.random.RandomState(0)
         # if model is split, apply a random material to each brick
@@ -143,9 +144,9 @@ class BrickerApplyMaterial(bpy.types.Operator):
                 # Assign random material to object
                 mat = bpy.data.materials.get(brick_mats[randIdx])
                 brick.data.materials.append(mat)
+                bricksDict[brick.name.split("__")[1]]["mat_name"] = mat.name
                 continue
-
-            if len(lastMatSlots) == len(brick_mats):
+            elif len(lastMatSlots) == len(brick_mats):
                 brick_mats_dup = brick_mats.copy()
                 for i in range(len(lastMatSlots)):
                     # iterate seed and set random index
@@ -158,3 +159,4 @@ class BrickerApplyMaterial(bpy.types.Operator):
                     matName = brick_mats_dup.pop(randIdx)
                     mat = bpy.data.materials.get(matName)
                     brick.data.materials[i] = mat
+                bricksDict[brick.name.split("__")[1]]["mat_name"] = mat.name

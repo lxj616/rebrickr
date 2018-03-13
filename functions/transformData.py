@@ -31,11 +31,14 @@ from .common import confirmList
 from .general import *
 
 
-def storeTransformData(obj):
+def storeTransformData(obj, offsetBy=None):
     """ store transform data from obj into cm.modelLoc/Rot/Scale """
     scn, cm, _ = getActiveContextInfo()
     if obj:
-        cm.modelLoc = listToStr(obj.location.to_tuple())
+        loc = obj.location
+        if offsetBy is not None:
+            loc += Vector(offsetBy)
+        cm.modelLoc = listToStr(loc.to_tuple())
         # cm.modelLoc = listToStr(obj.matrix_world.to_translation().to_tuple())
         obj.rotation_mode = "XYZ"
         cm.modelRot = listToStr(tuple(obj.rotation_euler))

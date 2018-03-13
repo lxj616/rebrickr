@@ -19,31 +19,36 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-def getAbsPlasticMaterials(km):
-    absPlasticMaterials = [
-        'ABS Plastic Black',
-        'ABS Plastic Blue',
-        'ABS Plastic Bright Green',
-        'ABS Plastic Bright Light Orange',
-        'ABS Plastic Brown',
-        'ABS Plastic Dark Azur',
-        'ABS Plastic Dark Brown',
-        'ABS Plastic Dark Green',
-        'ABS Plastic Dark Grey',
-        'ABS Plastic Dark Red',
-        'ABS Plastic Dark Tan',
-        'ABS Plastic Gold',
-        'ABS Plastic Green',
-        'ABS Plastic Light Grey',
-        'ABS Plastic Lime',
-        'ABS Plastic Orange',
-        'ABS Plastic Pink',
-        'ABS Plastic Purple',
-        'ABS Plastic Red',
-        'ABS Plastic Sand Blue',
-        'ABS Plastic Sand Green',
-        'ABS Plastic Silver',
-        'ABS Plastic Tan',
-        'ABS Plastic White',
-        'ABS Plastic Yellow']
+absPlasticMaterials = {
+    'ABS Plastic Black':0,
+    'ABS Plastic Blue':1,
+    'ABS Plastic Bright Green':10,
+    'ABS Plastic Bright Light Orange':25,
+    'ABS Plastic Brown':6,
+    'ABS Plastic Dark Azur':321,
+    'ABS Plastic Dark Brown':308,
+    'ABS Plastic Dark Green':288,
+    'ABS Plastic Dark Grey':8,
+    'ABS Plastic Dark Red':320,
+    'ABS Plastic Dark Tan':28,
+    'ABS Plastic Gold':334,
+    'ABS Plastic Green':2,
+    'ABS Plastic Light Grey':503,
+    'ABS Plastic Lime':27,
+    'ABS Plastic Orange':25,
+    'ABS Plastic Pink':13,
+    'ABS Plastic Purple':5,
+    'ABS Plastic Red':4,
+    'ABS Plastic Sand Blue':379,
+    'ABS Plastic Sand Green':378,
+    'ABS Plastic Silver':383,
+    'ABS Plastic Tan':19,
+    'ABS Plastic White':15,
+    'ABS Plastic Yellow':14
+}
+
+def getAbsPlasticMaterialNames():
+    return absPlasticMaterials.keys()
+
+def getAbsPlasticMatCodes():
     return absPlasticMaterials

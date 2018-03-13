@@ -300,6 +300,7 @@ class BrickerBrickify(bpy.types.Operator):
             parent = self.getParent(Bricker_parent_on, parentLoc)
             cm.parent_name = parent.name
             pGroup.objects.link(parent)
+        parent["loc_diff"] = self.source.location - Vector(parentLoc)
         self.createdObjects.append(parent.name)
 
         # update refLogo

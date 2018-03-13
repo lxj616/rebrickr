@@ -34,7 +34,7 @@ from .cmlist import *
 from .app_handlers import *
 from ..lib.bricksDict import *
 from ..lib.Brick.test_brick_generators import *
-from ..lib.abs_plastic_materials import getAbsPlasticMaterials
+from ..lib.abs_plastic_materials import getAbsPlasticMaterialNames
 from ..buttons.delete import BrickerDelete
 from ..buttons.revertSettings import *
 from ..buttons.cache import *
