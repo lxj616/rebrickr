@@ -256,6 +256,8 @@ class delete_override(Operator):
         cm = None
         for cmCur in scn.cmlist:
             n = cmCur.source_name
+            if not obj.name.startswith("Bricker_%(n)s_brick" % locals()):
+                continue
             if obj.isBrickifiedObject:
                 cm = cmCur
                 break
