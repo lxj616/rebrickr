@@ -44,7 +44,7 @@ absPlasticMaterials = {
     'ABS Plastic Silver':383,
     'ABS Plastic Tan':19,
     'ABS Plastic White':15,
-    'ABS Plastic Yellow':14
+    'ABS Plastic Yellow':14,
 }
 
 def getAbsPlasticMaterialNames():
