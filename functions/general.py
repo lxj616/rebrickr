@@ -218,7 +218,7 @@ def createdWithUnsupportedVersion(cm=None):
 def getLocsInBrick(size, key, loc=None):
     cm = getActiveContextInfo()[1]
     x0, y0, z0 = loc or strToList(key)
-    return [listToStr([x0 + x, y0 + y, z0 + z]) for z in range(0, size[2], getZStep(cm)) for y in range(size[1]) for x in range(size[0])]
+    return [[x0 + x, y0 + y, z0 + z] for z in range(0, size[2], getZStep(cm)) for y in range(size[1]) for x in range(size[0])]
 
 
 def getKeysInBrick(size, key, loc=None):
