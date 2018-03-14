@@ -166,15 +166,11 @@ def printBuildStatus(keys, printStatus, cursorStatus, keysNotChecked, old_percen
     return old_percent
 
 
-def updateKeysNotChecked(brickSize, loc, zStep, keysNotChecked, key):
-    for x1 in range(brickSize[0]):
-        for y1 in range(brickSize[1]):
-            for z1 in range(brickSize[2], zStep):
-                try:
-                    keyChecked = listToStr([Vector(loc) + Vector((x1, y1, z1))])
-                    keysNotChecked.remove(keyChecked)
-                except ValueError:
-                    pass
+def updateKeysNotChecked(size, loc, keysNotChecked, key):
+    keysChecked = getKeysInBrick(size, key, loc)
+    for k in keysChecked:
+        if k in keysNotChecked:
+            keysNotChecked.remove(k)
 
 
 def skipThisRow(timeThrough, lowestLoc, loc):

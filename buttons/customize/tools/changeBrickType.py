@@ -135,7 +135,7 @@ class changeBrickType(Operator):
                     bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
 
                     # verify exposure
-                    brickLocs = [[x0 + x, y0 + y, z0] for y in range(brickSize[1]) for x in range(brickSize[0])]
+                    brickLocs = getLocsInBrick(brickSize, dictKey, dictLoc)
                     for curLoc in brickLocs:
                         # run verifyBrickExposure
                         bricksDict = verifyBrickExposureAboveAndBelow(curLoc, bricksDict, decriment=2 if bAndPBrick else 0)

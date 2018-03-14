@@ -155,7 +155,7 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
             old_percent = printBuildStatus(keys, printStatus, cursorStatus, keysNotChecked, old_percent)
 
             # remove keys in new brick from keysNotChecked (for attemptMerge)
-            updateKeysNotChecked(brickSize, loc, zStep, keysNotChecked, key)
+            updateKeysNotChecked(brickSize, loc, keysNotChecked, key)
 
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO" and logo is not None:
