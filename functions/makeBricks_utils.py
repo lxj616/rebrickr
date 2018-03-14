@@ -57,8 +57,8 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
     mat = getMaterial(cm, bricksDict, key, brickSize, randS2, brick_mats, i)
 
     # set up arguments for brick mesh
-    logoToUse = logo if topExposed else None
     useStud = (topExposed and cm.studDetail != "NONE") or cm.studDetail == "ALL"
+    logoToUse = logo if useStud else None
     undersideDetail = cm.exposedUndersideDetail if botExposed else cm.hiddenUndersideDetail
 
     ### CREATE BRICK ###
