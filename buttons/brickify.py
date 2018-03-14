@@ -718,7 +718,8 @@ class BrickerBrickify(bpy.types.Operator):
             # set active object to obj (keeps original selection)
             select(None, active=obj)
         # match brick layers to source layers
-        obj.layers = self.source.layers
+        for obj in bGroup.objects:
+            obj.layers = self.source.layers
 
     @classmethod
     def getLogo(self, cm):
