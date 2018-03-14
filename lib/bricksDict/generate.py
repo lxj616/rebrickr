@@ -417,22 +417,22 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 for z in range(len(coordMatrix[0][0])):
                     if brickFreqMatrix[x][y][z] != -1:
                         continue
-                    try:
-                        idxsToCheck = [(x+1, y, z),
-                                       (x-1, y, z),
-                                       (x, y+1, z),
-                                       (x, y-1, z),
-                                       (x, y, z+1),
-                                       (x, y, z-1)]
-                        for idx in idxsToCheck:
-                            if brickFreqMatrix[idx[0]][idx[1]][idx[2]] == round(j + 0.01,2):
-                                brickFreqMatrix[x][y][z] = j
-                                setNF(cm.matShellDepth, j, i, (x,y,z), faceIdxMatrix)
-                                gotOne = True
-                                break
-                    except Exception as e:
-                        print(e)
-                        pass
+                    idxsToCheck = [(x+1, y, z),
+                                   (x-1, y, z),
+                                   (x, y+1, z),
+                                   (x, y-1, z),
+                                   (x, y, z+1),
+                                   (x, y, z-1)]
+                    for idx in idxsToCheck:
+                        try:
+                            curVal = brickFreqMatrix[idx[0]][idx[1]][idx[2]]
+                        except KeyError:
+                            continue
+                        if curVal == round(j + 0.01,2):
+                            brickFreqMatrix[x][y][z] = j
+                            setNF(cm.matShellDepth, j, idx, (x,y,z), faceIdxMatrix)
+                            gotOne = True
+                            break
         if not gotOne:
             break
 
