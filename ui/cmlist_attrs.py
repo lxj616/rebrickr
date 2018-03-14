@@ -458,7 +458,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     exportPath = StringProperty(
         name="Export Path",
         description="Destination path for exported files",
-        subtype="DIR_PATH",
+        subtype="FILE_PATH",
         default="//")
 
     # Source Object Properties

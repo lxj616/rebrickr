@@ -233,22 +233,21 @@ def isOnShell(bricksDict, key, loc=None):
     return bricksDict[key]["val"] == 1 or 1 in [bricksDict[k]["val"] for k in brickKeys]
 
 
-def getExportFolder(filename):
+def getExportPath(fn, ext):
     cm = getActiveContextInfo()[1]
-    path = cm.exportPath
+    fullPath = cm.exportPath
+    lastSlash = fullPath.rfind("/")
+    path = fullPath[:len(fullPath) if lastSlash == -1 else lastSlash]
+    fn0 = "" if lastSlash == -1 else fullPath[lastSlash + 1:len(fullPath)]
     # setup the render dump folder based on user input
     if path.startswith("//"):
         path = os.path.join(bpy.path.abspath("//"), path[2:])
-    elif path != "" and len(path) > 2:
-        path = path[2:]
     # if no user input, use default render location
-    else:
+    elif path == "":
         path = bpy.path.abspath("//")
-    # ensure it doesn't end in forwardslash
-    if path.endswith("/"):
-        path = path[:-1]
     # check to make sure dumpLoc exists on local machine
     if not os.path.exists(path):
         os.mkdir(path)
-    path = os.path.join(path, filename)
-    return path
+    # create full path from path and filename
+    fullPath = os.path.join(path, (fn if fn0 == "" else fn0) + ext)
+    return fullPath

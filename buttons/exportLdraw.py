@@ -62,7 +62,7 @@ class exportLdraw(Operator):
     def writeLdrawFile(self):
         """ create and write Ldraw file """
         scn, cm, n = getActiveContextInfo()
-        path = getExportFolder(filename=n + ".ldr")
+        path = getExportPath(n, ".ldr")
         f = open(path, "w")
         # write META commands
         f.write("0 %(n)s\n" % locals())
