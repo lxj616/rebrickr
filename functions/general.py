@@ -27,7 +27,7 @@ import numpy as np
 
 # Blender imports
 import bpy
-from mathutils import Vector, Euler
+from mathutils import Vector, Euler, Matrix
 
 # Bricker imports
 from .common import *
@@ -215,10 +215,10 @@ def createdWithUnsupportedVersion(cm=None):
     return cm.version[:3] != bpy.props.bricker_version[:3]
 
 
-def getLocsInBrick(size, key, loc=None):
-    cm = getActiveContextInfo()[1]
+def getLocsInBrick(size, key, loc=None, zStep=None):
+    zStep = zStep or getZStep(getActiveContextInfo()[1])
     x0, y0, z0 = loc or strToList(key)
-    return [[x0 + x, y0 + y, z0 + z] for z in range(0, size[2], getZStep(cm)) for y in range(size[1]) for x in range(size[0])]
+    return [[x0 + x, y0 + y, z0 + z] for z in range(0, size[2], zStep) for y in range(size[1]) for x in range(size[0])]
 
 
 def getKeysInBrick(size, key, loc=None):
@@ -233,11 +233,33 @@ def isOnShell(bricksDict, key, loc=None):
     return bricksDict[key]["val"] == 1 or 1 in [bricksDict[k]["val"] for k in brickKeys]
 
 
+def getDictKey(name):
+    """ get dict key details of obj """
+    dictKey = name.split("__")[1]
+    dictLoc = strToList(dictKey)
+    return dictKey, dictLoc
+
+
+def getBrickCenter(bricksDict, key, loc=None):
+    brickKeys = getKeysInBrick(size=bricksDict[key]["size"], key=key, loc=loc)
+    coords = [bricksDict[k0]["co"] for k0 in brickKeys]
+    coord_ave = Vector((np.mean([co[0] for co in coords]), np.mean([co[1] for co in coords]), np.mean([co[2] for co in coords])))
+    return coord_ave
+
+
+def centerBrickOrigin(brick, bricksDict, offset=Vector((0, 0, 0))):
+    key, loc = getDictKey(brick.name)
+    new_origin = getBrickCenter(bricksDict, key, loc)
+    cur_origin = brick.location
+    brick.data.transform(Matrix.Translation(brick.location - offset - new_origin))
+    brick.matrix_world.translation += new_origin + offset
+
+
 def getExportPath(fn, ext):
     cm = getActiveContextInfo()[1]
     fullPath = cm.exportPath
     lastSlash = fullPath.rfind("/")
-    path = fullPath[:len(fullPath) if lastSlash == -1 else lastSlash]
+    path = fullPath[:len(fullPath) if lastSlash == -1 else lastSlash + 1]
     fn0 = "" if lastSlash == -1 else fullPath[lastSlash + 1:len(fullPath)]
     # setup the render dump folder based on user input
     if path.startswith("//"):

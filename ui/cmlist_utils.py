@@ -165,7 +165,6 @@ def matchProperties(cmTo, cmFrom, bh=False):
                 "brickType",
                 "alignBricks",
                 "offsetBrickLayers",
-                "originSet",
                 "distOffsetX",
                 "distOffsetY",
                 "distOffsetZ",

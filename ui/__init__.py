@@ -419,8 +419,6 @@ class ModelSettingsPanel(Panel):
         if not cm.useAnimation:
             row = col.row(align=True)
             row.prop(cm, "splitModel")
-        if cm.splitModel:
-            row.prop(cm, "originSet")
 
         row = col.row(align=True)
         row.label("Randomize:")

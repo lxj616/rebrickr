@@ -169,15 +169,6 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
 
     # combine meshes, link to scene, and add relevant data to the new Blender MESH object
     if split:
-        # set origins of created bricks
-        if cm.originSet:
-            for brick in bricksCreated:
-                scn.objects.link(brick)
-            select(bricksCreated)
-            bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
-            select(bricksCreated, deselect=True)
-            for brick in bricksCreated:
-                scn.objects.unlink(brick)
         # iterate through keys
         old_percent = 0
         for i, key in enumerate(keys):
@@ -212,10 +203,6 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
         # create vert group for bevel mod (assuming only logo verts are selected):
         vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())
         vertList = [v.index for v in allBricksObj.data.vertices if not v.select]
-        # vertList = []
-        # for v in allBricksObj.data.vertices:
-        #     if not v.select:
-        #         vertList.append(v.index)
         vg.add(vertList, 1, "ADD")
         # add edge split modifier
         addEdgeSplitMod(allBricksObj)

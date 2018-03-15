@@ -134,11 +134,10 @@ class changeBrickType(Operator):
                     # check if brick spans 3 matrix locations
                     bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
 
-                    # verify exposure
-                    brickLocs = getLocsInBrick(brickSize, dictKey, dictLoc)
+                    # # verify exposure above and below
+                    brickLocs = getLocsInBrick(brickSize, dictKey, dictLoc, zStep=3)
                     for curLoc in brickLocs:
-                        # run verifyBrickExposure
-                        bricksDict = verifyBrickExposureAboveAndBelow(curLoc, bricksDict, decriment=2 if bAndPBrick else 0)
+                        bricksDict = verifyBrickExposureAboveAndBelow(curLoc, bricksDict, decriment=3 if bAndPBrick else 1)
                         # add bricks to keysToUpdate
                         keysToUpdate += [getParentKey(bricksDict, listToStr([x0 + x, y0 + y, z0 + z])) for z in [-1, 0, 3 if bAndPBrick else 1] for y in range(brickSize[1]) for x in range(brickSize[0])]
                     objNamesToSelect += [bricksDict[listToStr(loc)]["name"] for loc in brickLocs]

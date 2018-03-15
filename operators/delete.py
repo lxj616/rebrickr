@@ -154,9 +154,16 @@ class delete_override(Operator):
                     for y in range(y0, y0 + objSize[1]):
                         for z in range(z0, z0 + (objSize[2]//zStep)):
                             curKey = listToStr([x, y, z])
-                            # set 'draw' to false
+                            # reset bricksDict values
                             bricksDict[curKey]["draw"] = False
                             bricksDict[curKey]["val"] = 0
+                            bricksDict[curKey]["parent_brick"] = None
+                            bricksDict[curKey]["created_from"] = None
+                            bricksDict[curKey]["flipped"] = False
+                            bricksDict[curKey]["rotated"] = False
+                            bricksDict[curKey]["size"] = None
+                            bricksDict[curKey]["top_exposed"] = False
+                            bricksDict[curKey]["bot_exposed"] = False
                             # make adjustments to adjacent bricks
                             self.updateAdjBricksDicts(bricksDict, zStep, curKey, keysToUpdate, x, y, z)
             # dirtyBuild if it wasn't already

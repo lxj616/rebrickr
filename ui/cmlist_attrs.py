@@ -221,11 +221,6 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         precision=3,
         min=0.001, max=2,
         default=1)
-    originSet = BoolProperty(
-        name="Center origins",
-        description="Set all brick origins to center of bricks (slower)",
-        update=dirtyBricks,
-        default=False)
 
     # CUSTOMIZE SETTINGS
     autoUpdateExposed = BoolProperty(

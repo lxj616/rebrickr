@@ -67,7 +67,7 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
     if brickD["type"] == "CUSTOM":
         bm = bmesh.new()
         bm.from_mesh(customData)
-        addToMeshLoc((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid), bm=bm)
+        addToBMLoc(Vector((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid)), bm)
 
         maxDist = max(customObj_details.x.dist, customObj_details.y.dist, customObj_details.z.dist)
         bmesh.ops.scale(bm, vec=Vector(((brickScale.x - dimensions["gap"]) / customObj_details.x.dist, (brickScale.y - dimensions["gap"]) / customObj_details.y.dist, (brickScale.z - dimensions["gap"]) / customObj_details.z.dist)), verts=bm.verts)
@@ -90,24 +90,23 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
     m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
     bm.to_mesh(m)
     # apply random location to edit mesh according to parameters
-    if cm.randomLoc > 0:
-        randomizeLoc(randS3, dimensions["width"], dimensions["height"], mesh=m)
+    locOffset = randomizeLoc(cm.randomLoc, randS3, dimensions["width"], dimensions["height"], mesh=m) if cm.randomLoc > 0 else Vector((0, 0, 0))
     # undo bm rotation if not custom, since 'bm' points to bmesh used by all other similar bricks
     if cm.brickType != "CUSTOM" and cm.randomRot > 0:
         rotateBack(bm, center, randRot)
-    # get brick's location
+    # get brick location
+    brickLoc = Vector(brickD["co"])
     if brickSize[2] == 3 and "PLATES" in cm.brickType:
-        brickLoc = Vector(brickD["co"])
-        brickLoc[2] = brickLoc[2] + dimensions["height"] + dimensions["gap"]
-    else:
-        brickLoc = Vector(brickD["co"])
+        brickLoc.z += dimensions["height"] + dimensions["gap"]
 
     if split:
         # create new object with mesh data
         brick = bpy.data.objects.new(brickD["name"], m)
         brick.cmlist_id = cm.id
-        # set brick's location
+        # set brick location
         brick.location = brickLoc
+        # center brick origin
+        centerBrickOrigin(brick, bricksDict, offset=locOffset)
         # set brick's material
         brick.data.materials.append(mat or internalMat)
         # add edge split modifier
@@ -116,7 +115,7 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
         bricksCreated.append(brick)
     else:
         # transform brick mesh to coordinate on matrix
-        addToMeshLoc(brickLoc, mesh=m)
+        m.transform(Matrix.Translation(brickLoc))
         # keep track of mats already use
         if mat in mats:
             matIdx = mats.index(mat)
@@ -195,26 +194,19 @@ def combineMeshes(meshes):
     return finalMesh
 
 
-def addToMeshLoc(co, bm=None, mesh=None):
-    """ add 'co' to bm/mesh location """
-    assert bm or mesh  # one or the other must not be None!
-    verts = bm.verts if bm else mesh.vertices
-    for v in verts:
-        v.co = (v.co[0] + co[0], v.co[1] + co[1], v.co[2] + co[2])
+def addToBMLoc(co:Vector, bm):
+    """ add 'co' to bmesh location """
+    for v in bm.verts:
+        v.co += co
 
 
-def randomizeLoc(rand, width, height, bm=None, mesh=None):
-    """ translate bm/mesh location by (width,width,height) randomized by cm.randomLoc """
-    assert bm or mesh  # one or the other must not be None!
-    verts = bm.verts if bm else mesh.vertices
-    scn, cm, _ = getActiveContextInfo()
-
-    x = rand.uniform(-(width/2) * cm.randomLoc, (width/2) * cm.randomLoc)
-    y = x
-    z = rand.uniform(-(height/2) * cm.randomLoc, (height/2) * cm.randomLoc)
-    for v in verts:
-        v.co += Vector((x, y, z))
-    return (x, y, z)
+def randomizeLoc(randomLoc, rand, width, height, mesh):
+    """ translate bm/mesh location by (width,width,height) randomized by randomLoc """
+    loc = Vector((0,0,0))
+    loc.xy = [rand.uniform(-(width/2) * randomLoc, (width/2) * randomLoc)]*2
+    loc.z = rand.uniform(-(height/2) * randomLoc, (height/2) * randomLoc)
+    mesh.transform(Matrix.Translation(loc))
+    return loc
 
 
 def translateBack(bm, loc):

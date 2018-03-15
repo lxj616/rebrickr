@@ -90,9 +90,14 @@ class BrickerDelete(bpy.types.Operator):
         Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
         source = bpy.data.objects.get("%(n)s (DO NOT RENAME)" % locals())
 
-        # set layers to source layers temporarily
+        # set all layers active temporarily
         curLayers = list(scn.layers)
         setLayers([True]*20)
+        # match source layers to brick layers
+        gn = "Bricker_%(n)s_bricks" % locals()
+        if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
+            brick = bpy.data.groups[gn].objects[0]
+            source.layers = brick.layers
 
         # clean up 'Bricker_[source name]' group
         if not skipSource:
@@ -135,19 +140,8 @@ class BrickerDelete(bpy.types.Operator):
         parentOb = None
         origFrame = scn.frame_current
         scn.frame_set(cm.modelCreatedOnFrame)
-
-        # set scene layers for source adjustments
-        if source is not None:
-            # store last active layers
-            lastLayers = list(scn.layers)
-            # match source layers to brick layers
-            brick = None
-            gn = "Bricker_%(n)s_bricks" % locals()
-            if groupExists(gn) and len(bpy.data.groups[gn].objects) > 0:
-                brick = bpy.data.groups[gn].objects[0]
-                source.layers = brick.layers
-            # set active layers to source layers
-            setLayers(source.layers)
+        # store last active layers
+        lastLayers = list(scn.layers)
 
         source, brickLoc, brickRot, brickScl = cls.cleanUp(modelType, cm=cm, skipSource=source is None)
 

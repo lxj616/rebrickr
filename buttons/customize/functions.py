@@ -94,7 +94,7 @@ def verifyBrickExposureAboveAndBelow(origLoc, bricksDict, decriment=0, zNeg=Fals
     scn, cm, _ = getActiveContextInfo()
     dictLocs = []
     if not zNeg:
-        dictLocs.append([origLoc[0], origLoc[1], origLoc[2] + decriment + 1])
+        dictLocs.append([origLoc[0], origLoc[1], origLoc[2] + decriment])
     if not zPos:
         dictLocs.append([origLoc[0], origLoc[1], origLoc[2] - 1])
     # double check exposure of bricks above/below new adjacent brick

@@ -99,7 +99,7 @@ class exportLdraw(Operator):
             idx += 1 if size[1] > size[0] else 0
             matrix = matrices[idx]
             # get coordinate for brick in Ldraw units
-            co = self.blendToLdrawUnits(cm, bricksDict[key], idx)
+            co = self.blendToLdrawUnits(cm, bricksDict, key, idx)
             # get color code of brick
             mat_name = bricksDict[key]["mat_name"]
             rgba = bricksDict[key]["rgba"]
@@ -126,18 +126,16 @@ class exportLdraw(Operator):
         f.close()
         self.report({"INFO"}, "Ldraw file saved to '%(path)s'" % locals())
 
-    def blendToLdrawUnits(self, cm, brickD, idx):
+    def blendToLdrawUnits(self, cm, bricksDict, key, idx):
         """ convert location of brick from blender units to ldraw units """
-        loc = Vector(brickD["co"])
+        brickD = bricksDict[key]
+        loc = getBrickCenter(bricksDict, key)
         size = brickD["size"]
         zStep = getZStep(cm)
         dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)
         h = 8 * (zStep % 4)
         loc.x = loc.x * (20 / (dimensions["width"] + dimensions["gap"]))
         loc.y = loc.y * (20 / (dimensions["width"] + dimensions["gap"]))
-        loc.z = loc.z * (h  / (dimensions["height"] + dimensions["gap"]))
-        loc.x += ((size[0] - 1) * 20) / 2
-        loc.y += ((size[1] - 1) * 20) / 2
         if brickD["type"] == "SLOPE":
             if idx == 0:
                 loc.x -= ((size[0] - 1) * 20) / 2
@@ -147,10 +145,9 @@ class exportLdraw(Operator):
                 loc.x += ((size[0] - 1) * 20) / 2
             elif idx in [3, -1]:
                 loc.y -= ((size[1] - 1) * 20) / 2
-        if brickD["type"] == "SLOPE" and sum(size[:2]) == 2:
-            loc.z -= ((size[2] - 2) * 8)
-        else:
-            loc.z += ((size[2] - 1) * 8)
+        loc.z = loc.z * (h  / (dimensions["height"] + dimensions["gap"]))
+        if brickD["type"] == "SLOPE" and size == [1, 1, 3]:
+            loc.z -= size[2] * 8
         # convert to right-handed co-ordinate system where -Y is "up"
         loc = Vector((loc.x, -loc.z, loc.y))
         return loc

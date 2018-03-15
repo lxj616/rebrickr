@@ -279,13 +279,6 @@ def getBrickRGBA(obj, face_idx, point, uv_images):
     return rgba, origMatName
 
 
-def getDictKey(name):
-    """ get dict key details of obj """
-    dictKey = name.split("__")[1]
-    dictLoc = strToList(dictKey)
-    return dictKey, dictLoc
-
-
 def getDetailsAndBounds(source, cm=None):
     """ returns dimensions and bounds of source object """
     cm = cm or getActiveContextInfo()[1]

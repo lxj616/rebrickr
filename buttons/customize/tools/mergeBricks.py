@@ -137,17 +137,18 @@ class mergeBricks(Operator):
         keys.sort(key=lambda k: (strToList(k)[0] * strToList(k)[1] * strToList(k)[2]))
 
         for key in keys:
-            if bricksDict[key]["parent_brick"] in [None, "self"]:
-                # attempt to merge current brick with other bricks in keys, according to available brick types
-                parentD = bricksDict[getParentKey(bricksDict, key)]
-                tallType = targetType if targetType in getBrickTypes(height=3) else parentD["type"]
-                shortType = targetType if targetType in getBrickTypes(height=1) else (parentD["type"] if parentD["type"] in getBrickTypes(height=1) else "PLATE")
-                brickSize = attemptMerge(cm, bricksDict, key, keys, [parentD["size"]], zStep, randState, preferLargest=True, mergeVertical=mergeVertical, shortType=shortType, tallType=tallType, height3Only=height3Only)
-                # set exposure of current [merged] brick
-                topExposed, botExposed = getBrickExposure(cm, bricksDict, key)
-                bricksDict[key]["top_exposed"] = topExposed
-                bricksDict[key]["bot_exposed"] = botExposed
-                updatedKeys.append(key)
+            # skip keys already merged to another brick
+            if bricksDict[key]["parent_brick"] not in [None, "self"]:
+                continue
+            # attempt to merge current brick with other bricks in keys, according to available brick types
+            tallType = targetType if targetType in getBrickTypes(height=3) else bricksDict[key]["type"]
+            shortType = targetType if targetType in getBrickTypes(height=1) else (bricksDict[key]["type"] if bricksDict[key]["type"] in getBrickTypes(height=1) else "PLATE")
+            brickSize = attemptMerge(cm, bricksDict, key, keys, [bricksDict[key]["size"]], zStep, randState, preferLargest=True, mergeVertical=mergeVertical, shortType=shortType, tallType=tallType, height3Only=height3Only)
+            # set exposure of current [merged] brick
+            topExposed, botExposed = getBrickExposure(cm, bricksDict, key)
+            bricksDict[key]["top_exposed"] = topExposed
+            bricksDict[key]["bot_exposed"] = botExposed
+            updatedKeys.append(key)
         return updatedKeys
 
     #############################################
