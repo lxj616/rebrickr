@@ -52,7 +52,7 @@ def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limit
         try:
             dMod.vertex_group = vertexGroup
         except Exception as e:
-            print(e)
+            print("[Bricker]", e)
             dMod.limit_method = "ANGLE"
     dMod.angle_limit = angleLimit
     dMod.offset_type = offsetType

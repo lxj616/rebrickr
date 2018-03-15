@@ -32,11 +32,11 @@ from ...ui.app_handlers import brickerRunningOp
 from ...functions import *
 
 
-class CustomizeModel(Operator):
-    """ starts custom undo stack for changes to the BFM cache """
+class CustomizeMode(Operator):
+    """initializes customize mode for customizing the model"""
     bl_category = "Bricker"
-    bl_idname = "bricker.customize_model"
-    bl_label = "Customize Model"
+    bl_idname = "bricker.customize_mode"
+    bl_label = "Customize Mode"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'TOOLS'
 
@@ -54,8 +54,6 @@ class CustomizeModel(Operator):
         if not self.undo_stack.isUpdating() and not brickerRunningOp() and scn.cmlist_index != -1:
             global python_undo_state
             cm = scn.cmlist[scn.cmlist_index]
-            # try:    print(python_undo_state[cm.id], cm.blender_undo_state, len(self.undo_stack.undo))
-            # except: pass
             if cm.id not in python_undo_state:
                 python_undo_state[cm.id] = 0
             # handle undo

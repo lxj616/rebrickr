@@ -62,7 +62,7 @@ def locate(pattern):
             if os.path.exists(fname):
                 return (fname, False)
 
-    debugPrint("Could not find file {0}".format(fname))
+    debugPrint("[Bricker] Could not find file {0}".format(fname))
     # FIXME: v1.2 rewrite - Wrong! return error to caller, (#35)
     # for example by returning an empty string!
     return ("ERROR, FILE NOT FOUND", False)

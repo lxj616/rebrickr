@@ -984,17 +984,17 @@ class BrickDetailsPanel(Panel):
         except Exception as e:
             layout.label("No brick details available")
             if len(bricksDict) == 0:
-                print("Skipped drawing Brick Details")
+                print("[Bricker] Skipped drawing Brick Details")
             elif str(e)[1:-1] == dictKey:
-                print("Key '" + str(dictKey) + "' not found")
+                print("[Bricker] Key '" + str(dictKey) + "' not found")
                 # try:
                 #     print("Num Keys:", str(len(bricksDict)))
                 # except:
                 #     pass
             elif dictKey is None:
-                print("Key not set (entered else)")
+                print("[Bricker] Key not set (entered else)")
             else:
-                print("Error fetching brickD:", e)
+                print("[Bricker] Error fetching brickD:", e)
             return
 
         col1 = layout.column(align=True)

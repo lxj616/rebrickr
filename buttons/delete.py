@@ -153,7 +153,7 @@ class BrickerDelete(bpy.types.Operator):
 
         # select source
         if source is None:
-            print("Source object for model could not be found")
+            print("[Bricker] Source object for model could not be found")
         else:
             select(source, active=source)
 

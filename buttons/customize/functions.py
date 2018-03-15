@@ -38,7 +38,7 @@ from .undo_stack import *
 def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     if len(keysToUpdate) == 0: return
     if not isUnique(keysToUpdate): raise ValueError("keysToUpdate cannot contain duplicate values")
-    print("redrawing...")
+    print("[Bricker] redrawing...")
     # get arguments for createNewBricks
     n = cm.source_name
     source = bpy.data.objects.get(n + " (DO NOT RENAME)")

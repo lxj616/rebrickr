@@ -70,7 +70,7 @@ def lightToDeepCache(bricker_bfm_cache):
             cm.BFMCache = json.dumps(bricker_bfm_cache[cm_id])
             numPushedIDs += 1
     if numPushedIDs > 0:
-        print("pushed {numKeys} dicts from light cache to deep cache".format(numKeys=numPushedIDs))
+        print("[Bricker] pushed {numKeys} dicts from light cache to deep cache".format(numKeys=numPushedIDs))
 
 def deepToLightCache(bricker_bfm_cache):
     """ send bricksDict from python cache to blender cache for saving to file """
@@ -83,7 +83,7 @@ def deepToLightCache(bricker_bfm_cache):
             bricker_bfm_cache[cm.id] = bricksDict
             numpulledIDs += 1
     if numpulledIDs > 0:
-        print("pulled {numKeys} dicts from deep cache to light cache".format(numKeys=numpulledIDs))
+        print("[Bricker] pulled {numKeys} dicts from deep cache to light cache".format(numKeys=numpulledIDs))
 
 def cacheBricksDict(action, cm, bricksDict, curFrame=None):
     """ store bricksDict in light python cache for future access """

@@ -61,7 +61,7 @@ def setNameIfEmpty(self, context):
                 cm0.source_name = ""
                 scn.cmlist_index = i
 
-                
+
 def updateBevel(self, context):
     # get bricks to bevel
     try:
@@ -75,7 +75,7 @@ def updateBevel(self, context):
             cm.lastBevelSegments = cm.bevelSegments
             cm.lastBevelProfile = cm.bevelProfile
     except Exception as e:
-        print(e)
+        print("[Bricker]", e)
         pass
 
 
