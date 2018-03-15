@@ -135,7 +135,7 @@ class BrickModelsPanel(Panel):
             # if undo stack not initialized, draw initialize button
             if not bpy.props.bricker_initialized:
                 row = col1.row(align=True)
-                row.operator("bricker.customize_model", text="Initialize Bricker", icon="MODIFIER")
+                row.operator("bricker.initialize", text="Initialize Bricker", icon="MODIFIER")
                 # draw test brick generator button (for testing purposes only)
                 if testBrickGenerators.drawUIButton():
                     col = layout.column(align=True)
@@ -524,7 +524,7 @@ class CustomizeModel(Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_label       = "Customize Model"
-    bl_idname      = "VIEW3D_PT_tools_Bricker_customize_model"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_customize_mode"
     bl_context     = "objectmode"
     bl_category    = "Bricker"
     bl_options     = {"DEFAULT_CLOSED"}
@@ -560,7 +560,7 @@ class CustomizeModel(Panel):
             layout.label("Matrix not cached!")
             return
         # if not bpy.props.bricker_initialized:
-        #     layout.operator("bricker.customize_model", icon="MODIFIER")
+        #     layout.operator("bricker.initialize", icon="MODIFIER")
         #     return
 
         col1 = layout.column(align=True)

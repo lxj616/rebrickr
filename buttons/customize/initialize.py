@@ -32,11 +32,11 @@ from ...ui.app_handlers import brickerRunningOp
 from ...functions import *
 
 
-class CustomizeMode(Operator):
-    """initializes customize mode for customizing the model"""
+class InitializeUndoStack(Operator):
+    """ initializes undo stack for changes to the BFM cache """
     bl_category = "Bricker"
-    bl_idname = "bricker.customize_mode"
-    bl_label = "Customize Mode"
+    bl_idname = "bricker.initialize"
+    bl_label = "Initialize Undo Stack"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'TOOLS'
 
