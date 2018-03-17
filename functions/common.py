@@ -400,10 +400,16 @@ def selectVerts(vertsList):
         v.select = True
 
 
-def smoothFaces(facesList):
+def smoothBMFaces(facesList):
     facesList = confirmList(facesList)
     for f in facesList:
         f.smooth = True
+
+
+def smoothMeshFaces(facesList):
+    facesList = confirmList(facesList)
+    for f in facesList:
+        f.use_smooth = True
 
 
 def checkEqual1(iterator):

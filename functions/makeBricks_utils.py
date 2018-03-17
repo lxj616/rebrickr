@@ -65,18 +65,14 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
 
     # add brick with new mesh data at original location
     if brickD["type"] == "CUSTOM":
-        bm = bmesh.new()
-        bm.from_mesh(customData)
-        addToBMLoc(Vector((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid)), bm)
-
-        maxDist = max(customObj_details.x.dist, customObj_details.y.dist, customObj_details.z.dist)
-        bmesh.ops.scale(bm, vec=Vector(((brickScale.x - dimensions["gap"]) / customObj_details.x.dist, (brickScale.y - dimensions["gap"]) / customObj_details.y.dist, (brickScale.z - dimensions["gap"]) / customObj_details.z.dist)), verts=bm.verts)
+        # copy custom mesh
+        m = customData.copy()
     else:
         # get brick mesh
         bm = getBrickMesh(cm, brickD, randS4, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.circleVerts)
-    # create new mesh and send bm to it
-    m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
-    bm.to_mesh(m)
+        # create new mesh and send bm to it
+        m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
+        bm.to_mesh(m)
     # center mesh origin
     centerMeshOrigin(m, dimensions, brickSize)
     # apply random rotation to edit mesh according to parameters

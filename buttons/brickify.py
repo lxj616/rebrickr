@@ -489,7 +489,7 @@ class BrickerBrickify(bpy.types.Operator):
         updateCursor = action in ["CREATE", "UPDATE_MODEL"]  # evaluates to boolean value
         if bricksDict is None:
             # multiply brickScale by offset distance
-            brickScale2 = vec_mult(brickScale, Vector((cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ)))
+            brickScale2 = brickScale if cm.brickType != "CUSTOM" else vec_mult(brickScale, Vector((cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ)))
             # get bricks dictionary
             bricksDict, loadedFromCache = getBricksDict(dType=action, source=source, source_details=source_details, dimensions=dimensions, brickScale=brickScale2, updateCursor=updateCursor, curFrame=curFrame)
         else:

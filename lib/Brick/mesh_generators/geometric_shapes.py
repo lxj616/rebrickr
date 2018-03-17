@@ -158,7 +158,7 @@ def makeCylinder(r:float, h:float, N:int, co:Vector=Vector((0,0,0)), botFace:boo
 
     # create faces on the sides
     _, sideFaces = connectCircles(topVerts if flipNormals else botVerts, botVerts if flipNormals else topVerts, bme)
-    smoothFaces(sideFaces)
+    smoothBMFaces(sideFaces)
 
     # create top and bottom faces
     if topFace:

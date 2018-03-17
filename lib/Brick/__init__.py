@@ -161,24 +161,35 @@ def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, l
         randS0 = np.random.RandomState(randomSeed)
         zRots = [randS0.randint(0,rot_vars) * rot_mult + rot_add]
     lw = dimensions["logo_width"] * logo_scale
-    logoBM_ref = bmesh.new()
-    logoBM_ref.from_mesh(logo.data)
+    # get duplicate of logo mesh
+    m = logo.data.copy()
     if logo_type == "LEGO":
-        smoothFaces(list(logoBM_ref.faces))
+        # smooth faces
+        smoothMeshFaces(list(m.polygons))
+        # get transformation matrix
+        s_mat = Matrix.Scale(lw, 4)
+        r_mat = Matrix.Rotation(math.radians(90.0), 4, 'X')
         # transform logo into place
-        bmesh.ops.scale(logoBM_ref, vec=Vector((lw, lw, lw)), verts=logoBM_ref.verts)
-        bmesh.ops.rotate(logoBM_ref, verts=logoBM_ref.verts, cent=(1.0, 0.0, 0.0), matrix=Matrix.Rotation(math.radians(90.0), 3, 'X'))
+        m.transform(s_mat * r_mat)
     else:
-        # transform logo to origin (transform was (or should be at least) applied, origin is at center)
-        for v in logoBM_ref.verts:
-            v.co -= Vector((logo_details.x.mid, logo_details.y.mid, logo_details.z.mid))
+        # select all verts in logo
+        for v in m.vertices:
             v.select = True
         # scale logo
+        t_mat = -Vector((logo_details.x.mid, logo_details.y.mid, logo_details.z.mid))
         distMax = max(logo_details.x.dist, logo_details.y.dist)
-        bmesh.ops.scale(logoBM_ref, vec=Vector((lw/distMax, lw/distMax, lw/distMax)), verts=logoBM_ref.verts)
+        s_mat = Matrix.Scale(lw / distMax, 4)
+        # transform logo into place
+        m.transform(t_mat)
+        m.transform(s_mat)
 
     # create new bmeshes for each logo variation
     bms = [bmesh.new() for zRot in zRots]
+    # get loc offsets
+    zOffset = dimensions["logo_offset"] + (dimensions["height"] if "PLATES" in cm.brickType and size[2] == 3 else 0)
+    if logo_type != "LEGO" and logo_details is not None:
+        zOffset += ((logo_details.z.dist * (lw / distMax)) / 2) * (1 - logo_inset * 2)
+    xyOffset = dimensions["width"] + dimensions["gap"]
     # cap x/y ranges so logos aren't created over slopes
     xR0 = size[0] - 1 if direction == "X-" else 0
     yR0 = size[1] - 1 if direction == "Y-" else 0
@@ -186,22 +197,19 @@ def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, l
     yR1 = 1 if direction == "Y+" else size[1]
     # add logos on top of each stud
     for i,zRot in enumerate(zRots):
+        m0 = m.copy()
+        # rotate logo around stud
+        if zRot != 0:
+            m0.transform(Matrix.Rotation(math.radians(zRot), 4, 'Z'))
+        # create logo for each stud and append to bm
         for x in range(xR0, xR1):
             for y in range(yR0, yR1):
-                logoBM = logoBM_ref.copy()
-                # rotate logo around stud
-                if zRot != 0:
-                    bmesh.ops.rotate(logoBM, verts=logoBM.verts, cent=(0.0, 0.0, 1.0), matrix=Matrix.Rotation(math.radians(zRot), 3, 'Z'))
-                # transform logo to appropriate position
-                zOffset = dimensions["logo_offset"] + (dimensions["height"] if "PLATES" in cm.brickType and size[2] == 3 else 0)
-                if logo_type != "LEGO" and logo_details is not None:
-                    zOffset += ((logo_details.z.dist * (lw / distMax)) / 2) * (1 - logo_inset * 2)
-                xyOffset = dimensions["width"] + dimensions["gap"]
-                for v in logoBM.verts:
-                    v.co += Vector((x * xyOffset, y * xyOffset, zOffset))
-                # add logoBM mesh to bm mesh
-                junkMesh = bpy.data.meshes.new('Bricker_junkMesh')
-                logoBM.to_mesh(junkMesh)
-                bms[i].from_mesh(junkMesh)
-                bpy.data.meshes.remove(junkMesh, do_unlink=True)
+                # create duplicate of rotated logo
+                m1 = m0.copy()
+                # translate logo into place
+                m1.transform(Matrix.Translation((x * xyOffset, y * xyOffset, zOffset)))
+                # add transformed mesh to bm mesh
+                bms[i].from_mesh(m1)
+                bpy.data.meshes.remove(m1, do_unlink=True)
+        bpy.data.meshes.remove(m0, do_unlink=True)
     return bms

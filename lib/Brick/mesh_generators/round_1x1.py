@@ -119,7 +119,7 @@ def makeRound1x1(dimensions:dict, circleVerts:int=None, type:str="CYLINDER", det
     if detail != "FLAT":
         # create faces for cylinder inside brick
         _,faces = connectCircles(lowerTubeVerts["inner"]["bottom"], studVertsOuter["bottom"], bme)
-        smoothFaces(faces)
+        smoothBMFaces(faces)
         # create small inner cylinder inside stud for medium/high detail
         if type == "STUD" and origDetail in ["MEDIUM", "HIGH"]:
             # make small inner cylinders

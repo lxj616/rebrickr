@@ -295,21 +295,36 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
         source_details, dimensions = getDetailsAndBounds(source, cm)
     if cm.brickType == "CUSTOM":
         scn = bpy.context.scene
+        # get custom object
         customObj = bpy.data.objects[cm.customObjectName]
         oldLayers = list(scn.layers) # store scene layers for later reset
         setLayers(customObj.layers)
+        # duplicate custom object
         select(customObj, active=customObj)
         bpy.ops.object.duplicate()
         customObj0 = scn.objects.active
         select(customObj0, active=customObj0)
+        # apply transformation to custom object
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        # get custom object details
         customObj_details = bounds(customObj0)
-        customData = customObj0.data
-        bpy.data.objects.remove(customObj0, True)
+        # set brick scale
         scale = cm.brickHeight/customObj_details.z.dist
         brickScale = Vector((scale * customObj_details.x.dist + dimensions["gap"],
                     scale * customObj_details.y.dist + dimensions["gap"],
                     scale * customObj_details.z.dist + dimensions["gap"]))
+        # get transformation matrices
+        t_mat = Matrix.Translation((-customObj_details.x.mid, -customObj_details.y.mid, -customObj_details.z.mid))
+        maxDist = max(customObj_details.x.dist, customObj_details.y.dist, customObj_details.z.dist)
+        s_mat_x = Matrix.Scale((brickScale.x - dimensions["gap"]) / customObj_details.x.dist, 4, Vector((1, 0, 0)))
+        s_mat_y = Matrix.Scale((brickScale.y - dimensions["gap"]) / customObj_details.y.dist, 4, Vector((0, 1, 0)))
+        s_mat_z = Matrix.Scale((brickScale.z - dimensions["gap"]) / customObj_details.z.dist, 4, Vector((0, 0, 1)))
+        # apply transformation to custom object dup mesh
+        customObj0.data.transform(t_mat)
+        customObj0.data.transform(s_mat_x * s_mat_y * s_mat_z)
+        customData = customObj0.data
+        # remove duplicate of custom object
+        bpy.data.objects.remove(customObj0, True)
         setLayers(oldLayers)
     else:
         customData = None
