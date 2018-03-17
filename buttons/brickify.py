@@ -153,7 +153,7 @@ class BrickerBrickify(bpy.types.Operator):
         if not self.isValid(source, Bricker_bricks_gn):
             return {"CANCELLED"}
 
-        if self.action not in ["ANIMATE", "UPDATE_ANIM"]:
+        if "ANIM" not in self.action:
             self.brickifyModel()
         else:
             self.brickifyAnimation()
@@ -183,6 +183,8 @@ class BrickerBrickify(bpy.types.Operator):
         cm.bricksAreDirty = False
         cm.matrixIsDirty = False
         cm.internalIsDirty = False
+        cm.modelCreated = "ANIM" not in self.action
+        cm.animated = "ANIM" in self.action
         scn.Bricker_runningOperation = False
         cm.version = bpy.props.bricker_version
 
@@ -309,19 +311,19 @@ class BrickerBrickify(bpy.types.Operator):
         # create new bricks
         self.createNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, self.action, curFrame=None, sceneCurFrame=None)
 
+        ct = time.time()
         bGroup = bpy.data.groups.get(Bricker_bricks_gn)  # redefine bGroup since it was removed
         if bGroup:
             self.transformBricks(bGroup, cm, parent, self.source, self.action)
+        stopWatch("brickify (transform)", time.time()-ct, precision=5)
 
         # unlink source duplicate if created
         if sourceDup != self.source and sourceDup.name in scn.objects.keys():
             safeUnlink(sourceDup)
 
-        cm.modelCreated = True
-
         # add bevel if it was previously added
         if cm.bevelAdded:
-            bricks = getBricks()
+            bricks = getBricks(cm, typ="MODEL")
             BrickerBevel.runBevelAction(bricks, cm)
 
         # set active frame to original active frame
@@ -471,11 +473,9 @@ class BrickerBrickify(bpy.types.Operator):
         cm.lastStopFrame = cm.stopFrame
         scn.frame_set(sceneCurFrame)
 
-        cm.animated = True
-
         # add bevel if it was previously added
         if cm.bevelAdded:
-            bricks = getBricks()
+            bricks = getBricks(cm, typ="ANIM")
             BrickerBevel.runBevelAction(bricks, cm)
 
     @classmethod

@@ -366,7 +366,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         description="Bevel value/amount",
         step=1,
         min=0.000001, max=10,
-        default=0.01,
+        default=-1,
         update=updateBevel)
     bevelSegments = IntProperty(
         name="Bevel Resolution",

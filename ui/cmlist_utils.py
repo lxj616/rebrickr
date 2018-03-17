@@ -70,7 +70,7 @@ def updateBevel(self, context):
         n = cm.source_name
         if cm.lastBevelWidth != cm.bevelWidth or cm.lastBevelSegments != cm.bevelSegments or cm.lastBevelProfile != cm.bevelProfile:
             bricks = getBricks()
-            createBevelMods(bricks)
+            BrickerBevel.createBevelMods(bricks)
             cm.lastBevelWidth = cm.bevelWidth
             cm.lastBevelSegments = cm.bevelSegments
             cm.lastBevelProfile = cm.bevelProfile
