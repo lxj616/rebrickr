@@ -80,7 +80,7 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
     # center mesh origin
     centerMeshOrigin(m, dimensions, brickSize)
     # apply random rotation to edit mesh according to parameters
-    if cm.randomRot > 0: randomizeRot(randS3, brickSize, m)
+    if cm.randomRot > 0: randomizeRot(cm.randomRot, randS3, brickSize, m)
     # get brick location
     locOffset = getRandomLoc(cm.randomLoc, randS3, dimensions["width"], dimensions["height"]) if cm.randomLoc > 0 else Vector((0, 0, 0))
     brickLoc = getBrickCenter(bricksDict, key, loc) + locOffset
@@ -211,22 +211,21 @@ def centerMeshOrigin(m, dimensions, size):
     m.transform(Matrix.Translation(-Vector(center)))
 
 
-def randomizeRot(rand, brickSize, m):
-    """ rotate edit mesh 'm' randomized by cm.randomRot """
-    scn, cm, _ = getActiveContextInfo()
-    if max(brickSize) == 0:
-        denom = 0.75
-    else:
-        denom = brickSize[0] * brickSize[1]
-    mult = cm.randomRot / denom
+def randomizeRot(randomRot, rand, brickSize, m):
+    """ rotate edit mesh 'm' randomized by randomRot """
+    denom = 0.75 if max(brickSize) == 0 else brickSize[0] * brickSize[1]
+    mult = randomRot / denom
     # calculate rotation angles in radians
     x = rand.uniform(-math.radians(11.25) * mult, math.radians(11.25) * mult)
     y = rand.uniform(-math.radians(11.25) * mult, math.radians(11.25) * mult)
     z = rand.uniform(-math.radians(45)    * mult, math.radians(45)    * mult)
+    # get rotation matrix
+    x_mat = Matrix.Rotation(x, 4, 'X')
+    y_mat = Matrix.Rotation(y, 4, 'Y')
+    z_mat = Matrix.Rotation(z, 4, 'Z')
+    combined_mat = x_mat * y_mat * z_mat
     # apply rotation matrices to edit mesh
-    m.transform(Matrix.Rotation(x, 4, 'X'))
-    m.transform(Matrix.Rotation(y, 4, 'Y'))
-    m.transform(Matrix.Rotation(z, 4, 'Z'))
+    m.transform(combined_mat)
 
 
 def prepareLogoAndGetDetails(logo):
