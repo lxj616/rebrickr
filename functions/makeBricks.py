@@ -126,6 +126,8 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
                     keysNotChecked.remove(key)
                 continue
 
+            ct = time.time()
+
             # initialize vars
             loc = strToList(key)
             brickSizes = [[1, 1, zStep]]
@@ -146,10 +148,9 @@ def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brick
             cm.brickSizesUsed += brickSizeStr if cm.brickSizesUsed == "" else ("|" + brickSizeStr if brickSizeStr not in cm.brickSizesUsed.split("|") else "")
             cm.brickTypesUsed += brickD["type"] if cm.brickTypesUsed == "" else ("|" + str(brickD["type"]) if brickD["type"] not in cm.brickTypesUsed.split("|") else "")
 
-
             # create brick based on the current brickD information
             lastBricksDict = bricksDict
-            drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, brickScale, keysNotChecked, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4)
+            drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, brickScale, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4)
 
             # print build status to terminal
             old_percent = printBuildStatus(keys, printStatus, cursorStatus, keysNotChecked, old_percent)

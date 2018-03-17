@@ -361,7 +361,7 @@ def unhide(objList):
 def select(objList=[], active=None, deselect=False, only=True, scene=None):
     """ selects objs in list and deselects the rest """
     if objList is None and active is None:
-        deselectAll()
+        return True
     objList = confirmList(objList)
     try:
         # deselect all if selection is exclusive
@@ -380,7 +380,7 @@ def select(objList=[], active=None, deselect=False, only=True, scene=None):
             except:
                 raise TypeError("argument passed to 'active' parameter not valid (recieved '" + str(active) + "')")
     except Exception as e:
-        print(e)
+        print("[Bricker]", e)
         return False
     return True
 

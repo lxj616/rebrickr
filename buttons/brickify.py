@@ -200,7 +200,6 @@ class BrickerBrickify(bpy.types.Operator):
         scn, cm, n = getActiveContextInfo()
         origFrame = None
         source = None
-        Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
 
         # get or create parent group
@@ -309,13 +308,16 @@ class BrickerBrickify(bpy.types.Operator):
         refLogo = self.getLogo(cm)
 
         # create new bricks
-        self.createNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, self.action, curFrame=None, sceneCurFrame=None)
+        group_name = self.createNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, self.action, curFrame=None, sceneCurFrame=None)
 
-        ct = time.time()
-        bGroup = bpy.data.groups.get(Bricker_bricks_gn)  # redefine bGroup since it was removed
+        bGroup = bpy.data.groups.get(group_name)
         if bGroup:
+            self.createdGroups.append(group_name)
+            # transform bricks to appropriate location
             self.transformBricks(bGroup, cm, parent, self.source, self.action)
-        stopWatch("brickify (transform)", time.time()-ct, precision=5)
+            # match brick layers to source layers
+            for obj in bGroup.objects:
+                obj.layers = self.source.layers
 
         # unlink source duplicate if created
         if sourceDup != self.source and sourceDup.name in scn.objects.keys():
@@ -336,7 +338,6 @@ class BrickerBrickify(bpy.types.Operator):
         """ create brick animation """
         # set up variables
         scn, cm, n = getActiveContextInfo()
-        Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
         Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
         sceneCurFrame = scn.frame_current
@@ -517,10 +518,10 @@ class BrickerBrickify(bpy.types.Operator):
         # update materials in bricksDict
         bricksDict = updateMaterials(bricksDict, source)
         # make bricks
-        group_name = 'Bricker_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else None
+        group_name = 'Bricker_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else "Bricker_%(n)s_bricks" % locals()
         bricksCreated, bricksDict = makeBricks(parent, refLogo, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
         if selectCreated:
-            select(None)
+            deselectAll()
             for brick in bricksCreated:
                 select(brick, active=brick, only=False)
         # store current bricksDict to cache
@@ -717,9 +718,6 @@ class BrickerBrickify(bpy.types.Operator):
         else:
             # set active object to obj (keeps original selection)
             select(None, active=obj)
-        # match brick layers to source layers
-        for obj in bGroup.objects:
-            obj.layers = self.source.layers
 
     @classmethod
     def getLogo(self, cm):

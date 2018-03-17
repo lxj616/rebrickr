@@ -43,7 +43,7 @@ from .general import *
 from ..lib.caches import bricker_bm_cache
 
 
-def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, brickScale, keysNotChecked, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4):
+def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, brickScale, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4):
     # check exposure of current [merged] brick
     if brickD["top_exposed"] is None or brickD["bot_exposed"] is None or cm.buildIsDirty:
         topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)
@@ -74,30 +74,16 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
     else:
         # get brick mesh
         bm = getBrickMesh(cm, brickD, randS4, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.circleVerts)
-    # apply random rotation to BMesh according to parameters
-    if cm.randomRot > 0:
-        # get half width
-        d = Vector((dimensions["width"] / 2, dimensions["width"] / 2, dimensions["height"] / 2))
-        # get scalar for d in positive xyz directions
-        scalar = Vector((brickSize[0] * 2 - 1,
-                         brickSize[1] * 2 - 1,
-                         1))
-        # calculate center and rotate bm about center
-        center = (vec_mult(d, scalar) - d) / 2
-        center.z = 0
-        randRot = randomizeRot(randS3, center.to_tuple(), brickSize, bm)
     # create new mesh and send bm to it
     m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
     bm.to_mesh(m)
-    # apply random location to edit mesh according to parameters
-    locOffset = randomizeLoc(cm.randomLoc, randS3, dimensions["width"], dimensions["height"], mesh=m) if cm.randomLoc > 0 else Vector((0, 0, 0))
-    # undo bm rotation if not custom, since 'bm' points to bmesh used by all other similar bricks
-    if cm.brickType != "CUSTOM" and cm.randomRot > 0:
-        rotateBack(bm, center, randRot)
+    # center mesh origin
+    centerMeshOrigin(m, dimensions, brickSize)
+    # apply random rotation to edit mesh according to parameters
+    if cm.randomRot > 0: randomizeRot(randS3, brickSize, m)
     # get brick location
-    brickLoc = Vector(brickD["co"])
-    if brickSize[2] == 3 and "PLATES" in cm.brickType:
-        brickLoc.z += dimensions["height"] + dimensions["gap"]
+    locOffset = getRandomLoc(cm.randomLoc, randS3, dimensions["width"], dimensions["height"]) if cm.randomLoc > 0 else Vector((0, 0, 0))
+    brickLoc = getBrickCenter(bricksDict, key, loc) + locOffset
 
     if split:
         # create new object with mesh data
@@ -105,8 +91,6 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
         brick.cmlist_id = cm.id
         # set brick location
         brick.location = brickLoc
-        # center brick origin
-        centerBrickOrigin(brick, bricksDict, offset=locOffset)
         # set brick's material
         brick.data.materials.append(mat or internalMat)
         # add edge split modifier
@@ -200,12 +184,11 @@ def addToBMLoc(co:Vector, bm):
         v.co += co
 
 
-def randomizeLoc(randomLoc, rand, width, height, mesh):
-    """ translate bm/mesh location by (width,width,height) randomized by randomLoc """
+def getRandomLoc(randomLoc, rand, width, height):
+    """ get random location between (0,0,0) and (width/2, width/2, height/2) """
     loc = Vector((0,0,0))
     loc.xy = [rand.uniform(-(width/2) * randomLoc, (width/2) * randomLoc)]*2
     loc.z = rand.uniform(-(height/2) * randomLoc, (height/2) * randomLoc)
-    mesh.transform(Matrix.Translation(loc))
     return loc
 
 
@@ -215,27 +198,35 @@ def translateBack(bm, loc):
         v.co -= Vector(loc)
 
 
-def randomizeRot(rand, center, brickSize, bm):
-    """ rotate 'bm' around 'center' randomized by cm.randomRot """
+def centerMeshOrigin(m, dimensions, size):
+    # get half width
+    d0 = Vector((dimensions["width"] / 2, dimensions["width"] / 2, 0))
+    # get scalar for d0 in positive xy directions
+    scalar = Vector((size[0] * 2 - 1,
+                     size[1] * 2 - 1,
+                     0))
+    # calculate center and rotate bm about center
+    center = (vec_mult(d0, scalar) - d0) / 2
+    # apply translation matrix to center mesh
+    m.transform(Matrix.Translation(-Vector(center)))
+
+
+def randomizeRot(rand, brickSize, m):
+    """ rotate edit mesh 'm' randomized by cm.randomRot """
     scn, cm, _ = getActiveContextInfo()
     if max(brickSize) == 0:
         denom = 0.75
     else:
         denom = brickSize[0] * brickSize[1]
     mult = cm.randomRot / denom
+    # calculate rotation angles in radians
     x = rand.uniform(-math.radians(11.25) * mult, math.radians(11.25) * mult)
     y = rand.uniform(-math.radians(11.25) * mult, math.radians(11.25) * mult)
     z = rand.uniform(-math.radians(45)    * mult, math.radians(45)    * mult)
-    bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(x, 3, 'X'))
-    bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(y, 3, 'Y'))
-    bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(z, 3, 'Z'))
-    return (x, y, z)
-
-
-def rotateBack(bm, center, rot):
-    """ rotate bm around center -rot """
-    for i, axis in enumerate(['Z', 'Y', 'X']):
-        bmesh.ops.rotate(bm, verts=bm.verts, cent=center, matrix=Matrix.Rotation(-rot[2-i], 3, axis))
+    # apply rotation matrices to edit mesh
+    m.transform(Matrix.Rotation(x, 4, 'X'))
+    m.transform(Matrix.Rotation(y, 4, 'Y'))
+    m.transform(Matrix.Rotation(z, 4, 'Z'))
 
 
 def prepareLogoAndGetDetails(logo):

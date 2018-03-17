@@ -126,9 +126,8 @@ def getBricks(cm=None, typ=None):
     n = cm.source_name
     if typ == "MODEL":
         gn = "Bricker_%(n)s_bricks" % locals()
-        bGroup = bpy.data.groups.get(gn)
-        if bGroup:
-            bricks = list(bGroup.objects)
+        bGroup = bpy.data.groups[gn]
+        bricks = list(bGroup.objects)
     elif typ == "ANIM":
         bricks = []
         for cf in range(cm.lastStartFrame, cm.lastStopFrame+1):
@@ -222,8 +221,8 @@ def getLocsInBrick(size, key, loc=None, zStep=None):
     return [[x0 + x, y0 + y, z0 + z] for z in range(0, size[2], zStep) for y in range(size[1]) for x in range(size[0])]
 
 
-def getKeysInBrick(size, key, loc=None):
-    locs = getLocsInBrick(size=size, key=key, loc=loc)
+def getKeysInBrick(size, key, loc=None, zStep=None):
+    locs = getLocsInBrick(size=size, key=key, loc=loc, zStep=zStep)
     return [listToStr(loc) for loc in locs]
 
 
@@ -246,14 +245,6 @@ def getBrickCenter(bricksDict, key, loc=None):
     coords = [bricksDict[k0]["co"] for k0 in brickKeys]
     coord_ave = Vector((np.mean([co[0] for co in coords]), np.mean([co[1] for co in coords]), np.mean([co[2] for co in coords])))
     return coord_ave
-
-
-def centerBrickOrigin(brick, bricksDict, offset=Vector((0, 0, 0))):
-    key, loc = getDictKey(brick.name)
-    new_origin = getBrickCenter(bricksDict, key, loc)
-    cur_origin = brick.location
-    brick.data.transform(Matrix.Translation(brick.location - offset - new_origin))
-    brick.matrix_world.translation += new_origin + offset
 
 
 def getExportPath(fn, ext):
