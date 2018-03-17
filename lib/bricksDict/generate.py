@@ -519,14 +519,14 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
         scn.update()
     # get lattice bmesh
     print("\ngenerating blueprint...")
-    lScale = Vector((source_details.x.dist, source_details.y.dist, source_details.z.dist))
-    offset = Vector((source_details.x.mid, source_details.y.mid, source_details.z.mid))
+    lScale = source_details.dist
+    offset = source_details.mid
     if source.parent:
         offset = offset - source.parent.location
     # get coordinate list from intersections of edges with faces
     coordMatrix = generateLattice(brickScale, lScale, offset)
     if len(coordMatrix) == 0:
-        coordMatrix.append((source_details.x.mid, source_details.y.mid, source_details.z.mid))
+        coordMatrix.append(source_details.mid)
     # set calculationAxes
     calculationAxes = cm.calculationAxes if cm.brickShell != "INSIDE" else "XYZ"
     # set up faceIdxMatrix and brickFreqMatrix
@@ -552,7 +552,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
 
                 # initialize variables
                 bKey = listToStr([x, y, z])
-                co = coordMatrix[x][y][z]
+                co = Vector(coordMatrix[x][y][z])
                 i += 1
 
                 # get material from nearest face intersection point
@@ -571,7 +571,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                     name= 'Bricker_%(n)s_brick_%(i)s__%(bKey)s' % locals(),
                     val= brickFreqMatrix[x][y][z],
                     draw= draw,
-                    co= (co[0] - source_details.x.mid, co[1] - source_details.y.mid, co[2] - source_details.z.mid),
+                    co= (co - source_details.mid).to_tuple(),
                     nearest_face= nf,
                     nearest_intersection= ni if ni is None else tuple(ni),
                     rgba= rgba,

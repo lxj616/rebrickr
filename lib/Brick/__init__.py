@@ -176,8 +176,8 @@ def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, l
         for v in m.vertices:
             v.select = True
         # scale logo
-        t_mat = -Vector((logo_details.x.mid, logo_details.y.mid, logo_details.z.mid))
-        distMax = max(logo_details.x.dist, logo_details.y.dist)
+        t_mat = Matrix.Translation(-logo_details.mid)
+        distMax = max(logo_details.dist.x, logo_details.dist.y)
         s_mat = Matrix.Scale(lw / distMax, 4)
         # transform logo into place
         m.transform(t_mat)
@@ -188,7 +188,7 @@ def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, l
     # get loc offsets
     zOffset = dimensions["logo_offset"] + (dimensions["height"] if "PLATES" in cm.brickType and size[2] == 3 else 0)
     if logo_type != "LEGO" and logo_details is not None:
-        zOffset += ((logo_details.z.dist * (lw / distMax)) / 2) * (1 - logo_inset * 2)
+        zOffset += ((logo_details.dist.z * (lw / distMax)) / 2) * (1 - logo_inset * 2)
     xyOffset = dimensions["width"] + dimensions["gap"]
     # cap x/y ranges so logos aren't created over slopes
     xR0 = size[0] - 1 if direction == "X-" else 0

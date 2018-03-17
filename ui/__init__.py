@@ -373,9 +373,9 @@ class ModelSettingsPanel(Panel):
                 source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
             if source:
                 source_details = bounds(source)
-                s.x = round(source_details.x.dist, 2)
-                s.y = round(source_details.y.dist, 2)
-                s.z = round(source_details.z.dist, 2)
+                s.x = round(source_details.dist.x, 2)
+                s.y = round(source_details.dist.y, 2)
+                s.z = round(source_details.dist.z, 2)
         else:
             s = Vector((cm.modelScaleX, cm.modelScaleY, cm.modelScaleZ))
         # draw Brick Model dimensions to UI if set
@@ -391,10 +391,10 @@ class ModelSettingsPanel(Panel):
                 customObj = bpy.data.objects.get(cm.customObjectName)
                 if customObj and customObj.type == "MESH":
                     custom_details = bounds(customObj)
-                    if 0 not in [custom_details.x.dist, custom_details.y.dist, custom_details.z.dist]:
-                        mult = (cm.brickHeight / custom_details.z.dist)
-                        full_d = Vector((custom_details.x.dist * mult,
-                                         custom_details.y.dist * mult,
+                    if 0 not in custom_details.dist.to_tuple():
+                        mult = (cm.brickHeight / custom_details.dist.z)
+                        full_d = Vector((custom_details.dist.x * mult,
+                                         custom_details.dist.y * mult,
                                          cm.brickHeight))
                         r = vec_div(s, full_d)
                         customObjFound = True

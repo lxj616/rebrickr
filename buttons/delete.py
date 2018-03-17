@@ -258,7 +258,7 @@ class BrickerDelete(bpy.types.Operator):
                     loc_diff = p["loc_diff"]
                 except:
                     loc_diff = None
-                storeTransformData(p, offsetBy=p["loc_diff"])
+                storeTransformData(p, offsetBy=loc_diff)
             if not cm.lastSplitModel and groupExists(Bricker_bricks_gn):
                 bricks = getBricks()
                 if len(bricks) > 0:

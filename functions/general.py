@@ -65,12 +65,12 @@ def safeLink(obj, unhide=False, protect=False):
 
 def bounds(obj, local=False):
     """
-    returns object details with the following subattributes for x (same for y & z):
+    returns object details with the following subattribute Vectors:
 
-    .x.max : maximum 'x' value of object
-    .x.min : minimum 'x' value of object
-    .x.mid : midpoint 'x' value of object
-    .x.dist: distance 'x' min to 'x' max
+    .max : maximum value of object
+    .min : minimum value of object
+    .mid : midpoint value of object
+    .dist: distance min to max
 
     """
 
@@ -84,20 +84,16 @@ def bounds(obj, local=False):
         coords = [p[:] for p in local_coords]
 
     rotated = zip(*coords[::-1])
+    getMax = lambda i: max([co[i] for co in coords])
+    getMin = lambda i: min([co[i] for co in coords])
 
-    push_axis = []
-    for (axis, _list) in zip('xyz', rotated):
-        info = lambda: None
-        info.max = max(_list)
-        info.min = min(_list)
-        info.mid = (info.min + info.max) / 2
-        info.dist = info.max - info.min
-        push_axis.append(info)
+    info = lambda: None
+    info.max = Vector((getMax(0), getMax(1), getMax(2)))
+    info.min = Vector((getMin(0), getMin(1), getMin(2)))
+    info.mid = (info.min + info.max) / 2
+    info.dist = info.max - info.min
 
-    originals = dict(zip(['x', 'y', 'z'], push_axis))
-
-    o_details = collections.namedtuple('object_details', 'x y z')
-    return o_details(**originals)
+    return info
 
 
 def setOriginToObjOrigin(toObj, fromObj=None, fromLoc=None, deleteFromObj=False):
@@ -167,7 +163,7 @@ def matrixReallyIsDirty(cm):
 
 
 def listToStr(lst, separate_by=","):
-    assert type(lst) in [list, tuple]
+    assert type(lst) in [list, tuple, Vector]
     string = str(lst[0])
     for i in range(1, len(lst)):
         item = lst[i]

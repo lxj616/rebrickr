@@ -291,17 +291,17 @@ class BrickerBrickify(bpy.types.Operator):
 
         if self.action == "CREATE":
             # set sourceDup model height for display in UI
-            cm.modelHeight = sourceDup_details.z.dist
+            cm.modelHeight = sourceDup_details.dist.z
 
         # get parent object
         parent = bpy.data.objects.get(Bricker_parent_on)
         # if parent doesn't exist, get parent with new location
-        parentLoc = (sourceDup_details.x.mid, sourceDup_details.y.mid, sourceDup_details.z.mid)
+        parentLoc = sourceDup_details.mid
         if parent is None:
             parent = self.getParent(Bricker_parent_on, parentLoc)
             cm.parent_name = parent.name
             pGroup.objects.link(parent)
-        parent["loc_diff"] = self.source.location - Vector(parentLoc)
+        parent["loc_diff"] = self.source.location - parentLoc
         self.createdObjects.append(parent.name)
 
         # update refLogo
@@ -412,7 +412,7 @@ class BrickerBrickify(bpy.types.Operator):
 
             if self.action == "ANIMATE":
                 # set source model height for display in UI
-                cm.modelHeight = source_details.z.dist
+                cm.modelHeight = source_details.dist.z
 
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
@@ -421,7 +421,7 @@ class BrickerBrickify(bpy.types.Operator):
             if parent is None:
                 m = bpy.data.meshes.new(Bricker_parent_on + "_frame_" + str(curFrame) + "_mesh")
                 parent = bpy.data.objects.new(Bricker_parent_on + "_frame_" + str(curFrame), m)
-                parent.location = (source_details.x.mid - parent0.location.x, source_details.y.mid - parent0.location.y, source_details.z.mid - parent0.location.z)
+                parent.location = source_details.mid - parent0.location
                 parent.parent = parent0
                 pGroup.objects.link(parent)
                 scn.objects.link(parent)
@@ -548,11 +548,11 @@ class BrickerBrickify(bpy.types.Operator):
                 return False
             custom_details = bounds(customObj)
             zeroDistAxes = ""
-            if custom_details.x.dist < 0.00001:
+            if custom_details.dist.x < 0.00001:
                 zeroDistAxes += "X"
-            if custom_details.y.dist < 0.00001:
+            if custom_details.dist.y < 0.00001:
                 zeroDistAxes += "Y"
-            if custom_details.z.dist < 0.00001:
+            if custom_details.dist.z < 0.00001:
                 zeroDistAxes += "Z"
             if zeroDistAxes != "":
                 if len(zeroDistAxes) == 1:

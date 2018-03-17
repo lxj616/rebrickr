@@ -109,7 +109,7 @@ class Bricker_Uilist_actions(bpy.types.Operator):
             source = bpy.data.objects.get(item.source_name)
             if source:
                 source_details = bounds(source)
-                h = max(source_details.x.dist, source_details.y.dist, source_details.z.dist)
+                h = max(source_details.dist)
                 # update brick height based on model height
                 item.brickHeight = h / 20
 
