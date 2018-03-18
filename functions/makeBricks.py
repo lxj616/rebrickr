@@ -45,15 +45,12 @@ from .makeBricks_utils import *
 
 
 @timed_call('Time Elapsed')
-def makeBricks(parent, logo, dimensions, bricksDict, cm=None, split=False, brickScale=None, customData=None, customObj_details=None, group_name=None, replaceExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True):
+def makeBricks(parent, logo, logo_details, dimensions, bricksDict, cm=None, split=False, brickScale=None, customData=None, customObj_details=None, group_name=None, replaceExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True):
     # set up variables
     scn = bpy.context.scene
     cm = cm or scn.cmlist[scn.cmlist_index]
     n = cm.source_name
     zStep = getZStep(cm)
-
-    # apply transformation to logo duplicate and get bounds(logo)
-    logo_details, logo = prepareLogoAndGetDetails(logo)
 
     # reset brickSizes/TypesUsed
     if keys == "ALL":

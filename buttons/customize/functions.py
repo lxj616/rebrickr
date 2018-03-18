@@ -45,10 +45,10 @@ def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     source_details, dimensions = getDetailsAndBounds(source, cm)
     Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
     parent = bpy.data.objects.get(Bricker_parent_on)
-    refLogo = BrickerBrickify.getLogo(cm)
+    logo_details, refLogo = BrickerBrickify.getLogo(cm, dimensions)
     action = "UPDATE_MODEL"
     # actually draw the bricks
-    BrickerBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, action, cm=cm, bricksDict=bricksDict, keys=keysToUpdate, replaceExistingGroup=False, selectCreated=selectCreated, printStatus=False, redraw=True)
+    BrickerBrickify.createNewBricks(source, parent, source_details, dimensions, refLogo, logo_details, action, cm=cm, bricksDict=bricksDict, keys=keysToUpdate, replaceExistingGroup=False, selectCreated=selectCreated, printStatus=False, redraw=True)
     # add bevel if it was previously added
     if cm.bevelAdded:
         bricks = getBricks(cm)

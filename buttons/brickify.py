@@ -305,10 +305,10 @@ class BrickerBrickify(bpy.types.Operator):
         self.createdObjects.append(parent.name)
 
         # update refLogo
-        refLogo = self.getLogo(cm)
+        logo_details, refLogo = self.getLogo(cm, dimensions)
 
         # create new bricks
-        group_name = self.createNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, self.action, curFrame=None, sceneCurFrame=None)
+        group_name = self.createNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, logo_details, self.action, curFrame=None, sceneCurFrame=None)
 
         bGroup = bpy.data.groups.get(group_name)
         if bGroup:
@@ -387,9 +387,6 @@ class BrickerBrickify(bpy.types.Operator):
             cm.parent_name = parent0.name
         self.createdObjects.append(parent0.name)
 
-        # update refLogo
-        refLogo = self.getLogo(cm)
-
         # begin drawing status to cursor
         wm = bpy.context.window_manager
         wm.progress_begin(0, cm.stopFrame + 1 - cm.startFrame)
@@ -409,6 +406,9 @@ class BrickerBrickify(bpy.types.Operator):
 
             # get source_details and dimensions
             source_details, dimensions = getDetailsAndBounds(source)
+
+            # update refLogo
+            logo_details, refLogo = self.getLogo(cm, dimensions)
 
             if self.action == "ANIMATE":
                 # set source model height for display in UI
@@ -431,7 +431,7 @@ class BrickerBrickify(bpy.types.Operator):
 
             # create new bricks
             try:
-                group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame)
+                group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, logo_details, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame)
                 self.createdGroups.append(group_name)
             except KeyboardInterrupt:
                 self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
@@ -480,7 +480,7 @@ class BrickerBrickify(bpy.types.Operator):
             BrickerBevel.runBevelAction(bricks, cm)
 
     @classmethod
-    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, action, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False, printStatus=True, redraw=False):
+    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, logo_details, action, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False, printStatus=True, redraw=False):
         """ gets/creates bricksDict, runs makeBricks, and caches the final bricksDict """
         scn = bpy.context.scene
         cm = cm or scn.cmlist[scn.cmlist_index]
@@ -519,7 +519,7 @@ class BrickerBrickify(bpy.types.Operator):
         bricksDict = updateMaterials(bricksDict, source)
         # make bricks
         group_name = 'Bricker_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else "Bricker_%(n)s_bricks" % locals()
-        bricksCreated, bricksDict = makeBricks(parent, refLogo, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
+        bricksCreated, bricksDict = makeBricks(parent, refLogo, logo_details, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
         if selectCreated:
             deselectAll()
             for brick in bricksCreated:
@@ -720,17 +720,20 @@ class BrickerBrickify(bpy.types.Operator):
             select(None, active=obj)
 
     @classmethod
-    def getLogo(self, cm):
-        if cm.brickType != "CUSTOM":
+    def getLogo(self, cm, dimensions):
+        if cm.brickType == "CUSTOM":
+            refLogo = None
+        else:
             if cm.logoDetail == "LEGO":
-                refLogo = self.getLegoLogo(self)
+                refLogo = self.getLegoLogo(self, dimensions)
+                logo_details = bounds(refLogo)
             else:
                 refLogo = bpy.data.objects.get(cm.logoObjectName)
-        else:
-            refLogo = None
-        return refLogo
+                # apply transformation to duplicate of logo object and normalize size/position
+                logo_details, refLogo = prepareLogoAndGetDetails(refLogo, dimensions)
+        return logo_details, refLogo
 
-    def getLegoLogo(self):
+    def getLegoLogo(self, dimensions):
         scn, cm, _ = getActiveContextInfo()
         # update refLogo
         if cm.logoDetail == "NONE":
@@ -743,6 +746,7 @@ class BrickerBrickify(bpy.types.Operator):
                 refLogo = bpy.data.objects.get("Bricker_refLogo_%(r)s" % locals())
                 if refLogo is None:
                     refLogo = bpy.data.objects.new("Bricker_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
+                    # queue for decimation
                     decimate = True
             else:
                 # import refLogo and add to group
@@ -750,6 +754,14 @@ class BrickerBrickify(bpy.types.Operator):
                 refLogoImport.name = "Bricker_refLogo"
                 safeUnlink(refLogoImport)
                 refLogo = bpy.data.objects.new("Bricker_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
+                m = refLogo.data
+                # smooth faces
+                smoothMeshFaces(list(m.polygons))
+                # get transformation matrix
+                r_mat = Matrix.Rotation(math.radians(90.0), 4, 'X')
+                # transform logo into place
+                m.transform(r_mat)
+                # queue for decimation
                 decimate = True
             # decimate refLogo
             # TODO: Speed this up, if possible

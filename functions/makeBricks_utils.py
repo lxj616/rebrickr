@@ -224,22 +224,40 @@ def randomizeRot(randomRot, rand, brickSize, m):
     m.transform(combined_mat)
 
 
-def prepareLogoAndGetDetails(logo):
+def prepareLogoAndGetDetails(logo, dimensions):
     """ duplicate and normalize custom logo object; return logo and bounds(logo) """
     scn, cm, _ = getActiveContextInfo()
     if cm.logoDetail != "LEGO" and logo is not None:
+        # prepare for logo duplication
         oldLayers = list(scn.layers)
         setLayers(logo.layers)
         logo.hide = False
+        # duplicate logo object
         select(logo, active=logo)
         bpy.ops.object.duplicate()
         logo = scn.objects.active
+        # disable modifiers for logo object
         for mod in logo.modifiers:
             mod.show_viewport = False
+        # apply logo object transformation
         logo.parent = None
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        # set scene layers back to original active layers
         setLayers(oldLayers)
+        # get logo details
         logo_details = bounds(logo)
+        m = logo.data
+        # select all verts in logo
+        for v in m.vertices:
+            v.select = True
+        # scale logo
+        t_mat = Matrix.Translation(-logo_details.mid)
+        distMax = max(logo_details.dist.xy)
+        lw = dimensions["logo_width"] * cm.logoScale
+        s_mat = Matrix.Scale(lw / distMax, 4)
+        # transform logo into place
+        m.transform(t_mat)
+        m.transform(s_mat)
     else:
         logo_details = None
     return logo_details, logo
@@ -266,7 +284,7 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
         bm = bms[rand.randint(0, len(bms))] if len(bms) > 1 else bms[0]
     # if not found in bricker_bm_cache, create new brick mesh(es) and store to cache
     else:
-        bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, type=brickD["type"], undersideDetail=undersideDetail, flip=brickD["flipped"], rotate90=brickD["rotated"], logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_scale=cm.logoScale, logo_inset=cm.logoInset, stud=useStud, circleVerts=cm.circleVerts, cm=cm)
+        bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, type=brickD["type"], undersideDetail=undersideDetail, flip=brickD["flipped"], rotate90=brickD["rotated"], logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_inset=cm.logoInset, stud=useStud, circleVerts=cm.circleVerts, cm=cm)
         if cm.brickType != "CUSTOM":
             bricker_bm_cache[bm_cache_string] = bms
         bm = bms[rand.randint(0, len(bms))]

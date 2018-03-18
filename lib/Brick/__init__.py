@@ -37,7 +37,7 @@ from ...functions.common import *
 
 class Bricks:
     @staticmethod
-    def new_mesh(dimensions:list, size:list=[1,1,3], type:str="BRICK", flip:bool=False, rotate90:bool=False, logo=False, all_vars=False, logo_type=None, logo_details=None, logo_scale=None, logo_inset=None, undersideDetail:str="FLAT", stud:bool=True, circleVerts:int=16, cm=None):
+    def new_mesh(dimensions:list, size:list=[1,1,3], type:str="BRICK", flip:bool=False, rotate90:bool=False, logo=False, all_vars=False, logo_type=None, logo_details=None, logo_inset=None, undersideDetail:str="FLAT", stud:bool=True, circleVerts:int=16, cm=None):
         """ create unlinked Brick at origin """
         cm = cm or getActiveContextInfo()[1]
 
@@ -61,7 +61,7 @@ class Bricks:
 
         # create list of brick bmesh variations
         if logo and stud and (type in ["BRICK", "PLATE", "STUD"] or type == "SLOPE" and max(size[:2]) != 1):
-            bms = makeLogoVariations(dimensions, size, directions[maxIdx] if type == "SLOPE" else "", all_vars, logo, logo_type, logo_details, logo_scale, logo_inset)
+            bms = makeLogoVariations(dimensions, size, directions[maxIdx] if type == "SLOPE" else "", all_vars, logo, logo_type, logo_details, logo_inset)
         else:
             bms = [bmesh.new()]
 
@@ -133,7 +133,7 @@ class Bricks:
     def get_dimensions(height=1, zScale=1, gap_percentage=0.01):
         return get_brick_dimensions(height, zScale, gap_percentage)
 
-def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, logo_details, logo_scale, logo_inset):
+def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, logo_details, logo_inset):
     cm = getActiveContextInfo()[1]
     # get logo rotation angle based on size of brick
     rot_mult = 180
@@ -160,27 +160,13 @@ def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, l
         randomSeed = int(time.time()*10**6) % 10000
         randS0 = np.random.RandomState(randomSeed)
         zRots = [randS0.randint(0,rot_vars) * rot_mult + rot_add]
-    lw = dimensions["logo_width"] * logo_scale
     # get duplicate of logo mesh
     m = logo.data.copy()
     if logo_type == "LEGO":
-        # smooth faces
-        smoothMeshFaces(list(m.polygons))
-        # get transformation matrix
+        # get scale matrix
+        lw = dimensions["logo_width"] * cm.logoScale
         s_mat = Matrix.Scale(lw, 4)
-        r_mat = Matrix.Rotation(math.radians(90.0), 4, 'X')
         # transform logo into place
-        m.transform(s_mat * r_mat)
-    else:
-        # select all verts in logo
-        for v in m.vertices:
-            v.select = True
-        # scale logo
-        t_mat = Matrix.Translation(-logo_details.mid)
-        distMax = max(logo_details.dist.x, logo_details.dist.y)
-        s_mat = Matrix.Scale(lw / distMax, 4)
-        # transform logo into place
-        m.transform(t_mat)
         m.transform(s_mat)
 
     # create new bmeshes for each logo variation
@@ -188,6 +174,8 @@ def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, l
     # get loc offsets
     zOffset = dimensions["logo_offset"] + (dimensions["height"] if "PLATES" in cm.brickType and size[2] == 3 else 0)
     if logo_type != "LEGO" and logo_details is not None:
+        lw = dimensions["logo_width"] * cm.logoScale
+        distMax = max(logo_details.dist.xy)
         zOffset += ((logo_details.dist.z * (lw / distMax)) / 2) * (1 - logo_inset * 2)
     xyOffset = dimensions["width"] + dimensions["gap"]
     # cap x/y ranges so logos aren't created over slopes
@@ -199,8 +187,7 @@ def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, l
     for i,zRot in enumerate(zRots):
         m0 = m.copy()
         # rotate logo around stud
-        if zRot != 0:
-            m0.transform(Matrix.Rotation(math.radians(zRot), 4, 'Z'))
+        if zRot != 0: m0.transform(Matrix.Rotation(math.radians(zRot), 4, 'Z'))
         # create logo for each stud and append to bm
         for x in range(xR0, xR1):
             for y in range(yR0, yR1):
