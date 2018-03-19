@@ -182,7 +182,7 @@ def combineMeshes(meshes, printStatus):
     bm.to_mesh(finalMesh)
     return finalMesh
 
-    
+
 def addToBMLoc(co:Vector, bm):
     """ add 'co' to bmesh location """
     for v in bm.verts:

@@ -314,7 +314,7 @@ class BrickerBrickify(bpy.types.Operator):
         if bGroup:
             self.createdGroups.append(group_name)
             # transform bricks to appropriate location
-            self.transformBricks(bGroup, cm, parent, self.source, self.action)
+            self.transformBricks(bGroup, cm, parent, self.source, sourceDup_details, self.action)
             # match brick layers to source layers
             for obj in bGroup.objects:
                 obj.layers = self.source.layers
@@ -675,12 +675,15 @@ class BrickerBrickify(bpy.types.Operator):
 
         return True
 
-    def transformBricks(self, bGroup, cm, parent, source, action):
+    def transformBricks(self, bGroup, cm, parent, source, sourceDup_details, action):
         # if using local orientation and creating model for first time
         if cm.useLocalOrient and action == "CREATE":
             obj = parent if cm.splitModel else bGroup.objects[0]
+            source_details = bounds(source)
             obj.rotation_mode = "XYZ"
             obj.rotation_euler = source.rotation_euler
+            source["local_orient_offset"] = source_details.mid - sourceDup_details.mid
+            obj.location += Vector(source["local_orient_offset"])
         # if model was split but isn't now
         if cm.lastSplitModel and not cm.splitModel:
             # transfer transformation of parent to object

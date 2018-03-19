@@ -128,6 +128,7 @@ def unregister():
     del Scn.Bricker_last_layers
     del Scn.Bricker_runningOperation
     del Scn.Bricker_printTimes
+    del bpy.types.Object.cmlist_id
     del bpy.types.Object.isBrick
     del bpy.types.Object.isBrickifiedObject
     del bpy.types.Object.protected
