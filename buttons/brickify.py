@@ -519,7 +519,7 @@ class BrickerBrickify(bpy.types.Operator):
         bricksDict = updateMaterials(bricksDict, source)
         # make bricks
         group_name = 'Bricker_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else "Bricker_%(n)s_bricks" % locals()
-        bricksCreated, bricksDict = makeBricks(parent, refLogo, logo_details, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
+        bricksCreated, bricksDict = makeBricks(source, parent, refLogo, logo_details, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
         if selectCreated:
             deselectAll()
             for brick in bricksCreated:
@@ -706,23 +706,20 @@ class BrickerBrickify(bpy.types.Operator):
         obj = bGroup.objects[0] if len(bGroup.objects) > 0 else None
         if obj is None:
             return
-        if not cm.splitModel:
-            # select the bricks object
+        # select the bricks object unless it's massive
+        if not cm.splitModel and len(obj.data.vertices) < 500000:
             select(obj, active=obj)
-            # if the model contains armature, lock the location, rotation, and scale
-            if cm.armature:
-                # lock location, rotation, and scale of created bricks
-                obj.lock_location = [True, True, True]
-                obj.lock_rotation = [True, True, True]
-                obj.lock_scale    = [True, True, True]
-        else:
-            # set active object to obj (keeps original selection)
-            select(None, active=obj)
+        # if model contains armature, lock the location, rotation, and scale of created bricks object
+        if not cm.splitModel and cm.armature:
+            obj.lock_location = [True, True, True]
+            obj.lock_rotation = [True, True, True]
+            obj.lock_scale    = [True, True, True]
 
     @classmethod
     def getLogo(self, cm, dimensions):
         if cm.brickType == "CUSTOM":
             refLogo = None
+            logo_details = None
         else:
             if cm.logoDetail == "LEGO":
                 refLogo = self.getLegoLogo(self, dimensions)

@@ -360,28 +360,23 @@ def unhide(objList):
 
 def select(objList=[], active=None, deselect=False, only=True, scene=None):
     """ selects objs in list and deselects the rest """
+    # initialize vars
     if objList is None and active is None:
         return True
     objList = confirmList(objList)
-    try:
-        # deselect all if selection is exclusive
-        if not deselect and only and len(objList) > 0:
-            deselectAll()
-        # select/deselect objects in list
-        for obj in objList:
-            if obj is not None:
-                obj.select = not deselect
-
-        # set active object
-        if active:
-            scene = scene or bpy.context.scene
-            try:
-                scene.objects.active = objList[0] if type(active) == bool else active
-            except:
-                raise TypeError("argument passed to 'active' parameter not valid (recieved '" + str(active) + "')")
-    except Exception as e:
-        print("[Bricker]", e)
-        return False
+    # deselect all if selection is exclusive
+    if not deselect and only and len(objList) > 0:
+        deselectAll()
+    # select/deselect objects in list
+    for obj in objList:
+        if obj is not None:
+            obj.select = not deselect
+    # set active object
+    if active:
+        scene = scene or bpy.context.scene
+        if type(active) != bpy.types.Object:
+            raise TypeError("argument passed to 'active' parameter not valid (recieved '" + str(active) + "')")
+        scene.objects.active = objList[0] if type(active) == bool else active
     return True
 
 

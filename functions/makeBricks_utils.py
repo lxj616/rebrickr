@@ -88,7 +88,8 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
         # set brick location
         brick.location = brickLoc
         # set brick's material
-        brick.data.materials.append(mat or internalMat)
+        if mat is not None or internalMat is not None:
+            brick.data.materials.append(mat or internalMat)
         # add edge split modifier
         addEdgeSplitMod(brick)
         # append to bricksCreated
@@ -108,10 +109,6 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
             brickD["mat_name"] = mat.name
             for p in m.polygons:
                 p.material_index = matIdx
-        else:
-            brickD["mat_name"] = internalMat.name
-            for p in m.polygons:
-                p.material_index = 0
         # append mesh to allBrickMeshes list
         allBrickMeshes.append(m)
 
@@ -163,17 +160,29 @@ def skipThisRow(timeThrough, lowestLoc, loc):
     return False
 
 
-def combineMeshes(meshes):
+def combineMeshes(meshes, printStatus):
     """ return combined mesh from 'meshes' """
     bm = bmesh.new()
     # add meshes to bmesh
-    for m in meshes:
+    old_percent = 0
+    numMeshes = len(meshes)
+    for i,m in enumerate(meshes):
+        # print status to terminal
+        if printStatus:
+            percent = i/numMeshes
+            if percent - old_percent > 0.001 and percent < 1:
+                update_progress("Joining Bricks", percent)
+                old_percent = percent
+        # pull edit mesh to bmesh
         bm.from_mesh(m)
+    # end progress bar
+    if printStatus:
+        update_progress("Joining Bricks", 1)
     finalMesh = bpy.data.meshes.new("newMesh")
     bm.to_mesh(finalMesh)
     return finalMesh
 
-
+    
 def addToBMLoc(co:Vector, bm):
     """ add 'co' to bmesh location """
     for v in bm.verts:

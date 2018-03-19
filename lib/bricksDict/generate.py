@@ -405,11 +405,6 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     # NOTE: Following two lines are alternative for calculating full brickFreqMatrix
     denom = max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)/2
     for i in range(100):
-        # print status to terminal
-        if not scn.Bricker_printTimes:
-            percent = i / denom
-            if percent < 1:
-                update_progress("Internal", percent**0.9)
         j = round(j-0.01, 2)
         gotOne = False
         for x in range(len(coordMatrix)):
@@ -435,12 +430,6 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                             break
         if not gotOne:
             break
-
-    # print status to terminal
-    if scn.Bricker_printTimes:
-        stopWatch("Internal", time.time()-ct)
-        ct = time.time()
-    update_progress("Internal", 1)
 
     # bm = bmesh.new()
     # for x in range(len(coordMatrix)):

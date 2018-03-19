@@ -45,7 +45,7 @@ from .makeBricks_utils import *
 
 
 @timed_call('Time Elapsed')
-def makeBricks(parent, logo, logo_details, dimensions, bricksDict, cm=None, split=False, brickScale=None, customData=None, customObj_details=None, group_name=None, replaceExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True):
+def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=None, split=False, brickScale=None, customData=None, customObj_details=None, group_name=None, replaceExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True):
     # set up variables
     scn = bpy.context.scene
     cm = cm or scn.cmlist[scn.cmlist_index]
@@ -101,8 +101,8 @@ def makeBricks(parent, logo, logo_details, dimensions, bricksDict, cm=None, spli
     allBrickMeshes = []
     lowestLoc = -1
     # set up internal material for this object
-    internalMat = bpy.data.materials.get(cm.internalMatName) or bpy.data.materials.get("Bricker_%(n)s_internal" % locals()) or bpy.data.materials.new("Bricker_%(n)s_internal" % locals())
-    if cm.materialType == "SOURCE" and cm.matShellDepth < cm.shellThickness:
+    internalMat = None if len(source.data.materials) == 0 else bpy.data.materials.get(cm.internalMatName) or bpy.data.materials.get("Bricker_%(n)s_internal" % locals()) or bpy.data.materials.new("Bricker_%(n)s_internal" % locals())
+    if internalMat is not None and cm.materialType == "SOURCE" and cm.matShellDepth < cm.shellThickness:
         mats.append(internalMat)
     # initialize supportBrickDs
     supportBrickDs = []
@@ -155,6 +155,7 @@ def makeBricks(parent, logo, logo_details, dimensions, bricksDict, cm=None, spli
             # remove keys in new brick from keysNotChecked (for attemptMerge)
             updateKeysNotChecked(brickSize, loc, keysNotChecked, key)
 
+
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO" and logo is not None:
         bpy.data.objects.remove(logo)
@@ -192,20 +193,19 @@ def makeBricks(parent, logo, logo_details, dimensions, bricksDict, cm=None, spli
         if printStatus:
             update_progress("Linking to Scene", 1)
     else:
-        m = combineMeshes(allBrickMeshes)
+        m = combineMeshes(allBrickMeshes, printStatus)
         name = 'Bricker_%(n)s_bricks_combined' % locals()
         if frameNum:
             name = "%(name)s_frame_%(frameNum)s" % locals()
         allBricksObj = bpy.data.objects.new(name, m)
         allBricksObj.cmlist_id = cm.id
-        # create vert group for bevel mod (assuming only logo verts are selected):
-        vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())
-        vertList = [v.index for v in allBricksObj.data.vertices if not v.select]
-        vg.add(vertList, 1, "ADD")
-        # add edge split modifier
-        addEdgeSplitMod(allBricksObj)
-        bGroup.objects.link(allBricksObj)
-        allBricksObj.parent = parent
+        if cm.brickType != "CUSTOM":
+            # create vert group for bevel mod (assuming only logo verts are selected):
+            vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())
+            vertList = [v.index for v in allBricksObj.data.vertices if not v.select]
+            vg.add(vertList, 1, "ADD")
+            # add edge split modifier
+            addEdgeSplitMod(allBricksObj)
         if cm.materialType == "CUSTOM":
             mat = bpy.data.materials.get(cm.materialName)
             if mat is not None:
@@ -213,10 +213,14 @@ def makeBricks(parent, logo, logo_details, dimensions, bricksDict, cm=None, spli
         elif cm.materialType == "SOURCE" or (cm.materialType == "RANDOM" and len(brick_mats) > 0):
             for mat in mats:
                 allBricksObj.data.materials.append(mat)
+        # set parent
+        allBricksObj.parent = parent
+        # add bricks obj to scene, bGroup, and bricksCreated
+        bGroup.objects.link(allBricksObj)
         scn.objects.link(allBricksObj)
+        bricksCreated.append(allBricksObj)
         # protect allBricksObj from being deleted
         allBricksObj.isBrickifiedObject = True
-        bricksCreated.append(allBricksObj)
 
     # reset 'attempted_merge' for all items in bricksDict
     for key0 in bricksDict:

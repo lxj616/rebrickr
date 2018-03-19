@@ -50,11 +50,10 @@ class Caches(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            if self.clearAll:
-                self.clearCaches()
-                scn, cm, _ = getActiveContextInfo()
-                self.undo_stack.iterateStates(cm)
-                cm.matrixIsDirty = True
+            self.clearCaches()
+            scn, cm, _ = getActiveContextInfo()
+            self.undo_stack.iterateStates(cm)
+            cm.matrixIsDirty = True
         except:
             handle_exception()
 
@@ -66,14 +65,6 @@ class Caches(bpy.types.Operator):
     def __init__(self):
         self.undo_stack = UndoStack.get_instance()
         self.undo_stack.undo_push('clear_cache')
-
-    ###################################################
-    # class variables
-
-    clearAll = bpy.props.BoolProperty(
-        name="Clear Caches",
-        description="Clear all caches stored for current file",
-        default=False)
 
     #############################################
     # class methods
@@ -96,7 +87,7 @@ class Caches(bpy.types.Operator):
         """clear all caches in cmlist"""
         scn = bpy.context.scene
         for cm in scn.cmlist:
-            clearCache(cm, brick_mesh=brick_mesh, light_matrix=light_matrix, deep_matrix=deep_matrix)
+            Caches.clearCache(cm, brick_mesh=brick_mesh, light_matrix=light_matrix, deep_matrix=deep_matrix)
 
     @staticmethod
     def cacheExists(cm=None):
