@@ -253,12 +253,12 @@ class BrickerDelete(bpy.types.Operator):
         Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
         brickLoc, brickRot, brickScl = None, None, None
         if preservedFrames is None:
-            p = bpy.data.objects[Bricker_parent_on]
+            p = bpy.data.objects.get(Bricker_parent_on)
             if modelType == "ANIMATION" or cm.lastSplitModel:
                 # store transform data of transformation parent object
                 try:
                     loc_diff = p["loc_diff"]
-                except:
+                except KeyError:
                     loc_diff = None
                 storeTransformData(p, offsetBy=loc_diff)
             if not cm.lastSplitModel and groupExists(Bricker_bricks_gn):

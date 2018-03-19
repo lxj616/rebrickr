@@ -149,7 +149,7 @@ class BrickModelsPanel(Panel):
                     row = col.row(align=True)
                     row.operator("bricker.brickify", text="Update Animation", icon="FILE_REFRESH")
                     if createdWithUnsupportedVersion():
-                        v_str = cm.version[:3].replace("_", ".")
+                        v_str = cm.version[:3]
                         col = layout.column(align=True)
                         col.scale_y = 0.7
                         col.label("Model was created with")
@@ -179,7 +179,7 @@ class BrickModelsPanel(Panel):
                     col = layout.column(align=True)
                     col.operator("bricker.brickify", text="Update Model", icon="FILE_REFRESH")
                     if createdWithUnsupportedVersion():
-                        v_str = cm.version[:4].replace(", ", ".")
+                        v_str = cm.version[:3]
                         col = layout.column(align=True)
                         col.scale_y = 0.7
                         col.label("Model was created with")

@@ -514,7 +514,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     lastBevelProfile = IntProperty()
 
     # Bricker Version of Model
-    version = StringProperty(default="1_0_4")
+    version = StringProperty(default="1.0.4")
     # Left over attrs from earlier versions
     maxBrickScale1 = IntProperty(default=-1)
     maxBrickScale2 = IntProperty(default=-1)
