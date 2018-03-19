@@ -325,6 +325,14 @@ class ModelTransformPanel(Panel):
         col = layout.column(align=True)
         row = col.row(align=True)
 
+        if not cm.lastSplitModel:
+            col.scale_y = 0.7
+            row.label("Use Blender's built-in")
+            row = col.row(align=True)
+            row.label("transformation manipulators")
+            col = layout.column(align=True)
+            return
+
         row.prop(cm, "applyToSourceObject")
         if cm.animated or (cm.lastSplitModel and cm.modelCreated):
             row = col.row(align=True)

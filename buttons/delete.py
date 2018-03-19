@@ -137,7 +137,6 @@ class BrickerDelete(bpy.types.Operator):
         modelType = getModelType(cm)
         n = cm.source_name
         source = bpy.data.objects.get("%(n)s (DO NOT RENAME)" % locals())
-        parentOb = None
         origFrame = scn.frame_current
         scn.frame_set(cm.modelCreatedOnFrame)
         # store last active layers
@@ -254,7 +253,7 @@ class BrickerDelete(bpy.types.Operator):
         Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
         brickLoc, brickRot, brickScl = None, None, None
         if preservedFrames is None:
-            p = bpy.data.objects.get(Bricker_parent_on)
+            p = bpy.data.objects[Bricker_parent_on]
             if modelType == "ANIMATION" or cm.lastSplitModel:
                 # store transform data of transformation parent object
                 try:

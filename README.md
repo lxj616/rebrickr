@@ -29,7 +29,8 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add 'exclusion' functionality so that one model doesn’t create bricks where another model already did
       * Add merge option that creates either biggest bricks possible or randomly sampled like normal.
   * Known issues:
-      * In snapchat hotdog test file, when parents removed and transformation kept, then when model created then deleted, source shrinks
+      * In snapchat hotdog test file, when 'Clear Parent and Keep Transform' run, then when model created then deleted, source shrinks
       * For models with thin outer shells, Bricker may use color of inside face instead of outside face for brick material
       * In basketball test file, error occurs when attempting to generate model with materials based on UV map (index out of range)
       * When drawing adjacent bricks, exposure is incorrect when obstructed by ignored brick types
+      * Applying model rotation when deleting brickified model with source's origin not in mesh center doesn't work reliably
