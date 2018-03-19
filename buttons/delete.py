@@ -169,7 +169,10 @@ class BrickerDelete(bpy.types.Operator):
                     source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
             # adjust source loc to account for local_orient_offset applied in BrickerBrickify.transformBricks
             if cm.useLocalOrient and not cm.useAnimation:
-                source.location -= Vector(source["local_orient_offset"])
+                try:
+                    source.location -= Vector(source["local_orient_offset"])
+                except KeyError:
+                    pass
 
             # return open layers to original
             scn.Bricker_runningOperation = False
