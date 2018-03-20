@@ -50,7 +50,7 @@ class selectBricksByType(Operator):
 
     def execute(self, context):
         try:
-            selectBricks(self.objNamesD, self.bricksDicts, brickType=self.brickType, allModels=self.allModels, only=self.only, includeInternals=self.includeInternals)
+            selectBricks(self.objNamesD, self.bricksDicts, brickType=self.brickType, allModels=self.allModels, only=self.only, include=self.include)
         except:
             handle_exception()
         return{"FINISHED"}
@@ -77,6 +77,14 @@ class selectBricksByType(Operator):
     def get_items(self, context):
         items = getUsedTypes()
         return items
+    # get items for include prop
+    def get_items1(self, context):
+        cm = getActiveContextInfo()[1]
+        items = [("EXT", "Externals", "")]
+        if cm.shellThickness > 1 or cm.internalSupports != "NONE":
+            items += [("INT", "Internals", "")]
+            items += [("BOTH", "Both", "")]
+        return items
 
     # define props for popup
     brickType = bpy.props.EnumProperty(
@@ -91,9 +99,9 @@ class selectBricksByType(Operator):
         name="All Models",
         description="Select bricks of given type/size from all models in file",
         default=False)
-    includeInternals = bpy.props.BoolProperty(
-        name="Include Internals",
-        description="Include bricks inside shell in selection",
-        default=False)
+    include = bpy.props.EnumProperty(
+        name="Include",
+        description="Include bricks on shell, inside shell, or both",
+        items=get_items1)
 
     ###################################################

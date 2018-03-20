@@ -301,7 +301,7 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
     return bm
 
 
-def getMaterial(cm, bricksDict, key, brickSize, randState, brick_mats, k):
+def getMaterial(cm, bricksDict, key, size, randState=None, brick_mats=None, seedInc=None):
     mat = None
     highestVal = 0
     matsL = []
@@ -309,8 +309,8 @@ def getMaterial(cm, bricksDict, key, brickSize, randState, brick_mats, k):
         mat = bpy.data.materials.get(cm.materialName)
     elif cm.materialType == "SOURCE":
         # get most frequent material in brick size
-        for x in range(brickSize[0]):
-            for y in range(brickSize[1]):
+        for x in range(size[0]):
+            for y in range(size[1]):
                 loc = strToList(key)
                 x0, y0, z0 = loc
                 key0 = listToStr([x0 + x, y0 + y, z0])
@@ -325,7 +325,7 @@ def getMaterial(cm, bricksDict, key, brickSize, randState, brick_mats, k):
             matName = most_common(matsL)
         mat = bpy.data.materials.get(matName)
     elif cm.materialType == "RANDOM" and len(brick_mats) > 0:
-        randState.seed(cm.randomMatSeed + k)
+        randState.seed(cm.randomMatSeed + seedInc)
         if len(brick_mats) > 1:
             randIdx = randState.randint(0, len(brick_mats))
         else:

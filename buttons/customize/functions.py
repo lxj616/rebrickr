@@ -241,7 +241,7 @@ def createObjNamesAndBricksDictsDs(objs):
     return objNamesD, bricksDicts
 
 
-def selectBricks(objNamesD, bricksDicts, brickSize="NULL", brickType="NULL", allModels=False, only=False, includeInternals=False):
+def selectBricks(objNamesD, bricksDicts, brickSize="NULL", brickType="NULL", allModels=False, only=False, include="EXT"):
     scn = bpy.context.scene
     # split all bricks in objNamesD[cm_id]
     for cm_id in objNamesD.keys():
@@ -264,7 +264,7 @@ def selectBricks(objNamesD, bricksDicts, brickSize="NULL", brickType="NULL", all
             #     continue
             # select brick
             sizeStr = listToStr(sorted(siz[:2]) + [siz[2]])
-            if (sizeStr == brickSize or typ == brickType) and (includeInternals or onShell):
+            if (sizeStr == brickSize or typ == brickType) and (include == "BOTH" or (include == "INT" and not onShell) or (include == "EXT" and onShell)):
                 selectedSomething = True
                 curObj.select = True
             elif only:

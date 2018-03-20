@@ -101,7 +101,8 @@ class exportLdraw(Operator):
             # get coordinate for brick in Ldraw units
             co = self.blendToLdrawUnits(cm, bricksDict, key, idx)
             # get color code of brick
-            mat_name = bricksDict[key]["mat_name"]
+            mat = getMaterial(cm, bricksDict, key, size)
+            mat_name = "" if mat is None else mat.name
             rgba = bricksDict[key]["rgba"]
             if rgba in [None, ""] and mat_name not in absMatCodes.keys() and bpy.data.materials.get(mat_name) is not None:
                 rgba = getMaterialColor(mat_name)

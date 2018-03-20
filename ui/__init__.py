@@ -688,7 +688,7 @@ class MaterialsPanel(Panel):
             col = layout.column(align=True)
             row = col.row(align=True)
             row.prop(cm, "mergeInconsistentMats")
-            if cm.shellThickness > 1:
+            if cm.shellThickness > 1 or cm.internalSupports != "NONE":
                 col = layout.column(align=True)
                 row = col.row(align=True)
                 row.prop(cm, "matShellDepth")
@@ -728,7 +728,6 @@ class MaterialsPanel(Panel):
                 col = layout.column(align=True)
                 col.scale_y = 0.7
                 col.label("(Vertex colors not supported)")
-                layout.separator()
             col = layout.column(align=True)
             row = col.row(align=True)
             row.label("Color Snapping:")
