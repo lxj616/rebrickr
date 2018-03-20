@@ -443,31 +443,24 @@ class BrickerBrickify(bpy.types.Operator):
                     cm.animated = True
                 return
 
+            # get object with created bricks
+            obj = bpy.data.groups[group_name].objects[0]
+            # hide obj unless on scene current frame
+            showCurObj = (curFrame == cm.startFrame and sceneCurFrame < cm.startFrame) or curFrame == sceneCurFrame or (curFrame == cm.stopFrame and sceneCurFrame > cm.stopFrame)
+            if not showCurObj:
+                obj.hide = True
+                obj.hide_render = True
+            # lock location, rotation, and scale of created bricks
+            obj.lock_location = [True, True, True]
+            obj.lock_rotation = [True, True, True]
+            obj.lock_scale    = [True, True, True]
+            # match brick layers to source layers
+            obj.layers = self.source.layers
+
             wm.progress_update(curFrame-cm.startFrame)
             print('-'*100)
             print("completed frame " + str(curFrame))
             print('-'*100)
-
-        # prepare bricks to be displayed
-        for curFrame in range(cm.startFrame, cm.stopFrame + 1):
-            group_name = "Bricker_%(n)s_bricks_frame_%(curFrame)s" % locals()
-            for obj in bpy.data.groups[group_name].objects:
-                if (curFrame == cm.startFrame and sceneCurFrame < cm.startFrame) or curFrame == sceneCurFrame or (curFrame == cm.stopFrame and sceneCurFrame > cm.stopFrame):
-                    objsToSelect = bpy.data.groups[group_name].objects
-                else:
-                    obj.hide = True
-                    obj.hide_render = True
-                # lock location, rotation, and scale of created bricks
-                obj.lock_location = [True, True, True]
-                obj.lock_rotation = [True, True, True]
-                obj.lock_scale    = [True, True, True]
-                # match brick layers to source layers
-                obj.layers = self.source.layers
-
-        for obj in objsToSelect:
-            obj.hide = False
-            obj.hide_render = False
-            select(obj, active=obj)
 
         wm.progress_end()
         cm.lastStartFrame = cm.startFrame
@@ -555,10 +548,8 @@ class BrickerBrickify(bpy.types.Operator):
             if custom_details.dist.z < 0.00001:
                 zeroDistAxes += "Z"
             if zeroDistAxes != "":
-                if len(zeroDistAxes) == 1:
-                    warningMsg = "Custom brick type object is to small along the '%(zeroDistAxes)s' axis (<0.00001). Please select another object or extrude it along the '%(zeroDistAxes)s' axis." % locals()
-                else:
-                    warningMsg = "Custom brick type object is to small on the following axes (<0.00001): '%(zeroDistAxes)s'. Please select another object or extrude it along the '%(zeroDistAxes)s' axes." % locals()
+                axisStr = "axis" if len(zeroDistAxes) == 1 else "axes"
+                warningMsg = "Custom brick type object is to small along the '%(zeroDistAxes)s' %(axisStr)s (<0.00001). Please select another object or extrude it along the '%(zeroDistAxes)s' %(axisStr)s." % locals()
                 self.report({"WARNING"}, warningMsg)
                 return False
         if cm.materialType == "CUSTOM" and cm.materialName != "" and bpy.data.materials.find(cm.materialName) == -1:

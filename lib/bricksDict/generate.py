@@ -84,8 +84,8 @@ def castRays(obj:Object, point:Vector, direction:Vector, miniDist:float, roundTy
             if (location-point).length <= edgeLen2:
                 if intersections == 0:
                     edgeIntersects = True
-                    firstIntersection = {"idx":index, "dist":(location-point).length, "loc":location}
-                lastIntersection = {"idx":index, "dist":edgeLen - (location-point).length, "loc":location}
+                    firstIntersection = {"idx":index, "dist":(location-point).length, "loc":location, "normal":normal}
+                lastIntersection = {"idx":index, "dist":edgeLen - (location-point).length, "loc":location, "normal":normal}
 
             # set nextIntersection
             if intersections == 1:
@@ -450,36 +450,38 @@ def getThreshold(cm):
     """ returns threshold (draw bricks if returned val >= threshold) """
     return 1.01 - (cm.shellThickness / 100)
 
-def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,0), nearest_face:int=None, nearest_intersection:int=None, rgba:tuple=None, mat_name:str=None, parent_brick:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
+def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,0), near_face:int=None, near_intersection:tuple=None, near_normal:tuple=None, rgba:tuple=None, mat_name:str=None, parent_brick:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
     """
     create an entry in the dictionary of brick locations
 
     Keyword Arguments:
-    name                 -- name of the brick object
-    val                  -- location of brick in model (0: outside of model, 0.00-1.00: number of bricks away from shell / 100, 1: on shell)
-    draw                 -- draw the brick in 3D space
-    co                   -- 1x1 brick centered at this location
-    nearest_face         -- index of nearest face intersection with source mesh
-    nearest_intersection -- coordinate location of nearest intersection with source mesh
-    rgba                 -- [red, green, blue, alpha] values of brick color
-    mat_name             -- name of material attributed to bricks at this location
-    parent_brick         -- key into brick dictionary with information about the parent brick merged with this one
-    size                 -- 3D size of brick (e.g. standard 2x4 brick -> [2, 4, 3])
-    attempted_merge      -- attempt has been made in makeBricks function to merge this brick with nearby bricks
-    top_exposed          -- top of brick is visible to camera
-    bot_exposed          -- bottom of brick is visible to camera
-    type                 -- type of brick
-    flipped              -- brick is flipped over non-mirrored axis
-    rotated              -- brick is rotated 90 degrees about the Z axis
-    created_from         -- key of brick this brick was created from in drawAdjacent
+    name              -- name of the brick object
+    val               -- location of brick in model (0: outside of model, 0.00-1.00: number of bricks away from shell / 100, 1: on shell)
+    draw              -- draw the brick in 3D space
+    co                -- 1x1 brick centered at this location
+    near_face         -- index of nearest face intersection with source mesh
+    near_intersection -- coordinate location of nearest intersection with source mesh
+    near_normal       -- normal of the nearest face intersection
+    rgba              -- [red, green, blue, alpha] values of brick color
+    mat_name          -- name of material attributed to bricks at this location
+    parent_brick      -- key into brick dictionary with information about the parent brick merged with this one
+    size              -- 3D size of brick (e.g. standard 2x4 brick -> [2, 4, 3])
+    attempted_merge   -- attempt has been made in makeBricks function to merge this brick with nearby bricks
+    top_exposed       -- top of brick is visible to camera
+    bot_exposed       -- bottom of brick is visible to camera
+    type              -- type of brick
+    flipped           -- brick is flipped over non-mirrored axis
+    rotated           -- brick is rotated 90 degrees about the Z axis
+    created_from      -- key of brick this brick was created from in drawAdjacent
 
     """
     return {"name":name,
             "val":val,
             "draw":draw,
             "co":co,
-            "nearest_face":nearest_face,
-            "nearest_intersection":nearest_intersection,
+            "near_face":near_face,
+            "near_intersection":near_intersection,
+            "near_normal":near_normal,
             "rgba":rgba,
             "mat_name":mat_name,
             "parent_brick":parent_brick,
@@ -547,6 +549,8 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                 # get material from nearest face intersection point
                 nf = faceIdxMatrix[x][y][z]["idx"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 ni = faceIdxMatrix[x][y][z]["loc"] if type(faceIdxMatrix[x][y][z]) == dict else None
+                nn = faceIdxMatrix[x][y][z]["normal"] if type(faceIdxMatrix[x][y][z]) == dict else None
+                normal_direction = getNormalDirection(nn)
                 rgba = getUVPixelColor(source, nf, ni, uv_images)
                 draw = brickFreqMatrix[x][y][z] >= threshold
                 # store first key to active keys
@@ -561,8 +565,9 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                     val= brickFreqMatrix[x][y][z],
                     draw= draw,
                     co= (co - source_details.mid).to_tuple(),
-                    nearest_face= nf,
-                    nearest_intersection= ni if ni is None else tuple(ni),
+                    near_face= nf,
+                    near_intersection= ni if ni is None else tuple(ni),
+                    near_normal= normal_direction,
                     rgba= rgba,
                     mat_name= "",  # defined in 'updateMaterials' function
                     bType= "PLATE" if "PLATES" in cm.brickType else ("BRICK" if cm.brickType == "BRICKS" else cm.brickType),

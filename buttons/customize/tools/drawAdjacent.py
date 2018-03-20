@@ -277,8 +277,8 @@ class drawAdjacent(Operator):
             self.bricksDict[adjacent_key] = createBricksDictEntry(
                 name=                 'Bricker_%(n)s_brick_%(j)s__%(adjacent_key)s' % locals(),
                 co=                   co,
-                nearest_face=         self.bricksDict[dictKey]["nearest_face"],
-                nearest_intersection= self.bricksDict[dictKey]["nearest_intersection"],
+                near_face=         self.bricksDict[dictKey]["near_face"],
+                near_intersection= self.bricksDict[dictKey]["near_intersection"],
                 mat_name=             self.bricksDict[dictKey]["mat_name"],
             )
             adjBrickD = self.bricksDict[adjacent_key]
@@ -347,8 +347,8 @@ class drawAdjacent(Operator):
             adjBrickD["size"] = [1, 1, newBrickHeight if side in [4, 5] else getZStep(cm)]
             adjBrickD["parent_brick"] = "self"
             adjBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"] if adjBrickD["mat_name"] == "" else adjBrickD["mat_name"]
-            adjBrickD["nearest_face"] = adjBrickD["nearest_face"] or self.bricksDict[dictKey]["nearest_face"]
-            adjBrickD["nearest_intersection"] = adjBrickD["nearest_intersection"] or self.bricksDict[dictKey]["nearest_intersection"]
+            adjBrickD["near_face"] = adjBrickD["near_face"] or self.bricksDict[dictKey]["near_face"]
+            adjBrickD["near_intersection"] = adjBrickD["near_intersection"] or self.bricksDict[dictKey]["near_intersection"]
             topExposed, botExposed = getBrickExposure(cm, self.bricksDict, adjacent_key)
             adjBrickD["top_exposed"] = topExposed
             adjBrickD["bot_exposed"] = botExposed

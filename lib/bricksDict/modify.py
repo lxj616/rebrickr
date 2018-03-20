@@ -32,7 +32,7 @@ from .functions import *
 
 
 def updateMaterials(bricksDict, source):
-    """ sets all matNames in bricksDict based on nearest_face """
+    """ sets all matNames in bricksDict based on near_face """
     scn, cm, _ = getActiveContextInfo()
     if cm.useUVMap and (len(source.data.uv_layers) > 0 or cm.uvImageName != ""):
         uv_images = getUVImages(source)
@@ -46,11 +46,11 @@ def updateMaterials(bricksDict, source):
     # get original matNames, and populate rgba_vals
     for key in bricksDict.keys():
         # skip irrelevant bricks
-        nf = bricksDict[key]["nearest_face"]
+        nf = bricksDict[key]["near_face"]
         if not bricksDict[key]["draw"] or nf is None:
             continue
         # get RGBA value at nearest face intersection
-        ni = bricksDict[key]["nearest_intersection"]
+        ni = bricksDict[key]["near_intersection"]
         rgba, matName = getBrickRGBA(source, nf, ni, uv_images)
         # get material with snapped RGBA value
         if rgba is None:

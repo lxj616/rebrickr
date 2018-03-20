@@ -243,6 +243,31 @@ def getBrickCenter(bricksDict, key, loc=None):
     return coord_ave
 
 
+def getNormalDirection(normal, maxDist=0.77):
+    # initialize vars
+    minDist = maxDist
+    minDir = None
+    # skip normals that aren't within 0.3 of the z values
+    if normal is None or ((normal.z > -0.2 and normal.z < 0.2) or normal.z > 0.8 or normal.z < -0.8):
+        return minDir
+    # set Vectors for perfect normal directions
+    normDirs = {"^X+":Vector((1, 0, 0.5)),
+                "^Y+":Vector((0, 1, 0.5)),
+                "^X-":Vector((-1, 0, 0.5)),
+                "^Y-":Vector((0, -1, 0.5)),
+                "vX+":Vector((1, 0, -0.5)),
+                "vY+":Vector((0, 1, -0.5)),
+                "vX-":Vector((-1, 0, -0.5)),
+                "vY-":Vector((0, -1, -0.5))}
+    # calculate nearest
+    for dir,v in normDirs.items():
+        dist = (v - normal).length
+        if dist < minDist:
+            minDist = dist
+            minDir = dir
+    return minDir
+
+
 def get_override(area_type, region_type):
     for area in bpy.context.screen.areas:
         if area.type == area_type:
