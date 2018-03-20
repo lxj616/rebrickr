@@ -146,9 +146,11 @@ class exportLdraw(Operator):
                 loc.x += ((size[0] - 1) * 20) / 2
             elif idx in [3, -1]:
                 loc.y -= ((size[1] - 1) * 20) / 2
-        loc.z = loc.z * (h  / (dimensions["height"] + dimensions["gap"]))
+        loc.z = loc.z * (h / (dimensions["height"] + dimensions["gap"]))
         if brickD["type"] == "SLOPE" and size == [1, 1, 3]:
             loc.z -= size[2] * 8
+        if zStep == 1 and size[2] == 3:
+            loc.z += 8
         # convert to right-handed co-ordinate system where -Y is "up"
         loc = Vector((loc.x, -loc.z, loc.y))
         return loc

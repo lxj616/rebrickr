@@ -225,7 +225,7 @@ def brickAvail(cm, sourceBrick, brick):
     n = cm.source_name
     Bricker_internal_mn = "Bricker_%(n)s_internal" % locals()
     # This if statement ensures brick is present, brick isn't drawn already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal)
-    if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats):
+    if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats or cm.materialType == "NONE"):
         return True
     else:
         return False
