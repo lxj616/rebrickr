@@ -132,7 +132,9 @@ def attemptMerge(cm, bricksDict, key, availableKeys, defaultSize, zStep, randSta
     for k in keysInBrick:
         bricksDict[k]["attempted_merge"] = True
         bricksDict[k]["parent"] = "self" if k == key else key
-        bricksDict[k]["type"] = shortType if brickSize[2] == 1 and zStep == 1 else tallType
+        # set brick type if necessary
+        if "PLATES" in cm.brickType:
+            bricksDict[k]["type"] = shortType if brickSize[2] == 1 else tallType
 
     return brickSize
 

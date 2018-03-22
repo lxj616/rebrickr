@@ -421,6 +421,9 @@ class ModelSettingsPanel(Panel):
         row.prop(cm, "gap")
         row = col.row(align=True)
         row.prop(cm, "mergeSeed")
+        row = col.row(align=True)
+        row.prop(cm, "connectThresh")
+        row.active = cm.brickType != "CUSTOM"
         col = layout.column(align=True)
         row = col.row(align=True)
 
@@ -446,8 +449,6 @@ class ModelSettingsPanel(Panel):
             row.prop(cm, "calculationAxes", text="")
         row = col.row(align=True)
         row.prop(cm, "shellThickness", text="Thickness")
-        row = col.row(align=True)
-        row.prop(cm, "connectThresh")
         if cm.modelCreated or cm.animated:
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         else:
