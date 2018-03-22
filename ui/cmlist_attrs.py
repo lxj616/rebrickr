@@ -155,6 +155,12 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBuild,
         min=1, max=100,
         default=1)
+    connectThresh = IntProperty(
+        name="Connectivity Iterations",
+        description="Number of merged variations to generate (variation with highest connectivity will be chosen)",
+        update=dirtyBuild,
+        min=1, max=50,
+        default=1)
 
     # BRICK TYPE SETTINGS
     brickType = EnumProperty(

@@ -204,6 +204,42 @@ def checkExposure(bricksDict, x, y, z, direction:int=1, ignoredTypes=[]):
     return isExposed
 
 
+def getNumAlignedEdges(bricksDict, size, key, loc, zStep=None):
+    numAlignedEdges = 0
+    locs = getLocsInBrick(size, key, loc, 1)
+    gotOne = False
+
+    for l in locs:
+        l[2] -= 1
+        k = listToStr(l)
+        if k not in bricksDict:
+            continue
+        p_brick = bricksDict[k]["parent_brick"]
+        if p_brick == "self":
+            p_brick = k
+        if p_brick is None:
+            continue
+        gotOne = True
+        p_brick_sz = bricksDict[p_brick]["size"]
+        # -X side
+        if l[0] == loc[0] and strToList(p_brick)[0] == l[0]:
+            numAlignedEdges += 1
+        # -Y side
+        if l[1] == loc[1] and strToList(p_brick)[1] == l[1]:
+            numAlignedEdges += 1
+        # +X side
+        if l[0] == loc[0] + size[0] - 1 and strToList(p_brick)[0] + p_brick_sz[0] - 1 == l[0]:
+            numAlignedEdges += 1
+        # +Y side
+        if l[1] == loc[1] + size[1] - 1 and strToList(p_brick)[1] + p_brick_sz[1] - 1 == l[1]:
+            numAlignedEdges += 1
+
+    if not gotOne:
+        numAlignedEdges = size[0] * size[1] * 4
+
+    return numAlignedEdges
+    
+
 def brickAvail(cm, sourceBrick, brick):
     """ check brick is available to merge """
     if brick is None:

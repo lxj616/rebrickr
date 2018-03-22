@@ -66,8 +66,8 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     if keys == "ALL":
         keys = list(bricksDict.keys())
     keys.sort()
-    random.seed(cm.mergeSeed)
-    random.shuffle(keys)
+    # random.seed(cm.mergeSeed)
+    # random.shuffle(keys)
     # get dictionary of keys based on z value
     keysDict = {}
     for k0 in keys:
@@ -117,50 +117,80 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     for timeThrough in range(numIters):
         i = 0
         # iterate through z locations in bricksDict (bottom to top)
-        for j, z in enumerate(sorted(keysDict.keys())):
+        for z in sorted(keysDict.keys()):
+            # skip second and third rows on first time through
+            if numIters == 2 and cm.alignBricks:
+                # initialize lowestZ if not done already
+                if lowestZ == -0.1:
+                    lowestZ = z
+                if skipThisRow(cm, timeThrough, lowestZ, loc):
+                    continue
+            if cm.connectThresh > 1:
+                oldKeysNotChecked = keysNotChecked
+                bricksDictsBase = {}
+                for z0 in [z, z+1, z+2] if timeThrough == 0 and numIters == 2 else [z]:
+                    for key in keysDict[z0]:
+                        bricksDictsBase[key] = copy.deepcopy(bricksDict[key])
+                bricksDicts = [copy.deepcopy(bricksDictsBase) for j in range(cm.connectThresh)]
+                numAlignedEdges = [0 for idx in range(cm.connectThresh)]
+            else:
+                bricksDicts = [bricksDict]
             # get availableKeys for attemptMerge
             availableKeys = []
             for ii in range(maxBrickHeight):
                 if ii + z in keysDict:
                     availableKeys += keysDict[z + ii]
-            # iterate through keys on current z level
-            for key in keysDict[z]:
-                i += 1
-                brickD = bricksDict[key]
-                # skip keys that are already drawn or have attempted merge
-                if brickD["attempted_merge"] or brickD["parent"] not in [None, "self"]:
-                    # remove ignored keys from availableKeys (for attemptMerge)
-                    if key in availableKeys:
-                        availableKeys.remove(key)
-                    continue
-
-                # initialize loc
-                loc = strToList(key)
-
-                # skip second and third rows on first time through
-                if numIters == 2 and cm.alignBricks:
-                    # initialize lowestZ if not done already
-                    if lowestZ == -1:
-                        lowestZ = loc[2]
-                    if skipThisRow(cm, timeThrough, lowestZ, loc[2]):
+            for j in range(cm.connectThresh):
+                if cm.connectThresh > 1:
+                    keysNotChecked = oldKeysNotChecked.copy()
+                    numBricks = 0
+                random.seed(cm.mergeSeed + i)
+                random.shuffle(keysDict[z])
+                # iterate through keys on current z level
+                for key in keysDict[z]:
+                    i += 1
+                    brickD = bricksDicts[j][key]
+                    # skip keys that are already drawn or have attempted merge
+                    if brickD["attempted_merge"] or brickD["parent"] not in [None, "self"]:
+                        # remove ignored keys from availableKeys (for attemptMerge)
+                        if key in availableKeys:
+                            availableKeys.remove(key)
                         continue
 
-                # merge current brick with available adjacent bricks
-                brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, availableKeys, [1, 1, zStep], zStep, randS1, mergeVertical=mergeVertical)
-                # add brickSize to cm.brickSizesUsed if not already there
-                brickSizeStr = listToStr(sorted(brickSize[:2]) + [brickSize[2]])
-                cm.brickSizesUsed += brickSizeStr if cm.brickSizesUsed == "" else ("|" + brickSizeStr if brickSizeStr not in cm.brickSizesUsed.split("|") else "")
-                cm.brickTypesUsed += brickD["type"] if cm.brickTypesUsed == "" else ("|" + str(brickD["type"]) if brickD["type"] not in cm.brickTypesUsed.split("|") else "")
+                    # initialize loc
+                    loc = strToList(key)
 
-                # create brick based on the current brickD information
-                drawBrick(cm, bricksDict, brickD, key, loc, i, dimensions, brickSize, split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3)
+                    # merge current brick with available adjacent bricks
+                    brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, availableKeys, [1, 1, zStep], zStep, randS1, mergeVertical=mergeVertical)
+                    if cm.connectThresh > 1:
+                        numAlignedEdges[j] += getNumAlignedEdges(bricksDict, brickSize, key, loc, zStep)
+                        numBricks += 1
+                    # add brickSize to cm.brickSizesUsed if not already there
+                    brickSizeStr = listToStr(sorted(brickSize[:2]) + [brickSize[2]])
+                    cm.brickSizesUsed += brickSizeStr if cm.brickSizesUsed == "" else ("|" + brickSizeStr if brickSizeStr not in cm.brickSizesUsed.split("|") else "")
+                    cm.brickTypesUsed += brickD["type"] if cm.brickTypesUsed == "" else ("|" + str(brickD["type"]) if brickD["type"] not in cm.brickTypesUsed.split("|") else "")
 
-                # print build status to terminal
-                cur_percent = ((i * numIters) / (denom * numIters))
-                old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Building")
+                    # create brick based on the current brickD information
+                    drawBrick(cm, bricksDict, brickD, key, loc, i, dimensions, brickSize, split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3)
 
-                # remove keys in new brick from availableKeys (for attemptMerge)
-                updateKeysLists(brickSize, loc, availableKeys, key)
+                    # print build status to terminal
+                    cur_percent = ((i * numIters) / (denom * numIters))
+                    old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Building")
+
+                    # remove keys in new brick from availableKeys (for attemptMerge)
+                    updateKeysLists(brickSize, loc, availableKeys, key)
+
+                if cm.connectThresh > 1:
+                    if numAlignedEdges[j] == 0:
+                        break
+                    numAlignedEdges[j] += numBricks * 2
+
+            if cm.connectThresh > 1:
+                print(numAlignedEdges)
+                print(max(numAlignedEdges), min(numAlignedEdges))
+                largestTest = numAlignedEdges.index(min(numAlignedEdges))
+                for k3 in bricksDicts[largestTest]:
+                    bricksDict[k3] = bricksDicts[largestTest][k3]
 
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO" and logo is not None:
