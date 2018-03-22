@@ -43,7 +43,8 @@ from .general import *
 from ..lib.caches import bricker_bm_cache
 
 
-def drawBrick(cm, bricksDict, brickD, key, loc, i, dimensions, brickSize, split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3):
+def drawBrick(cm, bricksDict, key, loc, i, dimensions, brickSize, split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3):
+    brickD = bricksDict[key]
     # check exposure of current [merged] brick
     if brickD["top_exposed"] is None or brickD["bot_exposed"] is None or cm.buildIsDirty:
         topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)

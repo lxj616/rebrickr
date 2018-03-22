@@ -214,7 +214,7 @@ def getNumAlignedEdges(bricksDict, size, key, loc, zStep=None):
         k = listToStr(l)
         if k not in bricksDict:
             continue
-        p_brick = bricksDict[k]["parent_brick"]
+        p_brick = bricksDict[k]["parent"]
         if p_brick == "self":
             p_brick = k
         if p_brick is None:
@@ -238,7 +238,7 @@ def getNumAlignedEdges(bricksDict, size, key, loc, zStep=None):
         numAlignedEdges = size[0] * size[1] * 4
 
     return numAlignedEdges
-    
+
 
 def brickAvail(cm, sourceBrick, brick):
     """ check brick is available to merge """

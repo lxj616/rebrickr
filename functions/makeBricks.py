@@ -53,7 +53,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     zStep = getZStep(cm)
 
     # initialize progress bar around cursor
-    old_percent = updateProgressBars(printStatus, cursorStatus, 0, -1, "Building")
+    old_percent = updateProgressBars(printStatus, cursorStatus, 0, -1, "Merging")
 
     # reset brickSizes/TypesUsed
     if keys == "ALL":
@@ -123,26 +123,24 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 # initialize lowestZ if not done already
                 if lowestZ == -0.1:
                     lowestZ = z
-                if skipThisRow(cm, timeThrough, lowestZ, loc):
+                if skipThisRow(cm, timeThrough, lowestZ, z):
                     continue
+            # get availableKeys for attemptMerge
+            availableKeysBase = []
+            for ii in range(maxBrickHeight):
+                if ii + z in keysDict:
+                    availableKeysBase += keysDict[z + ii]
             if cm.connectThresh > 1:
-                oldKeysNotChecked = keysNotChecked
                 bricksDictsBase = {}
-                for z0 in [z, z+1, z+2] if timeThrough == 0 and numIters == 2 else [z]:
-                    for key in keysDict[z0]:
-                        bricksDictsBase[key] = copy.deepcopy(bricksDict[key])
+                for k4 in availableKeysBase:
+                    bricksDictsBase[k4] = copy.deepcopy(bricksDict[k4])
                 bricksDicts = [copy.deepcopy(bricksDictsBase) for j in range(cm.connectThresh)]
                 numAlignedEdges = [0 for idx in range(cm.connectThresh)]
             else:
                 bricksDicts = [bricksDict]
-            # get availableKeys for attemptMerge
-            availableKeys = []
-            for ii in range(maxBrickHeight):
-                if ii + z in keysDict:
-                    availableKeys += keysDict[z + ii]
             for j in range(cm.connectThresh):
+                availableKeys = availableKeysBase.copy()
                 if cm.connectThresh > 1:
-                    keysNotChecked = oldKeysNotChecked.copy()
                     numBricks = 0
                 random.seed(cm.mergeSeed + i)
                 random.shuffle(keysDict[z])
@@ -161,7 +159,8 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                     loc = strToList(key)
 
                     # merge current brick with available adjacent bricks
-                    brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, availableKeys, [1, 1, zStep], zStep, randS1, mergeVertical=mergeVertical)
+                    brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDicts[j], key, availableKeys, [1, 1, zStep], zStep, randS1, mergeVertical=mergeVertical)
+                    brickD["size"] = brickSize
                     if cm.connectThresh > 1:
                         numAlignedEdges[j] += getNumAlignedEdges(bricksDict, brickSize, key, loc, zStep)
                         numBricks += 1
@@ -170,12 +169,9 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                     cm.brickSizesUsed += brickSizeStr if cm.brickSizesUsed == "" else ("|" + brickSizeStr if brickSizeStr not in cm.brickSizesUsed.split("|") else "")
                     cm.brickTypesUsed += brickD["type"] if cm.brickTypesUsed == "" else ("|" + str(brickD["type"]) if brickD["type"] not in cm.brickTypesUsed.split("|") else "")
 
-                    # create brick based on the current brickD information
-                    drawBrick(cm, bricksDict, brickD, key, loc, i, dimensions, brickSize, split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3)
-
                     # print build status to terminal
                     cur_percent = ((i * numIters) / (denom * numIters))
-                    old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Building")
+                    old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Merging")
 
                     # remove keys in new brick from availableKeys (for attemptMerge)
                     updateKeysLists(brickSize, loc, availableKeys, key)
@@ -191,6 +187,22 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 largestTest = numAlignedEdges.index(min(numAlignedEdges))
                 for k3 in bricksDicts[largestTest]:
                     bricksDict[k3] = bricksDicts[largestTest][k3]
+
+    # switch progress bars to 'Building'
+    updateProgressBars(printStatus, cursorStatus, 1, 0, "Merging")
+    old_percent = updateProgressBars(printStatus, cursorStatus, 0, -1, "Building")
+
+    # draw merged bricks
+    for i, k2 in enumerate(bricksDict.keys()):
+        if bricksDict[k2]["draw"] and bricksDict[k2]["parent"] == "self":
+            loc = strToList(k2)
+            # create brick based on the current brickD information
+            drawBrick(cm, bricksDict, k2, loc, i, dimensions, bricksDict[k2]["size"], split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3)
+            old_percent = updateProgressBars(printStatus, cursorStatus, i/len(bricksDict.keys()), old_percent, "Building")
+
+    # end progress bars
+    updateProgressBars(printStatus, cursorStatus, 1, 0, "Building")
+
 
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO" and logo is not None:
