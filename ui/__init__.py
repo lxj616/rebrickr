@@ -1005,7 +1005,7 @@ class BrickDetailsPanel(Panel):
         col1 = layout.column(align=True)
         split = col1.split(align=True, percentage=0.35)
         # hard code keys so that they are in the order I want
-        keys = ["name", "val", "draw", "co", "near_face", "near_intersection", "near_normal", "mat_name", "rgba", "parent_brick", "size", "attempted_merge", "top_exposed", "bot_exposed", "type", "flipped", "rotated", "created_from"]
+        keys = ["name", "val", "draw", "co", "near_face", "near_intersection", "near_normal", "mat_name", "rgba", "parent", "size", "attempted_merge", "top_exposed", "bot_exposed", "type", "flipped", "rotated", "created_from"]
         # draw keys
         col = split.column(align=True)
         col.scale_y = 0.65

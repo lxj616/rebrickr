@@ -157,7 +157,7 @@ class delete_override(Operator):
                             # reset bricksDict values
                             bricksDict[curKey]["draw"] = False
                             bricksDict[curKey]["val"] = 0
-                            bricksDict[curKey]["parent_brick"] = None
+                            bricksDict[curKey]["parent"] = None
                             bricksDict[curKey]["created_from"] = None
                             bricksDict[curKey]["flipped"] = False
                             bricksDict[curKey]["rotated"] = False
@@ -228,7 +228,7 @@ class delete_override(Operator):
                     if not bricksDict[k0]["draw"]:
                         bricksDict[k0]["draw"] = True
                         bricksDict[k0]["size"] = [1, 1, zStep]
-                        bricksDict[k0]["parent_brick"] = "self"
+                        bricksDict[k0]["parent"] = "self"
                         bricksDict[k0]["mat_name"] = bricksDict[curKey]["mat_name"]
                         if k0 not in keysToUpdate:
                             # add key to simple bricksDict for drawing
@@ -236,10 +236,10 @@ class delete_override(Operator):
             # top of bricks below are now exposed
             k0 = listToStr([x, y, z - 1])
             if k0 in bricksDict and bricksDict[k0]["draw"]:
-                if bricksDict[k0]["parent_brick"] == "self":
+                if bricksDict[k0]["parent"] == "self":
                     k1 = k0
                 else:
-                    k1 = bricksDict[k0]["parent_brick"]
+                    k1 = bricksDict[k0]["parent"]
                 if not bricksDict[k1]["top_exposed"]:
                     bricksDict[k1]["top_exposed"] = True
                     if k1 not in keysToUpdate:
@@ -248,10 +248,10 @@ class delete_override(Operator):
             # bottom of bricks above are now exposed
             k0 = listToStr([x, y, z + 1])
             if k0 in bricksDict and bricksDict[k0]["draw"]:
-                if bricksDict[k0]["parent_brick"] == "self":
+                if bricksDict[k0]["parent"] == "self":
                     k1 = k0
                 else:
-                    k1 = bricksDict[k0]["parent_brick"]
+                    k1 = bricksDict[k0]["parent"]
                 if not bricksDict[k1]["bot_exposed"]:
                     bricksDict[k1]["bot_exposed"] = True
                     if k1 not in keysToUpdate:

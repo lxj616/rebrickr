@@ -102,7 +102,7 @@ def verifyBrickExposureAboveAndBelow(origLoc, bricksDict, decriment=0, zNeg=Fals
         k = listToStr(dictLoc)
         if k not in bricksDict:
             continue
-        parent_key = k if bricksDict[k]["parent_brick"] == "self" else bricksDict[k]["parent_brick"]
+        parent_key = k if bricksDict[k]["parent"] == "self" else bricksDict[k]["parent"]
         if parent_key is not None:
             topExposed, botExposed = getBrickExposure(cm, bricksDict, k, loc=dictLoc)
             bricksDict[parent_key]["top_exposed"] = topExposed
@@ -164,7 +164,7 @@ def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, curH
             for y in range(brickSize[1]):
                 for z in range(1, curHeight):
                     newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z])
-                    bricksDict[newKey]["parent_brick"] = None
+                    bricksDict[newKey]["parent"] = None
                     bricksDict[newKey]["draw"] = False
                     setCurBrickVal(bricksDict, strToList(newKey), action="REMOVE")
     # adjust brick size if changing type from 1 tall to 3 tall
@@ -180,7 +180,7 @@ def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, curH
                     if newKey not in bricksDict:
                         bricksDict = createAddlBricksDictEntry(cm, bricksDict, key, newKey, full_d, x, y, z)
                     # update bricksDict entry to point to new brick
-                    bricksDict[newKey]["parent_brick"] = key
+                    bricksDict[newKey]["parent"] = key
                     bricksDict[newKey]["created_from"] = createdFrom
                     bricksDict[newKey]["draw"] = True
                     bricksDict[newKey]["mat_name"] = brickD["mat_name"] if bricksDict[newKey]["mat_name"] == "" else bricksDict[newKey]["mat_name"]

@@ -117,7 +117,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
         for i, key in enumerate(keys):
             brickD = bricksDict[key]
             # skip keys that are already drawn or have attempted merge
-            if not brickD["draw"] or brickD["parent_brick"] not in [None, "self"] or brickD["attempted_merge"]:
+            if not brickD["draw"] or brickD["parent"] not in [None, "self"] or brickD["attempted_merge"]:
                 # remove ignored keys from keysNotChecked (for attemptMerge)
                 if key in keysNotChecked:
                     keysNotChecked.remove(key)
@@ -127,7 +127,6 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
 
             # initialize vars
             loc = strToList(key)
-            brickSizes = [[1, 1, zStep]]
 
             # skip second and third rows on first time through
             if "PLATES" in cm.brickType and cm.alignBricks:
@@ -139,7 +138,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                     continue
 
             # merge current brick with available adjacent bricks
-            brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, brickSizes, zStep, randS1, mergeVertical=mergeVertical)
+            brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, [1, 1, zStep], zStep, randS1, mergeVertical=mergeVertical)
             # add brickSize to cm.brickSizesUsed if not already there
             brickSizeStr = listToStr(sorted(brickSize[:2]) + [brickSize[2]])
             cm.brickSizesUsed += brickSizeStr if cm.brickSizesUsed == "" else ("|" + brickSizeStr if brickSizeStr not in cm.brickSizesUsed.split("|") else "")
@@ -178,7 +177,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                     update_progress("Linking to Scene", percent)
                     old_percent = percent
 
-            if bricksDict[key]["parent_brick"] == "self" and bricksDict[key]["draw"]:
+            if bricksDict[key]["parent"] == "self" and bricksDict[key]["draw"]:
                 name = bricksDict[key]["name"]
                 brick = bpy.data.objects.get(name)
                 # create vert group for bevel mod (assuming only logo verts are selected):

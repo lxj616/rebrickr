@@ -64,7 +64,7 @@ def updateMaterials(bricksDict, source):
     return bricksDict
 
 
-def updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep, maxL, height3Only=False, mergeVertical=False, tallType="BRICK", shortType="PLATE"):
+def updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, sizesD, zStep, maxL, height3Only=False, mergeVertical=False, tallType="BRICK", shortType="PLATE"):
     """ update 'brickSizes' with available brick sizes surrounding bricksDict[key] """
     newMax1 = maxL[1]
     newMax2 = maxL[2]
@@ -96,32 +96,35 @@ def updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep,
                 else:
                     newSize = [i+1, j+1, k+zStep]
                     if newSize not in brickSizes and not (newSize[2] == 1 and height3Only) and newSize[:2] in bpy.props.Bricker_legal_brick_sizes[newSize[2]][tallType if newSize[2] == 3 else shortType]:
+                        numConnections = getNumConnections(bricksDict, newSize, key, loc, zStep)
+                        sizesD.append({"size":newSize, "connections":numConnections})
                         brickSizes.append(newSize)
             if breakOuter1: break
         breakOuter1 = False
         if breakOuter2: break
+    return brickSizes, sizesD
 
 
-def attemptMerge(cm, bricksDict, key, availableKeys, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True, shortType="PLATE", tallType="BRICK", height3Only=False):
+def attemptMerge(cm, bricksDict, key, availableKeys, defaultSize, zStep, randState, preferLargest=False, mergeVertical=True, shortType="PLATE", tallType="BRICK", height3Only=False):
     """ attempt to merge bricksDict[key] with adjacent bricks """
-    assert len(brickSizes) > 0
-
     # get loc from key
     loc = strToList(key)
 
     if cm.brickType != "CUSTOM":
+        brickSizes = [defaultSize]
+        sizesD = [{"size":defaultSize, "connections":getNumConnections(bricksDict, defaultSize, key, zStep=zStep)}]
         # iterate through adjacent locs to find available brick sizes
-        updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
-        updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
+        brickSizes, sizesD = updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, sizesD, zStep, [cm.maxWidth, cm.maxDepth, 3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
+        brickSizes, sizesD = updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, sizesD, zStep, [cm.maxDepth, cm.maxWidth, 3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
         # sort brick types from smallest to largest
         order = randState.randint(0,2)
         if preferLargest:
-            brickSizes.sort(key=lambda x: (x[0] * x[1] * x[2]))
+            sizesD.sort(key=lambda x: (x["connections"], x["size"][0] * x["size"][1] * x["size"][2]))
         else:
-            brickSizes.sort(key=lambda x: (x[2], x[order], x[(order+1)%2]))
+            sizesD.sort(key=lambda x: (x["connections"], x["size"][2], x["size"][order], x["size"][(order+1)%2]))
 
     # grab the biggest brick type and store to bricksDict
-    brickSize = brickSizes[-1]
+    brickSize = sizesD[-1]["size"]
     bricksDict[key]["size"] = brickSize
 
     # Iterate through merged bricks to set brick parents
@@ -131,11 +134,11 @@ def attemptMerge(cm, bricksDict, key, availableKeys, brickSizes, zStep, randStat
         bricksDict[k]["attempted_merge"] = True
          # checks that x,y,z refer to original brick
         if k == key:
-            # set original brick as parent_brick
-            bricksDict[k]["parent_brick"] = "self"
+            # set original brick as brick parent
+            bricksDict[k]["parent"] = "self"
         else:
             # point deleted brick to original brick
-            bricksDict[k]["parent_brick"] = key
+            bricksDict[k]["parent"] = key
         # set brick type if necessary
         if "PLATES" in cm.brickType:
             bricksDict[k]["type"] = shortType if brickSize[2] == 1 else tallType
@@ -208,6 +211,18 @@ def checkExposure(bricksDict, x, y, z, direction:int=1, ignoredTypes=[]):
         for k in valKeysChecked:
             bricksDict[k]["val"] = 0
     return isExposed
+
+
+def getNumConnections(bricksDict, size, key, loc=None, zStep=None):
+    connectedBricks = []
+    brickLocs = getLocsInBrick(size, key, loc, zStep)
+    for l in brickLocs:
+        l[2] -= zStep
+        k = listToStr(l)
+        if k not in bricksDict:
+            continue
+        connectedBricks.append(k if bricksDict[k]["parent"] == "self" else bricksDict[k]["parent"])
+    return len(set(connectedBricks))
 
 
 def canBeJoined(cm, bricksDict, loc, key, i, j, k=0):

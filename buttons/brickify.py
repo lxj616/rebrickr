@@ -494,7 +494,7 @@ class BrickerBrickify(bpy.types.Operator):
                 bD = bricksDict[kk]
                 if keys == "ALL" or kk in keys:
                     bD["size"] = None
-                    bD["parent_brick"] = None
+                    bD["parent"] = None
                     bD["top_exposed"] = None
                     bD["bot_exposed"] = None
                     if cm.lastShellThickness != cm.shellThickness:

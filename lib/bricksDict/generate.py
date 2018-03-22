@@ -450,7 +450,7 @@ def getThreshold(cm):
     """ returns threshold (draw bricks if returned val >= threshold) """
     return 1.01 - (cm.shellThickness / 100)
 
-def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,0), near_face:int=None, near_intersection:tuple=None, near_normal:tuple=None, rgba:tuple=None, mat_name:str=None, parent_brick:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
+def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,0), near_face:int=None, near_intersection:tuple=None, near_normal:tuple=None, rgba:tuple=None, mat_name:str=None, parent:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
     """
     create an entry in the dictionary of brick locations
 
@@ -464,7 +464,7 @@ def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,
     near_normal       -- normal of the nearest face intersection
     rgba              -- [red, green, blue, alpha] values of brick color
     mat_name          -- name of material attributed to bricks at this location
-    parent_brick      -- key into brick dictionary with information about the parent brick merged with this one
+    parent      -- key into brick dictionary with information about the parent brick merged with this one
     size              -- 3D size of brick (e.g. standard 2x4 brick -> [2, 4, 3])
     attempted_merge   -- attempt has been made in makeBricks function to merge this brick with nearby bricks
     top_exposed       -- top of brick is visible to camera
@@ -484,7 +484,7 @@ def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,
             "near_normal":near_normal,
             "rgba":rgba,
             "mat_name":mat_name,
-            "parent_brick":parent_brick,
+            "parent":parent,
             "size":size,
             "attempted_merge":attempted_merge,
             "top_exposed":top_exposed,

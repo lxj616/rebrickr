@@ -82,7 +82,7 @@ class Bricks:
         for key in keys:
             # set all bricks as unmerged
             if bricksDict[key]["draw"]:
-                bricksDict[key]["parent_brick"] = "self"
+                bricksDict[key]["parent"] = "self"
                 bricksDict[key]["size"] = [1, 1, getZStep(cm)]
 
     def split(bricksDict, key, loc=None, cm=None, v=True, h=True):
@@ -122,7 +122,7 @@ class Bricks:
                     curKey = listToStr([x0,y0,z0])
                     bricksDict[curKey]["size"] = newSize
                     bricksDict[curKey]["type"] = "BRICK" if newSize[2] == 3 else "PLATE"
-                    bricksDict[curKey]["parent_brick"] = "self"
+                    bricksDict[curKey]["parent"] = "self"
                     bricksDict[curKey]["top_exposed"] = bricksDict[key]["top_exposed"]
                     bricksDict[curKey]["bot_exposed"] = bricksDict[key]["bot_exposed"]
                     # add curKey to list of split keys

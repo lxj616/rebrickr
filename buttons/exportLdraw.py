@@ -79,7 +79,7 @@ class exportLdraw(Operator):
         offset.z = offset.y % 10
         for key in bricksDict.keys():
             # skip bricks that aren't displayed
-            if not bricksDict[key]["draw"] or bricksDict[key]["parent_brick"] != "self":
+            if not bricksDict[key]["draw"] or bricksDict[key]["parent"] != "self":
                 continue
             # initialize brick size and typ
             size = bricksDict[key]["size"]

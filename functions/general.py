@@ -202,7 +202,7 @@ def gammaCorrect(rgba, val):
 def getParentKey(bricksDict, key):
     if key not in bricksDict:
         return None
-    parent_key = key if bricksDict[key]["parent_brick"] in ["self", None] else bricksDict[key]["parent_brick"]
+    parent_key = key if bricksDict[key]["parent"] in ["self", None] else bricksDict[key]["parent"]
     return parent_key
 
 
