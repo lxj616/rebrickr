@@ -125,7 +125,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             brickD = bricksDict[key]
             # skip keys that are already drawn or have attempted merge
             if not brickD["draw"] or brickD["attempted_merge"] or brickD["parent"] not in [None, "self"]:
-                # remove ignored keys from keysNotChecked (for attemptMerge)
+                # remove ignored keys from keysNotChecked (for progress bar)
                 if key in keysNotChecked:
                     keysNotChecked.remove(key)
                 if key in availableKeys:
@@ -134,9 +134,9 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
 
             # initialize vars
             loc = strToList(key)
-
             if loc[2] != curZ:
                 curZ = loc[2]
+                # get availableKeys for attemptMerge
                 availableKeys = [keysDict[curZ + ii] for ii in range(maxBrickHeight)]
                 # initialize lowestZ if not done already
                 if lowestZ == -1:
@@ -147,7 +147,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 continue
 
             # merge current brick with available adjacent bricks
-            brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, [1, 1, zStep], zStep, randS1, mergeVertical=mergeVertical)
+            brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, availableKeys, [1, 1, zStep], zStep, randS1, mergeVertical=mergeVertical)
             # add brickSize to cm.brickSizesUsed if not already there
             brickSizeStr = listToStr(sorted(brickSize[:2]) + [brickSize[2]])
             cm.brickSizesUsed += brickSizeStr if cm.brickSizesUsed == "" else ("|" + brickSizeStr if brickSizeStr not in cm.brickSizesUsed.split("|") else "")
@@ -160,7 +160,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             cur_percent = 1 - (len(keysNotChecked) / len(keys))
             old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Building")
 
-            # remove keys in new brick from keysNotChecked (for attemptMerge)
+            # remove keys in new brick from keysNotChecked (for progress bar)
             updateKeysLists(brickSize, loc, keysNotChecked, availableKeys, key)
 
 
