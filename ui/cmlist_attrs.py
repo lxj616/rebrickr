@@ -156,8 +156,8 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         min=1, max=100,
         default=1)
     connectThresh = IntProperty(
-        name="Connectivity Iterations",
-        description="Number of merged variations to generate (variation with highest connectivity will be chosen)",
+        name="Connectivity",
+        description="Quality of the model's brick connectivity (higher numbers are slower but better quality)",
         update=dirtyBuild,
         min=1, max=50,
         default=1)
