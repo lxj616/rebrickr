@@ -67,6 +67,15 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     random.shuffle(keys)
     # sort the list by the first character only
     keys.sort(key=lambda x: strToList(x)[2])
+    # get dictionary of keys based on z value
+    keysDict = {}
+    for k0 in keys:
+        z = strToList(k0)[2]
+        if bricksDict[k0]["draw"]:
+            if z in keysDict:
+                keysDict[z].append(k0)
+            else:
+                keysDict[z] = [k0]
 
     # get brick group
     group_name = group_name or 'Bricker_%(n)s_bricks' % locals()
@@ -97,6 +106,9 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     mats = []
     allBrickMeshes = []
     lowestZ = -1
+    curZ = -1
+    availableKeys = []
+    maxBrickHeight = 1 if zStep == 3 else max(legalBricks.keys())
     # set up internal material for this object
     internalMat = None if len(source.data.materials) == 0 else bpy.data.materials.get(cm.internalMatName) or bpy.data.materials.get("Bricker_%(n)s_internal" % locals()) or bpy.data.materials.new("Bricker_%(n)s_internal" % locals())
     if internalMat is not None and cm.materialType == "SOURCE" and cm.matShellDepth < cm.shellThickness:
@@ -112,23 +124,27 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
         for i, key in enumerate(keys):
             brickD = bricksDict[key]
             # skip keys that are already drawn or have attempted merge
-            if not brickD["draw"] or brickD["parent"] not in [None, "self"] or brickD["attempted_merge"]:
+            if not brickD["draw"] or brickD["attempted_merge"] or brickD["parent"] not in [None, "self"]:
                 # remove ignored keys from keysNotChecked (for attemptMerge)
                 if key in keysNotChecked:
                     keysNotChecked.remove(key)
+                if key in availableKeys:
+                    availableKeys.remove(key)
                 continue
 
             # initialize vars
             loc = strToList(key)
 
-            # skip second and third rows on first time through
-            if numIters == 2 and cm.alignBricks:
+            if loc[2] != curZ:
+                curZ = loc[2]
+                availableKeys = [keysDict[curZ + ii] for ii in range(maxBrickHeight)]
                 # initialize lowestZ if not done already
                 if lowestZ == -1:
                     lowestZ = loc[2]
-                # check if row should be skipped
-                if skipThisRow(cm, timeThrough, lowestZ, loc[2]):
-                    continue
+
+            # skip second and third rows on first time through
+            if numIters == 2 and cm.alignBricks and skipThisRow(cm, timeThrough, lowestZ, loc[2]):
+                continue
 
             # merge current brick with available adjacent bricks
             brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, [1, 1, zStep], zStep, randS1, mergeVertical=mergeVertical)
@@ -145,7 +161,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Building")
 
             # remove keys in new brick from keysNotChecked (for attemptMerge)
-            updateKeysNotChecked(brickSize, loc, keysNotChecked, key)
+            updateKeysLists(brickSize, loc, keysNotChecked, availableKeys, key)
 
 
     # remove duplicate of original logoDetail

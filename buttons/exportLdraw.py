@@ -134,7 +134,7 @@ class exportLdraw(Operator):
         size = brickD["size"]
         zStep = getZStep(cm)
         dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)
-        h = 8 * (zStep % 4)
+        h = 8 * ((zStep + 2) % 4)
         loc.x = loc.x * (20 / (dimensions["width"] + dimensions["gap"]))
         loc.y = loc.y * (20 / (dimensions["width"] + dimensions["gap"]))
         if brickD["type"] == "SLOPE":
@@ -149,8 +149,8 @@ class exportLdraw(Operator):
         loc.z = loc.z * (h / (dimensions["height"] + dimensions["gap"]))
         if brickD["type"] == "SLOPE" and size == [1, 1, 3]:
             loc.z -= size[2] * 8
-        if zStep == 1 and size[2] == 3:
-            loc.z += 8
+        # if zStep == 1 and size[2] == 3:
+        #     loc.z += 8
         # convert to right-handed co-ordinate system where -Y is "up"
         loc = Vector((loc.x, -loc.z, loc.y))
         return loc
