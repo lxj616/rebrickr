@@ -96,7 +96,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
 
     mats = []
     allBrickMeshes = []
-    lowestLoc = -1
+    lowestZ = -1
     # set up internal material for this object
     internalMat = None if len(source.data.materials) == 0 else bpy.data.materials.get(cm.internalMatName) or bpy.data.materials.get("Bricker_%(n)s_internal" % locals()) or bpy.data.materials.new("Bricker_%(n)s_internal" % locals())
     if internalMat is not None and cm.materialType == "SOURCE" and cm.matShellDepth < cm.shellThickness:
@@ -123,11 +123,11 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
 
             # skip second and third rows on first time through
             if "PLATES" in cm.brickType and cm.alignBricks:
-                # initialize lowestLoc if not done already
-                if lowestLoc == -1:
-                    lowestLoc = loc[2]
+                # initialize lowestZ if not done already
+                if lowestZ == -1:
+                    lowestZ = loc[2]
                 # check if row should be skipped
-                if skipThisRow(timeThrough, lowestLoc, loc):
+                if skipThisRow(cm, timeThrough, lowestZ, loc[2]):
                     continue
 
             # merge current brick with available adjacent bricks

@@ -153,13 +153,12 @@ def updateKeysNotChecked(size, loc, keysNotChecked, key):
             keysNotChecked.remove(k)
 
 
-def skipThisRow(timeThrough, lowestLoc, loc):
-    cm = getActiveContextInfo()[1]
+def skipThisRow(cm, timeThrough, lowestZ, z):
     if timeThrough == 0:  # first time
-        if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 in [1, 2]:
+        if (z - cm.offsetBrickLayers - lowestZ) % 3 in [1, 2]:
             return True
     else:  # second time
-        if (loc[2] - cm.offsetBrickLayers - lowestLoc) % 3 == 0:
+        if (z - cm.offsetBrickLayers - lowestZ) % 3 == 0:
             return True
     return False
 
