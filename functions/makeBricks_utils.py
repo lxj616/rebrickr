@@ -146,11 +146,9 @@ def updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, stat
     return old_percent
 
 
-def updateKeysLists(size, loc, keysNotChecked, availableKeys, key):
+def updateKeysLists(size, loc, availableKeys, key):
     keysChecked = getKeysInBrick(size, key, loc)
     for k in keysChecked:
-        if k in keysNotChecked:
-            keysNotChecked.remove(k)
         if k in availableKeys:
             availableKeys.remove(k)
 

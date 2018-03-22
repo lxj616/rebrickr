@@ -71,11 +71,11 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     keysDict = {}
     for k0 in keys:
         z = strToList(k0)[2]
-        if bricksDict[k0]["draw"]:
-            if z in keysDict:
+        if z in keysDict:
+            if bricksDict[k0]["draw"]:
                 keysDict[z].append(k0)
-            else:
-                keysDict[z] = [k0]
+        else:
+            keysDict[z] = [k0]
 
     # get brick group
     group_name = group_name or 'Bricker_%(n)s_bricks' % locals()
@@ -116,7 +116,6 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     # initialize supportBrickDs
     supportBrickDs = []
     bricksCreated = []
-    keysNotChecked = keys.copy()
     # set number of times to run through all keys
     numIters = 2 if "PLATES" in cm.brickType else 1
     for timeThrough in range(numIters):
@@ -125,9 +124,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             brickD = bricksDict[key]
             # skip keys that are already drawn or have attempted merge
             if not brickD["draw"] or brickD["attempted_merge"] or brickD["parent"] not in [None, "self"]:
-                # remove ignored keys from keysNotChecked (for progress bar)
-                if key in keysNotChecked:
-                    keysNotChecked.remove(key)
+                # remove ignored keys from availableKeys (for attemptMerge)
                 if key in availableKeys:
                     availableKeys.remove(key)
                 continue
@@ -137,7 +134,9 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             if loc[2] != curZ:
                 curZ = loc[2]
                 # get availableKeys for attemptMerge
-                availableKeys = [keysDict[curZ + ii] for ii in range(maxBrickHeight)]
+                availableKeys = []
+                for ii in range(maxBrickHeight):
+                    availableKeys += keysDict[curZ + ii]
                 # initialize lowestZ if not done already
                 if lowestZ == -1:
                     lowestZ = loc[2]
@@ -157,11 +156,11 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, brickScale, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4)
 
             # print build status to terminal
-            cur_percent = 1 - (len(keysNotChecked) / len(keys))
+            cur_percent = ((i * numIters) / (len(keys) * numIters))
             old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Building")
 
-            # remove keys in new brick from keysNotChecked (for progress bar)
-            updateKeysLists(brickSize, loc, keysNotChecked, availableKeys, key)
+            # remove keys in new brick from availableKeys (for attemptMerge)
+            updateKeysLists(brickSize, loc, availableKeys, key)
 
 
     # remove duplicate of original logoDetail
