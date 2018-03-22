@@ -106,6 +106,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     lowestZ = -1
     availableKeys = []
     maxBrickHeight = 1 if zStep == 3 else max(legalBricks.keys())
+    connectThresh = 1 if cm.brickType == "CUSTOM" else cm.connectThresh
     # set up internal material for this object
     internalMat = None if len(source.data.materials) == 0 else bpy.data.materials.get(cm.internalMatName) or bpy.data.materials.get("Bricker_%(n)s_internal" % locals()) or bpy.data.materials.new("Bricker_%(n)s_internal" % locals())
     if internalMat is not None and cm.materialType == "SOURCE" and cm.matShellDepth < cm.shellThickness:
@@ -130,23 +131,22 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             for ii in range(maxBrickHeight):
                 if ii + z in keysDict:
                     availableKeysBase += keysDict[z + ii]
-            if cm.connectThresh > 1:
+            if connectThresh > 1:
                 bricksDictsBase = {}
                 for k4 in availableKeysBase:
                     bricksDictsBase[k4] = copy.deepcopy(bricksDict[k4])
-                bricksDicts = [copy.deepcopy(bricksDictsBase) for j in range(cm.connectThresh)]
-                numAlignedEdges = [0 for idx in range(cm.connectThresh)]
+                bricksDicts = [copy.deepcopy(bricksDictsBase) for j in range(connectThresh)]
+                numAlignedEdges = [0 for idx in range(connectThresh)]
             else:
                 bricksDicts = [bricksDict]
-            for j in range(cm.connectThresh):
+            for j in range(connectThresh):
                 availableKeys = availableKeysBase.copy()
-                if cm.connectThresh > 1:
-                    numBricks = 0
+                numBricks = 0
                 random.seed(cm.mergeSeed + i)
                 random.shuffle(keysDict[z])
                 # iterate through keys on current z level
                 for key in keysDict[z]:
-                    i += 1
+                    i += 1 / connectThresh
                     brickD = bricksDicts[j][key]
                     # skip keys that are already drawn or have attempted merge
                     if brickD["attempted_merge"] or brickD["parent"] not in [None, "self"]:
@@ -161,7 +161,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                     # merge current brick with available adjacent bricks
                     brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDicts[j], key, availableKeys, [1, 1, zStep], zStep, randS1, mergeVertical=mergeVertical)
                     brickD["size"] = brickSize
-                    if cm.connectThresh > 1:
+                    if connectThresh > 1:
                         numAlignedEdges[j] += getNumAlignedEdges(bricksDict, brickSize, key, loc, zStep)
                         numBricks += 1
                     # add brickSize to cm.brickSizesUsed if not already there
@@ -176,17 +176,15 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                     # remove keys in new brick from availableKeys (for attemptMerge)
                     updateKeysLists(brickSize, loc, availableKeys, key)
 
-                if cm.connectThresh > 1:
+                if connectThresh > 1:
                     if numAlignedEdges[j] == 0:
                         break
                     numAlignedEdges[j] += numBricks * 2
 
-            if cm.connectThresh > 1:
-                print(numAlignedEdges)
-                print(max(numAlignedEdges), min(numAlignedEdges))
-                largestTest = numAlignedEdges.index(min(numAlignedEdges))
-                for k3 in bricksDicts[largestTest]:
-                    bricksDict[k3] = bricksDicts[largestTest][k3]
+            if connectThresh > 1:
+                optimalTest = numAlignedEdges.index(min(numAlignedEdges))
+                for k3 in bricksDicts[optimalTest]:
+                    bricksDict[k3] = bricksDicts[optimalTest][k3]
 
     # switch progress bars to 'Building'
     updateProgressBars(printStatus, cursorStatus, 1, 0, "Merging")

@@ -113,9 +113,9 @@ def attemptMerge(cm, bricksDict, key, availableKeys, defaultSize, zStep, randSta
     """ attempt to merge bricksDict[key] with adjacent bricks """
     # get loc from key
     loc = strToList(key)
+    brickSizes = [defaultSize]
 
     if cm.brickType != "CUSTOM":
-        brickSizes = [defaultSize]
         # iterate through adjacent locs to find available brick sizes
         updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
         updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
