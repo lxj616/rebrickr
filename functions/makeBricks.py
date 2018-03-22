@@ -87,9 +87,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
 
     # initialize progress bar around cursor
     old_percent = 0
-    if cursorStatus:
-        wm = bpy.context.window_manager
-        wm.progress_begin(0, 100)
+    updateProgressBars(printStatus, cursorStatus, 0, -1, "Building")
 
     # initialize random states
     randS1 = np.random.RandomState(cm.mergeSeed)  # for brickSize calc
@@ -108,8 +106,6 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     supportBrickDs = []
     bricksCreated = []
     keysNotChecked = keys.copy()
-    if printStatus:
-        update_progress("Building", 0.0)
     # set number of times to run through all keys
     numIters = 2 if "PLATES" in cm.brickType else 1
     for timeThrough in range(numIters):
@@ -149,7 +145,8 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, brickScale, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4)
 
             # print build status to terminal
-            old_percent = printBuildStatus(keys, printStatus, cursorStatus, keysNotChecked, old_percent)
+            cur_percent = 1 - (len(keysNotChecked) / len(keys))
+            old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Building")
 
             # remove keys in new brick from keysNotChecked (for attemptMerge)
             updateKeysNotChecked(brickSize, loc, keysNotChecked, key)
@@ -158,24 +155,15 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO" and logo is not None:
         bpy.data.objects.remove(logo)
-    # end progress bar in terminal
-    if printStatus:
-        update_progress("Building", 1)
-    # end progress bar on cursor
-    if cursorStatus:
-        wm.progress_end()
+    # end progress bars
+    updateProgressBars(printStatus, cursorStatus, 1, 0, "Building")
 
     # combine meshes, link to scene, and add relevant data to the new Blender MESH object
     if split:
         # iterate through keys
         old_percent = 0
         for i, key in enumerate(keys):
-            if printStatus:
-                # print status to terminal
-                percent = i/len(bricksDict)
-                if percent - old_percent > 0.001 and percent < 1:
-                    update_progress("Linking to Scene", percent)
-                    old_percent = percent
+            old_percent = updateProgressBars(printStatus, False, i/len(bricksDict), old_percent, "Linking to Scene")
 
             if bricksDict[key]["parent"] == "self" and bricksDict[key]["draw"]:
                 name = bricksDict[key]["name"]
@@ -189,8 +177,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 brick.parent = parent
                 scn.objects.link(brick)
                 brick.isBrick = True
-        if printStatus:
-            update_progress("Linking to Scene", 1)
+        updateProgressBars(printStatus, False, 1, 0, "Linking to Scene")
     else:
         m = combineMeshes(allBrickMeshes, printStatus)
         name = 'Bricker_%(n)s_bricks_combined' % locals()

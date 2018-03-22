@@ -129,16 +129,20 @@ def mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, default
     return brickSize
 
 
-def printBuildStatus(keys, printStatus, cursorStatus, keysNotChecked, old_percent):
+def updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, statusType):
     if printStatus:
         # print status to terminal
-        percent = 1 - (len(keysNotChecked) / len(keys))
-        if percent - old_percent > 0.001 and percent < 1:
-            update_progress("Building", percent)
+        if cur_percent - old_percent > 0.001 and cur_percent <= 1:
+            update_progress(statusType, cur_percent)
             if cursorStatus:
                 wm = bpy.context.window_manager
-                wm.progress_update(percent*100)
-            old_percent = percent
+                if cur_percent == 0:
+                    wm.progress_begin(0, 100)
+                elif cur_percent >= 1:
+                    wm.progress_end()
+                else:
+                    wm.progress_update(cur_percent*100)
+            old_percent = cur_percent
     return old_percent
 
 
@@ -167,17 +171,11 @@ def combineMeshes(meshes, printStatus):
     old_percent = 0
     numMeshes = len(meshes)
     for i,m in enumerate(meshes):
-        # print status to terminal
-        if printStatus:
-            percent = i/numMeshes
-            if percent - old_percent > 0.001 and percent < 1:
-                update_progress("Joining Bricks", percent)
-                old_percent = percent
+        old_percent = updateProgressBars(printStatus, False, i/numMeshes, old_percent, "Joining Bricks")
         # pull edit mesh to bmesh
         bm.from_mesh(m)
     # end progress bar
-    if printStatus:
-        update_progress("Joining Bricks", 1)
+    updateProgressBars(printStatus, False, 1, 0, "Joining Bricks")
     finalMesh = bpy.data.meshes.new("newMesh")
     bm.to_mesh(finalMesh)
     return finalMesh
