@@ -142,7 +142,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
 
             # print build status to terminal
             cur_percent = 1 - (len(keysNotChecked) / len(keys))
-            old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Building")
+            # old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Building")
 
             # remove keys in new brick from keysNotChecked (for attemptMerge)
             updateKeysNotChecked(brickSize, loc, keysNotChecked, key)

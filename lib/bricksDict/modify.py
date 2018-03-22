@@ -26,9 +26,10 @@ Created by Christopher Gearhart
 import bpy
 
 # Bricker imports
-from ...functions.general import *
-from ..Brick.legal_brick_sizes import *
 from .functions import *
+from ..Brick.legal_brick_sizes import *
+from ...functions.general import *
+from ...functions.wrappers import *
 
 
 def updateMaterials(bricksDict, source):
@@ -64,18 +65,21 @@ def updateMaterials(bricksDict, source):
     return bricksDict
 
 
+# @timed_call('updateSizes', precision=5)
 def updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep, maxL, height3Only=False, mergeVertical=False, tallType="BRICK", shortType="PLATE"):
     """ update 'brickSizes' with available brick sizes surrounding bricksDict[key] """
     newMax1 = maxL[1]
     newMax2 = maxL[2]
     breakOuter1 = False
     breakOuter2 = False
-    for i in range(0, maxL[0]):
-        for j in range(0, maxL[1]):
+    # return
+    for i in range(maxL[0]):
+        for j in range(maxL[1]):
             # break case 1
             if j >= newMax1: break
             # break case 2
-            elif not canBeJoined(cm, bricksDict, loc, key, i, j) or listToStr([i + loc[0], j + loc[1], loc[2]]) not in availableKeys:
+            key1 = listToStr([loc[0] + i, loc[1] + j, loc[2]])
+            if not brickAvail(cm, bricksDict[key], bricksDict.get(key1)) or key1 not in availableKeys:
                 if j == 0: breakOuter2 = True
                 else:      newMax1 = j
                 break
@@ -86,7 +90,8 @@ def updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep,
                 # break case 1
                 elif k >= newMax2: break
                 # break case 2
-                elif not canBeJoined(cm, bricksDict, loc, key, i, j, k) or listToStr([i + loc[0], j + loc[1], loc[2] + k]) not in availableKeys:
+                key2 = listToStr([loc[0] + i, loc[1] + j, loc[2] + k])
+                if not brickAvail(cm, bricksDict[key], bricksDict.get(key2)) or key2 not in availableKeys:
                     if k == 0: breakOuter1 = True
                     else:      newMax2 = k
                     break
@@ -95,7 +100,9 @@ def updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep,
                 # else, append current brick size to brickSizes
                 else:
                     newSize = [i+1, j+1, k+zStep]
-                    if newSize not in brickSizes and not (newSize[2] == 1 and height3Only) and newSize[:2] in bpy.props.Bricker_legal_brick_sizes[newSize[2]][tallType if newSize[2] == 3 else shortType]:
+                    if newSize in brickSizes:
+                        continue
+                    if not (newSize[2] == 1 and height3Only) and newSize[:2] in bpy.props.Bricker_legal_brick_sizes[newSize[2]][tallType if newSize[2] == 3 else shortType]:
                         brickSizes.append(newSize)
             if breakOuter1: break
         breakOuter1 = False
@@ -209,22 +216,9 @@ def checkExposure(bricksDict, x, y, z, direction:int=1, ignoredTypes=[]):
     return isExposed
 
 
-def canBeJoined(cm, bricksDict, loc, key, i, j, k=0):
-    curBrickD = bricksDict[key]
-    key = listToStr([loc[0] + i, loc[1] + j, loc[2] + k])
-    nextBrickD = bricksDict.get(key)
-    spotAvail = brickAvail(cm, curBrickD, nextBrickD)
-    return spotAvail
-
-
 def brickAvail(cm, sourceBrick, brick):
     """ check brick is available to merge """
-    if not brick:
+    if brick is None:
         return False
-    n = cm.source_name
-    Bricker_internal_mn = "Bricker_%(n)s_internal" % locals()
-    # This if statement ensures brick is present, brick isn't drawn already, and checks that brick materials match, or mergeInconsistentMats is True, or one of the mats is "" (internal)
-    if brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats or cm.materialType == "NONE"):
-        return True
-    else:
-        return False
+    # returns True if brick is present, brick isn't drawn already, and brick materials match or mergeInconsistentMats is True, or one of the mats is "" (internal)
+    return brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats or cm.materialType == "NONE")
