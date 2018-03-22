@@ -118,8 +118,6 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                     keysNotChecked.remove(key)
                 continue
 
-            ct = time.time()
-
             # initialize vars
             loc = strToList(key)
 
@@ -140,7 +138,6 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             cm.brickTypesUsed += brickD["type"] if cm.brickTypesUsed == "" else ("|" + str(brickD["type"]) if brickD["type"] not in cm.brickTypesUsed.split("|") else "")
 
             # create brick based on the current brickD information
-            lastBricksDict = bricksDict
             drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, brickScale, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4)
 
             # print build status to terminal
