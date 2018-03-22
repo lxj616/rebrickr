@@ -43,7 +43,7 @@ from .general import *
 from ..lib.caches import bricker_bm_cache
 
 
-def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, split, customData, customObj_details, brickScale, bricksCreated, supportBrickDs, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3, randS4):
+def drawBrick(cm, bricksDict, brickD, key, loc, i, dimensions, brickSize, split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3):
     # check exposure of current [merged] brick
     if brickD["top_exposed"] is None or brickD["bot_exposed"] is None or cm.buildIsDirty:
         topExposed, botExposed = getBrickExposure(cm, bricksDict, key, loc)
@@ -54,7 +54,7 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
         botExposed = brickD["bot_exposed"]
 
     # get brick material
-    mat = getMaterial(cm, bricksDict, key, brickSize, randS2, brick_mats, i)
+    mat = getMaterial(cm, bricksDict, key, brickSize, brick_mats, i)
 
     # set up arguments for brick mesh
     useStud = (topExposed and cm.studDetail != "NONE") or cm.studDetail == "ALL"
@@ -69,16 +69,16 @@ def drawBrick(cm, bricksDict, brickD, key, loc, keys, i, dimensions, brickSize, 
         m = customData.copy()
     else:
         # get brick mesh
-        bm = getBrickMesh(cm, brickD, randS4, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.circleVerts)
+        bm = getBrickMesh(cm, brickD, randS3, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.circleVerts)
         # create new mesh and send bm to it
         m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
         bm.to_mesh(m)
     # center mesh origin
     centerMeshOrigin(m, dimensions, brickSize)
     # apply random rotation to edit mesh according to parameters
-    if cm.randomRot > 0: randomizeRot(cm.randomRot, randS3, brickSize, m)
+    if cm.randomRot > 0: randomizeRot(cm.randomRot, randS2, brickSize, m)
     # get brick location
-    locOffset = getRandomLoc(cm.randomLoc, randS3, dimensions["width"], dimensions["height"]) if cm.randomLoc > 0 else Vector((0, 0, 0))
+    locOffset = getRandomLoc(cm.randomLoc, randS2, dimensions["width"], dimensions["height"]) if cm.randomLoc > 0 else Vector((0, 0, 0))
     brickLoc = getBrickCenter(bricksDict, key, loc) + locOffset
 
     if split:
@@ -299,7 +299,7 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
     return bm
 
 
-def getMaterial(cm, bricksDict, key, size, randState=None, brick_mats=None, seedInc=None):
+def getMaterial(cm, bricksDict, key, size, brick_mats=None, seedInc=None):
     mat = None
     highestVal = 0
     matsL = []
@@ -325,6 +325,7 @@ def getMaterial(cm, bricksDict, key, size, randState=None, brick_mats=None, seed
     elif cm.materialType == "RANDOM" and len(brick_mats) > 0:
         randState.seed(cm.randomMatSeed + seedInc)
         if len(brick_mats) > 1:
+            randState = np.random.RandomState(0)
             randIdx = randState.randint(0, len(brick_mats))
         else:
             randIdx = 0
