@@ -120,18 +120,18 @@ def addEdgeSplitMod(obj):
     eMod = obj.modifiers.new('Edge Split', 'EDGE_SPLIT')
 
 
-def mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, brickSizes, zStep, randS1, mergeVertical=True):
+def mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, defaultSize, zStep, randS1, mergeVertical=True):
     if brickD["size"] is None or (cm.buildIsDirty):
         preferLargest = brickD["val"] > 0 and brickD["val"] < 1
-        brickSize = attemptMerge(cm, bricksDict, key, keysNotChecked, brickSizes, zStep, randS1, preferLargest=preferLargest, mergeVertical=mergeVertical)
+        brickSize = attemptMerge(cm, bricksDict, key, keysNotChecked, defaultSize, zStep, randS1, preferLargest=preferLargest, mergeVertical=mergeVertical)
     else:
         brickSize = brickD["size"]
     return brickSize
 
 
 def updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, statusType):
-     if printStatus:
-         # print status to terminal
+    if printStatus:
+        # print status to terminal
         if cur_percent - old_percent > 0.001 and cur_percent <= 1:
             update_progress(statusType, cur_percent)
             if cursorStatus:
@@ -143,19 +143,6 @@ def updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, stat
                 else:
                     wm.progress_update(cur_percent*100)
             old_percent = cur_percent
-     return old_percent
-
-
-def printBuildStatus(keys, printStatus, cursorStatus, keysNotChecked, old_percent):
-    if printStatus:
-        # print status to terminal
-        percent = 1 - (len(keysNotChecked) / len(keys))
-        if percent - old_percent > 0.001 and percent < 1:
-            update_progress("Building", percent)
-            if cursorStatus:
-                wm = bpy.context.window_manager
-                wm.progress_update(percent*100)
-            old_percent = percent
     return old_percent
 
 

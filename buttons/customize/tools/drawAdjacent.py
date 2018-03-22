@@ -304,7 +304,7 @@ class drawAdjacent(Operator):
                     self.bricksDict[k]["draw"] = False
                     setCurBrickVal(self.bricksDict, strToList(k), action="REMOVE")
                     self.bricksDict[k]["size"] = None
-                    self.bricksDict[k]["parent_brick"] = None
+                    self.bricksDict[k]["parent"] = None
                     self.bricksDict[k]["bot_exposed"] = None
                     self.bricksDict[k]["top_exposed"] = None
                     self.bricksDict[k]["created_from"] = None
@@ -345,7 +345,7 @@ class drawAdjacent(Operator):
             setCurBrickVal(self.bricksDict, strToList(adjacent_key))
             adjBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"]
             adjBrickD["size"] = [1, 1, newBrickHeight if side in [4, 5] else getZStep(cm)]
-            adjBrickD["parent_brick"] = "self"
+            adjBrickD["parent"] = "self"
             adjBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"] if adjBrickD["mat_name"] == "" else adjBrickD["mat_name"]
             adjBrickD["near_face"] = adjBrickD["near_face"] or self.bricksDict[dictKey]["near_face"]
             adjBrickD["near_intersection"] = adjBrickD["near_intersection"] or self.bricksDict[dictKey]["near_intersection"]

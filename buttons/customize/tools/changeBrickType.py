@@ -121,7 +121,7 @@ class changeBrickType(Operator):
                     # print helpful message to user in blender interface
                     self.report({"INFO"}, "Changed {brickSize} brick to {targetType}".format(brickSize=listToStr(brickSize).replace(",", "x"), targetType=self.brickType))
 
-                    # set type of parent_brick to self.brickType
+                    # set type of parent brick to self.brickType
                     bricksDict[dictKey]["type"] = self.brickType
                     bricksDict[dictKey]["flipped"] = self.flipBrick
                     bricksDict[dictKey]["rotated"] = False if min(brickSize[:2]) == 1 and max(brickSize[:2]) > 1 else self.rotateBrick

@@ -20,6 +20,7 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add many more brick types, including inverted sloped bricks and tiles
       * For animation, if last frame's brickFreqMatrix matches current frame's brickFreqMatrix, save time by just keeping that model around for another frame or duplicating it for the next frame or something
       * Prefer overlapping and staggering over stacking of bricks
+      * Merge bricks in all directions, not just positive directions
       * New feature: SNOT (studs not on top) functionality
       * Add support for smoke animations
       * Add support for rigid bodies

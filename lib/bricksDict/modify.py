@@ -102,14 +102,13 @@ def updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep,
         if breakOuter2: break
 
 
-def attemptMerge(cm, bricksDict, key, availableKeys, brickSizes, zStep, randState, preferLargest=False, mergeVertical=True, shortType="PLATE", tallType="BRICK", height3Only=False):
+def attemptMerge(cm, bricksDict, key, availableKeys, defaultSize, zStep, randState, preferLargest=False, mergeVertical=True, shortType="PLATE", tallType="BRICK", height3Only=False):
     """ attempt to merge bricksDict[key] with adjacent bricks """
-    assert len(brickSizes) > 0
-
     # get loc from key
     loc = strToList(key)
 
     if cm.brickType != "CUSTOM":
+        brickSizes = [defaultSize]
         # iterate through adjacent locs to find available brick sizes
         updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
         updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
@@ -131,11 +130,11 @@ def attemptMerge(cm, bricksDict, key, availableKeys, brickSizes, zStep, randStat
         bricksDict[k]["attempted_merge"] = True
          # checks that x,y,z refer to original brick
         if k == key:
-            # set original brick as parent_brick
-            bricksDict[k]["parent_brick"] = "self"
+            # set original brick as brick parent
+            bricksDict[k]["parent"] = "self"
         else:
             # point deleted brick to original brick
-            bricksDict[k]["parent_brick"] = key
+            bricksDict[k]["parent"] = key
         # set brick type if necessary
         if "PLATES" in cm.brickType:
             bricksDict[k]["type"] = shortType if brickSize[2] == 1 else tallType
