@@ -121,7 +121,8 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             # get availableKeys for attemptMerge
             availableKeys = []
             for ii in range(maxBrickHeight):
-                availableKeys += keysDict[z + ii]
+                if ii + z in keysDict:
+                    availableKeys += keysDict[z + ii]
             # iterate through keys on current z level
             for key in keysDict[z]:
                 i += 1
