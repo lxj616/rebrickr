@@ -121,30 +121,18 @@ def attemptMerge(cm, bricksDict, key, availableKeys, defaultSize, zStep, randSta
         updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
         # sort brick types from smallest to largest
         order = randState.randint(0,2)
-        if preferLargest:
-            brickSizes.sort(key=lambda x: (x[0] * x[1] * x[2]))
-        else:
-            brickSizes.sort(key=lambda x: (x[2], x[order], x[(order+1)%2]))
+        brickSizes.sort(key=lambda x: (x[0] * x[1] * x[2]) if preferLargest else (x[2], x[order], x[(order+1)%2]))
 
-    # grab the biggest brick type and store to bricksDict
+    # grab the biggest brick size and store to bricksDict
     brickSize = brickSizes[-1]
     bricksDict[key]["size"] = brickSize
 
-    # Iterate through merged bricks to set brick parents
+    # set attributes for merged brick keys
     keysInBrick = getKeysInBrick(brickSize, key, loc, zStep)
     for k in keysInBrick:
-        # get brick at x,y location
         bricksDict[k]["attempted_merge"] = True
-         # checks that x,y,z refer to original brick
-        if k == key:
-            # set original brick as brick parent
-            bricksDict[k]["parent"] = "self"
-        else:
-            # point deleted brick to original brick
-            bricksDict[k]["parent"] = key
-        # set brick type if necessary
-        if "PLATES" in cm.brickType:
-            bricksDict[k]["type"] = shortType if brickSize[2] == 1 else tallType
+        bricksDict[k]["parent"] = "self" if k == key else key
+        bricksDict[k]["type"] = shortType if brickSize[2] == 1 and zStep == 1 else tallType
 
     return brickSize
 

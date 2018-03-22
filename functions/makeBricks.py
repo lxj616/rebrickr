@@ -57,7 +57,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
         cm.brickSizesUsed = ""
         cm.brickTypesUsed = ""
 
-    mergeVertical = not keys == "ALL" or cm.brickType == "BRICKS AND PLATES"
+    mergeVertical = keys != "ALL" or cm.brickType == "BRICKS AND PLATES"
 
     # get bricksDict dicts in seeded order
     if keys == "ALL":
@@ -122,7 +122,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             loc = strToList(key)
 
             # skip second and third rows on first time through
-            if "PLATES" in cm.brickType and cm.alignBricks:
+            if numIters == 2 and cm.alignBricks:
                 # initialize lowestZ if not done already
                 if lowestZ == -1:
                     lowestZ = loc[2]
