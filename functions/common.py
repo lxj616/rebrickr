@@ -24,6 +24,7 @@ import random
 import sys
 import time
 import os
+import platform
 import itertools
 import operator
 import traceback
@@ -541,10 +542,10 @@ def writeErrorToFile(errorReportPath, txtName, addonVersion):
     f.write("\nBlender Version: " + bversion())
     f.write("\nAddon Version: " + addonVersion)
     f.write("\nPlatform Info:")
-    f.write("\n   sysname = " + str(os.uname()[0]))
-    f.write("\n   release = " + str(os.uname()[2]))
-    f.write("\n   version = " + str(os.uname()[3]))
-    f.write("\n   machine = " + str(os.uname()[4]))
+    f.write("\n   system   = " + platform.system())
+    f.write("\n   platform = " + platform.platform())
+    f.write("\n   version  = " + platform.version())
+    f.write("\n   python   = " + platform.python_version())
     f.write("\nError:")
     try:
         f.write("\n" + bpy.data.texts[txtName].as_string())

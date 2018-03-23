@@ -33,3 +33,4 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * In basketball test file, error occurs when attempting to generate model with materials based on UV map (index out of range)
       * When drawing adjacent bricks, exposure is incorrect when obstructed by ignored brick types
       * Applying model rotation when deleting brickified model with source's origin not in mesh center doesn't work reliably
+      * When insideness set to 'X', error report generated
