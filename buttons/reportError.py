@@ -49,8 +49,8 @@ class reportError(bpy.types.Operator):
             bpy.context.space_data.show_word_wrap = True
             self.report({"INFO"}, "Opened 'Bricker_error_report.txt'")
             bpy.props.needsUpdating = True
-            except:
-                self.report({"ERROR"}, "ERROR: Could not open 'Bricker_error_report.txt'. If the problem persists, try reinstalling the add-on.")
+        except:
+            self.report({"ERROR"}, "ERROR: Could not open 'Bricker_error_report.txt'. If the problem persists, try reinstalling the add-on.")
         # except:
         #     self.report({"ERROR"}, "[Bricker] Could not generate error report. Please use the 'Report a Bug' button in the Bricker Preferences (found in Add-On User Preferences)")
         return{"FINISHED"}
