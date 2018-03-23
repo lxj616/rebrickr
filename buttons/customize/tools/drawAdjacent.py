@@ -336,7 +336,7 @@ class drawAdjacent(Operator):
             # update dictionary of locations above brick
             if "PLATES" in cm.brickType and side in [4, 5]:
                 curType = self.adjBricksCreated[side][brickNum] if self.adjBricksCreated[side][brickNum] else "PLATE"
-                updateBrickSizeAndDict(dimensions, cm, self.bricksDict, [1, 1, newBrickHeight], adjacent_key, adjDictLoc, curType=curType, targetType=self.brickType, createdFrom=dictKey)
+                updateBrickSizeAndDict(dimensions, cm, self.bricksDict, side, [1, 1, newBrickHeight], adjacent_key, adjDictLoc, curType=curType, targetType=self.brickType, createdFrom=dictKey)
             # update dictionary location of adjacent brick created
             adjBrickD["draw"] = True
             adjBrickD["type"] = self.brickType

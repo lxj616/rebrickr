@@ -151,7 +151,7 @@ def getAvailableTypes(by="SELECTION", includeSizes=[]):
     # return items, or null if items was empty
     return items if len(items) > 0 else [("NULL", "Null", "")]
 
-def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, curHeight=None, curType=None, targetHeight=None, targetType=None, createdFrom=None):
+def updateBrickSizeAndDict(dimensions, cm, bricksDict, side, brickSize, key, loc, curHeight=None, curType=None, targetHeight=None, targetType=None, createdFrom=None):
     brickD = bricksDict[key]
     assert targetHeight is not None or targetType is not None
     targetHeight = targetHeight or (1 if targetType in getBrickTypes(height=1) else 3)
@@ -160,6 +160,8 @@ def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, curH
     # adjust brick size if changing type from 3 tall to 1 tall
     if curHeight == 3 and targetHeight == 1:
         brickSize[2] = 1
+        if side == 5:
+            loc[2] -= 2
         for x in range(brickSize[0]):
             for y in range(brickSize[1]):
                 for z in range(1, curHeight):
@@ -213,7 +215,7 @@ def createObjNamesD(objs):
     objNamesD = {}
     # fill objNamesD with selected_objects
     for obj in objs:
-        if not obj.isBrick:
+        if obj is None or not obj.isBrick:
             continue
         # get cmlist item referred to by object
         cm = getItemByID(scn.cmlist, obj.cmlist_id)
