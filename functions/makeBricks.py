@@ -192,7 +192,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                     bricksDict[k3] = bricksDicts[optimalTest][k3]
 
     # switch progress bars to 'Building'
-    updateProgressBars(printStatus, cursorStatus, 1, 0, "Merging")
+    updateProgressBars(printStatus, cursorStatus, 1, 0, "Merging", end=True)
     old_percent = updateProgressBars(printStatus, cursorStatus, 0, -1, "Building")
 
     # draw merged bricks
@@ -205,7 +205,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             old_percent = updateProgressBars(printStatus, cursorStatus, i/len(bricksDict.keys()), old_percent, "Building")
 
     # end progress bars
-    updateProgressBars(printStatus, cursorStatus, 1, 0, "Building")
+    updateProgressBars(printStatus, cursorStatus, 1, 0, "Building", end=True)
 
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO" and logo is not None:
@@ -232,7 +232,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 scn.objects.link(brick)
                 brick.isBrick = True
         # end progress bars
-        updateProgressBars(printStatus, cursorStatus, 1, 0, "Linking to Scene")
+        updateProgressBars(printStatus, cursorStatus, 1, 0, "Linking to Scene", end=True)
     else:
         m = combineMeshes(allBrickMeshes, printStatus)
         name = 'Bricker_%(n)s_bricks_combined' % locals()

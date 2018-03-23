@@ -150,12 +150,12 @@ def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
                 miniDist = dirs[i][1]
                 count, firstDirection,_,_,_,_ = castRays(obj, point, direction, miniDist)
                 if count%2 == 0 and not (cm.useNormals and firstDirection > 0):
-                    outsideL[i] = 1
+                    outsideL[len(outsideL) - 1] = 1
                 elif cm.castDoubleCheckRays:
                     # double check vert is inside mesh
                     count, firstDirection,_,_,_,_ = castRays(obj, point, -direction, -miniDist, roundType="FLOOR")
                     if count%2 == 0 and not (cm.useNormals and firstDirection > 0):
-                        outsideL[i] = 1
+                        outsideL[len(outsideL) - 1] = 1
 
     # find average of outsideL and set outside accordingly (<0.5 is False, >=0.5 is True)
     outside = sum(outsideL)/len(outsideL) >= 0.5
