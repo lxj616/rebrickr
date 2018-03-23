@@ -62,12 +62,10 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
 
     mergeVertical = keys != "ALL" or cm.brickType == "BRICKS AND PLATES"
 
-    # get bricksDict dicts in seeded order
+    # get bricksDict keys in sorted order
     if keys == "ALL":
         keys = list(bricksDict.keys())
     keys.sort()
-    # random.seed(cm.mergeSeed)
-    # random.shuffle(keys)
     # get dictionary of keys based on z value
     keysDict = {}
     for k0 in keys:
@@ -115,8 +113,8 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     bricksCreated = []
     # set number of times to run through all keys
     numIters = 2 if "PLATES" in cm.brickType else 1
+    i = 0
     for timeThrough in range(numIters):
-        i = 0
         # iterate through z locations in bricksDict (bottom to top)
         for z in sorted(keysDict.keys()):
             # skip second and third rows on first time through
@@ -161,6 +159,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                     # merge current brick with available adjacent bricks
                     brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDicts[j], key, availableKeys, [1, 1, zStep], zStep, randS1, mergeVertical=mergeVertical)
                     brickD["size"] = brickSize
+                    # iterate number aligned edges and bricks if generating multiple variations
                     if connectThresh > 1:
                         numAlignedEdges[j] += getNumAlignedEdges(bricksDict, brickSize, key, loc, zStep)
                         numBricks += 1
@@ -169,18 +168,22 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                     cm.brickSizesUsed += brickSizeStr if cm.brickSizesUsed == "" else ("|" + brickSizeStr if brickSizeStr not in cm.brickSizesUsed.split("|") else "")
                     cm.brickTypesUsed += brickD["type"] if cm.brickTypesUsed == "" else ("|" + str(brickD["type"]) if brickD["type"] not in cm.brickTypesUsed.split("|") else "")
 
-                    # print build status to terminal
-                    cur_percent = ((i * numIters) / (denom * numIters))
+                    # print status to terminal and cursor
+                    cur_percent = (i / denom)
                     old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Merging")
 
                     # remove keys in new brick from availableKeys (for attemptMerge)
                     updateKeysLists(brickSize, loc, availableKeys, key)
 
                 if connectThresh > 1:
+                    # if no aligned edges / bricks found, skip to next z level
                     if numAlignedEdges[j] == 0:
+                        i += (len(keysDict[z]) * connectThresh - 1) / connectThresh
                         break
+                    # add double the number of bricks so connectivity threshold is weighted towards larger bricks
                     numAlignedEdges[j] += numBricks * 2
 
+            # choose optimal variation from above for current z level
             if connectThresh > 1:
                 optimalTest = numAlignedEdges.index(min(numAlignedEdges))
                 for k3 in bricksDicts[optimalTest]:
@@ -194,26 +197,25 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     for i, k2 in enumerate(bricksDict.keys()):
         if bricksDict[k2]["draw"] and bricksDict[k2]["parent"] == "self":
             loc = strToList(k2)
-            # create brick based on the current brickD information
+            # create brick based on the current brick info
             drawBrick(cm, bricksDict, k2, loc, i, dimensions, bricksDict[k2]["size"], split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3)
+            # print status to terminal and cursor
             old_percent = updateProgressBars(printStatus, cursorStatus, i/len(bricksDict.keys()), old_percent, "Building")
 
     # end progress bars
     updateProgressBars(printStatus, cursorStatus, 1, 0, "Building")
 
-
     # remove duplicate of original logoDetail
     if cm.logoDetail != "LEGO" and logo is not None:
         bpy.data.objects.remove(logo)
-    # end progress bars
-    updateProgressBars(printStatus, cursorStatus, 1, 0, "Building")
 
     # combine meshes, link to scene, and add relevant data to the new Blender MESH object
     if split:
         # iterate through keys
         old_percent = 0
         for i, key in enumerate(keys):
-            old_percent = updateProgressBars(printStatus, False, i/len(bricksDict), old_percent, "Linking to Scene")
+            # print status to terminal and cursor
+            old_percent = updateProgressBars(printStatus, cursorStatus, i/len(bricksDict), old_percent, "Linking to Scene")
 
             if bricksDict[key]["parent"] == "self" and bricksDict[key]["draw"]:
                 name = bricksDict[key]["name"]
@@ -227,7 +229,8 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 brick.parent = parent
                 scn.objects.link(brick)
                 brick.isBrick = True
-        updateProgressBars(printStatus, False, 1, 0, "Linking to Scene")
+        # end progress bars
+        updateProgressBars(printStatus, cursorStatus, 1, 0, "Linking to Scene")
     else:
         m = combineMeshes(allBrickMeshes, printStatus)
         name = 'Bricker_%(n)s_bricks_combined' % locals()
