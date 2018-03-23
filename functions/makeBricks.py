@@ -129,6 +129,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             for ii in range(maxBrickHeight):
                 if ii + z in keysDict:
                     availableKeysBase += keysDict[z + ii]
+            # get small duplicate of bricksDict for variations
             if connectThresh > 1:
                 bricksDictsBase = {}
                 for k4 in availableKeysBase:
@@ -137,6 +138,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 numAlignedEdges = [0 for idx in range(connectThresh)]
             else:
                 bricksDicts = [bricksDict]
+            # calculate build variations for current z level
             for j in range(connectThresh):
                 availableKeys = availableKeysBase.copy()
                 numBricks = 0

@@ -161,7 +161,6 @@ class delete_override(Operator):
                             bricksDict[curKey]["created_from"] = None
                             bricksDict[curKey]["flipped"] = False
                             bricksDict[curKey]["rotated"] = False
-                            bricksDict[curKey]["size"] = None
                             bricksDict[curKey]["top_exposed"] = False
                             bricksDict[curKey]["bot_exposed"] = False
                             # make adjustments to adjacent bricks
@@ -173,16 +172,16 @@ class delete_override(Operator):
             # merge and draw modified bricks
             if len(keysToUpdate) > 0:
                 # split up bricks before drawUpdatedBricks calls attemptMerge
-                newKeysToUpdate = keysToUpdate.copy()
-                for k0 in keysToUpdate:
-                    newKeysToUpdate += Bricks.split(bricksDict, k0, cm=cm)
-                newKeysToUpdate = uniquify1(newKeysToUpdate)
+                keysToUpdate = uniquify1(keysToUpdate)
+                for k0 in keysToUpdate.copy():
+                    keysToUpdate += Bricks.split(bricksDict, k0, cm=cm)
+                keysToUpdate = uniquify1(keysToUpdate)
                 # remove duplicate keys from the list and delete those objects
-                for k2 in newKeysToUpdate:
+                for k2 in keysToUpdate:
                     brick = bpy.data.objects.get(bricksDict[k2]["name"])
                     delete(brick)
                 # create new bricks at all keysToUpdate locations (attempts merge as well)
-                drawUpdatedBricks(cm, bricksDict, newKeysToUpdate, selectCreated=False)
+                drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=False)
                 iteratedStates = True
             if not lastBuildIsDirty:
                 cm.buildIsDirty = False
@@ -230,33 +229,24 @@ class delete_override(Operator):
                         bricksDict[k0]["size"] = [1, 1, zStep]
                         bricksDict[k0]["parent"] = "self"
                         bricksDict[k0]["mat_name"] = bricksDict[curKey]["mat_name"]
-                        if k0 not in keysToUpdate:
-                            # add key to simple bricksDict for drawing
-                            keysToUpdate.append(k0)
+                        # add key to simple bricksDict for drawing
+                        keysToUpdate.append(k0)
             # top of bricks below are now exposed
             k0 = listToStr([x, y, z - 1])
             if k0 in bricksDict and bricksDict[k0]["draw"]:
-                if bricksDict[k0]["parent"] == "self":
-                    k1 = k0
-                else:
-                    k1 = bricksDict[k0]["parent"]
+                k1 = k0 if bricksDict[k0]["parent"] == "self" else bricksDict[k0]["parent"]
                 if not bricksDict[k1]["top_exposed"]:
                     bricksDict[k1]["top_exposed"] = True
-                    if k1 not in keysToUpdate:
-                        # add key to simple bricksDict for drawing
-                        keysToUpdate.append(k1)
+                    # add key to simple bricksDict for drawing
+                    keysToUpdate.append(k1)
             # bottom of bricks above are now exposed
             k0 = listToStr([x, y, z + 1])
             if k0 in bricksDict and bricksDict[k0]["draw"]:
-                if bricksDict[k0]["parent"] == "self":
-                    k1 = k0
-                else:
-                    k1 = bricksDict[k0]["parent"]
+                k1 = k0 if bricksDict[k0]["parent"] == "self" else bricksDict[k0]["parent"]
                 if not bricksDict[k1]["bot_exposed"]:
                     bricksDict[k1]["bot_exposed"] = True
-                    if k1 not in keysToUpdate:
-                        # add key to simple bricksDict for drawing
-                        keysToUpdate.append(k1)
+                    # add key to simple bricksDict for drawing
+                    keysToUpdate.append(k1)
 
     def deleteBrickObject(self, obj, use_global=False):
         scn = bpy.context.scene

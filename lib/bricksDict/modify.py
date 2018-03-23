@@ -116,9 +116,10 @@ def attemptMerge(cm, bricksDict, key, availableKeys, defaultSize, zStep, randSta
     brickSizes = [defaultSize]
 
     if cm.brickType != "CUSTOM":
-        # iterate through adjacent locs to find available brick sizes
-        updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth, 3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
-        updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep, [cm.maxDepth, cm.maxWidth, 3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
+        # check width-depth and depth-width
+        for i in [1, -1] if cm.maxWidth != cm.maxDepth else [1]:
+            # iterate through adjacent locs to find available brick sizes
+            updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep, [cm.maxWidth, cm.maxDepth][::i] + [3], height3Only, mergeVertical and "PLATES" in cm.brickType, tallType=tallType, shortType=shortType)
         # sort brick types from smallest to largest
         order = randState.randint(0,2)
         brickSizes.sort(key=lambda x: (x[0] * x[1] * x[2]) if preferLargest else (x[2], x[order], x[(order+1)%2]))
