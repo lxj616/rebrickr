@@ -317,6 +317,7 @@ class drawAdjacent(Operator):
                 self.report({"INFO"}, "Brick does not exist in the following location: %(adjacent_key)s" % locals())
                 return False
             # check if locs above current are available
+            curType = self.adjBricksCreated[side][brickNum] if self.adjBricksCreated[side][brickNum] else "PLATE"
             if checkTwoMoreAbove:
                 x0, y0, z0 = adjDictLoc
                 for z in range(1, 3):
@@ -324,7 +325,8 @@ class drawAdjacent(Operator):
                     # if brick drawn in next loc and not just rerunning based on new direction selection
                     if (newKey in self.bricksDict and self.bricksDict[newKey]["draw"] and
                         (not self.isBrickAlreadyCreated(brickNum, side) or
-                         self.adjBricksCreated[side][brickNum] not in getBrickTypes(height=3))):
+                         curType not in getBrickTypes(height=3)) and not
+                         (z == 2 and curType in getBrickTypes(height=1) and self.brickType not in getBrickTypes(height=1))):
                         self.report({"INFO"}, "Brick already exists in the following location: %(newKey)s" % locals())
                         self.setDirBool(side, False)
                         # reset values at failed location, in case brick was previously drawn there
@@ -335,7 +337,6 @@ class drawAdjacent(Operator):
                         keysToMerge.append(newKey)
             # update dictionary of locations above brick
             if "PLATES" in cm.brickType and side in [4, 5]:
-                curType = self.adjBricksCreated[side][brickNum] if self.adjBricksCreated[side][brickNum] else "PLATE"
                 updateBrickSizeAndDict(dimensions, cm, self.bricksDict, side, [1, 1, newBrickHeight], adjacent_key, adjDictLoc, curType=curType, targetType=self.brickType, createdFrom=dictKey)
             # update dictionary location of adjacent brick created
             adjBrickD["draw"] = True

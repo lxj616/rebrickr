@@ -160,12 +160,10 @@ def updateBrickSizeAndDict(dimensions, cm, bricksDict, side, brickSize, key, loc
     # adjust brick size if changing type from 3 tall to 1 tall
     if curHeight == 3 and targetHeight == 1:
         brickSize[2] = 1
-        if side == 5:
-            loc[2] -= 2
         for x in range(brickSize[0]):
             for y in range(brickSize[1]):
                 for z in range(1, curHeight):
-                    newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z])
+                    newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z - (2 if side == 5 else 0)])
                     bricksDict[newKey]["parent"] = None
                     bricksDict[newKey]["draw"] = False
                     setCurBrickVal(bricksDict, strToList(newKey), action="REMOVE")
@@ -178,6 +176,7 @@ def updateBrickSizeAndDict(dimensions, cm, bricksDict, side, brickSize, key, loc
             for y in range(brickSize[1]):
                 for z in range(1, targetHeight):
                     newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z])
+                    print(newKey)
                     # create new bricksDict entry if it doesn't exist
                     if newKey not in bricksDict:
                         bricksDict = createAddlBricksDictEntry(cm, bricksDict, key, newKey, full_d, x, y, z)
