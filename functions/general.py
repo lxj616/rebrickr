@@ -290,14 +290,14 @@ def getExportPath(fn, ext):
     cm = getActiveContextInfo()[1]
     fullPath = cm.exportPath
     lastSlash = fullPath.rfind("/")
+    # setup the render dump folder based on user input
+    if fullPath.startswith("//"):
+        fullPath = os.path.join(bpy.path.abspath("//"), fullPath[2:])
     path = fullPath[:len(fullPath) if lastSlash == -1 else lastSlash + 1]
     fn0 = "" if lastSlash == -1 else fullPath[lastSlash + 1:len(fullPath)]
-    # setup the render dump folder based on user input
-    if path.startswith("//"):
-        path = os.path.join(bpy.path.abspath("//"), path[2:])
     # if no user input, use default render location
-    elif path == "":
-        path = bpy.path.abspath("//")
+    if path == "":
+        path = bpy.path.abspath("//") or "/tmp/"
     # check to make sure dumpLoc exists on local machine
     if not os.path.exists(path):
         os.mkdir(path)

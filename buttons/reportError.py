@@ -37,22 +37,22 @@ class reportError(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
+        # try:
+        # set up file paths
+        libraryServersPath = os.path.join(getLibraryPath(), "error_log")
+        # write necessary debugging information to text file
+        writeErrorToFile(libraryServersPath, 'Bricker_log', bpy.props.bricker_version)
+        # open error report in UI with text editor
+        changeContext(context, "TEXT_EDITOR")
         try:
-            # set up file paths
-            libraryServersPath = os.path.join(getLibraryPath(), "error_log")
-            # write necessary debugging information to text file
-            writeErrorToFile(libraryServersPath, 'Bricker_log', bpy.props.bricker_version)
-            # open error report in UI with text editor
-            changeContext(context, "TEXT_EDITOR")
-            try:
-                bpy.ops.text.open(filepath=os.path.join(libraryServersPath, "Bricker_error_report.txt"))
-                bpy.context.space_data.show_word_wrap = True
-                self.report({"INFO"}, "Opened 'Bricker_error_report.txt'")
-                bpy.props.needsUpdating = True
+            bpy.ops.text.open(filepath=os.path.join(libraryServersPath, "Bricker_error_report.txt"))
+            bpy.context.space_data.show_word_wrap = True
+            self.report({"INFO"}, "Opened 'Bricker_error_report.txt'")
+            bpy.props.needsUpdating = True
             except:
                 self.report({"ERROR"}, "ERROR: Could not open 'Bricker_error_report.txt'. If the problem persists, try reinstalling the add-on.")
-        except:
-            self.report({"ERROR"}, "ERROR: Could not generate error report. Please use the 'Report a Bug' button in the Bricker Preferences (found in Add-On User Preferences)")
+        # except:
+        #     self.report({"ERROR"}, "[Bricker] Could not generate error report. Please use the 'Report a Bug' button in the Bricker Preferences (found in Add-On User Preferences)")
         return{"FINISHED"}
 
 
