@@ -450,7 +450,7 @@ def getThreshold(cm):
     """ returns threshold (draw bricks if returned val >= threshold) """
     return 1.01 - (cm.shellThickness / 100)
 
-def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0,0,0), near_face:int=None, near_intersection:tuple=None, near_normal:tuple=None, rgba:tuple=None, mat_name:str=None, parent:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
+def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:str="0,0,0", near_face:int=None, near_intersection:str=None, near_normal:tuple=None, rgba:tuple=None, mat_name:str=None, parent:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
     """
     create an entry in the dictionary of brick locations
 
@@ -564,9 +564,9 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                     name= 'Bricker_%(n)s_brick_%(i)s__%(bKey)s' % locals(),
                     val= brickFreqMatrix[x][y][z],
                     draw= draw,
-                    co= (co - source_details.mid).to_tuple(),
+                    co= listToStr(co - source_details.mid),
                     near_face= nf,
-                    near_intersection= ni if ni is None else tuple(ni),
+                    near_intersection= ni if ni is None else listToStr(ni),
                     near_normal= normal_direction,
                     rgba= rgba,
                     mat_name= "",  # defined in 'updateMaterials' function

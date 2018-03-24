@@ -51,7 +51,7 @@ def updateMaterials(bricksDict, source):
         if not bricksDict[key]["draw"] or nf is None:
             continue
         # get RGBA value at nearest face intersection
-        ni = bricksDict[key]["near_intersection"]
+        ni = strToList(bricksDict[key]["near_intersection"], item_type=float)
         rgba, matName = getBrickRGBA(source, nf, ni, uv_images)
         # get material with snapped RGBA value
         if rgba is None:

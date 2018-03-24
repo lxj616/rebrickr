@@ -238,7 +238,7 @@ def getDictKey(name):
 
 def getBrickCenter(bricksDict, key, loc=None):
     brickKeys = getKeysInBrick(size=bricksDict[key]["size"], key=key, loc=loc)
-    coords = [bricksDict[k0]["co"] for k0 in brickKeys]
+    coords = [strToList(bricksDict[k0]["co"], item_type=float) for k0 in brickKeys]
     coord_ave = Vector((np.mean([co[0] for co in coords]), np.mean([co[1] for co in coords]), np.mean([co[2] for co in coords])))
     return coord_ave
 

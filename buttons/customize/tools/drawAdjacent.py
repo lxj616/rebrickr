@@ -272,14 +272,14 @@ class drawAdjacent(Operator):
             else:                  # negative directions
                 newDictLoc[side//2] += (newBrickHeight if side == 5 and "PLATES" in cm.brickType else 1)
             theKey = listToStr(newDictLoc)
-            co0 = self.bricksDict[theKey]["co"]
+            co0 = strToList(self.bricksDict[theKey]["co"], item_type=float)
             co = self.getNewCoord(cm, co0, dimensions, side, newBrickHeight)
             self.bricksDict[adjacent_key] = createBricksDictEntry(
-                name=                 'Bricker_%(n)s_brick_%(j)s__%(adjacent_key)s' % locals(),
-                co=                   co,
+                name=              'Bricker_%(n)s_brick_%(j)s__%(adjacent_key)s' % locals(),
+                co=                listToStr(co),
                 near_face=         self.bricksDict[dictKey]["near_face"],
                 near_intersection= self.bricksDict[dictKey]["near_intersection"],
-                mat_name=             self.bricksDict[dictKey]["mat_name"],
+                mat_name=          self.bricksDict[dictKey]["mat_name"],
             )
             adjBrickD = self.bricksDict[adjacent_key]
             # self.report({"WARNING"}, "Matrix not available at the following location: %(adjacent_key)s" % locals())

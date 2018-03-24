@@ -73,7 +73,7 @@ class exportLdraw(Operator):
         absMatCodes = getAbsPlasticMatCodes()
         bricksDict, _ = getBricksDict(dType="MODEL" if cm.modelCreated else "ANIM", curFrame=scn.frame_current, cm=cm, restrictContext=True)
         # get small offset for model to get close to Ldraw units
-        offset = vec_conv(bricksDict[list(bricksDict.keys())[0]]["co"], int)
+        offset = vec_conv(strToList(bricksDict[list(bricksDict.keys())[0]]["co"], item_type=float), int)
         offset.x = offset.x % 10
         offset.y = offset.z % 8
         offset.z = offset.y % 10
