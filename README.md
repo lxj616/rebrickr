@@ -17,20 +17,22 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Once you're satisfied with the settings, make adjustments to your model in the 'Customize Model' dropdown menu
   * Future improvements:
       * Add mode for selecting verts at locations next to bricks and adding bricks there
-      * Add many more brick types, including inverted sloped bricks and tiles
       * For animation, if last frame's brickFreqMatrix matches current frame's brickFreqMatrix, save time by just keeping that model around for another frame or duplicating it for the next frame or something
       * New feature: SNOT (studs not on top) functionality
       * Add support for smoke animations
       * Add support for rigid bodies
       * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
       * Simply calculate brick dimensions, then divide height by three if plate later on. (gets rid of zScale parameter in get_dimensions function)
-      * Add 'Change Color' model customization option
       * Add 'exclusion' functionality so that one model doesn’t create bricks where another model already did
+  * On trip:
+      * Improve speed of brick customizations (undo push/pop)
+      * Verify that undoing 'Update Model' action doesn't break customize functions
+      * Add 'Change Color' model customization option
       * Add merge option that creates either biggest bricks possible or randomly sampled like normal.
+      * Add many more brick types, including inverted sloped bricks and tiles
   * Known issues:
       * In snapchat hotdog test file, when 'Clear Parent and Keep Transform' run, then when model created then deleted, source shrinks
       * For models with thin outer shells, Bricker may use color of inside face instead of outside face for brick material
       * In basketball test file, error occurs when attempting to generate model with materials based on UV map (index out of range)
       * When drawing adjacent bricks, exposure is incorrect when obstructed by ignored brick types
       * Applying model rotation when deleting brickified model with source's origin not in mesh center doesn't work reliably
-      * When insideness set to 'X', error report generated
