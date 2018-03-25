@@ -24,11 +24,9 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
       * Simply calculate brick dimensions, then divide height by three if plate later on. (gets rid of zScale parameter in get_dimensions function)
       * Add 'exclusion' functionality so that one model doesn’t create bricks where another model already did
-  * On trip:
-      * Verify that undoing 'Update Model' action doesn't break customize functions
-      * Add 'Change Material' model customization option
-      * Add merge option that creates either biggest bricks possible or randomly sampled like normal.
       * Add many more brick types, including inverted sloped bricks and tiles
+      * figure out how to get 'Update Model' operator to not push to undo stack
+      * Add merge option that creates either biggest bricks possible or randomly sampled like normal.
   * Known issues:
       * In snapchat hotdog test file, when 'Clear Parent and Keep Transform' run, then when model created then deleted, source shrinks
       * For models with thin outer shells, Bricker may use color of inside face instead of outside face for brick material
