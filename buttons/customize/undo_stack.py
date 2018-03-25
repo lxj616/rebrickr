@@ -103,15 +103,18 @@ class UndoStack():
     def isUpdating(self): return bpy.props.bricker_undoUpdating
 
     def _create_state(self, action):
+        bfm_cache = {}
+        for cm_id in bricker_bfm_cache:
+            bfm_cache[cm_id] = json.dumps(bricker_bfm_cache[cm_id])
         return {
             'action':       action,
-            'bfm_cache':    copy.deepcopy(bricker_bfm_cache),
+            'bfm_cache':    bfm_cache
             }
 
     def _restore_state(self, state):
         global bricker_bfm_cache
         for key in state['bfm_cache'].keys():
-            bricker_bfm_cache[key] = state['bfm_cache'][key]
+            bricker_bfm_cache[key] = json.loads(state['bfm_cache'][key])
 
     def undo_push(self, action, repeatable=False):
         # skip pushing to undo if action is repeatable and we are repeating actions
