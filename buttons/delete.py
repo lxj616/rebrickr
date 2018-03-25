@@ -77,7 +77,7 @@ class BrickerDelete(bpy.types.Operator):
         cm = getActiveContextInfo()[1]
         # push to undo stack
         self.undo_stack = UndoStack.get_instance()
-        self.undo_stack.undo_push('delete', affected_ids=cm.id)
+        self.undo_stack.undo_push('delete', affected_ids=[cm.id])
 
     #############################################
     # class methods
