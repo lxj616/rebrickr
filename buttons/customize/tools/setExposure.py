@@ -20,7 +20,7 @@
     """
 
 # System imports
-import copy
+# NONE!
 
 # Blender imports
 import bpy
@@ -71,7 +71,7 @@ class setExposure(Operator):
             for cm_id in self.objNamesD.keys():
                 cm = getItemByID(scn.cmlist, cm_id)
                 self.undo_stack.iterateStates(cm)
-                bricksDict = copy.deepcopy(self.bricksDicts[cm_id])
+                bricksDict = deepcopy(self.bricksDicts[cm_id])
                 keysToUpdate = []
 
                 # iterate through names of selected objects

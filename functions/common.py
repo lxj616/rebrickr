@@ -27,6 +27,7 @@ import os
 import platform
 import itertools
 import operator
+import json
 import traceback
 import subprocess
 from math import *
@@ -431,6 +432,12 @@ def checkEqual3(lst):
 # Since checkEqual1 contains more Python code, it is less efficient when many of the items are equal in the beginning.
 # Since checkEqual2 and checkEqual3 always perform O(N) copying operations, they will take longer if most of your input will return False.
 # checkEqual2 and checkEqual3 can't be easily changed to adopt to compare a is b instead of a == b.
+
+
+def deepcopy(object):
+    jsonObj = json.dumps(object)
+    newObj = json.loads(jsonObj)
+    return newObj
 
 
 def changeContext(context, areaType):

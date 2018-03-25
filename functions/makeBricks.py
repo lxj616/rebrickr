@@ -133,8 +133,8 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             if connectThresh > 1:
                 bricksDictsBase = {}
                 for k4 in availableKeysBase:
-                    bricksDictsBase[k4] = copy.deepcopy(bricksDict[k4])
-                bricksDicts = [copy.deepcopy(bricksDictsBase) for j in range(connectThresh)]
+                    bricksDictsBase[k4] = deepcopy(bricksDict[k4])
+                bricksDicts = [deepcopy(bricksDictsBase) for j in range(connectThresh)]
                 numAlignedEdges = [0 for idx in range(connectThresh)]
             else:
                 bricksDicts = [bricksDict]

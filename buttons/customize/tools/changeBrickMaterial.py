@@ -20,7 +20,7 @@
     """
 
 # System imports
-import copy
+# NONE!
 
 # Blender imports
 import bpy
@@ -68,7 +68,7 @@ class changeMaterial(Operator):
                 cm = getItemByID(scn.cmlist, cm_id)
                 self.undo_stack.iterateStates(cm)
                 # initialize vars
-                bricksDict = copy.deepcopy(self.bricksDicts[cm_id])
+                bricksDict = deepcopy(self.bricksDicts[cm_id])
                 keysToUpdate = []
 
                 # iterate through cm_ids of selected objects
