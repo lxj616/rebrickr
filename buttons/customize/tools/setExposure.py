@@ -71,7 +71,7 @@ class setExposure(Operator):
             for cm_id in self.objNamesD.keys():
                 cm = getItemByID(scn.cmlist, cm_id)
                 self.undo_stack.iterateStates(cm)
-                bricksDict = deepcopy(self.bricksDicts[cm_id])
+                bricksDict = json.loads(self.cached_bfm[cm_id])
                 keysToUpdate = []
 
                 # iterate through names of selected objects
@@ -118,7 +118,7 @@ class setExposure(Operator):
         self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
         # push to undo stack
         self.undo_stack = UndoStack.get_instance()
-        self.undo_stack.undo_push('exposure', affected_ids=list(self.objNamesD.keys()))
+        self.cached_bfm = self.undo_stack.undo_push('exposure', affected_ids=list(self.objNamesD.keys()))
 
     ###################################################
     # class variables

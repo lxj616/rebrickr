@@ -99,6 +99,7 @@ class splitBricks(Operator):
         self.orig_undo_stack_length = self.undo_stack.getLength()
         self.vertical = False
         self.horizontal = False
+        self.cached_bfm = {}
         # get copy of objNamesD and bricksDicts
         selected_objects = bpy.context.selected_objects
         self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
@@ -129,7 +130,7 @@ class splitBricks(Operator):
             self.undo_stack.matchPythonToBlenderState()
             # push to undo stack
             if self.orig_undo_stack_length == self.undo_stack.getLength():
-                self.undo_stack.undo_push('split', affected_ids=list(self.objNamesD.keys()))
+                self.cached_bfm = self.undo_stack.undo_push('split', affected_ids=list(self.objNamesD.keys()))
             # initialize vars
             scn = bpy.context.scene
             objsToSelect = []
@@ -137,7 +138,7 @@ class splitBricks(Operator):
             for cm_id in self.objNamesD.keys():
                 cm = getItemByID(scn.cmlist, cm_id)
                 self.undo_stack.iterateStates(cm)
-                bricksDict = deepcopy(self.bricksDicts[cm_id]) if deepCopyMatrix else self.bricksDicts[cm_id]
+                bricksDict = json.loads(self.cached_bfm[cm_id]) if deepCopyMatrix else self.bricksDicts[cm_id]
                 keysToUpdate = []
 
                 # iterate through names of selected objects

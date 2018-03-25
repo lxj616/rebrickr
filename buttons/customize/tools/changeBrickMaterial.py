@@ -68,7 +68,7 @@ class changeMaterial(Operator):
                 cm = getItemByID(scn.cmlist, cm_id)
                 self.undo_stack.iterateStates(cm)
                 # initialize vars
-                bricksDict = deepcopy(self.bricksDicts[cm_id])
+                bricksDict = json.loads(self.cached_bfm[cm_id])
                 keysToUpdate = []
 
                 # iterate through cm_ids of selected objects
@@ -109,7 +109,7 @@ class changeMaterial(Operator):
         self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
         # push to undo stack
         self.undo_stack = UndoStack.get_instance()
-        self.undo_stack.undo_push('change material', list(self.objNamesD.keys()))
+        self.cached_bfm = self.undo_stack.undo_push('change material', list(self.objNamesD.keys()))
 
     ###################################################
     # class variables

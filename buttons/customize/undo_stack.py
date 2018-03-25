@@ -127,6 +127,7 @@ class UndoStack():
                 else:
                     new_bfm_cache[cm_id] = json.dumps(bricker_bfm_cache[cm_id])
         stack.append(self._create_state(action, new_bfm_cache))
+        return new_bfm_cache
 
     def undo_push(self, action, affected_ids="ALL", repeatable=False):
         # skip pushing to undo if action is repeatable and we are repeating actions
@@ -135,11 +136,12 @@ class UndoStack():
         # skip pushing to undo if bricker not initialized
         if not bpy.props.bricker_initialized:
             return
-        self.appendState(action, self.undo, 'undo', affected_ids=affected_ids)
+        new_bfm_cache = self.appendState(action, self.undo, 'undo', affected_ids=affected_ids)
         while len(self.undo) > self.undo_depth:
             self.undo.pop(0)  # limit stack size
         self.redo.clear()
         self.instrument_write(action)
+        return new_bfm_cache
 
     def undo_pop(self):
         if not self.undo:
