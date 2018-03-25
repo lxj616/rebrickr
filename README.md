@@ -25,9 +25,8 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Simply calculate brick dimensions, then divide height by three if plate later on. (gets rid of zScale parameter in get_dimensions function)
       * Add 'exclusion' functionality so that one model doesn’t create bricks where another model already did
   * On trip:
-      * Improve speed of brick customizations (undo push/pop)
       * Verify that undoing 'Update Model' action doesn't break customize functions
-      * Add 'Change Color' model customization option
+      * Add 'Change Material' model customization option
       * Add merge option that creates either biggest bricks possible or randomly sampled like normal.
       * Add many more brick types, including inverted sloped bricks and tiles
   * Known issues:

@@ -20,6 +20,7 @@
     """
 
 from .changeBrickType import *
+from .changeBrickMaterial import *
 from .drawAdjacent import *
 from .mergeBricks import *
 from .redrawBricks import *

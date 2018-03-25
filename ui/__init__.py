@@ -607,6 +607,9 @@ class CustomizeModel(Panel):
         # change brick type
         row = col1.row(align=True)
         row.operator("bricker.change_brick_type", text="Change Type")
+        # change material type
+        row = col1.row(align=True)
+        row.operator("bricker.change_brick_material", text="Change Material")
         # additional controls
         col = layout.column(align=True)
         row = col.row(align=True)
