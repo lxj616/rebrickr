@@ -120,11 +120,13 @@ class BrickerBrickify(bpy.types.Operator):
     # initialization method
 
     def __init__(self):
+        scn, cm, _ = getActiveContextInfo()
+        # push to undo stack
         self.undo_stack = UndoStack.get_instance()
-        self.undo_stack.undo_push('brickify')
+        self.undo_stack.undo_push('brickify', affected_ids=[cm.id])
+        # initialize vars
         self.createdObjects = []
         self.createdGroups = []
-        scn, cm, _ = getActiveContextInfo()
         self.setAction(cm)
         self.source = self.getObjectToBrickify()
 

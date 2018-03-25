@@ -64,9 +64,11 @@ class changeBrickType(Operator):
 
     def execute(self, context):
         try:
+            # revert to last bricksDict
             self.undo_stack.matchPythonToBlenderState()
+            # push to undo stack
             if self.orig_undo_stack_length == self.undo_stack.getLength():
-                self.undo_stack.undo_push('change_type')
+                self.undo_stack.undo_push('change_type', affected_ids=list(self.objNamesD.keys()))
             scn = bpy.context.scene
             legalBrickSizes = bpy.props.Bricker_legal_brick_sizes
             # get original active and selected objects

@@ -125,9 +125,11 @@ class splitBricks(Operator):
 
     def splitBricks(self, deepCopyMatrix=False):
         try:
+            # revert to last bricksDict
             self.undo_stack.matchPythonToBlenderState()
+            # push to undo stack
             if self.orig_undo_stack_length == self.undo_stack.getLength():
-                self.undo_stack.undo_push('split')
+                self.undo_stack.undo_push('split', affected_ids=list(self.objNamesD.keys()))
             # initialize vars
             scn = bpy.context.scene
             objsToSelect = []

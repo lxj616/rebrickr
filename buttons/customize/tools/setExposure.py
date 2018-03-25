@@ -113,11 +113,12 @@ class setExposure(Operator):
 
     def __init__(self):
         scn = bpy.context.scene
-        self.undo_stack = UndoStack.get_instance()
-        self.undo_stack.undo_push('exposure')
         # initialize bricksDicts
         selected_objects = bpy.context.selected_objects
         self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
+        # push to undo stack
+        self.undo_stack = UndoStack.get_instance()
+        self.undo_stack.undo_push('exposure', affected_ids=list(self.objNamesD.keys()))
 
     ###################################################
     # class variables

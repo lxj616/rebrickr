@@ -110,10 +110,12 @@ class mergeBricks(Operator):
 
     def __init__(self):
         scn = bpy.context.scene
-        self.undo_stack = UndoStack.get_instance()
-        self.undo_stack.undo_push('merge')
+        # initialize vars
         selected_objects = bpy.context.selected_objects
         self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
+        # push to undo stack
+        self.undo_stack = UndoStack.get_instance()
+        self.undo_stack.undo_push('merge', list(self.objNamesD.keys()))
 
     ###################################################
     # class variables

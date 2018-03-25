@@ -66,11 +66,12 @@ class drawAdjacent(Operator):
             # if no sides were and are selected, don't execute (i.e. if only brick type changed)
             if [False]*6 == [createAdjBricks[i] or self.adjBricksCreated[i][0] for i in range(6)]:
                 return {"CANCELLED"}
-            # push to undo stack
-            self.undo_stack.matchPythonToBlenderState()
-            if self.orig_undo_stack_length == self.undo_stack.getLength():
-                self.undo_stack.undo_push('draw_adjacent')
             scn, cm, _ = getActiveContextInfo()
+            # revert to last bricksDict
+            self.undo_stack.matchPythonToBlenderState()
+            # push to undo stack
+            if self.orig_undo_stack_length == self.undo_stack.getLength():
+                self.undo_stack.undo_push('draw_adjacent', affected_ids=[cm.id])
             scn.update()
             self.undo_stack.iterateStates(cm)
             # get fresh copy of self.bricksDict

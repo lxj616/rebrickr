@@ -113,24 +113,29 @@ class UndoStack():
         for key in state['bfm_cache'].keys():
             bricker_bfm_cache[key] = json.loads(state['bfm_cache'][key])
 
-    def appendState(self, action, stack, stackType):
-        new_bfm_cache = {}
-        bfm_cached = stack[-1]["bfm_cache"] if len(stack) > 0 else {}
-        for cm_id in bricker_bfm_cache:
-            if cm_id not in bfm_cached or bfm_cached[cm_id] != bricker_bfm_cache[cm_id]:
-                new_bfm_cache[cm_id] = json.dumps(bricker_bfm_cache[cm_id])
-            else:
-                new_bfm_cache[cm_id] = bfm_cached[cm_id]
+    def appendState(self, action, stack, stackType, affected_ids="ALL"):
+        if action == "undo" and stackType == "redo":
+            new_bfm_cache = self.undo[-1]['bfm_cache']
+        elif action == "undo" and stackType == "redo":
+            new_bfm_cache = self.redo[-1]['bfm_cache']
+        else:
+            new_bfm_cache = {}
+            bfm_cached = stack[-1]["bfm_cache"] if len(stack) > 0 else {}
+            for cm_id in bricker_bfm_cache:
+                if affected_ids != "ALL" and cm_id not in affected_ids and cm_id in bfm_cached:
+                    new_bfm_cache[cm_id] = bfm_cached[cm_id]
+                else:
+                    new_bfm_cache[cm_id] = json.dumps(bricker_bfm_cache[cm_id])
         stack.append(self._create_state(action, new_bfm_cache))
 
-    def undo_push(self, action, repeatable=False):
+    def undo_push(self, action, affected_ids="ALL", repeatable=False):
         # skip pushing to undo if action is repeatable and we are repeating actions
         if repeatable and self.undo and self.undo[-1]['action'] == action:
             return
         # skip pushing to undo if bricker not initialized
         if not bpy.props.bricker_initialized:
             return
-        self.appendState(action, self.undo, 'undo')
+        self.appendState(action, self.undo, 'undo', affected_ids=affected_ids)
         while len(self.undo) > self.undo_depth:
             self.undo.pop(0)  # limit stack size
         self.redo.clear()
