@@ -213,13 +213,10 @@ class BrickerDelete(bpy.types.Operator):
             bGroup = bpy.data.groups.get(Bricker_bricks_gn + "_frame_" + str(cm.lastStartFrame))
         if bGroup and len(bGroup.objects) > 0:
             source.layers = list(bGroup.objects[0].layers)
-        # select source and reset cm.modelHeight
-        select(source, active=source)
-        cm.modelHeight = -1
         # reset source parent to original parent object
         old_parent = bpy.data.objects.get(source["old_parent"])
         if old_parent:
-            select([source, old_parent], active=old_parent)
+            select([source, old_parent], active=old_parent, only=True)
             if source["frame_parent_cleared"] != -1:
                 origFrame = scn.frame_current
                 scn.frame_set(source["frame_parent_cleared"])
@@ -229,6 +226,9 @@ class BrickerDelete(bpy.types.Operator):
         if source["ignored_mods"] != "":
             for mn in source["ignored_mods"]:
                 source.modifiers[mn].show_viewport = True
+        # reset cm properties
+        cm.modelHeight = -1
+        # reset source properties
         source.name = n
         source.cmlist_id = -1
 

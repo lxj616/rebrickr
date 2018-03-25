@@ -207,7 +207,7 @@ class Suppressor(object):
 
 def applyModifiers(obj, only=None, exclude=None, curFrame=None):
     hasArmature = False
-    select(obj, active=obj)
+    setActiveObj(obj)
     # apply modifiers
     for mod in obj.modifiers:
         # only = ["SUBSURF", "ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"]
@@ -360,7 +360,13 @@ def unhide(objList):
         obj.hide = False
 
 
-def select(objList=[], active=None, deselect=False, only=True, scene=None):
+def setActiveObj(obj, scene=None):
+    assert type(obj) == bpy.types.Object
+    scene = scene or bpy.context.scene
+    scene.objects.active = obj
+
+
+def select(objList=[], active=None, deselect=False, only=False, scene=None):
     """ selects objs in list and deselects the rest """
     # initialize vars
     if objList is None and active is None:
@@ -375,10 +381,9 @@ def select(objList=[], active=None, deselect=False, only=True, scene=None):
             obj.select = not deselect
     # set active object
     if active:
-        scene = scene or bpy.context.scene
         if type(active) != bpy.types.Object:
             raise TypeError("argument passed to 'active' parameter not valid (recieved '" + str(active) + "')")
-        scene.objects.active = objList[0] if type(active) == bool else active
+        setActiveObj(objList[0] if type(active) == bool else active, scene=scene)
     return True
 
 

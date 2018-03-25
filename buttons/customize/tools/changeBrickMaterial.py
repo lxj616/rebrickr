@@ -89,7 +89,7 @@ class changeMaterial(Operator):
                 cm.customized = True
 
                 # add selected objects to objects to select at the end
-                objsToSelect += bpy.context.selected_objects.copy()
+                objsToSelect += bpy.context.selected_objects
             # select the new objects created
             select(objsToSelect)
         except:

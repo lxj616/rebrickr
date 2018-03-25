@@ -105,7 +105,7 @@ def setOriginToObjOrigin(toObj, fromObj=None, fromLoc=None, deleteFromObj=False)
         scn.cursor_location = fromObj.matrix_world.to_translation().to_tuple()
     else:
         scn.cursor_location = fromLoc
-    select(toObj, active=toObj)
+    setActiveObj(toObj)
     bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
     scn.cursor_location = oldCursorLocation
     if fromObj:

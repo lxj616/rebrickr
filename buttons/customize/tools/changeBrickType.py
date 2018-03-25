@@ -162,7 +162,7 @@ class changeBrickType(Operator):
             # select original bricks
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
             objsToSelect = [bpy.data.objects.get(n) for n in objNamesToSelect if bpy.data.objects.get(n) is not None]
-            select(objsToSelect, active=orig_obj if orig_obj else None, only=False)
+            select(objsToSelect, active=orig_obj if orig_obj else None)
             self.brickType = brickType if not bricksWereGenerated else self.brickType
         except:
             handle_exception()

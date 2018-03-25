@@ -241,7 +241,8 @@ def prepareLogoAndGetDetails(logo, dimensions):
         setLayers(logo.layers)
         logo.hide = False
         # duplicate logo object
-        select(logo, active=logo)
+        setActiveObj(logo)
+        bpy.data.objects.active = logo
         bpy.ops.object.duplicate()
         logo = scn.objects.active
         # disable modifiers for logo object

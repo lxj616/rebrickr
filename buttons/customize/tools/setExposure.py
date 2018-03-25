@@ -99,7 +99,7 @@ class setExposure(Operator):
                 # model is now customized
                 cm.customized = True
                 # add selected objects to objects to select at the end
-                objsToSelect += bpy.context.selected_objects.copy()
+                objsToSelect += bpy.context.selected_objects
             # select the new objects created
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
             # select the new objects created

@@ -63,7 +63,6 @@ def newObjFromBmesh(layer, bme, meshName, objName=None, loc=(0,0,0), edgeSplit=T
     ob.location = loc
     # link and select object
     scn.objects.link(ob)
-    select(ob, active=ob)
     scn.update()
 
     # send bmesh data to object data
@@ -76,7 +75,7 @@ def newObjFromBmesh(layer, bme, meshName, objName=None, loc=(0,0,0), edgeSplit=T
 
     # move to appropriate layer
     layerList = [i == layer - 1 for i in range(20)]
-    bpy.ops.object.move_to_layer(layers=layerList)
+    ob.layers = layerList
 
     return ob
 

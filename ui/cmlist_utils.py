@@ -94,7 +94,7 @@ def updateParentExposure(self, context):
         parentOb = bpy.data.objects.get(cm.parent_name)
         if parentOb:
             safeLink(parentOb, unhide=True, protect=True)
-            select(parentOb, active=parentOb)
+            select(parentOb, active=parentOb, only=True)
     else:
         parentOb = bpy.data.objects.get(cm.parent_name)
         if parentOb:

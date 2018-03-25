@@ -196,7 +196,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     old_percent = updateProgressBars(printStatus, cursorStatus, 0, -1, "Building")
 
     # draw merged bricks
-    for i, k2 in enumerate(bricksDict.keys()):
+    for i, k2 in enumerate(keys):
         if bricksDict[k2]["draw"] and bricksDict[k2]["parent"] == "self":
             loc = strToList(k2)
             # create brick based on the current brick info

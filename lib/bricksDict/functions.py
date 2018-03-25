@@ -300,10 +300,10 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
         oldLayers = list(scn.layers) # store scene layers for later reset
         setLayers(customObj.layers)
         # duplicate custom object
-        select(customObj, active=customObj)
+        setActiveObj(customObj)
         bpy.ops.object.duplicate()
         customObj0 = scn.objects.active
-        select(customObj0, active=customObj0)
+        setActiveObj(customObj0)
         # apply transformation to custom object
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
         # get custom object details
