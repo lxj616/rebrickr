@@ -30,7 +30,6 @@ from bpy.types import Operator
 from ...functions import *
 from ....brickify import *
 from ....brickify import *
-from .....lib.bricksDict.functions import getDictKey
 from .....functions import *
 
 
@@ -76,6 +75,7 @@ class selectBricksByType(Operator):
     # get items for brickType prop
     def get_items(self, context):
         items = getUsedTypes()
+        print(1)
         return items
     # get items for include prop
     def get_items1(self, context):

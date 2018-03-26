@@ -139,8 +139,8 @@ class delete_override(Operator):
 
             for obj_name in objNamesD[cm_id]:
                 # get dict key details of current obj
-                dictKey, dictLoc = getDictKey(obj_name)
-                x0, y0, z0 = dictLoc
+                dictKey = getDictKey(obj_name)
+                x0, y0, z0 = getDictLoc(dictKey)
                 # get size of current brick (e.g. [2, 4, 1])
                 objSize = bricksDict[dictKey]["size"]
 

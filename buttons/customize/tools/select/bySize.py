@@ -30,7 +30,6 @@ from bpy.types import Operator
 from ...functions import *
 from ....brickify import *
 from ....brickify import *
-from .....lib.bricksDict.functions import getDictKey
 from .....functions import *
 
 

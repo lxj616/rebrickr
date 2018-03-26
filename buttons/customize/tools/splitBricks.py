@@ -76,7 +76,7 @@ class splitBricks(Operator):
             bricksDict = self.bricksDicts[cm_id]
             # iterate through names of selected objects
             for obj_name in self.objNamesD[cm_id]:
-                dictKey, dictLoc = getDictKey(obj_name)
+                dictKey = getDictKey(obj_name)
                 size = bricksDict[dictKey]["size"]
                 if size[2] <= 1:
                     continue
@@ -144,7 +144,8 @@ class splitBricks(Operator):
                 # iterate through names of selected objects
                 for obj_name in self.objNamesD[cm_id]:
                     # get dict key details of current obj
-                    dictKey, dictLoc = getDictKey(obj_name)
+                    dictKey = getDictKey(obj_name)
+                    dictLoc = getDictLoc(dictKey)
                     x0, y0, z0 = dictLoc
                     # get size of current brick (e.g. [2, 4, 1])
                     brickSize = bricksDict[dictKey]["size"]
@@ -171,8 +172,10 @@ class splitBricks(Operator):
 
                 # add selected objects to objects to select at the end
                 objsToSelect += bpy.context.selected_objects
+            print(1)
             # select the new objects created
             select(objsToSelect)
+            print(2)
         except:
             handle_exception()
 

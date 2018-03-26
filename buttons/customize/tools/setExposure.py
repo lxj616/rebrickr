@@ -77,7 +77,7 @@ class setExposure(Operator):
                 # iterate through names of selected objects
                 for obj_name in self.objNamesD[cm_id]:
                     # get dict key details of current obj
-                    dictKey, dictLoc = getDictKey(obj_name)
+                    dictKey = getDictKey(obj_name)
                     # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
 

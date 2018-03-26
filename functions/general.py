@@ -232,8 +232,10 @@ def isOnShell(bricksDict, key, loc=None):
 def getDictKey(name):
     """ get dict key details of obj """
     dictKey = name.split("__")[1]
-    dictLoc = strToList(dictKey)
-    return dictKey, dictLoc
+    return dictKey
+
+def getDictLoc(dictKey):
+    return strToList(dictKey)
 
 
 def getBrickCenter(bricksDict, key, loc=None):

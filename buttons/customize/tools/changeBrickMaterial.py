@@ -59,7 +59,9 @@ class changeMaterial(Operator):
 
     def execute(self, context):
         try:
-            if self.mat_name == "NONE":
+            # only reference self.mat_name once (runs get_items)
+            targetMatName = self.mat_name
+            if targetMatName == "NONE":
                 return {"FINISHED"}
             scn = bpy.context.scene
             objsToSelect = []
@@ -73,11 +75,11 @@ class changeMaterial(Operator):
 
                 # iterate through cm_ids of selected objects
                 for obj_name in self.objNamesD[cm_id]:
-                    dictKey, _ = getDictKey(obj_name)
+                    dictKey = getDictKey(obj_name)
                     # change material
                     keysInBrick = getKeysInBrick(bricksDict[dictKey]["size"], dictKey)
                     for k in keysInBrick:
-                        bricksDict[k]["mat_name"] = self.mat_name
+                        bricksDict[k]["mat_name"] = targetMatName
                     # delete the object that was split
                     delete(bpy.data.objects.get(obj_name))
                     keysToUpdate.append(dictKey)

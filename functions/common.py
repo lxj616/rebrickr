@@ -35,6 +35,7 @@ from math import *
 # Blender imports
 import bpy
 from mathutils import Vector
+from bpy.types import Object, Scene
 props = bpy.props
 
 
@@ -361,19 +362,19 @@ def unhide(objList):
 
 
 def setActiveObj(obj, scene=None):
-    assert type(obj) == bpy.types.Object
+    assert type(obj) == Object
     scene = scene or bpy.context.scene
     scene.objects.active = obj
 
 
-def select(objList=[], active=None, deselect=False, only=False, scene=None):
+def select(objList=[], active:Object=None, deselect:bool=False, only:bool=False, scene:Scene=None):
     """ selects objs in list and deselects the rest """
     # initialize vars
     if objList is None and active is None:
         return True
     objList = confirmList(objList)
     # deselect all if selection is exclusive
-    if not deselect and only and len(objList) > 0:
+    if only and not deselect and len(objList) > 0:
         deselectAll()
     # select/deselect objects in list
     for obj in objList:
@@ -381,9 +382,7 @@ def select(objList=[], active=None, deselect=False, only=False, scene=None):
             obj.select = not deselect
     # set active object
     if active:
-        if type(active) != bpy.types.Object:
-            raise TypeError("argument passed to 'active' parameter not valid (recieved '" + str(active) + "')")
-        setActiveObj(objList[0] if type(active) == bool else active, scene=scene)
+        setActiveObj(active, scene=scene)
     return True
 
 

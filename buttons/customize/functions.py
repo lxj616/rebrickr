@@ -137,9 +137,13 @@ def getAvailableTypes(by="SELECTION", includeSizes=[]):
         cm = getItemByID(scn.cmlist, cm_id)
         items += [("CUSTOM", "Custom", "")] if cm.brickType == "CUSTOM" else []
         bricksDict = bricksDicts[cm_id]
+        objSizes = []
         for obj_name in objNamesD[cm_id]:
-            dictKey, dictLoc = getDictKey(obj_name)
+            dictKey = getDictKey(obj_name)
             objSize = bricksDict[dictKey]["size"]
+            if objSize in objSizes:
+                continue
+            objSizes.append(objSize)
             if objSize[2] not in [1, 3]: raise Exception("Custom Error Message: objSize not in [1, 3]")
             # build items
             items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[3] if includeSizes == "ALL" or objSize[:2] in legalBS[3][typ] + includeSizes]
@@ -254,7 +258,8 @@ def selectBricks(objNamesD, bricksDicts, brickSize="NULL", brickType="NULL", all
 
         for obj_name in objNamesD[cm_id]:
             # get dict key details of current obj
-            dictKey, dictLoc = getDictKey(obj_name)
+            dictKey = getDictKey(obj_name)
+            dictLoc = getDictLoc(dictKey)
             siz = bricksDict[dictKey]["size"]
             typ = bricksDict[dictKey]["type"]
             onShell = isOnShell(bricksDict, dictKey, dictLoc)

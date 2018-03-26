@@ -75,7 +75,7 @@ class redrawBricks(Operator):
                     delete(obj)
 
                 # add keys for updated objects to simple bricksDict for drawing
-                keysToUpdate = [getDictKey(obj.name)[0] for obj in self.objNamesD[cm_id]]
+                keysToUpdate = [getDictKey(obj.name) for obj in self.objNamesD[cm_id]]
 
                 # draw modified bricks
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate)

@@ -79,8 +79,8 @@ class mergeBricks(Operator):
                 # iterate through cm_ids of selected objects
                 for obj_name in self.objNamesD[cm_id]:
                     # initialize vars
-                    dictKey, dictLoc = getDictKey(obj_name)
-                    x0, y0, z0 = dictLoc
+                    dictKey = getDictKey(obj_name)
+                    x0, y0, z0 = getDictLoc(dictKey)
 
                     # split brick in matrix
                     splitKeys = Bricks.split(bricksDict, dictKey, cm=cm)
