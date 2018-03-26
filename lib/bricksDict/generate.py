@@ -264,10 +264,6 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     """ returns new brickFreqMatrix """
     scn, cm, _ = getActiveContextInfo()
     brickFreqMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
-    # convert source to bmesh and convert faces to tri's
-    sourceBM = bmesh.new()
-    sourceBM.from_mesh(source.data)
-    bmesh.ops.triangulate(sourceBM, faces=sourceBM.faces)
 
     # initialize values used for printing status
     denom = (len(coordMatrix[0][0]) + len(coordMatrix[0]) + len(coordMatrix))/100
@@ -284,7 +280,6 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
             update_progress("Shell", percent/100.0)
             if cursorStatus: wm.progress_update(percent)
         return percent
-
 
     axes = axes.lower()
     ct = time.time()
@@ -358,7 +353,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                     if brickFreqMatrix[x][y][z] == -1:
                         brickFreqMatrix[x][y][z] = 1
                         # TODO: set faceIdxMatrix value to nearest shell value using some sort of built in nearest poly to point function
-                    # break from current location, as boundary locs should not be verified
+                    # continue since boundary locs should not be verified in this case
                     continue
                 if cm.verifyExposure:
                     # If inside location (-1) intersects outside location (0), make it ouside (0)

@@ -247,6 +247,11 @@ def most_common(L):
     return max(groups, key=_auxfun)[0]
 
 
+def checkEqual(lst):
+    """ verifies that all items in list are the same """
+    return lst.count(lst[0]) == len(lst)
+
+
 def vec_mult(v1, v2):
     """ componentwise multiplication for vectors """
     return Vector(e1 * e2 for e1, e2 in zip(v1, v2))
