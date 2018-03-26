@@ -241,27 +241,27 @@ class BrickerBrickify(bpy.types.Operator):
             dGroup = bpy.data.groups.new(Bricker_source_dupes_gn)
             self.createdGroups.append(dGroup.name)
             # duplicate source and add duplicate to group
-            setActiveObj(self.source)
+            select(self.source, active=True, only=True)
             bpy.ops.object.duplicate()
             sourceDup = scn.objects.active
             dGroup.objects.link(sourceDup)
-            setActiveObj(sourceDup)
             sourceDup.name = self.source.name + "_duplicate"
             if cm.useLocalOrient:
                 sourceDup.rotation_mode = "XYZ"
                 sourceDup.rotation_euler = Euler((0, 0, 0), "XYZ")
             self.createdObjects.append(sourceDup.name)
+            self.source.select = False
             # set up sourceDup["old_parent"] and remove sourceDup parent
             sourceDup["frame_parent_cleared"] = -1
-            setActiveObj(sourceDup)
             if sourceDup.parent:
                 sourceDup["old_parent"] = sourceDup.parent.name
                 sourceDup["frame_parent_cleared"] = scn.frame_current
+                select(sourceDup, active=True)
                 bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
             # apply shape keys if existing
             shapeKeys = sourceDup.data.shape_keys
             if shapeKeys and len(shapeKeys.key_blocks) > 0:
-                setActiveObj(sourceDup)
+                select(sourceDup, active=True)
                 bpy.ops.object.shape_key_add(from_mix=True)
                 for i in range(len(shapeKeys.key_blocks)):
                     sourceDup.shape_key_remove(sourceDup.data.shape_keys.key_blocks[0])
@@ -274,7 +274,7 @@ class BrickerBrickify(bpy.types.Operator):
             self.source.rotation_mode = "XYZ"
             self.source["previous_rotation"] = tuple(self.source.rotation_euler)
             self.source["previous_scale"] = self.source.scale.to_tuple()
-            setActiveObj(sourceDup)
+            select(sourceDup, active=True)
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             scn.update()
         else:
@@ -760,7 +760,7 @@ class BrickerBrickify(bpy.types.Operator):
                 dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
                 dMod.ratio = cm.logoResolution * 1.6
                 scn.objects.link(refLogo)
-                setActiveObj(refLogo)
+                select(refLogo, active=True, only=True)
                 bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
                 safeUnlink(refLogo)
 
@@ -783,7 +783,7 @@ class BrickerBrickify(bpy.types.Operator):
                 duplicates[curFrame] = {"obj":sourceDup, "isReused":True}
                 continue
             # duplicate source for current frame
-            setActiveObj(lastObj)
+            select(lastObj, active=True, only=True)
             bpy.ops.object.duplicate()
             sourceDup = scn.objects.active
             sourceDup.name = "Bricker_" + cm.source_name + "_frame_" + str(curFrame)
@@ -803,12 +803,12 @@ class BrickerBrickify(bpy.types.Operator):
             self.createdObjects.append(sourceDup.name)
             if sourceDup.parent:
                 # apply parent transformation
-                setActiveObj(sourceDup)
+                select(sourceDup, active=True, only=True)
                 bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
             # apply shape keys if existing
             shapeKeys = sourceDup.data.shape_keys
             if shapeKeys is not None and len(shapeKeys.key_blocks) > 0:
-                setActiveObj(sourceDup)
+                select(sourceDup, active=True, only=True)
                 bpy.ops.object.shape_key_add(from_mix=True)
                 for i in range(len(shapeKeys.key_blocks)):
                     sourceDup.shape_key_remove(sourceDup.data.shape_keys.key_blocks[0])
@@ -855,7 +855,7 @@ class BrickerBrickify(bpy.types.Operator):
             self.source["previous_rotation"] = tuple(sourceDup.rotation_euler)
             self.source["previous_scale"] = sourceDup.scale.to_tuple()
             # apply transform data
-            setActiveObj(sourceDup)
+            select(sourceDup, active=True, only=True)
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             scn.update()
             # unlink source duplicate

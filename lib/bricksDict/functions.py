@@ -295,17 +295,20 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
         source_details, dimensions = getDetailsAndBounds(source, cm)
     if cm.brickType == "CUSTOM":
         scn = bpy.context.scene
+        originalActiveName = scn.objects.active.name
         # get custom object
         customObj = bpy.data.objects[cm.customObjectName]
         oldLayers = list(scn.layers) # store scene layers for later reset
         setLayers(customObj.layers)
         # duplicate custom object
-        setActiveObj(customObj)
+        select(customObj, active=customObj)
         bpy.ops.object.duplicate()
         customObj0 = scn.objects.active
-        setActiveObj(customObj0)
+        select(customObj0)
         # apply transformation to custom object
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        originalActive = bpy.data.objects[originalActiveName]
+        select(originalActive, active=originalActive, only=True)
         # get custom object details
         customObj_details = bounds(customObj0)
         # set brick scale

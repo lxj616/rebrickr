@@ -59,7 +59,7 @@ class MakeClosedMesh(bpy.types.Operator):
             source = bpy.data.objects.get(cm.source_name)
 
             # separate source by loose parts
-            setActiveObj(source)
+            select(source, active=True, only=True)
             bpy.ops.mesh.separate(type='LOOSE')
 
             separatedObjs = bpy.context.selected_objects
@@ -69,7 +69,7 @@ class MakeClosedMesh(bpy.types.Operator):
                 bMod = obj.modifiers.new('Bricker_Boolean', type='BOOLEAN')
                 bMod.object = separatedObjs[i]
                 bMod.operation = 'UNION'
-                setActiveObj(obj)
+                select(obj, active=True, only=True)
                 bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Bricker_Boolean')
                 obj = scn.objects.active
                 delete(separatedObjs[i])

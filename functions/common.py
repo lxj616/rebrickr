@@ -208,7 +208,7 @@ class Suppressor(object):
 
 def applyModifiers(obj, only=None, exclude=None, curFrame=None):
     hasArmature = False
-    setActiveObj(obj)
+    select(obj, active=True, only=True)
     # apply modifiers
     for mod in obj.modifiers:
         # only = ["SUBSURF", "ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"]
@@ -367,7 +367,7 @@ def setActiveObj(obj, scene=None):
     scene.objects.active = obj
 
 
-def select(objList=[], active:Object=None, deselect:bool=False, only:bool=False, scene:Scene=None):
+def select(objList=[], active=None, deselect:bool=False, only:bool=False, scene:Scene=None):
     """ selects objs in list and deselects the rest """
     # initialize vars
     if objList is None and active is None:
@@ -382,7 +382,7 @@ def select(objList=[], active:Object=None, deselect:bool=False, only:bool=False,
             obj.select = not deselect
     # set active object
     if active:
-        setActiveObj(active, scene=scene)
+        setActiveObj(objList[0] if type(active) == bool else active, scene=scene)
     return True
 
 

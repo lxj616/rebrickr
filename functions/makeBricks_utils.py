@@ -237,11 +237,12 @@ def prepareLogoAndGetDetails(logo, dimensions):
     scn, cm, _ = getActiveContextInfo()
     if cm.logoDetail != "LEGO" and logo is not None:
         # prepare for logo duplication
+        originalActiveName = scn.objects.active.name
         oldLayers = list(scn.layers)
         setLayers(logo.layers)
         logo.hide = False
         # duplicate logo object
-        setActiveObj(logo)
+        select(logo, active=True, only=True)
         bpy.data.objects.active = logo
         bpy.ops.object.duplicate()
         logo = scn.objects.active
@@ -251,6 +252,9 @@ def prepareLogoAndGetDetails(logo, dimensions):
         # apply logo object transformation
         logo.parent = None
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        # select original selection
+        originalActive = bpy.data.objects[originalActiveName]
+        select(originalActive, active=True, only=True)
         # set scene layers back to original active layers
         setLayers(oldLayers)
         # get logo details
