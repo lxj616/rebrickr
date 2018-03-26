@@ -416,7 +416,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                     for idx in idxsToCheck:
                         try:
                             curVal = brickFreqMatrix[idx[0]][idx[1]][idx[2]]
-                        except KeyError:
+                        except IndexError:
                             continue
                         if curVal == round(j + 0.01,2):
                             brickFreqMatrix[x][y][z] = j
