@@ -75,7 +75,6 @@ class selectBricksByType(Operator):
     # get items for brickType prop
     def get_items(self, context):
         items = getUsedTypes()
-        print(1)
         return items
     # get items for include prop
     def get_items1(self, context):

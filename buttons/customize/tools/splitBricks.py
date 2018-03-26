@@ -158,7 +158,7 @@ class splitBricks(Operator):
 
                     if self.vertical or self.horizontal:
                         # delete the current object
-                        delete(bpy.data.objects.get(obj_name))
+                        delete(bpy.data.objects[obj_name])
                         # split the bricks in the matrix and set size of active brick's bricksDict entries to 1x1x[lastZSize]
                         splitKeys = Bricks.split(bricksDict, dictKey, loc=dictLoc, cm=cm, v=self.vertical, h=self.horizontal)
                         # append new splitKeys to keysToUpdate
@@ -172,10 +172,8 @@ class splitBricks(Operator):
 
                 # add selected objects to objects to select at the end
                 objsToSelect += bpy.context.selected_objects
-            print(1)
             # select the new objects created
             select(objsToSelect)
-            print(2)
         except:
             handle_exception()
 
