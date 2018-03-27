@@ -21,6 +21,7 @@
 
 # system imports
 import time
+import sys
 
 # Blender imports
 import bpy
@@ -119,7 +120,7 @@ class BrickerDelete(bpy.types.Operator):
         wm.progress_begin(0, 100)
         print()
 
-        cls.cleanBricks(preservedFrames, modelType)
+        cls.cleanBricks(scn, cm, n, preservedFrames, modelType)
 
         # set scene layers back to original layers
         setLayers(curLayers)
@@ -290,13 +291,13 @@ class BrickerDelete(bpy.types.Operator):
                 bpy.data.groups.remove(pGroup, do_unlink=True)
         return brickLoc, brickRot, brickScl
 
-    @timed_call("delete", precision=5)
-    def cleanBricks(preservedFrames, modelType):
-        scn, cm, n = getActiveContextInfo()
+    def cleanBricks(scn, cm, n, preservedFrames, modelType):
         wm = bpy.context.window_manager
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         if modelType == "MODEL":
             # clean up Bricker_bricks group
+            sys.stdout.write("\rDeleting...")
+            sys.stdout.flush()
             if groupExists(Bricker_bricks_gn):
                 brickGroup = bpy.data.groups[Bricker_bricks_gn]
                 bricks = getBricks()
@@ -326,9 +327,9 @@ class BrickerDelete(bpy.types.Operator):
                         delete(bricks)
                     bpy.data.groups.remove(brickGroup, do_unlink=True)
             cm.animated = False
-            # finish status update
-            update_progress("Deleting", 1)
-            wm.progress_end()
+        # finish status update
+        update_progress("Deleting", 1)
+        wm.progress_end()
 
     def resetCmlistAttrs():
         scn, cm, n = getActiveContextInfo()
