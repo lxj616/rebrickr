@@ -121,10 +121,6 @@ class BrickerDelete(bpy.types.Operator):
 
         cls.cleanBricks(preservedFrames, modelType)
 
-        # finish status update
-        update_progress("Deleting", 1)
-        wm.progress_end()
-
         # set scene layers back to original layers
         setLayers(curLayers)
 
@@ -294,6 +290,7 @@ class BrickerDelete(bpy.types.Operator):
                 bpy.data.groups.remove(pGroup, do_unlink=True)
         return brickLoc, brickRot, brickScl
 
+    @timed_call("delete", precision=5)
     def cleanBricks(preservedFrames, modelType):
         scn, cm, n = getActiveContextInfo()
         wm = bpy.context.window_manager
@@ -308,15 +305,8 @@ class BrickerDelete(bpy.types.Operator):
                         storeTransformData(cm, bricks[0])
                 last_percent = 0
                 # remove objects
-                for i, obj in enumerate(bricks):
-                    percent = i/len(bricks)
-                    if percent - last_percent > 0.001 and percent < 1:
-                        update_progress("Deleting", percent)
-                        wm.progress_update(percent*100)
-                        last_percent
-                    m = obj.data
-                    bpy.data.objects.remove(obj, True)
-                    bpy.data.meshes.remove(m, True)
+                select(bricks)
+                bpy.ops.object.delete(update_model=False)
                 bpy.data.groups.remove(brickGroup, do_unlink=True)
             cm.modelCreated = False
         elif modelType == "ANIMATION":
@@ -336,6 +326,9 @@ class BrickerDelete(bpy.types.Operator):
                         delete(bricks)
                     bpy.data.groups.remove(brickGroup, do_unlink=True)
             cm.animated = False
+            # finish status update
+            update_progress("Deleting", 1)
+            wm.progress_end()
 
     def resetCmlistAttrs():
         scn, cm, n = getActiveContextInfo()

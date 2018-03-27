@@ -85,6 +85,7 @@ class delete_override(Operator):
     # class variables
 
     use_global = BoolProperty(default=False)
+    update_model = BoolProperty(default=True)
 
     ################################################
     # class methods
@@ -108,14 +109,14 @@ class delete_override(Operator):
                         self.report({"WARNING"}, "Please initialize the Bricker [shift+i] before attempting to delete bricks")
                         self.warnInitialize = True
         # run deleteUnprotected
-        protected = self.deleteUnprotected(context, self.use_global)
+        protected = self.deleteUnprotected(context, self.use_global, self.update_model)
         # alert user of protected objects
         if len(protected) > 0:
             self.report({"WARNING"}, "Bricker is using the following object(s): " + str(protected)[1:-1])
         # push delete action to undo stack
         bpy.ops.ed.undo_push(message="Delete")
 
-    def deleteUnprotected(self, context, use_global=False):
+    def deleteUnprotected(self, context, use_global=False, update_model=True):
         scn = context.scene
         protected = []
         objNamesToDelete = [obj.name for obj in self.objsToDelete]
@@ -131,6 +132,8 @@ class delete_override(Operator):
             lastBlenderState = cm.blender_undo_state
             # get bricksDict from cache
             bricksDict, loadedFromCache = getBricksDict(dType="MODEL", cm=cm, restrictContext=True)
+            if not update_model:
+                continue
             if not loadedFromCache:
                 self.report({"WARNING"}, "Adjacent bricks in model '" + cm.name + "' could not be updated (matrix not cached)")
                 continue
@@ -199,7 +202,7 @@ class delete_override(Operator):
             if obj is None:
                 continue
             if obj.isBrickifiedObject or obj.isBrick:
-                self.deleteBrickObject(obj, use_global)
+                self.deleteBrickObject(obj, update_model, use_global)
             elif not obj.protected:
                 obj_users_scene = len(obj.users_scene)
                 scn.objects.unlink(obj)
@@ -242,7 +245,7 @@ class delete_override(Operator):
                     # add key to simple bricksDict for drawing
                     keysToUpdate.append(k1)
 
-    def deleteBrickObject(self, obj, use_global=False):
+    def deleteBrickObject(self, obj, update_model=True, use_global=False):
         scn = bpy.context.scene
         cm = None
         for cmCur in scn.cmlist:
@@ -257,7 +260,7 @@ class delete_override(Operator):
                 if bGroup and len(bGroup.objects) < 2:
                     cm = cmCur
                     break
-        if cm:
+        if cm and update_model:
             BrickerDelete.runFullDelete(cm=cm)
             scn.objects.active.select = False
         else:

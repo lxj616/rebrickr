@@ -42,16 +42,10 @@ def VectorRound(vec, dec, roundType="ROUND"):
     """ round all vals in Vector 'vec' to 'dec' precision """
     if roundType == "ROUND":
         lst = [round(vec[i], dec) for i in range(len(vec))]
-    else:
-        lst = []
-        for i in range(len(vec)):
-            val = vec[i] * 10**dec
-            if roundType == "FLOOR":
-                val = math.floor(val)
-            elif roundType in ["CEILING", "CEIL"]:
-                val = math.ceil(val)
-            val = val / 10**dec
-            lst.append(val)
+    elif roundType == "FLOOR":
+        lst = [(math.floor(vec[i] * 10**dec)) / 10**dec for i in range(len(vec))]
+    elif roundType in ["CEILING", "CEIL"]:
+        lst = [(math.ceil(vec[i] * 10**dec)) / 10**dec for i in range(len(vec))]
     return Vector(lst)
 
 def castRays(obj:Object, point:Vector, direction:Vector, miniDist:float, roundType:str="CEILING", edgeLen:int=0):
@@ -554,9 +548,9 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                     name= 'Bricker_%(n)s_brick_%(i)s__%(bKey)s' % locals(),
                     val= brickFreqMatrix[x][y][z],
                     draw= draw,
-                    co= listToStr(co - source_details.mid),
+                    co= vecToStr(co - source_details.mid),
                     near_face= nf,
-                    near_intersection= ni if ni is None else listToStr(ni),
+                    near_intersection= ni if ni is None else vecToStr(ni),
                     near_normal= normal_direction,
                     rgba= rgba,
                     mat_name= "",  # defined in 'updateMaterials' function

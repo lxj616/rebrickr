@@ -162,13 +162,13 @@ def matrixReallyIsDirty(cm):
     return cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings()
 
 
+def vecToStr(vec, separate_by=","):
+    return listToStr(list(vec), separate_by=separate_by)
+
+
 def listToStr(lst, separate_by=","):
-    assert type(lst) in [list, tuple, Vector]
-    string = str(lst[0])
-    for i in range(1, len(lst)):
-        item = lst[i]
-        string = "%(string)s%(separate_by)s%(item)s" % locals()
-    return string
+    assert type(lst) in [list, tuple]
+    return separate_by.join(map(str, lst))
 
 
 def strToList(string, item_type=int, split_on=","):

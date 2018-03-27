@@ -336,7 +336,7 @@ class BrickerBrickify(bpy.types.Operator):
         if origFrame:
             scn.frame_set(origFrame)
 
-        cm.lastSourceMid = listToStr(parentLoc)
+        cm.lastSourceMid = vecToStr(parentLoc)
 
     def brickifyAnimation(self):
         """ create brick animation """
