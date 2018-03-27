@@ -72,7 +72,7 @@ class BrickerBrickify(bpy.types.Operator):
     """ Create brick sculpture from source object mesh """
     bl_idname = "bricker.brickify"
     bl_label = "Create/Update Brick Model from Source Object"
-    bl_options = {"REGISTER", "UNDO"}
+    bl_options = {"REGISTER"}
 
     ################################################
     # Blender Operator methods
@@ -91,6 +91,8 @@ class BrickerBrickify(bpy.types.Operator):
 
     def execute(self, context):
         try:
+            if not self.action.startswith("UPDATE"):
+                bpy.ops.ed.undo_push(message="Brickify")
             scn, cm, _ = getActiveContextInfo()
             previously_animated = cm.animated
             previously_model_created = cm.modelCreated
