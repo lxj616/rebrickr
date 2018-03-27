@@ -23,6 +23,7 @@ Created by Christopher Gearhart
 import bmesh
 import math
 import time
+import numpy as np
 
 # Blender imports
 import bpy
@@ -252,7 +253,7 @@ def updateInternal(bricksDict, cm, keys="ALL", clearExisting=False):
 def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", cursorStatus=False):
     """ returns new brickFreqMatrix """
     scn, cm, _ = getActiveContextInfo()
-    brickFreqMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
+    brickFreqMatrix = np.zeros((len(coordMatrix), len(coordMatrix[0]), len(coordMatrix[0][0]))).tolist()
 
     # initialize values used for printing status
     denom = (len(coordMatrix[0][0]) + len(coordMatrix[0]) + len(coordMatrix))/100
@@ -488,10 +489,6 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
     cursorStatus   -- update mouse cursor with status of matrix creation
     """
     scn, cm, n = getActiveContextInfo()
-    # update source data in case data needs to be refreshed
-    source.data.update()
-    for scn in bpy.data.scenes:
-        scn.update()
     # get lattice bmesh
     print("\ngenerating blueprint...")
     lScale = source_details.dist
@@ -505,7 +502,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
     # set calculationAxes
     calculationAxes = cm.calculationAxes if cm.brickShell != "INSIDE" else "XYZ"
     # set up faceIdxMatrix and brickFreqMatrix
-    faceIdxMatrix = [[[0 for _ in range(len(coordMatrix[0][0]))] for _ in range(len(coordMatrix[0]))] for _ in range(len(coordMatrix))]
+    faceIdxMatrix = np.zeros((len(coordMatrix), len(coordMatrix[0]), len(coordMatrix[0][0]))).tolist()
     brickFreqMatrix = getBrickMatrix(source, faceIdxMatrix, coordMatrix, cm.brickShell, axes=calculationAxes, cursorStatus=cursorStatus)
     # initialize active keys
     cm.activeKeyX = -1

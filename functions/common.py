@@ -70,6 +70,7 @@ def stopWatch(text, value, precision=2):
 
     outputString = str(text) + ": " + str(Days) + ";" + str(Hours) + ":" + str(Minutes) + ";" + str(Seconds)
     print(outputString)
+    return time.time()
 
 
 def groupExists(groupName):
