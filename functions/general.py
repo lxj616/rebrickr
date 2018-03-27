@@ -211,21 +211,21 @@ def createdWithUnsupportedVersion(cm=None):
     return cm.version[:3] != bpy.props.bricker_version[:3]
 
 
-def getLocsInBrick(size, key, loc=None, zStep=None):
-    zStep = zStep or getZStep(getActiveContextInfo()[1])
+def getLocsInBrick(cm, size, key, loc=None, zStep=None):
+    zStep = zStep or getZStep(cm)
     x0, y0, z0 = loc or strToList(key)
     return [[x0 + x, y0 + y, z0 + z] for z in range(0, size[2], zStep) for y in range(size[1]) for x in range(size[0])]
 
 
-def getKeysInBrick(size, key, loc=None, zStep=None):
-    locs = getLocsInBrick(size=size, key=key, loc=loc, zStep=zStep)
+def getKeysInBrick(cm, size, key, loc=None, zStep=None):
+    locs = getLocsInBrick(cm, size=size, key=key, loc=loc, zStep=zStep)
     return [listToStr(loc) for loc in locs]
 
 
 def isOnShell(bricksDict, key, loc=None):
     """ check if any locations in brick are on the shell """
     size = bricksDict[key]["size"]
-    brickKeys = getKeysInBrick(size=size, key=key, loc=loc)
+    brickKeys = getKeysInBrick(cm, size=size, key=key, loc=loc)
     return bricksDict[key]["val"] == 1 or 1 in [bricksDict[k]["val"] for k in brickKeys]
 
 
@@ -238,8 +238,8 @@ def getDictLoc(dictKey):
     return strToList(dictKey)
 
 
-def getBrickCenter(bricksDict, key, loc=None):
-    brickKeys = getKeysInBrick(size=bricksDict[key]["size"], key=key, loc=loc)
+def getBrickCenter(cm, bricksDict, key, loc=None):
+    brickKeys = getKeysInBrick(cm, size=bricksDict[key]["size"], key=key, loc=loc)
     coords = [strToList(bricksDict[k0]["co"], item_type=float) for k0 in brickKeys]
     coord_ave = Vector((np.mean([co[0] for co in coords]), np.mean([co[1] for co in coords]), np.mean([co[2] for co in coords])))
     return coord_ave

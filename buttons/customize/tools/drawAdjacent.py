@@ -111,7 +111,7 @@ class drawAdjacent(Operator):
                     for j,adjDictLoc in enumerate(self.adjDKLs[i]):
                         dictLoc2 = dictLoc
                         dictLoc2[2] += 1
-                        self.bricksDict = verifyBrickExposureAboveAndBelow(adjDictLoc.copy(), self.bricksDict, decriment=decriment + 1, zNeg=self.zNeg, zPos=self.zPos)
+                        self.bricksDict = verifyBrickExposureAboveAndBelow(scn, cm, adjDictLoc.copy(), self.bricksDict, decriment=decriment + 1, zNeg=self.zNeg, zPos=self.zPos)
 
             # recalculate val for each bricksDict key in original brick
             brickLocs = [[x, y, z] for z in range(z0, z0 + objSize[2], zStep) for y in range(y0, y0 + objSize[1]) for x in range(x0, x0 + objSize[0])]

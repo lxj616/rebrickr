@@ -154,7 +154,7 @@ class BrickerBrickify(bpy.types.Operator):
             if not matrixReallyIsDirty(cm) and loadedFromCache:
                 cm.matrixIsDirty = False
 
-        if not self.isValid(source, Bricker_bricks_gn):
+        if not self.isValid(scn, cm, source, Bricker_bricks_gn):
             return {"CANCELLED"}
 
         if "ANIM" not in self.action:
@@ -235,7 +235,7 @@ class BrickerBrickify(bpy.types.Operator):
             # skip source, dupes, and parents
             BrickerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
         else:
-            storeTransformData(None)
+            storeTransformData(cm, None)
 
         if self.action == "CREATE":
             # create dupes group
@@ -309,7 +309,7 @@ class BrickerBrickify(bpy.types.Operator):
         self.createdObjects.append(parent.name)
 
         # update refLogo
-        logo_details, refLogo = self.getLogo(cm, dimensions)
+        logo_details, refLogo = self.getLogo(scn, cm, dimensions)
 
         # create new bricks
         group_name = self.createNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, logo_details, self.action, curFrame=None, sceneCurFrame=None)
@@ -422,7 +422,7 @@ class BrickerBrickify(bpy.types.Operator):
             source_details, dimensions = getDetailsAndBounds(source)
 
             # update refLogo
-            logo_details, refLogo = self.getLogo(cm, dimensions)
+            logo_details, refLogo = self.getLogo(scn, cm, dimensions)
 
             if self.action == "ANIMATE":
                 # set source model height for display in UI
@@ -539,9 +539,8 @@ class BrickerBrickify(bpy.types.Operator):
         cacheBricksDict(action, cm, bricksDict, curFrame=curFrame)
         return group_name
 
-    def isValid(self, source, Bricker_bricks_gn):
+    def isValid(self, scn, cm, source, Bricker_bricks_gn):
         """ returns True if brickify action can run, else report WARNING/ERROR and return False """
-        scn, cm, _ = getActiveContextInfo()
         if cm.brickType == "CUSTOM":
             if cm.customObjectName == "":
                 self.report({"WARNING"}, "Custom brick type object not specified.")
@@ -710,11 +709,11 @@ class BrickerBrickify(bpy.types.Operator):
         # if model is not split
         elif not cm.splitModel:
             # apply stored transformation to bricks
-            applyTransformData(list(bGroup.objects))
+            applyTransformData(cm, list(bGroup.objects))
         # if model wasn't split but is now
         elif not cm.lastSplitModel:
             # apply stored transformation to parent of bricks
-            applyTransformData(parent)
+            applyTransformData(cm, parent)
         obj = bGroup.objects[0] if len(bGroup.objects) > 0 else None
         if obj is None:
             return
@@ -728,22 +727,21 @@ class BrickerBrickify(bpy.types.Operator):
             obj.lock_scale    = [True, True, True]
 
     @classmethod
-    def getLogo(self, cm, dimensions):
+    def getLogo(self, scn, cm, dimensions):
         if cm.brickType == "CUSTOM":
             refLogo = None
             logo_details = None
         else:
             if cm.logoDetail == "LEGO":
-                refLogo = self.getLegoLogo(self, dimensions)
+                refLogo = self.getLegoLogo(self, scn, cm, dimensions)
                 logo_details = bounds(refLogo)
             else:
                 refLogo = bpy.data.objects.get(cm.logoObjectName)
                 # apply transformation to duplicate of logo object and normalize size/position
-                logo_details, refLogo = prepareLogoAndGetDetails(refLogo, dimensions)
+                logo_details, refLogo = prepareLogoAndGetDetails(scn, cm, refLogo, dimensions)
         return logo_details, refLogo
 
-    def getLegoLogo(self, dimensions):
-        scn, cm, _ = getActiveContextInfo()
+    def getLegoLogo(self, scn, cm, dimensions):
         # update refLogo
         if cm.logoDetail == "NONE":
             refLogo = None

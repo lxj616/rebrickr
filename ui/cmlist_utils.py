@@ -105,7 +105,7 @@ def updateModelScale(self, context):
     scn, cm, _ = getActiveContextInfo()
     if not (cm.modelCreated or cm.animated):
         return
-    _, _, s = getTransformData()
+    _, _, s = getTransformData(cm)
     parentOb = bpy.data.objects.get(cm.parent_name)
     if parentOb:
         parentOb.scale = Vector(s) * cm.transformScale

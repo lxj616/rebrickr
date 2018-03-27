@@ -61,7 +61,7 @@ class Bricks:
 
         # create list of brick bmesh variations
         if logo and stud and (type in ["BRICK", "PLATE", "STUD"] or type == "SLOPE" and max(size[:2]) != 1):
-            bms = makeLogoVariations(dimensions, size, directions[maxIdx] if type == "SLOPE" else "", all_vars, logo, logo_type, logo_details, logo_inset)
+            bms = makeLogoVariations(cm, dimensions, size, directions[maxIdx] if type == "SLOPE" else "", all_vars, logo, logo_type, logo_details, logo_inset)
         else:
             bms = [bmesh.new()]
 
@@ -133,8 +133,7 @@ class Bricks:
     def get_dimensions(height=1, zScale=1, gap_percentage=0.01):
         return get_brick_dimensions(height, zScale, gap_percentage)
 
-def makeLogoVariations(dimensions, size, direction, all_vars, logo, logo_type, logo_details, logo_inset):
-    cm = getActiveContextInfo()[1]
+def makeLogoVariations(cm, dimensions, size, direction, all_vars, logo, logo_type, logo_details, logo_inset):
     # get logo rotation angle based on size of brick
     rot_mult = 180
     rot_vars = 2

@@ -215,24 +215,22 @@ def createNewMaterial(model_name, rgba, rgba_vals):
     return mat_name
 
 
-def getUVImage(obj, face_idx):
+def getUVImage(scn, cm, obj, face_idx):
     """ returns UV image (priority to user settings, then face index, then first one found in object """
-    scn, cm, _ = getActiveContextInfo()
     image = bpy.data.images.get(cm.uvImageName)
     if image is None and obj.data.uv_textures.active:
         image = obj.data.uv_textures.active.data[face_idx].image or getFirstImgTexNode(obj)
     return image
 
 
-def getUVPixelColor(obj, face_idx, point, uv_images):
+def getUVPixelColor(scn, cm, obj, face_idx, point, uv_images):
     """ get RGBA value for point in UV image at specified face index """
     if face_idx is None:
         return None
     # get closest material using UV map
-    scn, cm, _ = getActiveContextInfo()
     face = obj.data.polygons[face_idx]
     # get uv_texture image for face
-    image = getUVImage(obj, face_idx)
+    image = getUVImage(scn, cm, obj, face_idx)
     if image is None:
         return None
     # get uv coordinate based on nearest face intersection
@@ -263,15 +261,14 @@ def getMaterialColor(matName):
     return [r, g, b, a]
 
 
-def getBrickRGBA(obj, face_idx, point, uv_images):
+def getBrickRGBA(scn, cm, obj, face_idx, point, uv_images):
     """ returns RGBA value for brick """
-    scn, cm, _ = getActiveContextInfo()
     if face_idx is None:
         return None
     # get material based on rgba value of UV image at face index
     if uv_images:
         origMatName = ""
-        rgba = getUVPixelColor(obj, face_idx, Vector(point), uv_images)
+        rgba = getUVPixelColor(scn, cm, obj, face_idx, Vector(point), uv_images)
     else:
         # get closest material using material slot of face
         origMatName = getMatAtFaceIdx(obj, face_idx)

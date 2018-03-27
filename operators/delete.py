@@ -159,7 +159,7 @@ class delete_override(Operator):
                             bricksDict[curKey]["top_exposed"] = False
                             bricksDict[curKey]["bot_exposed"] = False
                             # make adjustments to adjacent bricks
-                            self.updateAdjBricksDicts(bricksDict, zStep, curKey, keysToUpdate, x, y, z)
+                            self.updateAdjBricksDicts(scn, cm, bricksDict, zStep, curKey, keysToUpdate, x, y, z)
             # dirtyBuild if it wasn't already
             lastBuildIsDirty = cm.buildIsDirty
             if not lastBuildIsDirty:
@@ -211,8 +211,7 @@ class delete_override(Operator):
 
         return protected
 
-    def updateAdjBricksDicts(self, bricksDict, zStep, curKey, keysToUpdate, x, y, z):
-        scn, cm, _ = getActiveContextInfo()
+    def updateAdjBricksDicts(self, scn, cm, bricksDict, zStep, curKey, keysToUpdate, x, y, z):
         adjKeys, adjBrickVals = getAdjKeysAndBrickVals(bricksDict, key=curKey)
         if min(adjBrickVals) == 0 and cm.autoUpdateExposed and cm.lastSplitModel:
             # set adjacent bricks to shell if deleted brick was on shell

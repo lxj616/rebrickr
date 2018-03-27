@@ -31,9 +31,8 @@ from .common import confirmList
 from .general import *
 
 
-def storeTransformData(obj, offsetBy=None):
+def storeTransformData(cm, obj, offsetBy=None):
     """ store transform data from obj into cm.modelLoc/Rot/Scale """
-    scn, cm, _ = getActiveContextInfo()
     if obj:
         loc = obj.location
         if offsetBy is not None:
@@ -49,29 +48,27 @@ def storeTransformData(obj, offsetBy=None):
         cm.modelScale = "1,1,1"
 
 
-def getTransformData():
+def getTransformData(cm):
     """ return transform data from cm.modelLoc/Rot/Scale """
-    scn, cm, _ = getActiveContextInfo()
     l = tuple(strToList(cm.modelLoc, float))
     r = tuple(strToList(cm.modelRot, float))
     s = tuple(strToList(cm.modelScale, float))
     return l, r, s
 
 
-def clearTransformData():
-    scn, cm, _ = getActiveContextInfo()
+def clearTransformData(cm):
     cm.modelLoc = "0,0,0"
     cm.modelRot = "0,0,0"
     cm.modelScale = "1,1,1"
 
 
-def applyTransformData(objList):
+def applyTransformData(cm, objList):
     """ apply transform data from cm.modelLoc/Rot/Scale to objects in objList """
     objList = confirmList(objList)
     # apply matrix to objs
     for obj in objList:
         # LOCATION
-        l, r, s = getTransformData()
+        l, r, s = getTransformData(cm)
         obj.location = obj.location + Vector(l)
         # ROTATION
         obj.rotation_mode = "XYZ"

@@ -97,7 +97,7 @@ class BrickerApplyMaterial(bpy.types.Operator):
         elif self.action == "INTERNAL":
             matName = cm.internalMatName
         elif self.action == "RANDOM":
-            BrickerApplyMaterial.applyRandomMaterial(context, bricks, bricksDict)
+            BrickerApplyMaterial.applyRandomMaterial(scn, cm, context, bricks, bricksDict)
 
         if self.action != "RANDOM":
             mat = bpy.data.materials.get(matName)
@@ -110,7 +110,7 @@ class BrickerApplyMaterial(bpy.types.Operator):
                         brick.data.materials.clear(1)
                     # Assign it to object
                     brick.data.materials.append(mat)
-                elif self.action == "INTERNAL" and not isOnShell(bricksDict, brick.name.split("__")[1]):
+                elif self.action == "INTERNAL" and not isOnShell(cm, bricksDict, brick.name.split("__")[1]):
                     brick.data.materials.pop(0)
                     # Assign it to object
                     brick.data.materials.append(mat)
@@ -130,8 +130,7 @@ class BrickerApplyMaterial(bpy.types.Operator):
         cm.materialIsDirty = False
 
     @classmethod
-    def applyRandomMaterial(self, context, bricks, bricksDict):
-        scn, cm, _ = getActiveContextInfo()
+    def applyRandomMaterial(self, scn, cm, context, bricks, bricksDict):
         # initialize list of brick materials
         brick_mats = []
         mats = bpy.data.materials.keys()

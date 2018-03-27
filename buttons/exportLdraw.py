@@ -130,7 +130,7 @@ class exportLdraw(Operator):
     def blendToLdrawUnits(self, cm, bricksDict, key, idx):
         """ convert location of brick from blender units to ldraw units """
         brickD = bricksDict[key]
-        loc = getBrickCenter(bricksDict, key)
+        loc = getBrickCenter(cm, bricksDict, key)
         size = brickD["size"]
         zStep = getZStep(cm)
         dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)

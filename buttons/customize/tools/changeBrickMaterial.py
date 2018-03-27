@@ -77,7 +77,7 @@ class changeMaterial(Operator):
                 for obj_name in self.objNamesD[cm_id]:
                     dictKey = getDictKey(obj_name)
                     # change material
-                    keysInBrick = getKeysInBrick(bricksDict[dictKey]["size"], dictKey)
+                    keysInBrick = getKeysInBrick(cm, bricksDict[dictKey]["size"], dictKey)
                     for k in keysInBrick:
                         bricksDict[k]["mat_name"] = targetMatName
                     # delete the object that was split

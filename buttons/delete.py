@@ -154,7 +154,7 @@ class BrickerDelete(bpy.types.Operator):
 
             # apply transformation to source
             if not cm.armature and ((modelType == "MODEL" and (cm.applyToSourceObject or not cm.lastSplitModel)) or (modelType == "ANIMATION" and cm.applyToSourceObject)):
-                l, r, s = getTransformData()
+                l, r, s = getTransformData(cm)
                 if modelType == "MODEL":
                     loc = strToTuple(cm.lastSourceMid, float)
                     if brickLoc is not None:
@@ -193,7 +193,7 @@ class BrickerDelete(bpy.types.Operator):
         # reset default values for select items in cmlist
         cls.resetCmlistAttrs()
 
-        clearTransformData()
+        clearTransformData(cm)
 
         # reset frame (for proper update), update scene and redraw 3D view
         scn.frame_set(origFrame)
@@ -265,7 +265,7 @@ class BrickerDelete(bpy.types.Operator):
                     loc_diff = p["loc_diff"]
                 except KeyError:
                     loc_diff = None
-                storeTransformData(p, offsetBy=loc_diff)
+                storeTransformData(cm, p, offsetBy=loc_diff)
             if not cm.lastSplitModel and groupExists(Bricker_bricks_gn):
                 bricks = getBricks()
                 if len(bricks) > 0:
@@ -305,7 +305,7 @@ class BrickerDelete(bpy.types.Operator):
                 bricks = getBricks()
                 if not cm.lastSplitModel:
                     if len(bricks) > 0:
-                        storeTransformData(bricks[0])
+                        storeTransformData(cm, bricks[0])
                 last_percent = 0
                 # remove objects
                 for i, obj in enumerate(bricks):

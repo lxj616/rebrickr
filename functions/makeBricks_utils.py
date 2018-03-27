@@ -80,7 +80,7 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, brickSize, split, customD
     if cm.randomRot > 0: randomizeRot(cm.randomRot, randS2, brickSize, m)
     # get brick location
     locOffset = getRandomLoc(cm.randomLoc, randS2, dimensions["width"], dimensions["height"]) if cm.randomLoc > 0 else Vector((0, 0, 0))
-    brickLoc = getBrickCenter(bricksDict, key, loc) + locOffset
+    brickLoc = getBrickCenter(cm, bricksDict, key, loc) + locOffset
 
     if split:
         # create new object with mesh data
@@ -147,8 +147,8 @@ def updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, stat
     return old_percent
 
 
-def updateKeysLists(size, loc, availableKeys, key):
-    keysChecked = getKeysInBrick(size, key, loc)
+def updateKeysLists(cm, size, loc, availableKeys, key):
+    keysChecked = getKeysInBrick(cm, size, key, loc)
     for k in keysChecked:
         if k in availableKeys:
             availableKeys.remove(k)
@@ -232,9 +232,8 @@ def randomizeRot(randomRot, rand, brickSize, m):
     m.transform(combined_mat)
 
 
-def prepareLogoAndGetDetails(logo, dimensions):
+def prepareLogoAndGetDetails(scn, cm, logo, dimensions):
     """ duplicate and normalize custom logo object; return logo and bounds(logo) """
-    scn, cm, _ = getActiveContextInfo()
     if cm.logoDetail != "LEGO" and logo is not None:
         # prepare for logo duplication
         originalActiveName = scn.objects.active.name

@@ -58,7 +58,7 @@ class BrickerBevel(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            scn, cm, n = getActiveContextInfo()
+            cm = getActiveContextInfo()[1]
             # set bevel action to add or remove
             action = "REMOVE" if cm.bevelAdded else "ADD"
             # get bricks to bevel
@@ -79,10 +79,10 @@ class BrickerBevel(bpy.types.Operator):
             # auto-set bevel width
             cm.bevelWidth = cm.brickHeight/100
         if action == "REMOVE":
-            BrickerBevel.removeBevelMods(objs=bricks)
+            BrickerBevel.removeBevelMods(bricks)
             cm.bevelAdded = False
         elif action == "ADD":
-            BrickerBevel.createBevelMods(objs=bricks)
+            BrickerBevel.createBevelMods(cm, bricks)
             cm.bevelAdded = True
 
     @classmethod
@@ -93,11 +93,10 @@ class BrickerBevel(bpy.types.Operator):
             obj.modifiers.remove(obj.modifiers[obj.name + "_bevel"])
 
     @classmethod
-    def createBevelMods(self, objs):
+    def createBevelMods(self, cm, objs):
         """ runs 'createBevelMod' on objects in 'objs' """
         # get objs to bevel
         objs = confirmList(objs)
-        scn, cm, _ = getActiveContextInfo()
         # create bevel modifiers for each object
         for obj in objs:
             segments = cm.bevelSegments

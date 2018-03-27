@@ -83,8 +83,7 @@ def handle_animation(scene):
 bpy.app.handlers.frame_change_pre.append(handle_animation)
 
 
-def isObjVisible(scn, cm):
-    scn, _, n = getActiveContextInfo()
+def isObjVisible(scn, cm, n):
     objVisible = False
     if cm.modelCreated or cm.animated:
         gn = "Bricker_%(n)s_bricks" % locals()
@@ -113,12 +112,12 @@ def handle_selections(scene):
         curObjVisible = False
         if scn.cmlist_index != -1:
             cm0 = scn.cmlist[scn.cmlist_index]
-            curObjVisible, _ = isObjVisible(scn, cm0)
+            curObjVisible, _ = isObjVisible(scn, cm0, cm0.source_name)
         if not curObjVisible or scn.cmlist_index == -1:
             setIndex = False
             for i, cm in enumerate(scn.cmlist):
                 if i != scn.cmlist_index:
-                    nextObjVisible, obj = isObjVisible(scn, cm)
+                    nextObjVisible, obj = isObjVisible(scn, cm, cm.source_name)
                     if nextObjVisible and bpy.context.active_object == obj:
                         scn.cmlist_index = i
                         setIndex = True

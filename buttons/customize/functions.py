@@ -90,8 +90,7 @@ def setCurBrickVal(bricksDict, loc, action="ADD"):
     bricksDict[listToStr(loc)]["val"] = newVal
 
 
-def verifyBrickExposureAboveAndBelow(origLoc, bricksDict, decriment=0, zNeg=False, zPos=False):
-    scn, cm, _ = getActiveContextInfo()
+def verifyBrickExposureAboveAndBelow(scn, cm, origLoc, bricksDict, decriment=0, zNeg=False, zPos=False):
     dictLocs = []
     if not zNeg:
         dictLocs.append([origLoc[0], origLoc[1], origLoc[2] + decriment])
@@ -262,7 +261,7 @@ def selectBricks(objNamesD, bricksDicts, brickSize="NULL", brickType="NULL", all
             dictLoc = getDictLoc(dictKey)
             siz = bricksDict[dictKey]["size"]
             typ = bricksDict[dictKey]["type"]
-            onShell = isOnShell(bricksDict, dictKey, dictLoc)
+            onShell = isOnShell(cm, bricksDict, dictKey, dictLoc)
 
             # get current brick object
             curObj = bpy.data.objects.get(obj_name)

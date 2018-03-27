@@ -163,7 +163,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                     brickD["size"] = brickSize
                     # iterate number aligned edges and bricks if generating multiple variations
                     if connectThresh > 1:
-                        numAlignedEdges[j] += getNumAlignedEdges(bricksDict, brickSize, key, loc, zStep)
+                        numAlignedEdges[j] += getNumAlignedEdges(cm, bricksDict, brickSize, key, loc, zStep)
                         numBricks += 1
                     # add brickSize to cm.brickSizesUsed if not already there
                     brickSizeStr = listToStr(sorted(brickSize[:2]) + [brickSize[2]])
@@ -175,7 +175,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                     old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Merging")
 
                     # remove keys in new brick from availableKeys (for attemptMerge)
-                    updateKeysLists(brickSize, loc, availableKeys, key)
+                    updateKeysLists(cm, brickSize, loc, availableKeys, key)
 
                 if connectThresh > 1:
                     # if no aligned edges / bricks found, skip to next z level

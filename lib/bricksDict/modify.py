@@ -52,7 +52,7 @@ def updateMaterials(bricksDict, source):
             continue
         # get RGBA value at nearest face intersection
         ni = strToList(bricksDict[key]["near_intersection"], item_type=float)
-        rgba, matName = getBrickRGBA(source, nf, ni, uv_images)
+        rgba, matName = getBrickRGBA(scn, cm, source, nf, ni, uv_images)
         # get material with snapped RGBA value
         if rgba is None:
             matName = ""
@@ -130,7 +130,7 @@ def attemptMerge(cm, bricksDict, key, availableKeys, defaultSize, zStep, randSta
     bricksDict[key]["size"] = brickSize
 
     # set attributes for merged brick keys
-    keysInBrick = getKeysInBrick(brickSize, key, loc, zStep)
+    keysInBrick = getKeysInBrick(cm, brickSize, key, loc, zStep)
     for k in keysInBrick:
         bricksDict[k]["attempted_merge"] = True
         bricksDict[k]["parent"] = "self" if k == key else key
@@ -162,7 +162,7 @@ def getBrickExposure(cm, bricksDict, key=None, loc=None):
     idxZa = loc[2] + (size[2] if "PLATES" in cm.brickType else 1)
 
     # Iterate through brick locs in size to check top and bottom exposure
-    keysInBrick = getKeysInBrick(size, key, loc, zStep)
+    keysInBrick = getKeysInBrick(cm, size, key, loc, zStep)
     for k in keysInBrick:
         x, y, z = strToList(k)
         # check if brick top or bottom is exposed
@@ -208,9 +208,9 @@ def checkExposure(bricksDict, x, y, z, direction:int=1, ignoredTypes=[]):
     return isExposed
 
 
-def getNumAlignedEdges(bricksDict, size, key, loc, zStep=None):
+def getNumAlignedEdges(cm, bricksDict, size, key, loc, zStep=None):
     numAlignedEdges = 0
-    locs = getLocsInBrick(size, key, loc, 1)
+    locs = getLocsInBrick(cm, size, key, loc, 1)
     gotOne = False
 
     for l in locs:

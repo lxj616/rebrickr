@@ -72,7 +72,6 @@ def castRays(obj:Object, point:Vector, direction:Vector, miniDist:float, roundTy
     edgeLen2 = edgeLen*1.00001
     orig = point
     intersections = 0
-    origs = []
     # cast rays until no more rays to cast
     while True:
         _,location,normal,index = obj.ray_cast(orig,direction)#distance=edgeLen*1.00000000001)
@@ -93,12 +92,10 @@ def castRays(obj:Object, point:Vector, direction:Vector, miniDist:float, roundTy
         intersections += 1
         location = VectorRound(location, 5, roundType=roundType)
         orig = location + miniDist
-        origs.append(orig)
-
 
     return intersections, firstDirection, firstIntersection, nextIntersection, lastIntersection, edgeIntersects
 
-def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
+def rayObjIntersections(scn, cm, point, direction, miniDist:Vector, edgeLen, obj):
     """
     cast ray(s) from point in direction to determine insideness and whether edge intersects obj within edgeLen
 
@@ -113,7 +110,6 @@ def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
     """
 
     # initialize variables
-    scn, cm, _ = getActiveContextInfo()
     intersections = 0
     noMoreChecks = False
     outsideL = []
@@ -163,7 +159,7 @@ def rayObjIntersections(point, direction, miniDist:Vector, edgeLen, obj):
     # return helpful information
     return not outside, edgeIntersects, intersections, nextIntersection, firstIntersection, lastIntersection
 
-def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x1, y1, z1, miniDist, inside=None):
+def updateBFMatrix(scn, cm, x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x1, y1, z1, miniDist, inside=None):
     """ update brickFreqMatrix[x0][y0][z0] based on results from rayObjIntersections """
     orig = coordMatrix[x0][y0][z0]
     try:
@@ -174,8 +170,7 @@ def updateBFMatrix(x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMatrix, bric
     ray = rayEnd - orig
     edgeLen = ray.length
 
-    origInside, edgeIntersects, intersections, nextIntersection, firstIntersection, lastIntersection = rayObjIntersections(orig,ray,miniDist,edgeLen,source)
-
+    origInside, edgeIntersects, intersections, nextIntersection, firstIntersection, lastIntersection = rayObjIntersections(scn, cm, orig, ray, miniDist, edgeLen, source)
     if origInside and brickFreqMatrix[x0][y0][z0] == 0:
         # define brick as inside shell
         brickFreqMatrix[x0][y0][z0] = -1
@@ -290,7 +285,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
             percent0 = printMatrixStatus(0, z, len(coordMatrix[0][0]))
             for y in range(len(coordMatrix[0])):
                 for x in range(len(coordMatrix)):
-                    intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z, miniDist)
+                    intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z, miniDist)
                     if intersections == 0:
                         break
     else:
@@ -307,7 +302,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
             percent1 = printMatrixStatus(percent0, z, len(coordMatrix[0][0]))
             for x in range(len(coordMatrix)):
                 for y in range(len(coordMatrix[0])):
-                    intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z, miniDist)
+                    intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z, miniDist)
                     if intersections == 0:
                         break
     else:
@@ -324,7 +319,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
             percent2 = printMatrixStatus(percent1, x, len(coordMatrix))
             for y in range(len(coordMatrix[0])):
                 for z in range(len(coordMatrix[0][0])):
-                    intersections, nextIntersection = updateBFMatrix(x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
+                    intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
                     if intersections == 0:
                         break
     # print status to terminal
@@ -546,7 +541,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                 ni = faceIdxMatrix[x][y][z]["loc"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 nn = faceIdxMatrix[x][y][z]["normal"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 normal_direction = getNormalDirection(nn)
-                rgba = getUVPixelColor(source, nf, ni, uv_images)
+                rgba = getUVPixelColor(scn, cm, source, nf, ni, uv_images)
                 draw = brickFreqMatrix[x][y][z] >= threshold
                 # store first key to active keys
                 if cm.activeKeyX == -1 and draw:
