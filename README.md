@@ -1,6 +1,6 @@
 # README
 
-Blender add-on for automated generation of Brick sculptures and simulations from mesh objects (Blender version: 2.78-2.79)
+Blender add-on for automated generation of Brick sculptures and simulations from mesh objects (Blender version: 2.79)
 
 ## Bricker
   * Features:
