@@ -139,10 +139,10 @@ def updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, stat
                 wm = bpy.context.window_manager
                 if cur_percent == 0:
                     wm.progress_begin(0, 100)
-                elif cur_percent >= 1:
-                    wm.progress_end()
-                else:
+                elif cur_percent < 1:
                     wm.progress_update(cur_percent*100)
+                else:
+                    wm.progress_end()
             old_percent = cur_percent
     return old_percent
 

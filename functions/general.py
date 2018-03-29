@@ -292,17 +292,24 @@ def getExportPath(fn, ext):
     cm = getActiveContextInfo()[1]
     fullPath = cm.exportPath
     lastSlash = fullPath.rfind("/")
-    # setup the render dump folder based on user input
-    if fullPath.startswith("//"):
-        fullPath = os.path.join(bpy.path.abspath("//"), fullPath[2:])
-    path = fullPath[:len(fullPath) if lastSlash == -1 else lastSlash + 1]
-    fn0 = "" if lastSlash == -1 else fullPath[lastSlash + 1:len(fullPath)]
+    fullPath = fullPath[:len(fullPath) if lastSlash == -1 else lastSlash + 1]
+    blendPathSplit = bpy.path.abspath("//")[:-1].split("/")
     # if no user input, use default render location
-    if path == "":
-        path = bpy.path.abspath("//") or "/tmp/"
+    if fullPath == "":
+        fullPath = bpy.path.abspath("//") or "/tmp/"
+    # if relative path, construct path from user input
+    elif fullPath.startswith("//"):
+        splitPath = fullPath[2:].split("/")
+        while len(splitPath) > 0 and splitPath[0] == "..":
+            splitPath.pop(0)
+            blendPathSplit.pop()
+        newPath = "/".join(splitPath)
+        blendPath = "/".join(blendPathSplit)
+        path = os.path.join(blendPath, newPath)
     # check to make sure dumpLoc exists on local machine
     if not os.path.exists(path):
         os.mkdir(path)
     # create full path from path and filename
+    fn0 = "" if lastSlash == -1 else cm.exportPath[lastSlash + 1:len(cm.exportPath)]
     fullPath = os.path.join(path, (fn if fn0 == "" else fn0) + ext)
     return fullPath

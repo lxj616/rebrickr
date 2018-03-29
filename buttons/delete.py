@@ -178,7 +178,7 @@ class BrickerDelete(bpy.types.Operator):
             setLayers(lastLayers)
 
             # delete custom properties from source
-            customPropNames = ["ignored_mods", "frame_parent_cleared", "old_parent", "previous_location", "previous_rotation", "previous_scale", "before_edit_location", "before_origin_set_location"]
+            customPropNames = ["ignored_mods", "frame_parent_cleared", "old_parent"]
             for cPN in customPropNames:
                 try:
                     del source[cPN]
