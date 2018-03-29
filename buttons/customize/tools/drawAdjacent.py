@@ -109,8 +109,6 @@ class drawAdjacent(Operator):
                         self.toggleBrick(cm, dimensions, adjDictLoc, dictKey, objSize, targetType, i, j, keysToMerge, addBrick=createAdjBricks[i])
                     # after ALL bricks toggled, check exposure of bricks above and below new ones
                     for j,adjDictLoc in enumerate(self.adjDKLs[i]):
-                        dictLoc2 = dictLoc
-                        dictLoc2[2] += 1
                         self.bricksDict = verifyBrickExposureAboveAndBelow(scn, cm, adjDictLoc.copy(), self.bricksDict, decriment=decriment + 1, zNeg=self.zNeg, zPos=self.zPos)
 
             # recalculate val for each bricksDict key in original brick
@@ -122,17 +120,13 @@ class drawAdjacent(Operator):
             tallBandP = "PLATES" in cm.brickType and targetType in getBrickTypes(height=3)
             keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm, mergeVertical=targetType in getBrickTypes(height=3), targetType=targetType, height3Only=tallBandP)
 
-            # if bricks created on top, set top_exposed of original brick to False
-            if self.zPos:
-                self.bricksDict[dictKey]["top_exposed"] = False
+            # if bricks created on top or bottom, set exposure of original brick
+            if self.zPos or self.zNeg:
+                topExposed, botExposed = getBrickExposure(cm, self.bricksDict, dictKey, loc=dictLoc)
+                self.bricksDict[dictKey]["top_exposed"] = topExposed
+                self.bricksDict[dictKey]["bot_exposed"] = botExposed
                 keysToUpdate.append(dictKey)
                 delete(obj)
-            # if bricks created on bottom, set top_exposed of original brick to False
-            if self.zNeg:
-                self.bricksDict[dictKey]["bot_exposed"] = False
-                if not self.zPos:
-                    keysToUpdate.append(dictKey)
-                    delete(obj)
 
             # draw created bricks
             drawUpdatedBricks(cm, self.bricksDict, keysToUpdate, selectCreated=False)

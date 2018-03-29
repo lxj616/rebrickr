@@ -164,19 +164,19 @@ def getBrickExposure(cm, bricksDict, key=None, loc=None):
     # Iterate through brick locs in size to check top and bottom exposure
     keysInBrick = getKeysInBrick(cm, size, key, loc, zStep)
     for k in keysInBrick:
-        x, y, z = strToList(k)
+        x, y, _ = strToList(k)
         # check if brick top or bottom is exposed
         if bricksDict[k]["val"] != 1 and not ("PLATES" in cm.brickType and size[2] == 3):
             continue
-        returnVal0 = checkExposure(bricksDict, x, y, idxZa, 1, ignoredTypes=getTypesObscuringBelow())
-        if returnVal0: topExposed = True
-        returnVal1 = checkExposure(bricksDict, x, y, idxZb, 1, ignoredTypes=getTypesObscuringAbove())
-        if returnVal1: botExposed = True
+        curTopExposed = checkExposure(bricksDict, x, y, idxZa, 1, obscuringTypes=getTypesObscuringBelow())
+        if curTopExposed: topExposed = True
+        curBotExposed = checkExposure(bricksDict, x, y, idxZb, -1, obscuringTypes=getTypesObscuringAbove())
+        if curBotExposed: botExposed = True
 
     return topExposed, botExposed
 
 
-def checkExposure(bricksDict, x, y, z, direction:int=1, ignoredTypes=[]):
+def checkExposure(bricksDict, x, y, z, direction:int=1, obscuringTypes=[]):
     isExposed = False
     try:
         valKeysChecked = []
@@ -184,9 +184,9 @@ def checkExposure(bricksDict, x, y, z, direction:int=1, ignoredTypes=[]):
         val = bricksDict[k0]["val"]
         parent_key = getParentKey(bricksDict, k0)
         typ = bricksDict[parent_key]["type"]
-        if val == 0 or typ not in ignoredTypes:
+        if val == 0 or typ not in obscuringTypes:
             isExposed = True
-        # Check bricks on Z axis [above or below depending on 'direction'] this brick until shell (1) hit. If ouside (0) hit first, [top or bottom depending on 'direction'] is exposed
+        # Check bricks [above or below depending on 'direction'] this brick until shell (1) hit. If ouside (0) hit first, [top or bottom depending on 'direction'] is exposed
         elif val > 0 and val < 1:
             zz = z
             while val > 0 and val < 1:
@@ -197,7 +197,7 @@ def checkExposure(bricksDict, x, y, z, direction:int=1, ignoredTypes=[]):
                 parent_key = getParentKey(bricksDict, k1)
                 typ = bricksDict[parent_key]["type"]
                 valKeysChecked.append(k1)
-                if val == 0 or typ not in ignoredTypes:
+                if val == 0 or typ not in obscuringTypes:
                     isExposed = True
     except KeyError:
         isExposed = True
