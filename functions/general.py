@@ -288,18 +288,18 @@ def setPivotPoint(pivot_point='CURSOR'):
     v3d.spaces[0].pivot_point = pivot_point
 
 
-def getExportPath(fn, ext):
+def getExportPath(cm, fn, ext):
     cm = getActiveContextInfo()[1]
-    fullPath = cm.exportPath
-    lastSlash = fullPath.rfind("/")
-    fullPath = fullPath[:len(fullPath) if lastSlash == -1 else lastSlash + 1]
+    path = cm.exportPath
+    lastSlash = path.rfind("/")
+    path = path[:len(path) if lastSlash == -1 else lastSlash + 1]
     blendPathSplit = bpy.path.abspath("//")[:-1].split("/")
     # if no user input, use default render location
-    if fullPath == "":
-        fullPath = bpy.path.abspath("//") or "/tmp/"
+    if path == "":
+        path = bpy.path.abspath("//") or "/tmp/"
     # if relative path, construct path from user input
-    elif fullPath.startswith("//"):
-        splitPath = fullPath[2:].split("/")
+    elif path.startswith("//"):
+        splitPath = path[2:].split("/")
         while len(splitPath) > 0 and splitPath[0] == "..":
             splitPath.pop(0)
             blendPathSplit.pop()

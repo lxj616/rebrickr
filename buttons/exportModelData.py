@@ -49,7 +49,7 @@ class exportModelData(Operator):
     def execute(self, context):
         try:
             scn, cm, n = getActiveContextInfo()
-            path = getExportPath(n, ".py")
+            path = getExportPath(cm, n, ".py")
             # get model info
             modelInfoStrings = []
             modelInfoStrings.append("# Model Name:  " + cm.name)

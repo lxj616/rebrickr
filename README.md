@@ -22,12 +22,10 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add support for smoke animations
       * Add support for rigid bodies
       * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
-      * Simply calculate brick dimensions, then divide height by three if plate later on. (gets rid of zScale parameter in get_dimensions function)
       * Add 'exclusion' functionality so that one model doesn’t create bricks where another model already did
       * Add many more brick types, including inverted sloped bricks and tiles
       * Generate model with bricks and slopes to more closely approximate original mesh
       * Add merge option that creates either biggest bricks possible or randomly sampled like normal.
   * Known issues:
-      * For models with thin outer shells, Bricker may use color of inside face instead of outside face for brick material
+      * For models with thin outer shells, Bricker may use color of inside face instead of outside face for brick material (see snapchat hotdog file)
       * Applying model rotation when deleting brickified model with source's origin not in mesh center doesn't work reliably
-      * Updating brick animation results in error
