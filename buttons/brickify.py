@@ -29,7 +29,7 @@ import json
 
 # Blender imports
 import bpy
-from mathutils import Matrix, Vector, Euler
+from mathutils import Matrix, Vector, Quaternion
 props = bpy.props
 
 # Bricker imports
@@ -249,8 +249,8 @@ class BrickerBrickify(bpy.types.Operator):
             dGroup.objects.link(sourceDup)
             sourceDup.name = self.source.name + "_duplicate"
             if cm.useLocalOrient:
-                sourceDup.rotation_mode = "XYZ"
-                sourceDup.rotation_euler = Euler((0, 0, 0), "XYZ")
+                sourceDup.rotation_mode = "QUATERNION"
+                sourceDup.rotation_quaternion = Quaternion((1, 0, 0, 0))
             self.createdObjects.append(sourceDup.name)
             self.source.select = False
             # set up sourceDup["old_parent"] and remove sourceDup parent
@@ -676,22 +676,25 @@ class BrickerBrickify(bpy.types.Operator):
         if cm.useLocalOrient and action == "CREATE":
             obj = parent if cm.splitModel else bGroup.objects[0]
             source_details = bounds(source)
-            obj.rotation_mode = "XYZ"
-            obj.rotation_euler = source.rotation_euler
+            lastMode = source.rotation_mode
+            obj.rotation_mode = "QUATERNION"
+            source.rotation_mode = obj.rotation_mode
+            obj.rotation_quaternion = source.rotation_quaternion
+            obj.rotation_mode = lastMode
             source["local_orient_offset"] = source_details.mid - sourceDup_details.mid
             obj.location += Vector(source["local_orient_offset"])
         # if model was split but isn't now
         if cm.lastSplitModel and not cm.splitModel:
             # transfer transformation of parent to object
-            parent.rotation_mode = "XYZ"
+            parent.rotation_mode = "QUATERNION"
             for obj in bGroup.objects:
                 obj.location = parent.location
                 obj.rotation_mode = parent.rotation_mode
-                obj.rotation_euler.rotate(parent.rotation_euler)
+                obj.rotation_quaternion.rotate(parent.rotation_quaternion)
                 obj.scale = parent.scale
             # reset parent transformation
             parent.location = (0, 0, 0)
-            parent.rotation_euler = Euler((0, 0, 0), "XYZ")
+            parent.rotation_quaternion = Quaternion((1, 0, 0, 0))
             cm.transformScale = 1
             parent.scale = (1, 1, 1)
         # if model is not split

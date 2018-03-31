@@ -86,6 +86,7 @@ class delete_override(Operator):
 
     use_global = BoolProperty(default=False)
     update_model = BoolProperty(default=True)
+    undo = BoolProperty(default=True)
 
     ################################################
     # class methods
@@ -114,7 +115,8 @@ class delete_override(Operator):
         if len(protected) > 0:
             self.report({"WARNING"}, "Bricker is using the following object(s): " + str(protected)[1:-1])
         # push delete action to undo stack
-        bpy.ops.ed.undo_push(message="Delete")
+        if self.undo:
+            bpy.ops.ed.undo_push(message="Delete")
 
     def deleteUnprotected(self, context, use_global=False, update_model=True):
         scn = context.scene

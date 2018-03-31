@@ -25,7 +25,7 @@ import sys
 
 # Blender imports
 import bpy
-from mathutils import Vector, Euler
+from mathutils import Vector, Quaternion
 props = bpy.props
 
 # Bricker imports
@@ -138,6 +138,14 @@ class BrickerDelete(bpy.types.Operator):
         source = bpy.data.objects.get("%(n)s (DO NOT RENAME)" % locals())
         origFrame = scn.frame_current
         scn.frame_set(cm.modelCreatedOnFrame)
+        # store pivot point for model
+        if cm.lastSplitModel or cm.animated:
+            Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
+            p = bpy.data.objects.get(Bricker_parent_on)
+            pivot_point = p.matrix_world.to_translation()
+        else:
+            bricks = getBricks()
+            pivot_point = bricks[0].matrix_world.to_translation()
         # store last active layers
         lastLayers = list(scn.layers)
 
@@ -161,11 +169,27 @@ class BrickerDelete(bpy.types.Operator):
                 else:
                     source.location = Vector(l)
                 source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
-                source.rotation_mode = "XYZ"
+                lastMode = source.rotation_mode
+                source.rotation_mode = "QUATERNION"
+                # create vert to track original source origin
+                last_co = source.data.vertices[0].co.to_tuple()
+                source.data.vertices[0].co = (0, 0, 0)
+                # set source origin to rotation point for transformed brick object
+                setObjOrigin(source, pivot_point)
+                # rotate source
                 if cm.useLocalOrient and not cm.useAnimation:
-                    source.rotation_euler = brickRot or Euler(tuple(r), "XYZ")
+                    source.rotation_quaternion = brickRot or Quaternion(tuple(r))
                 else:
-                    source.rotation_euler.rotate(Euler(tuple(r), "XYZ"))
+                    rotateBy = Quaternion(tuple(r))
+                    # if source.parent is not None:
+                    #     # TODO: convert rotateBy to local with respect to source's parent
+                    source.rotation_quaternion.rotate(rotateBy)
+                    # obj.matrix_world.to_quaternion() = obj.rotation_quaternion.rotate(p.matrix_world.to_quaternion())
+                # set source origin back to original point (tracked by last vert)
+                scn.update()
+                setObjOrigin(source, source.matrix_world * source.data.vertices[0].co)
+                source.data.vertices[0].co = last_co
+                source.rotation_mode = lastMode
             # adjust source loc to account for local_orient_offset applied in BrickerBrickify.transformBricks
             if cm.useLocalOrient and not cm.useAnimation:
                 try:
@@ -269,7 +293,7 @@ class BrickerDelete(bpy.types.Operator):
                     b = bricks[0]
                     scn.update()
                     brickLoc = b.matrix_world.to_translation().copy()
-                    brickRot = b.matrix_world.to_euler().copy()
+                    brickRot = b.matrix_world.to_quaternion().copy()
                     brickScl = b.matrix_world.to_scale().copy()  # currently unused
         # clean up Bricker_parent objects
         pGroup = bpy.data.groups.get(Bricker_parent_on)
@@ -307,7 +331,7 @@ class BrickerDelete(bpy.types.Operator):
                 last_percent = 0
                 # remove objects
                 select(bricks)
-                bpy.ops.object.delete(update_model=False)
+                bpy.ops.object.delete(update_model=False, undo=False)
                 bpy.data.groups.remove(brickGroup, do_unlink=True)
             cm.modelCreated = False
         elif modelType == "ANIMATION":

@@ -28,4 +28,4 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add merge option that creates either biggest bricks possible or randomly sampled like normal.
   * Known issues:
       * For models with thin outer shells, Bricker may use color of inside face instead of outside face for brick material (see snapchat hotdog file)
-      * Applying model rotation when deleting brickified model with source's origin not in mesh center doesn't work reliably
+      * Applying model rotation when deleting brickified model whose source has rotated parent produces problematic results

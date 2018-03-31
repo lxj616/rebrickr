@@ -28,6 +28,7 @@ import numpy as np
 # Blender imports
 import bpy
 from mathutils import Vector, Euler, Matrix
+from bpy.types import Object
 
 # Bricker imports
 from .common import *
@@ -96,18 +97,18 @@ def bounds(obj, local=False):
     return info
 
 
+def setObjOrigin(obj, loc):
+    scn = bpy.context.scene
+    old_loc = tuple(scn.cursor_location)
+    scn.cursor_location = loc
+    select(obj, active=True, only=True)
+    bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+    scn.cursor_location = old_loc
+
+
 def setOriginToObjOrigin(toObj, fromObj=None, fromLoc=None, deleteFromObj=False):
     assert fromObj or fromLoc
-    scn = bpy.context.scene
-    oldCursorLocation = tuple(scn.cursor_location)
-    unlinkToo = False
-    if fromObj:
-        scn.cursor_location = fromObj.matrix_world.to_translation().to_tuple()
-    else:
-        scn.cursor_location = fromLoc
-    select(toObj, active=True, only=True)
-    bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
-    scn.cursor_location = oldCursorLocation
+    setObjOrigin(toObj, fromObj.matrix_world.to_translation().to_tuple() if fromObj else fromLoc)
     if fromObj:
         if deleteFromObj:
             m = fromObj.data
@@ -282,10 +283,10 @@ def get_override(area_type, region_type):
                         "\n Make sure it's open while executing script.")
 
 
-def setPivotPoint(pivot_point='CURSOR'):
+def getSpace():
     scr = bpy.context.window.screen
     v3d = [area for area in scr.areas if area.type == 'VIEW_3D'][0]
-    v3d.spaces[0].pivot_point = pivot_point
+    return v3d.spaces[0]
 
 
 def getExportPath(cm, fn, ext):
