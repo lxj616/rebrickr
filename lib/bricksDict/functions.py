@@ -218,10 +218,10 @@ def createNewMaterial(model_name, rgba, rgba_vals):
 def getUVImage(scn, cm, obj, face_idx):
     """ returns UV image (priority to user settings, then face index, then first one found in object """
     image = bpy.data.images.get(cm.uvImageName)
-    image = image if image.has_data else None
+    image = image if image is not None and image.has_data else None
     if image is None and obj.data.uv_textures.active:
         face_im = obj.data.uv_textures.active.data[face_idx].image
-        image = (face_im if face_im.has_data else None) or getFirstImgTexNode(obj)
+        image = (face_im if face_im is not None and face_im.has_data else None) or getFirstImgTexNode(obj)
     return image
 
 
