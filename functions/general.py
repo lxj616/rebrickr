@@ -27,10 +27,10 @@ import numpy as np
 
 # Blender imports
 import bpy
-from mathutils import Vector, Euler, Matrix
+from mathutils import Vector, Quaternion, Matrix
 from bpy.types import Object
 
-# Bricker imports
+# Addon imports
 from .common import *
 
 
@@ -39,6 +39,14 @@ def getSafeScn():
     if safeScn == None:
         safeScn = bpy.data.scenes.new("Bricker_storage (DO NOT RENAME)")
     return safeScn
+
+
+def getActiveContextInfo(cm_idx=None):
+    scn = bpy.context.scene
+    cm_idx = cm_idx or scn.cmlist_index
+    cm = scn.cmlist[cm_idx]
+    n = cm.source_name
+    return scn, cm, n
 
 
 def safeUnlink(obj, hide=True, protect=True):
@@ -98,6 +106,10 @@ def bounds(obj, local=False):
 
 
 def setObjOrigin(obj, loc):
+    # TODO: Speed up this function by not using the ops call
+    # for v in obj.data.vertices:
+    #     v.co += obj.location - loc
+    # obj.location = loc
     scn = bpy.context.scene
     old_loc = tuple(scn.cursor_location)
     scn.cursor_location = loc

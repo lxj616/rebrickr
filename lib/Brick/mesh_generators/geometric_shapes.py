@@ -2,7 +2,7 @@ import bpy
 import bmesh
 import math
 from mathutils import Vector
-from ....functions.common import *
+from ....functions import *
 
 
 def makeSquare(coord1:Vector, coord2:Vector, face:bool=True, flipNormal:bool=False, bme:bmesh=None):

@@ -28,7 +28,7 @@ from bpy.props import *
 from bpy.types import Panel, UIList
 props = bpy.props
 
-# Bricker imports
+# Addon imports
 from ..functions import *
 from ..buttons.bevel import *
 

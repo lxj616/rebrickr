@@ -25,10 +25,10 @@ import bpy
 # Blender imports
 # NONE!
 
-# Bricker imports
+# Addon imports
 from .mesh_generators import *
 from .get_brick_dimensions import *
-from ...functions.common import *
+from ...functions.common import * 
 from ...functions.general import *
 from ...functions.makeBricks_utils import *
 

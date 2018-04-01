@@ -27,7 +27,7 @@ import bpy
 from bpy.props import *
 from bpy.types import UIList
 
-# Bricker imports
+# Addon imports
 from ..functions import *
 from .cmlist_utils import *
 

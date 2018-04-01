@@ -29,11 +29,10 @@ import numpy as np
 # Blender imports
 from mathutils import Vector, Matrix
 
-# Bricker imports
+# Addon imports
 from .mesh_generators import *
 from .get_brick_dimensions import *
-from ...functions.general import *
-from ...functions.common import *
+from ...functions import *
 
 class Bricks:
     @staticmethod

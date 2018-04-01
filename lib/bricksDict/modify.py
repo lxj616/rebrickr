@@ -25,11 +25,10 @@ Created by Christopher Gearhart
 # Blender imports
 import bpy
 
-# Bricker imports
+# Addon imports
 from .functions import *
 from ..Brick.legal_brick_sizes import *
-from ...functions.general import *
-from ...functions.wrappers import *
+from ...functions import *
 
 
 def updateMaterials(bricksDict, source):

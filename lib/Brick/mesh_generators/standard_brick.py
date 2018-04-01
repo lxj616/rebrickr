@@ -27,11 +27,10 @@ import math
 from mathutils import Vector, Matrix
 from bpy.types import Object, CollectionProperty
 
-# Bricker imports
+# Addon imports
 from .geometric_shapes import *
 from .generator_utils import *
-from ....functions.common import *
-from ....functions.general import *
+from ....functions import *
 
 
 def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int=16, detail:str="LOW", logo:Object=None, stud:bool=True, cm:CollectionProperty=None, bme:bmesh=None):

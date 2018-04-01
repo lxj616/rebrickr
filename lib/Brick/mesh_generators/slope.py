@@ -29,9 +29,10 @@ import numpy as np
 from mathutils import Vector, Matrix
 from bpy.types import CollectionProperty
 
-# Bricker imports
+# Addon imports
 from .geometric_shapes import *
 from .generator_utils import *
+from ....functions import *
 
 
 def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:int=None, detail:str="LOW", stud:bool=True, cm:CollectionProperty=None, bme:bmesh=None):

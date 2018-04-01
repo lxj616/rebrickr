@@ -28,7 +28,7 @@ import bpy
 from mathutils import Vector, Quaternion
 props = bpy.props
 
-# Bricker imports
+# Addon imports
 from ..functions import *
 from .cache import *
 

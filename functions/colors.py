@@ -24,7 +24,7 @@ import bpy
 import numpy as np
 import colorsys
 
-# Bricker imports
+# Addon imports
 from .general import *
 
 

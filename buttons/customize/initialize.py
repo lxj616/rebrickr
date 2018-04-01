@@ -26,7 +26,7 @@ Created by Christopher Gearhart
 import bpy
 from bpy.types import Operator
 
-# Bricker imports
+# Addon imports
 from .undo_stack import *
 from ...ui.app_handlers import brickerRunningOp
 from ...functions import *

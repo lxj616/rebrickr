@@ -29,8 +29,9 @@ import numpy as np
 from mathutils import Vector
 from bpy.types import CollectionProperty
 
-# Bricker imports
+# Addon imports
 from .geometric_shapes import *
+from ....functions import *
 
 
 def makeInvertedSlope(dimensions:dict, brickSize:list, circleVerts:int=None, detail:str="LOW", stud:bool=True, cm:CollectionProperty=None, bme:bmesh=None):

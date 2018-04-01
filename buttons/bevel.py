@@ -30,7 +30,7 @@ import bpy
 from mathutils import Matrix, Vector
 props = bpy.props
 
-# Bricker imports
+# Addon imports
 from ..functions import *
 
 

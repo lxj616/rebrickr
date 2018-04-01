@@ -26,7 +26,7 @@ Created by Christopher Gearhart
 import bpy
 from bpy.props import *
 
-# Bricker imports
+# Addon imports
 from ..functions import *
 from .cmlist_utils import *
 

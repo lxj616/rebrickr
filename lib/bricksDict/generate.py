@@ -30,7 +30,7 @@ import bpy
 from bpy.types import Object
 from mathutils import Matrix, Vector
 
-# Bricker imports
+# Addon imports
 from .functions import *
 from ...functions.common import *
 from ...functions.general import *
@@ -261,66 +261,47 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         wm = bpy.context.window_manager
         wm.progress_begin(0, 100)
 
-    def printMatrixStatus(lastPercent, num0, denom0):
-        # print status to terminal
-        if scn.Bricker_printTimes:
-            return None
-        percent = lastPercent + len(coordMatrix)/denom * (num0/(denom0-1))
-        if percent < 100:
-            update_progress("Shell", percent/100.0)
-            if cursorStatus: wm.progress_update(percent)
+    def getPercent(lastAxisPercent, num0, denom0, lastPercent):
+        percent = lastAxisPercent + (len(coordMatrix)/denom * (num0/(denom0-1))) / 100
+        updateProgressBars(True, cursorStatus, percent, lastPercent, "Shell")
         return percent
 
     axes = axes.lower()
-    ct = time.time()
+    percent0 = 0
     if "x" in axes:
         miniDist = Vector((0.00015, 0.0, 0.0))
         for z in range(len(coordMatrix[0][0])):
             # # print status to terminal
-            percent0 = printMatrixStatus(0, z, len(coordMatrix[0][0]))
+            percent0 = getPercent(0, z, len(coordMatrix[0][0]) + 1, percent0)
             for y in range(len(coordMatrix[0])):
                 for x in range(len(coordMatrix)):
                     intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z, miniDist)
                     if intersections == 0:
                         break
-    else:
-        percent0 = 0
-    # print status to terminal
-    if scn.Bricker_printTimes:
-        stopWatch("X Axis", time.time()-ct)
-        ct = time.time()
 
+    percent1 = percent0
     if "y" in axes:
         miniDist = Vector((0.0, 0.00015, 0.0))
         for z in range(len(coordMatrix[0][0])):
             # # print status to terminal
-            percent1 = printMatrixStatus(percent0, z, len(coordMatrix[0][0]))
+            percent1 = getPercent(percent0, z, len(coordMatrix[0][0]) + 1, percent1)
             for x in range(len(coordMatrix)):
                 for y in range(len(coordMatrix[0])):
                     intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z, miniDist)
                     if intersections == 0:
                         break
-    else:
-        percent1 = percent0
-    # print status to terminal
-    if scn.Bricker_printTimes:
-        stopWatch("Y Axis", time.time()-ct)
-        ct = time.time()
 
+    percent2 = percent1
     if "z" in axes:
         miniDist = Vector((0.0, 0.0, 0.00015))
         for x in range(len(coordMatrix)):
             # # print status to terminal
-            percent2 = printMatrixStatus(percent1, x, len(coordMatrix))
+            percent2 = getPercent(percent1, x, len(coordMatrix) + 1, percent2)
             for y in range(len(coordMatrix[0])):
                 for z in range(len(coordMatrix[0][0])):
                     intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
                     if intersections == 0:
                         break
-    # print status to terminal
-    if scn.Bricker_printTimes:
-        stopWatch("Z Axis", time.time()-ct)
-        ct = time.time()
 
     # adjust brickFreqMatrix values
     for x in range(len(coordMatrix)):
@@ -378,9 +359,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                     brickFreqMatrix[x][y][z] = None
 
     # print status to terminal
-    if not scn.Bricker_printTimes:
-        update_progress("Shell", 1)
-        if cursorStatus: wm.progress_end()
+    updateProgressBars(True, cursorStatus, 1, 0, "Shell", end=True)
 
     # set up brickFreqMatrix values for bricks inside shell
     j = 1
@@ -415,19 +394,6 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                             break
         if not gotOne:
             break
-
-    # bm = bmesh.new()
-    # for x in range(len(coordMatrix)):
-    #     for y in range(len(coordMatrix[0])):
-    #         for z in range(len(coordMatrix[0][0])):
-    #             if brickFreqMatrix[x][y][z] > 1:
-    #                 bm.verts.new(coordMatrix[x][y][z])
-    # drawBMesh(bm)
-
-    # print status to terminal
-    if scn.Bricker_printTimes:
-        stopWatch("Supports", time.time()-ct)
-        ct = time.time()
 
     return brickFreqMatrix
 

@@ -19,9 +19,14 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+# System imports
 import bpy
 
-from ...functions.common import *
+# Blender imports
+# NONE!
+
+# Addon imports
+from ...functions import *
 
 legalBricks = {
     1:{ "PLATE":        [{"s":[1, 1], "pt":"3024"},

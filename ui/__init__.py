@@ -29,7 +29,7 @@ from bpy.types import Panel
 from bpy.props import *
 props = bpy.props
 
-# Bricker imports
+# Addon imports
 from .cmlist_attrs import *
 from .cmlist_actions import *
 from .app_handlers import *

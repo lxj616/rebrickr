@@ -26,7 +26,7 @@ import os
 # Blender imports
 import bpy
 
-# Bricker imports
+# Addon imports
 from ..functions import *
 
 

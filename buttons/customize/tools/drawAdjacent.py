@@ -26,7 +26,7 @@ import copy
 import bpy
 from bpy.types import Operator
 
-# Bricker imports
+# Addon imports
 from .mergeBricks import *
 from ..undo_stack import *
 from ..functions import *

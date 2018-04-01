@@ -27,7 +27,7 @@ import bpy
 from bpy.app.handlers import persistent
 from mathutils import Vector, Euler
 
-# Bricker imports
+# Addon imports
 from ..functions import *
 from ..lib.bricksDict import lightToDeepCache, deepToLightCache, getDictKey
 from ..lib.caches import bricker_bfm_cache

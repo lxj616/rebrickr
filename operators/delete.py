@@ -27,10 +27,9 @@ import bpy
 from bpy.types import Operator
 from bpy.props import *
 
-# Bricker imports
+# Addon imports
 from ..lib.bricksDict import *
-from ..functions.common import *
-from ..functions.general import *
+from ..functions import *
 from ..buttons.customize.functions import *
 from ..buttons.customize.undo_stack import *
 from ..buttons.delete import BrickerDelete

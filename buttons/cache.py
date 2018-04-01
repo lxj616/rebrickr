@@ -27,10 +27,10 @@ import os
 import bpy
 props = bpy.props
 
-# Bricker imports
+# Addon imports
 from .customize.undo_stack import *
 from ..lib.caches import *
-from ..functions.common import *
+from ..functions import *
 
 
 class Caches(bpy.types.Operator):

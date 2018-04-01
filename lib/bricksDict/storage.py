@@ -25,7 +25,7 @@ import json
 # Blender imports
 import bpy
 
-# Bricker imports
+# Addon imports
 from .generate import *
 from .modify import *
 from .functions import *

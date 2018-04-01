@@ -27,11 +27,10 @@ import math
 from mathutils import Vector, Matrix
 from bpy.types import Object
 
-# Bricker imports
+# Addon imports
 from .geometric_shapes import *
 from .generator_utils import *
-from ....functions.common import *
-from ....functions.general import *
+from ....functions import *
 
 
 def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, hollow=False, zStep=1, inset=0):

@@ -31,9 +31,8 @@ import bpy
 from mathutils import Matrix, Vector, Euler
 props = bpy.props
 
-# Bricker imports
+# Addon imports
 from ..functions import *
-from ..functions.wrappers import *
 from .delete import BrickerDelete
 from ..lib.abs_plastic_materials import getAbsPlasticMaterialNames
 

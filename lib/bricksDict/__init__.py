@@ -25,7 +25,7 @@ Created by Christopher Gearhart
 # Blender imports
 # NONE!
 
-# Bricker imports
+# Addon imports
 from .generate import *
 from .modify import *
 from .functions import *

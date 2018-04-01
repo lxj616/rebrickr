@@ -29,10 +29,10 @@ import numpy as np
 from mathutils import Vector
 from bpy.types import CollectionProperty
 
-# Bricker imports
+# Addon imports
 from .geometric_shapes import *
 from .generator_utils import *
-from ....functions.common import *
+from ....functions import *
 
 
 def makeRound1x1(dimensions:dict, circleVerts:int=None, type:str="CYLINDER", detail:str="LOW", cm:CollectionProperty=None, bme:bmesh=None):

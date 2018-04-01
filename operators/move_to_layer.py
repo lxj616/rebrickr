@@ -26,7 +26,7 @@ Created by Christopher Gearhart
 import bpy
 from bpy.types import Operator
 
-# Bricker imports
+# Addon imports
 from ..functions.common import *
 
 

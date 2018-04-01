@@ -29,7 +29,7 @@ import bpy
 from bpy.types import Operator
 from bpy.props import StringProperty, CollectionProperty
 
-# Bricker imports
+# Addon imports
 from ..functions import *
 from ..lib.Brick import *
 from ..lib.abs_plastic_materials import *

@@ -34,7 +34,7 @@ import bpy
 from addon_utils import check, paths, enable
 props = bpy.props
 
-# Bricker imports
+# Addon imports
 from ..functions import *
 
 

@@ -29,11 +29,10 @@ import numpy as np
 from mathutils import Vector
 from bpy.types import Object, CollectionProperty
 
-# Bricker imports
+# Addon imports
 from .geometric_shapes import *
 from .generator_utils import *
-from ....functions.common import *
-from ....functions.general import *
+from ....functions import *
 
 
 def makeTile(dimensions:dict, brickSize:list, circleVerts:int=None, type:str=None, detail:str="LOW", cm:CollectionProperty=None, bme:bmesh=None):

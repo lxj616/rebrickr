@@ -27,7 +27,7 @@ import colorsys
 # Blender imports
 import bpy
 
-# Bricker imports
+# Addon imports
 from .general import *
 from ..lib.bricksDict.generate import *
 

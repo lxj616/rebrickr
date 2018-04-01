@@ -40,7 +40,7 @@ Created by Christopher Gearhart
 import bpy
 from bpy.props import *
 
-# Bricker imports
+# Addon imports
 from .ui import *
 from .buttons import *
 from .buttons.customize import *

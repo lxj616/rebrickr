@@ -34,7 +34,7 @@ from mathutils import Matrix
 from bpy.types import Operator, SpaceView3D, bpy_struct
 from bpy.app.handlers import persistent, load_post
 
-# Bricker imports
+# Addon imports
 from ...functions import *
 from ...lib.caches import bricker_bfm_cache
 

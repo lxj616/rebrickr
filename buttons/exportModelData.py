@@ -28,7 +28,7 @@ import json
 import bpy
 from bpy.types import Operator
 
-# Bricker imports
+# Addon imports
 from ..functions import *
 
 

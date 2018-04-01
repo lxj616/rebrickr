@@ -45,14 +45,6 @@ def bversion():
     return bversion
 
 
-def getActiveContextInfo(cm_idx=None):
-    scn = bpy.context.scene
-    cm_idx = cm_idx or scn.cmlist_index
-    cm = scn.cmlist[cm_idx]
-    n = cm.source_name
-    return scn, cm, n
-
-
 def stopWatch(text, value, precision=2):
     """From seconds to Days;Hours:Minutes;Seconds"""
 
@@ -163,7 +155,7 @@ def disableRelationshipLines():
             area.spaces[0].show_relationship_lines = False
 
 
-def drawBMesh(BMesh, name="drawnBMesh"):
+def drawBMesh(bm, name="drawnBMesh"):
     """ create mesh and object from bmesh """
     # note: neither are linked to the scene, yet, so they won't show in the 3d view
     m = bpy.data.meshes.new(name + "_mesh")
@@ -173,7 +165,7 @@ def drawBMesh(BMesh, name="drawnBMesh"):
     scn.objects.link(obj)     # link new object to scene
     scn.objects.active = obj  # make new object active
     obj.select = True         # make new object selected (does not deselect other objects)
-    BMesh.to_mesh(m)          # push bmesh data into m
+    bm.to_mesh(m)          # push bmesh data into m
     return obj
 
 
@@ -495,15 +487,16 @@ def showErrorMessage(message, wrap=80):
     return
 
 
-def handle_exception():
-    errormsg = print_exception('Bricker_log')
+def handle_exception(plugin_name="Bricker", report_button_loc="Brick Models"):
+    errormsg = print_exception('%(plugin_name)s_log' % locals())
     # if max number of exceptions occur within threshold of time, abort!
+    errorStr = "Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the '%(report_button_loc)s' dropdown menu of %(plugin_name)s)" % locals()
     print('\n'*5)
     print('-'*100)
-    print("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Bricker)")
+    print(errorStr)
     print('-'*100)
     print('\n'*5)
-    showErrorMessage("Something went wrong. Please start an error report with us so we can fix it! (press the 'Report a Bug' button under the 'Brick Models' dropdown menu of the Bricker)", wrap=240)
+    showErrorMessage(errorStr, wrap=240)
 
 
 # http://stackoverflow.com/questions/14519177/python-exception-handling-line-number
@@ -534,6 +527,23 @@ def print_exception(txtName, showError=False):
         showErrorMessage(errormsg, wrap=240)
 
     return errormsg
+
+
+def updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, statusType, end=False):
+    if printStatus:
+        # print status to terminal
+        if cur_percent - old_percent > 0.001 and (cur_percent < 1 or end):
+            update_progress(statusType, cur_percent)
+            if cursorStatus:
+                wm = bpy.context.window_manager
+                if cur_percent == 0:
+                    wm.progress_begin(0, 100)
+                elif cur_percent < 1:
+                    wm.progress_update(cur_percent*100)
+                else:
+                    wm.progress_end()
+            old_percent = cur_percent
+    return old_percent
 
 
 def update_progress(job_title, progress):

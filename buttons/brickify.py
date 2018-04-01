@@ -32,7 +32,7 @@ import bpy
 from mathutils import Matrix, Vector, Quaternion
 props = bpy.props
 
-# Bricker imports
+# Addon imports
 from .customize.undo_stack import *
 from .materials import BrickerApplyMaterial
 from .delete import BrickerDelete
