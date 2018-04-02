@@ -338,6 +338,16 @@ def handle_upconversion(scene):
                 for group in bpy.data.groups:
                     if group.name.startswith("Rebrickr"):
                         group.name = group.name.replace("Rebrickr", "Bricker")
+            # convert from v1_3_2 to v1_3_3
+            if cm.version[2] == 3 and cm.version[4] < 3:
+                for cm in scn.cmlist:
+                    bricksDict, _ = getBricksDict(cm=cm, restrictContext=True)
+                    if type(bricksDict) != dict:
+                        continue
+                    bricksDicts = [bD for bD in bricksDict] if cm.animated else [bricksDict]
+                    for bD in bricksDicts:
+                        for k in bD:
+                            bD[k]["parent"] = bD[k].pop('parent_brick', None)
 
 
 bpy.app.handlers.load_post.append(handle_upconversion)

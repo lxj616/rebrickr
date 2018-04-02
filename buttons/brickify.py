@@ -144,6 +144,10 @@ class BrickerBrickify(bpy.types.Operator):
         source["old_parent"] = ""
         source.cmlist_id = cm.id
 
+        # clear cache if updating from previous version
+        if createdWithUnsupportedVersion() and "UPDATE" in self.action:
+            Caches.clearCache(cm)
+
         # make sure matrix really is dirty
         if cm.matrixIsDirty:
             _, loadedFromCache = getBricksDict(dType="MODEL", cm=cm, restrictContext=True)
