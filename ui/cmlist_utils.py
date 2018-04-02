@@ -146,63 +146,71 @@ def dirtyBricks(self, context):
     cm.bricksAreDirty = True
 
 
+def getCMProps():
+    """ returns list of important cmlist properties """
+    return ["shellThickness",
+            "studDetail",
+            "logoDetail",
+            "logoResolution",
+            "logoObjectName",
+            "logoScale",
+            "logoInset",
+            "hiddenUndersideDetail",
+            "exposedUndersideDetail",
+            "circleVerts",
+            "gap",
+            "mergeSeed",
+            "randomLoc",
+            "randomRot",
+            "brickType",
+            "alignBricks",
+            "offsetBrickLayers",
+            "distOffsetX",
+            "distOffsetY",
+            "distOffsetZ",
+            "customObjectName",
+            "maxWidth",
+            "maxDepth",
+            "splitModel",
+            "internalSupports",
+            "matShellDepth",
+            "latticeStep",
+            "alternateXY",
+            "colThickness",
+            "colStep",
+            "materialType",
+            "materialName",
+            "internalMatName",
+            "matShellDepth",
+            "mergeInconsistentMats",
+            "randomMatSeed",
+            "useUVMap",
+            "useNormals",
+            "verifyExposure",
+            "insidenessRayCastDir",
+            "castDoubleCheckRays",
+            "startFrame",
+            "stopFrame",
+            "useAnimation",
+            "autoUpdateExposed",
+            "brickShell",
+            "calculationAxes",
+            "useLocalOrient",
+            "brickHeight",
+            "bevelWidth",
+            "bevelSegments",
+            "bevelProfile"]
+
+
 def matchProperties(cmTo, cmFrom, bh=False):
-    # list properties to match
-    cm_attrs = ["shellThickness",
-                "studDetail",
-                "logoDetail",
-                "logoResolution",
-                "logoObjectName",
-                "logoScale",
-                "logoInset",
-                "hiddenUndersideDetail",
-                "exposedUndersideDetail",
-                "circleVerts",
-                "gap",
-                "mergeSeed",
-                "randomLoc",
-                "randomRot",
-                "brickType",
-                "alignBricks",
-                "offsetBrickLayers",
-                "distOffsetX",
-                "distOffsetY",
-                "distOffsetZ",
-                "customObjectName",
-                "maxWidth",
-                "maxDepth",
-                "splitModel",
-                "internalSupports",
-                "matShellDepth",
-                "latticeStep",
-                "alternateXY",
-                "colThickness",
-                "colStep",
-                "materialType",
-                "materialName",
-                "internalMatName",
-                "matShellDepth",
-                "mergeInconsistentMats",
-                "randomMatSeed",
-                "useUVMap",
-                "useNormals",
-                "verifyExposure",
-                "insidenessRayCastDir",
-                "castDoubleCheckRays",
-                "startFrame",
-                "stopFrame",
-                "useAnimation",
-                "autoUpdateExposed",
-                "brickShell",
-                "calculationAxes",
-                "useLocalOrient"]
-    # more properties to match if condition is true
-    if bh:
-        cm_attrs.append("brickHeight")
-    if cmFrom.bevelAdded and cmTo.bevelAdded:
-        cm_attrs.append("bevelWidth")
-        cm_attrs.append("bevelSegments")
-        cm_attrs.append("bevelProfile")
+    cm_attrs = getCMProps()
+    # remove properties that should not be matched
+    if not bh:
+        cm_attrs.remove("brickHeight")
+    if not cmFrom.bevelAdded or not cmTo.bevelAdded:
+        cm_attrs.remove("bevelWidth")
+        cm_attrs.remove("bevelSegments")
+        cm_attrs.remove("bevelProfile")
     # match properties from 'cmFrom' to 'cmTo'
     for attr in cm_attrs:
         oldVal = getattr(cmFrom, attr)

@@ -243,9 +243,7 @@ class BrickerBrickify(bpy.types.Operator):
             dGroup = bpy.data.groups.new(Bricker_source_dupes_gn)
             self.createdGroups.append(dGroup.name)
             # duplicate source and add duplicate to group
-            select(self.source, active=True, only=True)
-            bpy.ops.object.duplicate()
-            sourceDup = scn.objects.active
+            sourceDup = duplicateObj(self.source)
             dGroup.objects.link(sourceDup)
             sourceDup.name = self.source.name + "_duplicate"
             if cm.useLocalOrient:
@@ -336,7 +334,6 @@ class BrickerBrickify(bpy.types.Operator):
     def brickifyAnimation(self):
         """ create brick animation """
         # set up variables
-        ct = time.time()
         scn, cm, n = getActiveContextInfo()
         Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
         Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
@@ -391,12 +388,8 @@ class BrickerBrickify(bpy.types.Operator):
         wm = bpy.context.window_manager
         wm.progress_begin(0, cm.stopFrame + 1 - cm.startFrame)
 
-        ct = stopWatch(1, time.time()-ct, precision=5)
-
         # prepare duplicate objects for animation
         duplicates = self.getDuplicateObjects(scn, cm, dGroup, cm.source_name, cm.startFrame, cm.stopFrame)
-
-        ct = stopWatch(2, time.time()-ct, precision=5)
 
         # iterate through frames of animation and generate Brick Model
         for curFrame in range(cm.startFrame, cm.stopFrame + 1):
@@ -466,8 +459,6 @@ class BrickerBrickify(bpy.types.Operator):
             print("completed frame " + str(curFrame))
             print('-'*100)
 
-        ct = stopWatch(3, time.time()-ct, precision=5)
-
         wm.progress_end()
         cm.lastStartFrame = cm.startFrame
         cm.lastStopFrame = cm.stopFrame
@@ -477,8 +468,6 @@ class BrickerBrickify(bpy.types.Operator):
         if cm.bevelAdded:
             bricks = getBricks(cm, typ="ANIM")
             BrickerBevel.runBevelAction(bricks, cm)
-
-        stopWatch(4, time.time()-ct, precision=5)
 
     @classmethod
     def createNewBricks(self, source, parent, source_details, dimensions, refLogo, logo_details, action, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False, printStatus=True, redraw=False):
@@ -788,9 +777,7 @@ class BrickerBrickify(bpy.types.Operator):
                     duplicates[curFrame] = {"obj":sourceDup, "isReused":True}
                     continue
             # duplicate source for current frame
-            select(lastObj, active=True, only=True)
-            bpy.ops.object.duplicate()
-            sourceDup = scn.objects.active
+            sourceDup = duplicateObj(lastObj)
             sourceDup.name = "Bricker_" + cm.source_name + "_frame_" + str(curFrame)
             if sourceDup.name not in dGroup.objects.keys():
                 dGroup.objects.link(sourceDup)

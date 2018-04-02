@@ -224,15 +224,13 @@ def prepareLogoAndGetDetails(scn, cm, logo, dimensions):
         setLayers(logo.layers)
         logo.hide = False
         # duplicate logo object
-        select(logo, active=True, only=True)
-        bpy.data.objects.active = logo
-        bpy.ops.object.duplicate()
-        logo = scn.objects.active
+        logo = duplicateObj(logo)
         # disable modifiers for logo object
         for mod in logo.modifiers:
             mod.show_viewport = False
         # apply logo object transformation
         logo.parent = None
+        select(logo, active=True, only=True)
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
         # select original selection
         originalActive = bpy.data.objects[originalActiveName]

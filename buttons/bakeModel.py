@@ -32,10 +32,10 @@ from bpy.types import Operator
 from ..functions import *
 
 
-class exportModelData(Operator):
-    """send bricksDict to external file"""
-    bl_idname = "bricker.export_model_data"
-    bl_label = "Export Model Data"
+class bakeModel(Operator):
+    """bake current brick model"""
+    bl_idname = "bricker.bake_model"
+    bl_label = "Bake Brick Model"
     bl_options = {"REGISTER", "UNDO"}
 
     ################################################
@@ -50,6 +50,9 @@ class exportModelData(Operator):
         try:
             scn, cm, n = getActiveContextInfo()
             path = getExportPath(cm, n, ".py")
+            # Apply modifiers
+            # remove from group
+            # clear parent and keep transform
             bType = "Frames" if cm.animated else "Bricks"
             numBs = len([b for b in bricksDict if not hasattr(b, "draw") or b.draw])
             # get model info
