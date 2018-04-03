@@ -237,10 +237,10 @@ class BrickerBrickify(bpy.types.Operator):
         # delete old bricks if present
         if self.action in ["UPDATE_MODEL"]:
             # skip source, dupes, and parents
-            transform_and_animation_data = BrickerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True, skipTransAndAnimData=skipTransAndAnimData)[4]
+            trans_and_anim_data = BrickerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True, skipTransAndAnimData=skipTransAndAnimData)[4]
         else:
             storeTransformData(cm, None)
-            transform_and_animation_data = []
+            trans_and_anim_data = []
 
         if self.action == "CREATE":
             # create dupes group
@@ -321,14 +321,15 @@ class BrickerBrickify(bpy.types.Operator):
             for obj in bGroup.objects:
                 obj.layers = self.source.layers
             # apply old animation data to objects
-            for d0 in transform_and_animation_data:
+            for d0 in trans_and_anim_data:
                 obj = bpy.data.objects.get(d0["name"])
                 if obj is not None:
                     obj.location = d0["loc"]
                     obj.rotation_euler = d0["rot"]
                     obj.scale = d0["scale"]
-                    obj.animation_data_create()
-                    obj.animation_data.action = d0["action"]
+                    if d0["action"] is not None:
+                        obj.animation_data_create()
+                        obj.animation_data.action = d0["action"]
 
         # unlink source duplicate if created
         if sourceDup != self.source and sourceDup.name in scn.objects.keys():

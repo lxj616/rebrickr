@@ -320,10 +320,8 @@ class BrickerDelete(bpy.types.Operator):
     def updateAnimationData(objs, trans_and_anim_data):
         """ add anim data for objs to 'trans_and_anim_data' """
         for obj in objs:
-            if obj.animation_data is None or obj.animation_data.action is None:
-                continue
             obj.rotation_mode = "XYZ"
-            trans_and_anim_data.append({"name":obj.name, "loc":obj.location.to_tuple(), "rot":obj.rotation_euler.copy(), "scale":obj.scale.to_tuple(), "action":obj.animation_data.action.copy()})
+            trans_and_anim_data.append({"name":obj.name, "loc":obj.location.to_tuple(), "rot":obj.rotation_euler.copy(), "scale":obj.scale.to_tuple(), "action":obj.animation_data.action.copy() if obj.animation_data and obj.animation_data.action else None})
 
     @classmethod
     def cleanBricks(cls, scn, cm, n, preservedFrames, modelType, skipTransAndAnimData):
