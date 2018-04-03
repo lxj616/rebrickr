@@ -308,6 +308,42 @@ def handle_storing_to_deep_cache(scene):
 bpy.app.handlers.save_pre.append(handle_storing_to_deep_cache)
 
 
+# send parent object to scene for linking scene in other file
+@persistent
+def safe_link_parent(scene):
+    if not brickerIsActive():
+        return
+    for scn in bpy.data.scenes:
+        for cm in scn.cmlist:
+            n = cm.source_name
+            Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
+            p = bpy.data.objects.get(Bricker_parent_on)
+            if (cm.modelCreated or cm.animated) and not cm.exposeParent:
+                print(p.name)
+                safeLink(p)
+
+
+bpy.app.handlers.save_pre.append(safe_link_parent)
+
+
+# send parent object to scene for linking scene in other file
+@persistent
+def safe_unlink_parent(scene):
+    if not brickerIsActive():
+        return
+    for scn in bpy.data.scenes:
+        for cm in scn.cmlist:
+            n = cm.source_name
+            Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
+            p = bpy.data.objects.get(Bricker_parent_on)
+            if (cm.modelCreated or cm.animated) and not cm.exposeParent:
+                safeUnlink(p)
+
+
+bpy.app.handlers.save_post.append(safe_unlink_parent)
+bpy.app.handlers.load_post.append(safe_unlink_parent)
+
+
 @persistent
 def handle_upconversion(scene):
     scn = bpy.context.scene

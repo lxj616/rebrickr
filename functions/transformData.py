@@ -24,7 +24,7 @@ Created by Christopher Gearhart
 
 # Blender imports
 import bpy
-from mathutils import Vector, Quaternion
+from mathutils import Vector, Euler
 
 # Addon imports
 from .common import confirmList
@@ -40,13 +40,13 @@ def storeTransformData(cm, obj, offsetBy=None):
         cm.modelLoc = listToStr(loc.to_tuple())
         # cm.modelLoc = listToStr(obj.matrix_world.to_translation().to_tuple())
         lastMode = obj.rotation_mode
-        obj.rotation_mode = "QUATERNION"
-        cm.modelRot = listToStr(tuple(obj.rotation_quaternion))
+        obj.rotation_mode = "XYZ"
+        cm.modelRot = listToStr(tuple(obj.rotation_euler))
         cm.modelScale = listToStr(obj.scale.to_tuple())
         obj.rotation_mode = lastMode
     elif obj is None:
         cm.modelLoc = "0,0,0"
-        cm.modelRot = "1,0,0,0"
+        cm.modelRot = "0,0,0"
         cm.modelScale = "1,1,1"
 
 
@@ -60,7 +60,7 @@ def getTransformData(cm):
 
 def clearTransformData(cm):
     cm.modelLoc = "0,0,0"
-    cm.modelRot = "1,0,0,0"
+    cm.modelRot = "0,0,0"
     cm.modelScale = "1,1,1"
 
 
@@ -74,8 +74,8 @@ def applyTransformData(cm, objList):
         obj.location = obj.location + Vector(l)
         # ROTATION
         lastMode = obj.rotation_mode
-        obj.rotation_mode = "QUATERNION"
-        obj.rotation_quaternion.rotate(Quaternion(r))
+        obj.rotation_mode = "XYZ"
+        obj.rotation_euler.rotate(Euler(r))
         obj.rotation_mode = lastMode
         # SCALE
         osx, osy, osz = obj.scale

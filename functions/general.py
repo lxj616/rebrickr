@@ -27,7 +27,7 @@ import numpy as np
 
 # Blender imports
 import bpy
-from mathutils import Vector, Quaternion, Matrix
+from mathutils import Vector, Euler, Matrix
 from bpy.types import Object
 
 # Addon imports

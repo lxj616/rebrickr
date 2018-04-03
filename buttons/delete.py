@@ -25,7 +25,7 @@ import sys
 
 # Blender imports
 import bpy
-from mathutils import Vector, Quaternion
+from mathutils import Vector, Euler
 props = bpy.props
 
 # Addon imports
@@ -84,7 +84,7 @@ class BrickerDelete(bpy.types.Operator):
     # class methods
 
     @classmethod
-    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, preservedFrames=None):
+    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, skipTransAndAnimData=True, preservedFrames=None):
         """ externally callable cleanup function for bricks, source, dupes, and parents """
         # set up variables
         scn = bpy.context.scene
@@ -120,12 +120,12 @@ class BrickerDelete(bpy.types.Operator):
         wm.progress_begin(0, 100)
         print()
 
-        cls.cleanBricks(scn, cm, n, preservedFrames, modelType)
+        trans_and_anim_data = cls.cleanBricks(scn, cm, n, preservedFrames, modelType, skipTransAndAnimData)
 
         # set scene layers back to original layers
         setLayers(curLayers)
 
-        return source, brickLoc, brickRot, brickScl
+        return source, brickLoc, brickRot, brickScl, trans_and_anim_data
 
     @classmethod
     def runFullDelete(cls, cm=None):
@@ -149,7 +149,7 @@ class BrickerDelete(bpy.types.Operator):
         # store last active layers
         lastLayers = list(scn.layers)
 
-        source, brickLoc, brickRot, brickScl = cls.cleanUp(modelType, cm=cm, skipSource=source is None)
+        source, brickLoc, brickRot, brickScl, _ = cls.cleanUp(modelType, cm=cm, skipSource=source is None)
 
         # select source
         if source is None:
@@ -170,7 +170,7 @@ class BrickerDelete(bpy.types.Operator):
                     source.location = Vector(l)
                 source.scale = (source.scale[0] * s[0], source.scale[1] * s[1], source.scale[2] * s[2])
                 lastMode = source.rotation_mode
-                source.rotation_mode = "QUATERNION"
+                source.rotation_mode = "XYZ"
                 # create vert to track original source origin
                 last_co = source.data.vertices[0].co.to_tuple()
                 source.data.vertices[0].co = (0, 0, 0)
@@ -178,13 +178,12 @@ class BrickerDelete(bpy.types.Operator):
                 setObjOrigin(source, pivot_point)
                 # rotate source
                 if cm.useLocalOrient and not cm.useAnimation:
-                    source.rotation_quaternion = brickRot or Quaternion(tuple(r))
+                    source.rotation_euler = brickRot or Euler(tuple(r))
                 else:
-                    rotateBy = Quaternion(tuple(r))
+                    rotateBy = Euler(tuple(r))
                     # if source.parent is not None:
                     #     # TODO: convert rotateBy to local with respect to source's parent
-                    source.rotation_quaternion.rotate(rotateBy)
-                    # obj.matrix_world.to_quaternion() = obj.rotation_quaternion.rotate(p.matrix_world.to_quaternion())
+                    source.rotation_euler.rotate(rotateBy)
                 # set source origin back to original point (tracked by last vert)
                 scn.update()
                 setObjOrigin(source, source.matrix_world * source.data.vertices[0].co)
@@ -221,7 +220,8 @@ class BrickerDelete(bpy.types.Operator):
         scn.update()
         tag_redraw_areas("VIEW_3D")
 
-    def cleanSource(source, modelType):
+    @classmethod
+    def cleanSource(cls, source, modelType):
         scn, cm, n = getActiveContextInfo()
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         # link source to scene
@@ -253,7 +253,8 @@ class BrickerDelete(bpy.types.Operator):
         source.name = n
         source.cmlist_id = -1
 
-    def cleanDupes(preservedFrames, modelType):
+    @classmethod
+    def cleanDupes(cls, preservedFrames, modelType):
         scn, cm, n = getActiveContextInfo()
         Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
         dGroup = bpy.data.groups[Bricker_source_dupes_gn]
@@ -273,7 +274,8 @@ class BrickerDelete(bpy.types.Operator):
         if preservedFrames is None:
             bpy.data.groups.remove(dGroup, do_unlink=True)
 
-    def cleanParents(preservedFrames, modelType):
+    @classmethod
+    def cleanParents(cls, preservedFrames, modelType):
         scn, cm, n = getActiveContextInfo()
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
@@ -293,7 +295,7 @@ class BrickerDelete(bpy.types.Operator):
                     b = bricks[0]
                     scn.update()
                     brickLoc = b.matrix_world.to_translation().copy()
-                    brickRot = b.matrix_world.to_quaternion().copy()
+                    brickRot = b.matrix_world.to_euler().copy()
                     brickScl = b.matrix_world.to_scale().copy()  # currently unused
         # clean up Bricker_parent objects
         pGroup = bpy.data.groups.get(Bricker_parent_on)
@@ -315,7 +317,17 @@ class BrickerDelete(bpy.types.Operator):
                 bpy.data.groups.remove(pGroup, do_unlink=True)
         return brickLoc, brickRot, brickScl
 
-    def cleanBricks(scn, cm, n, preservedFrames, modelType):
+    def updateAnimationData(objs, trans_and_anim_data):
+        """ add anim data for objs to 'trans_and_anim_data' """
+        for obj in objs:
+            if obj.animation_data is None or obj.animation_data.action is None:
+                continue
+            obj.rotation_mode = "XYZ"
+            trans_and_anim_data.append({"name":obj.name, "loc":obj.location.to_tuple(), "rot":obj.rotation_euler.copy(), "scale":obj.scale.to_tuple(), "action":obj.animation_data.action.copy()})
+
+    @classmethod
+    def cleanBricks(cls, scn, cm, n, preservedFrames, modelType, skipTransAndAnimData):
+        trans_and_anim_data = []
         wm = bpy.context.window_manager
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         if modelType == "MODEL":
@@ -328,9 +340,11 @@ class BrickerDelete(bpy.types.Operator):
                 if not cm.lastSplitModel:
                     if len(bricks) > 0:
                         storeTransformData(cm, bricks[0])
+                if not skipTransAndAnimData:
+                    cls.updateAnimationData(bricks, trans_and_anim_data)
                 last_percent = 0
                 # remove objects
-                select(bricks)
+                select(bricks, only=True)
                 bpy.ops.object.delete(update_model=False, undo=False)
                 bpy.data.groups.remove(brickGroup, do_unlink=True)
             cm.modelCreated = False
@@ -347,6 +361,8 @@ class BrickerDelete(bpy.types.Operator):
                 brickGroup = bpy.data.groups.get(Bricker_bricks_cur_frame_gn)
                 if brickGroup:
                     bricks = list(brickGroup.objects)
+                    if not skipTransAndAnimData:
+                        cls.updateAnimationData(bricks, trans_and_anim_data)
                     if len(bricks) > 0:
                         delete(bricks)
                     bpy.data.groups.remove(brickGroup, do_unlink=True)
@@ -354,6 +370,7 @@ class BrickerDelete(bpy.types.Operator):
         # finish status update
         update_progress("Deleting", 1)
         wm.progress_end()
+        return trans_and_anim_data
 
     def resetCmlistAttrs():
         scn, cm, n = getActiveContextInfo()

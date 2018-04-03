@@ -29,7 +29,7 @@ import json
 
 # Blender imports
 import bpy
-from mathutils import Matrix, Vector, Quaternion
+from mathutils import Matrix, Vector, Euler
 props = bpy.props
 
 # Addon imports
@@ -45,17 +45,17 @@ from ..functions import *
 
 def updateCanRun(type):
     scn, cm, n = getActiveContextInfo()
-    if scn.name == "Bricker_storage (DO NOT RENAME)":
+    if createdWithUnsupportedVersion(cm):
         return True
     elif scn.cmlist_index == -1:
         return False
     else:
+        commonNeedsUpdate = (cm.logoDetail != "NONE" and cm.logoDetail != "LEGO") or cm.brickType == "CUSTOM" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty
         if type == "ANIMATION":
-            return (cm.logoDetail != "NONE" and cm.logoDetail != "LEGO") or cm.brickType == "CUSTOM" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "CUSTOM" and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
+            return commonNeedsUpdate or (cm.materialType != "CUSTOM" and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
         elif type == "MODEL":
-            # set up variables
             Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
-            return (cm.logoDetail != "NONE" and cm.logoDetail != "LEGO") or cm.brickType == "CUSTOM" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty or (cm.materialType != "CUSTOM" and not (cm.materialType == "RANDOM" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Bricker_bricks_gn) and len(bpy.data.groups[Bricker_bricks_gn].objects) == 0)
+            return commonNeedsUpdate or (cm.materialType != "CUSTOM" and not (cm.materialType == "RANDOM" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Bricker_bricks_gn) and len(bpy.data.groups[Bricker_bricks_gn].objects) == 0)
 
 
 def importLogo():
@@ -72,7 +72,7 @@ class BrickerBrickify(bpy.types.Operator):
     """ Create brick sculpture from source object mesh """
     bl_idname = "bricker.brickify"
     bl_label = "Create/Update Brick Model from Source Object"
-    bl_options = {"REGISTER"}
+    bl_options = {"REGISTER", "UNDO"}
 
     ################################################
     # Blender Operator methods
@@ -91,8 +91,6 @@ class BrickerBrickify(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            if not self.action.startswith("UPDATE"):
-                bpy.ops.ed.undo_push(message="Brickify")
             scn, cm, _ = getActiveContextInfo()
             previously_animated = cm.animated
             previously_model_created = cm.modelCreated
@@ -147,6 +145,7 @@ class BrickerBrickify(bpy.types.Operator):
         source = self.getObjectToBrickify(cm)
         source["old_parent"] = ""
         source.cmlist_id = cm.id
+        skipTransAndAnimData = (cm.splitModel or cm.lastSplitModel) and (matrixReallyIsDirty(cm) or cm.buildIsDirty)
 
         # clear cache if updating from previous version
         if createdWithUnsupportedVersion() and "UPDATE" in self.action:
@@ -162,7 +161,7 @@ class BrickerBrickify(bpy.types.Operator):
             return {"CANCELLED"}
 
         if "ANIM" not in self.action:
-            self.brickifyModel()
+            self.brickifyModel(skipTransAndAnimData)
         else:
             self.brickifyAnimation()
             cm.animIsDirty = False
@@ -195,6 +194,7 @@ class BrickerBrickify(bpy.types.Operator):
         cm.animated = "ANIM" in self.action
         scn.Bricker_runningOperation = False
         cm.version = bpy.props.bricker_version
+        cm.exposeParent = False
 
         # unlink source from scene and link to safe scene
         if source.name in scn.objects.keys():
@@ -202,7 +202,7 @@ class BrickerBrickify(bpy.types.Operator):
 
         disableRelationshipLines()
 
-    def brickifyModel(self):
+    def brickifyModel(self, skipTransAndAnimData=False):
         """ create brick model """
         # set up variables
         scn, cm, n = getActiveContextInfo()
@@ -237,9 +237,10 @@ class BrickerBrickify(bpy.types.Operator):
         # delete old bricks if present
         if self.action in ["UPDATE_MODEL"]:
             # skip source, dupes, and parents
-            BrickerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True)
+            transform_and_animation_data = BrickerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True, skipTransAndAnimData=skipTransAndAnimData)[4]
         else:
             storeTransformData(cm, None)
+            transform_and_animation_data = []
 
         if self.action == "CREATE":
             # create dupes group
@@ -251,8 +252,8 @@ class BrickerBrickify(bpy.types.Operator):
             dGroup.objects.link(sourceDup)
             sourceDup.name = self.source.name + "_duplicate"
             if cm.useLocalOrient:
-                sourceDup.rotation_mode = "QUATERNION"
-                sourceDup.rotation_quaternion = Quaternion((1, 0, 0, 0))
+                sourceDup.rotation_mode = "XYZ"
+                sourceDup.rotation_euler = Euler((0, 0, 0))
             self.createdObjects.append(sourceDup.name)
             self.source.select = False
             # set up sourceDup["old_parent"] and remove sourceDup parent
@@ -319,6 +320,15 @@ class BrickerBrickify(bpy.types.Operator):
             # match brick layers to source layers
             for obj in bGroup.objects:
                 obj.layers = self.source.layers
+            # apply old animation data to objects
+            for d0 in transform_and_animation_data:
+                obj = bpy.data.objects.get(d0["name"])
+                if obj is not None:
+                    obj.location = d0["loc"]
+                    obj.rotation_euler = d0["rot"]
+                    obj.scale = d0["scale"]
+                    obj.animation_data_create()
+                    obj.animation_data.action = d0["action"]
 
         # unlink source duplicate if created
         if sourceDup != self.source and sourceDup.name in scn.objects.keys():
@@ -670,24 +680,24 @@ class BrickerBrickify(bpy.types.Operator):
             obj = parent if cm.splitModel else bGroup.objects[0]
             source_details = bounds(source)
             lastMode = source.rotation_mode
-            obj.rotation_mode = "QUATERNION"
+            obj.rotation_mode = "XYZ"
             source.rotation_mode = obj.rotation_mode
-            obj.rotation_quaternion = source.rotation_quaternion
+            obj.rotation_euler = source.rotation_euler
             obj.rotation_mode = lastMode
             source["local_orient_offset"] = source_details.mid - sourceDup_details.mid
             obj.location += Vector(source["local_orient_offset"])
         # if model was split but isn't now
         if cm.lastSplitModel and not cm.splitModel:
             # transfer transformation of parent to object
-            parent.rotation_mode = "QUATERNION"
+            parent.rotation_mode = "XYZ"
             for obj in bGroup.objects:
                 obj.location = parent.location
                 obj.rotation_mode = parent.rotation_mode
-                obj.rotation_quaternion.rotate(parent.rotation_quaternion)
+                obj.rotation_euler.rotate(parent.rotation_euler)
                 obj.scale = parent.scale
             # reset parent transformation
             parent.location = (0, 0, 0)
-            parent.rotation_quaternion = Quaternion((1, 0, 0, 0))
+            parent.rotation_euler = Euler((0, 0, 0))
             cm.transformScale = 1
             parent.scale = (1, 1, 1)
         # if model is not split
