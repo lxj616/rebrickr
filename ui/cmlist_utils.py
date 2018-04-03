@@ -98,7 +98,10 @@ def updateParentExposure(self, context):
     else:
         parentOb = bpy.data.objects.get(cm.parent_name)
         if parentOb:
-            safeUnlink(parentOb)
+            try:
+                safeUnlink(parentOb)
+            except RuntimeError:
+                pass
 
 
 def updateModelScale(self, context):

@@ -319,7 +319,6 @@ def safe_link_parent(scene):
             Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
             p = bpy.data.objects.get(Bricker_parent_on)
             if (cm.modelCreated or cm.animated) and not cm.exposeParent:
-                print(p.name)
                 safeLink(p)
 
 

@@ -145,7 +145,7 @@ class BrickerBrickify(bpy.types.Operator):
         source = self.getObjectToBrickify(cm)
         source["old_parent"] = ""
         source.cmlist_id = cm.id
-        skipTransAndAnimData = (cm.splitModel or cm.lastSplitModel) and (matrixReallyIsDirty(cm) or cm.buildIsDirty)
+        skipTransAndAnimData = cm.animated or (cm.splitModel or cm.lastSplitModel) and (matrixReallyIsDirty(cm) or cm.buildIsDirty)
 
         # clear cache if updating from previous version
         if createdWithUnsupportedVersion() and "UPDATE" in self.action:
