@@ -201,10 +201,10 @@ def createAddlBricksDictEntry(cm, bricksDict, source_key, key, full_d, x, y, z):
     j = cm.numBricksGenerated
     n = cm.source_name
     newName = "Bricker_%(n)s_brick_%(j)s__%(key)s" % locals()
-    newCO = list(Vector(strToList(brickD["co"], item_type=float)) + vec_mult(Vector((x, y, z)), full_d))
+    newCO = tuple(Vector(brickD["co"]) + vec_mult(Vector((x, y, z)), full_d))
     bricksDict[key] = createBricksDictEntry(
         name=              newName,
-        co=                listToStr(newCO),
+        co=                newCO,
         near_face=         brickD["near_face"],
         near_intersection= brickD["near_intersection"],
         mat_name=          brickD["mat_name"],
@@ -254,6 +254,7 @@ def selectBricks(objNamesD, bricksDicts, brickSize="NULL", brickType="NULL", all
             continue
         bricksDict = bricksDicts[cm_id]
         selectedSomething = False
+        zStep = getZStep(cm)
 
         for obj_name in objNamesD[cm_id]:
             # get dict key details of current obj
@@ -261,7 +262,7 @@ def selectBricks(objNamesD, bricksDicts, brickSize="NULL", brickType="NULL", all
             dictLoc = getDictLoc(dictKey)
             siz = bricksDict[dictKey]["size"]
             typ = bricksDict[dictKey]["type"]
-            onShell = isOnShell(cm, bricksDict, dictKey, dictLoc)
+            onShell = isOnShell(cm, bricksDict, dictKey, dictLoc, zStep)
 
             # get current brick object
             curObj = bpy.data.objects.get(obj_name)

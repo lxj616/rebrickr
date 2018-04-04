@@ -254,6 +254,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     """ returns new brickFreqMatrix """
     scn, cm, _ = getActiveContextInfo()
     brickFreqMatrix = np.zeros((len(coordMatrix), len(coordMatrix[0]), len(coordMatrix[0][0]))).tolist()
+    axes = axes.lower()
 
     # initialize values used for printing status
     denom = (len(coordMatrix[0][0]) + len(coordMatrix[0]) + len(coordMatrix))/100
@@ -261,18 +262,18 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         wm = bpy.context.window_manager
         wm.progress_begin(0, 100)
 
-    def getPercent(lastAxisPercent, num0, denom0, lastPercent):
-        percent = lastAxisPercent + (len(coordMatrix)/denom * (num0/(denom0-1))) / 100
-        updateProgressBars(True, cursorStatus, percent, lastPercent, "Shell")
+    def printStatus(percentStart, num0, denom0, lastPercent):
+        # print status to terminal
+        percent = percentStart + (len(coordMatrix)/denom * (num0/(denom0-1))) / 100
+        updateProgressBars(True, cursorStatus, percent, 0, "Shell")
         return percent
 
-    axes = axes.lower()
     percent0 = 0
     if "x" in axes:
         miniDist = Vector((0.00015, 0.0, 0.0))
         for z in range(len(coordMatrix[0][0])):
             # # print status to terminal
-            percent0 = getPercent(0, z, len(coordMatrix[0][0]) + 1, percent0)
+            percent0 = printStatus(0, z, len(coordMatrix[0][0]), percent0)
             for y in range(len(coordMatrix[0])):
                 for x in range(len(coordMatrix)):
                     intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z, miniDist)
@@ -284,7 +285,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         miniDist = Vector((0.0, 0.00015, 0.0))
         for z in range(len(coordMatrix[0][0])):
             # # print status to terminal
-            percent1 = getPercent(percent0, z, len(coordMatrix[0][0]) + 1, percent1)
+            percent1 = printStatus(percent0, z, len(coordMatrix[0][0]), percent1)
             for x in range(len(coordMatrix)):
                 for y in range(len(coordMatrix[0])):
                     intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z, miniDist)
@@ -296,7 +297,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
         miniDist = Vector((0.0, 0.0, 0.00015))
         for x in range(len(coordMatrix)):
             # # print status to terminal
-            percent2 = getPercent(percent1, x, len(coordMatrix) + 1, percent2)
+            percent2 = printStatus(percent1, x, len(coordMatrix), percent2)
             for y in range(len(coordMatrix[0])):
                 for z in range(len(coordMatrix[0][0])):
                     intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
@@ -401,7 +402,7 @@ def getThreshold(cm):
     """ returns threshold (draw bricks if returned val >= threshold) """
     return 1.01 - (cm.shellThickness / 100)
 
-def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:str="0,0,0", near_face:int=None, near_intersection:str=None, near_normal:tuple=None, rgba:tuple=None, mat_name:str=None, parent:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
+def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0, 0, 0), near_face:int=None, near_intersection:str=None, near_normal:tuple=None, rgba:tuple=None, mat_name:str=None, parent:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
     """
     create an entry in the dictionary of brick locations
 
@@ -489,7 +490,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                     continue
 
                 # initialize variables
-                bKey = listToStr([x, y, z])
+                bKey = "{x},{y},{z}".format(x=x, y=y, z=z)
                 co = Vector(coordMatrix[x][y][z])
                 i += 1
 
@@ -511,7 +512,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                     name= 'Bricker_%(n)s_brick_%(i)s__%(bKey)s' % locals(),
                     val= brickFreqMatrix[x][y][z],
                     draw= draw,
-                    co= vecToStr(co - source_details.mid),
+                    co= (co - source_details.mid).to_tuple(),
                     near_face= nf,
                     near_intersection= ni if ni is None else vecToStr(ni),
                     near_normal= normal_direction,

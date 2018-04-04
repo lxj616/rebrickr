@@ -114,7 +114,7 @@ def readModelFromFile(path, name):
             name= "Bricker_%(modelName)s_brick_%(i)s__%(key)s" % locals(),
             draw= True,
             val=  1,
-            co=   listToStr(loc),
+            co=   tuple(loc),
             size=
             type= d[loc]['type'],
         )

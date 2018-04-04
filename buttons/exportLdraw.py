@@ -73,7 +73,7 @@ class exportLdraw(Operator):
         absMatCodes = getAbsPlasticMatCodes()
         bricksDict, _ = getBricksDict(dType="MODEL" if cm.modelCreated else "ANIM", curFrame=scn.frame_current, cm=cm, restrictContext=True)
         # get small offset for model to get close to Ldraw units
-        offset = vec_conv(strToList(bricksDict[list(bricksDict.keys())[0]]["co"], item_type=float), int)
+        offset = vec_conv(bricksDict[list(bricksDict.keys())[0]]["co"], int)
         offset.x = offset.x % 10
         offset.y = offset.z % 8
         offset.z = offset.y % 10
@@ -130,9 +130,9 @@ class exportLdraw(Operator):
     def blendToLdrawUnits(self, cm, bricksDict, key, idx):
         """ convert location of brick from blender units to ldraw units """
         brickD = bricksDict[key]
-        loc = getBrickCenter(cm, bricksDict, key)
         size = brickD["size"]
         zStep = getZStep(cm)
+        loc = getBrickCenter(cm, bricksDict, key, zStep=zStep)
         dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)
         h = 8 * zStep
         loc.x = loc.x * (20 / (dimensions["width"] + dimensions["gap"]))

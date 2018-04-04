@@ -164,47 +164,25 @@ def getBrickExposure(cm, bricksDict, key=None, loc=None):
     keysInBrick = getKeysInBrick(cm, size, key, loc, zStep)
     for k in keysInBrick:
         x, y, _ = strToList(k)
-        # check if brick top or bottom is exposed
+        # don't check keys where keys above are in current brick
         if bricksDict[k]["val"] != 1 and not ("PLATES" in cm.brickType and size[2] == 3):
             continue
-        curTopExposed = checkExposure(bricksDict, x, y, idxZa, 1, obscuringTypes=getTypesObscuringBelow())
+        # check if brick top or bottom is exposed
+        k0 = "{x},{y},{z}".format(x=x, y=y, z=idxZa)
+        curTopExposed = checkExposure(bricksDict, k0, 1, obscuringTypes=getTypesObscuringBelow())
         if curTopExposed: topExposed = True
-        curBotExposed = checkExposure(bricksDict, x, y, idxZb, -1, obscuringTypes=getTypesObscuringAbove())
+        k1 = "{x},{y},{z}".format(x=x, y=y, z=idxZb)
+        curBotExposed = checkExposure(bricksDict, k1, -1, obscuringTypes=getTypesObscuringAbove())
         if curBotExposed: botExposed = True
 
     return topExposed, botExposed
 
 
-def checkExposure(bricksDict, x, y, z, direction:int=1, obscuringTypes=[]):
-    isExposed = False
-    try:
-        valKeysChecked = []
-        k0 = listToStr([x,y,z])
-        val = bricksDict[k0]["val"]
-        parent_key = getParentKey(bricksDict, k0)
-        typ = bricksDict[parent_key]["type"]
-        if val == 0 or typ not in obscuringTypes:
-            isExposed = True
-        # Check bricks [above or below depending on 'direction'] this brick until shell (1) hit. If ouside (0) hit first, [top or bottom depending on 'direction'] is exposed
-        elif val > 0 and val < 1:
-            zz = z
-            while val > 0 and val < 1:
-                zz += direction
-                k1 = listToStr([x,y,zz])
-                # NOTE: if key 'k1' does not exist in bricksDict, we will be sent to 'except'
-                val = bricksDict[k1]["val"]
-                parent_key = getParentKey(bricksDict, k1)
-                typ = bricksDict[parent_key]["type"]
-                valKeysChecked.append(k1)
-                if val == 0 or typ not in obscuringTypes:
-                    isExposed = True
-    except KeyError:
-        isExposed = True
-    # if outside (0) hit before shell (1) [above or below depending on 'direction'] exposed brick, set all inside (0 < x < 1) values in-between to ouside (0)
-    if isExposed and len(valKeysChecked) > 0:
-        for k in valKeysChecked:
-            bricksDict[k]["val"] = 0
-    return isExposed
+def checkExposure(bricksDict, key, direction:int=1, obscuringTypes=[]):
+    val = bricksDict[key]["val"]
+    parent_key = getParentKey(bricksDict, key)
+    typ = bricksDict[parent_key]["type"]
+    return val == 0 or typ not in obscuringTypes
 
 
 def getNumAlignedEdges(cm, bricksDict, size, key, loc, zStep=None):

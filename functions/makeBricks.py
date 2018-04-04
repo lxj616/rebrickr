@@ -200,7 +200,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
         if bricksDict[k2]["draw"] and bricksDict[k2]["parent"] == "self":
             loc = strToList(k2)
             # create brick based on the current brick info
-            drawBrick(cm, bricksDict, k2, loc, i, dimensions, bricksDict[k2]["size"], split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3)
+            drawBrick(cm, bricksDict, k2, loc, i, dimensions, zStep, bricksDict[k2]["size"], split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3)
             # print status to terminal and cursor
             old_percent = updateProgressBars(printStatus, cursorStatus, i/len(bricksDict.keys()), old_percent, "Building")
 

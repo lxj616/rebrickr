@@ -184,6 +184,7 @@ def listToStr(lst, separate_by=","):
     return separate_by.join(map(str, lst))
 
 
+
 def strToList(string, item_type=int, split_on=","):
     lst = string.split(split_on)
     assert type(string) is str and type(split_on) is str
@@ -231,14 +232,15 @@ def getLocsInBrick(cm, size, key, loc=None, zStep=None):
 
 
 def getKeysInBrick(cm, size, key, loc=None, zStep=None):
-    locs = getLocsInBrick(cm, size=size, key=key, loc=loc, zStep=zStep)
-    return [listToStr(loc) for loc in locs]
+    zStep = zStep or getZStep(cm)
+    x0, y0, z0 = loc or strToList(key)
+    return ["{x},{y},{z}".format(x=x0 + x, y=y0 + y, z=z0 + z) for z in range(0, size[2], zStep) for y in range(size[1]) for x in range(size[0])]
 
 
-def isOnShell(bricksDict, key, loc=None):
+def isOnShell(bricksDict, key, loc=None, zStep=None):
     """ check if any locations in brick are on the shell """
     size = bricksDict[key]["size"]
-    brickKeys = getKeysInBrick(cm, size=size, key=key, loc=loc)
+    brickKeys = getKeysInBrick(cm, size=size, key=key, loc=loc, zStep=zStep)
     return bricksDict[key]["val"] == 1 or 1 in [bricksDict[k]["val"] for k in brickKeys]
 
 
@@ -251,10 +253,10 @@ def getDictLoc(dictKey):
     return strToList(dictKey)
 
 
-def getBrickCenter(cm, bricksDict, key, loc=None):
-    brickKeys = getKeysInBrick(cm, size=bricksDict[key]["size"], key=key, loc=loc)
-    coords = [strToList(bricksDict[k0]["co"], item_type=float) for k0 in brickKeys]
-    coord_ave = Vector((np.mean([co[0] for co in coords]), np.mean([co[1] for co in coords]), np.mean([co[2] for co in coords])))
+def getBrickCenter(cm, bricksDict, key, loc=None, zStep=None):
+    brickKeys = getKeysInBrick(cm, size=bricksDict[key]["size"], key=key, loc=loc, zStep=zStep)
+    coords = [bricksDict[k0]["co"] for k0 in brickKeys]
+    coord_ave = Vector((mean([co[0] for co in coords]), mean([co[1] for co in coords]), mean([co[2] for co in coords])))
     return coord_ave
 
 

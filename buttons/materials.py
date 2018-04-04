@@ -90,6 +90,7 @@ class BrickerApplyMaterial(bpy.types.Operator):
         scn, cm, _ = getActiveContextInfo()
         bricksDict, _ = getBricksDict(cm=cm)
         bricks = getBricks()
+        zStep = getZStep(cm)
         cm.lastMaterialType = cm.materialType
         if self.action == "CUSTOM":
             matName = cm.materialName
@@ -109,7 +110,7 @@ class BrickerApplyMaterial(bpy.types.Operator):
                         brick.data.materials.clear(1)
                     # Assign it to object
                     brick.data.materials.append(mat)
-                elif self.action == "INTERNAL" and not isOnShell(cm, bricksDict, brick.name.split("__")[1]):
+                elif self.action == "INTERNAL" and not isOnShell(cm, bricksDict, brick.name.split("__")[1], zStep):
                     brick.data.materials.pop(0)
                     # Assign it to object
                     brick.data.materials.append(mat)

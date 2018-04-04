@@ -43,7 +43,7 @@ from .general import *
 from ..lib.caches import bricker_bm_cache
 
 
-def drawBrick(cm, bricksDict, key, loc, i, dimensions, brickSize, split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3):
+def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3):
     brickD = bricksDict[key]
     # check exposure of current [merged] brick
     if brickD["top_exposed"] is None or brickD["bot_exposed"] is None or cm.buildIsDirty:
@@ -80,7 +80,7 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, brickSize, split, customD
     if cm.randomRot > 0: randomizeRot(cm.randomRot, randS2, brickSize, m)
     # get brick location
     locOffset = getRandomLoc(cm.randomLoc, randS2, dimensions["width"], dimensions["height"]) if cm.randomLoc > 0 else Vector((0, 0, 0))
-    brickLoc = getBrickCenter(cm, bricksDict, key, loc) + locOffset
+    brickLoc = getBrickCenter(cm, bricksDict, key, loc, zStep) + locOffset
 
     if split:
         # create new object with mesh data

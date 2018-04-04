@@ -269,6 +269,10 @@ def vec_conv(v1, innerType=int, outerType=Vector):
     return outerType([innerType(x) for x in v1])
 
 
+def mean(lst):
+    return sum(lst)/len(lst)
+
+
 def round_nearest(num, divisor):
     rem = num % divisor
     if rem > divisor / 2:
