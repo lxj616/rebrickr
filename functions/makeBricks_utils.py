@@ -293,17 +293,14 @@ def getMaterial(cm, bricksDict, key, size, brick_mats=None, seedInc=None):
         mat = bpy.data.materials.get(cm.materialName)
     elif cm.materialType == "SOURCE":
         # get most frequent material in brick size
-        for x in range(size[0]):
-            for y in range(size[1]):
-                loc = strToList(key)
-                x0, y0, z0 = loc
-                key0 = listToStr([x0 + x, y0 + y, z0])
-                curBrickD = bricksDict[key0]
-                if curBrickD["val"] >= highestVal:
-                    highestVal = curBrickD["val"]
-                    matName = curBrickD["mat_name"]
-                    if curBrickD["val"] == 1:
-                        matsL.append(matName)
+        keysInBrick = getKeysInBrick(cm, size, key)
+        for key0 in keysInBrick:
+            curBrickD = bricksDict[key0]
+            if curBrickD["val"] >= highestVal:
+                highestVal = curBrickD["val"]
+                matName = curBrickD["mat_name"]
+                if curBrickD["val"] == 1:
+                    matsL.append(matName)
         # if multiple shell materials, use the most frequent one
         if len(matsL) > 1:
             matName = most_common(matsL)

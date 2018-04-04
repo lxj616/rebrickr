@@ -65,25 +65,27 @@ def lightToDeepCache(bricker_bfm_cache):
     for cm_id in bricker_bfm_cache.keys():
         # get cmlist item referred to by object
         cm = getItemByID(scn.cmlist, cm_id)
-        if cm:
-            # save last cache to cm.BFMCache
-            cm.BFMCache = json.dumps(bricker_bfm_cache[cm_id])
-            numPushedIDs += 1
+        if not cm:
+            continue
+        # save last cache to cm.BFMCache
+        cm.BFMCache = json.dumps(bricker_bfm_cache[cm_id])
+        numPushedIDs += 1
     if numPushedIDs > 0:
-        print("[Bricker] pushed {numKeys} dicts from light cache to deep cache".format(numKeys=numPushedIDs))
+        print("[Bricker] pushed {numKeys} {pluralized_dicts} from light cache to deep cache".format(numKeys=numPushedIDs, pluralized_dicts="dict" if numPushedIDs == 1 else "dicts"))
 
 def deepToLightCache(bricker_bfm_cache):
     """ send bricksDict from python cache to blender cache for saving to file """
     scn = bpy.context.scene
-    numpulledIDs = 0
+    numPulledIDs = 0
     for cm in scn.cmlist:
         # make sure there is something to store to light cache
-        if cm.BFMCache != "":
-            bricksDict = json.loads(cm.BFMCache)
-            bricker_bfm_cache[cm.id] = bricksDict
-            numpulledIDs += 1
-    if numpulledIDs > 0:
-        print("[Bricker] pulled {numKeys} dicts from deep cache to light cache".format(numKeys=numpulledIDs))
+        if cm.BFMCache == "":
+            continue
+        bricksDict = json.loads(cm.BFMCache)
+        bricker_bfm_cache[cm.id] = bricksDict
+        numPulledIDs += 1
+    if numPulledIDs > 0:
+        print("[Bricker] pulled {numKeys} {pluralized_dicts} from deep cache to light cache".format(numKeys=numPulledIDs, pluralized_dicts="dict" if numPulledIDs == 1 else "dicts"))
 
 def cacheBricksDict(action, cm, bricksDict, curFrame=None):
     """ store bricksDict in light python cache for future access """
