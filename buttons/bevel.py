@@ -114,18 +114,26 @@ class BrickerBevel(bpy.types.Operator):
             if eMod:
                 obj.modifiers.remove(eMod)
                 obj.modifiers.new('Edge Split', 'EDGE_SPLIT')
-        dMod.use_only_vertices = onlyVerts
-        dMod.width = width
-        dMod.segments = segments
-        dMod.profile = profile
-        dMod.limit_method = limitMethod
-        if vertexGroup:
+        # only update values if necessary (prevents multiple updates to mesh)
+        if dMod.use_only_vertices != onlyVerts:
+            dMod.use_only_vertices = onlyVerts
+        if dMod.width != width:
+            dMod.width = width
+        if dMod.segments != segments:
+            dMod.segments = segments
+        if dMod.profile != profile:
+            dMod.profile = profile
+        if dMod.limit_method != limitMethod:
+            dMod.limit_method = limitMethod
+        if vertexGroup and dMod.vertex_group != vertexGroup:
             try:
                 dMod.vertex_group = vertexGroup
             except Exception as e:
                 print("[Bricker]", e)
                 dMod.limit_method = "ANGLE"
-        dMod.angle_limit = angleLimit
-        dMod.offset_type = offsetType
+        if dMod.angle_limit != angleLimit:
+            dMod.angle_limit = angleLimit
+        if dMod.offset_type != offsetType:
+            dMod.offset_type = offsetType
 
     #############################################
