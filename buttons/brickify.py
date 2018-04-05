@@ -235,7 +235,7 @@ class BrickerBrickify(bpy.types.Operator):
             cm.customized = False
 
         # delete old bricks if present
-        if self.action in ["UPDATE_MODEL"] and (matrixReallyIsDirty(cm) or cm.buildIsDirty):
+        if self.action.startswith("UPDATE") and (matrixReallyIsDirty(cm) or cm.buildIsDirty or cm.lastSplitModel != cm.splitModel):
             # skip source, dupes, and parents
             trans_and_anim_data = BrickerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True, skipTransAndAnimData=skipTransAndAnimData)[4]
         else:
@@ -373,7 +373,7 @@ class BrickerBrickify(bpy.types.Operator):
             cm.splitModel = False
 
         # delete old bricks if present
-        if self.action == "UPDATE_ANIM":
+        if self.action.startswith("UPDATE") and (matrixReallyIsDirty(cm) or cm.buildIsDirty or cm.lastSplitModel != cm.splitModel):
             preservedFrames = None
             if self.updatedFramesOnly:
                 # preserve duplicates, parents, and bricks for frames that haven't changed

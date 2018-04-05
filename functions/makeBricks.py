@@ -239,15 +239,20 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
         name = 'Bricker_%(n)s_bricks_combined' % locals()
         if frameNum:
             name = "%(name)s_f_%(frameNum)s" % locals()
-        allBricksObj = bpy.data.objects.new(name, m)
-        allBricksObj.cmlist_id = cm.id
+        allBricksObj = bpy.data.objects.get(name)
+        if allBricksObj:
+            allBricksObj.data = m
+        else:
+            allBricksObj = bpy.data.objects.new(name, m)
+            allBricksObj.cmlist_id = cm.id
+            # add edge split modifier
+            if cm.brickType != "CUSTOM":
+                addEdgeSplitMod(allBricksObj)
         if cm.brickType != "CUSTOM":
             # create vert group for bevel mod (assuming only logo verts are selected):
             vg = allBricksObj.vertex_groups.new("%(name)s_bvl" % locals())
             vertList = [v.index for v in allBricksObj.data.vertices if not v.select]
             vg.add(vertList, 1, "ADD")
-            # add edge split modifier
-            addEdgeSplitMod(allBricksObj)
         if cm.materialType == "CUSTOM":
             mat = bpy.data.materials.get(cm.materialName)
             if mat is not None:
@@ -259,10 +264,11 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
         allBricksObj.parent = parent
         # add bricks obj to scene, bGroup, and bricksCreated
         bGroup.objects.link(allBricksObj)
-        scn.objects.link(allBricksObj)
+        if not allBricksObj.isBrickifiedObject:
+            scn.objects.link(allBricksObj)
+            # protect allBricksObj from being deleted
+            allBricksObj.isBrickifiedObject = True
         bricksCreated.append(allBricksObj)
-        # protect allBricksObj from being deleted
-        allBricksObj.isBrickifiedObject = True
 
     # reset 'attempted_merge' for all items in bricksDict
     for key0 in bricksDict:

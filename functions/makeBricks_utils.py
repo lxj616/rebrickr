@@ -93,7 +93,8 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
             brick = bpy.data.objects.new(brickD["name"], m)
             brick.cmlist_id = cm.id
             # add edge split modifier
-            addEdgeSplitMod(brick)
+            if cm.brickType != "CUSTOM":
+                addEdgeSplitMod(brick)
         # set brick location
         brick.location = brickLoc
         # set brick material
