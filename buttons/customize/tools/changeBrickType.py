@@ -146,11 +146,6 @@ class changeBrickType(Operator):
                 # if something was updated, set bricksWereGenerated
                 bricksWereGenerated = bricksWereGenerated or len(keysToUpdate) > 0
 
-                # delete objects to be updated
-                for k1 in keysToUpdate:
-                    obj0 = bpy.data.objects.get(bricksDict[k1]["name"])
-                    if obj0 is not None:
-                        delete(obj0)
                 # draw updated brick
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=False)
                 # model is now customized

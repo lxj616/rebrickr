@@ -157,8 +157,6 @@ class splitBricks(Operator):
                         continue
 
                     if self.vertical or self.horizontal:
-                        # delete the current object
-                        delete(bpy.data.objects[obj_name])
                         # split the bricks in the matrix and set size of active brick's bricksDict entries to 1x1x[lastZSize]
                         splitKeys = Bricks.split(bricksDict, dictKey, loc=dictLoc, cm=cm, v=self.vertical, h=self.horizontal)
                         # append new splitKeys to keysToUpdate

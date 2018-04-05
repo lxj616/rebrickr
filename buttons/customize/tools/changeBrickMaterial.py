@@ -81,7 +81,6 @@ class changeMaterial(Operator):
                     for k in keysInBrick:
                         bricksDict[k]["mat_name"] = targetMatName
                     # delete the object that was split
-                    delete(bpy.data.objects.get(obj_name))
                     keysToUpdate.append(dictKey)
 
                 # draw modified bricks

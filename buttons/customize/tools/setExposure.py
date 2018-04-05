@@ -81,9 +81,6 @@ class setExposure(Operator):
                     # get size of current brick (e.g. [2, 4, 1])
                     objSize = bricksDict[dictKey]["size"]
 
-                    # delete the current object
-                    delete(bpy.data.objects.get(obj_name))
-
                     # set top as exposed
                     if self.side in ["TOP", "BOTH"]:
                         bricksDict[dictKey]["top_exposed"] = not bricksDict[dictKey]["top_exposed"]

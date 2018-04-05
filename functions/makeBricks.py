@@ -227,7 +227,8 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 vertList = [v.index for v in brick.data.vertices if not v.select]
                 vg.add(vertList, 1, "ADD")
                 # set up remaining brick info if brick object just created
-                bGroup.objects.link(brick)
+                if replaceExistingGroup or brick.name not in bGroup.objects.keys():
+                    bGroup.objects.link(brick)
                 brick.parent = parent
                 if not brick.isBrick:
                     scn.objects.link(brick)

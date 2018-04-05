@@ -175,10 +175,6 @@ class delete_override(Operator):
                 for k0 in keysToUpdate.copy():
                     keysToUpdate += Bricks.split(bricksDict, k0, cm=cm)
                 keysToUpdate = uniquify1(keysToUpdate)
-                # remove duplicate keys from the list and delete those objects
-                for k2 in keysToUpdate:
-                    brick = bpy.data.objects.get(bricksDict[k2]["name"])
-                    delete(brick)
                 # create new bricks at all keysToUpdate locations (attempts merge as well)
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=False)
                 iteratedStates = True

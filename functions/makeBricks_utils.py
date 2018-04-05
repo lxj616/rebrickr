@@ -72,7 +72,7 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
         # get brick mesh
         bm = getBrickMesh(cm, brickD, randS3, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.circleVerts)
         # create new mesh and send bm to it
-        m = bpy.data.meshes.new(brickD["name"] + 'Mesh')
+        m = bpy.data.meshes.new(brickD["name"] + 'Mesh')  # this name may already exist, causing duplicate names (.001, .002, etc.)
         bm.to_mesh(m)
     # center mesh origin
     centerMeshOrigin(m, dimensions, brickSize)
@@ -88,6 +88,7 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
         if brick:
             # set brick.data to new mesh (resets materials)
             brick.data = m
+            # NOTE: last brick mesh is left in memory (faster)
         else:
             # create new object with mesh data
             brick = bpy.data.objects.new(brickD["name"], m)

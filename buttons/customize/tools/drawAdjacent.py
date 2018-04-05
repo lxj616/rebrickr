@@ -126,7 +126,6 @@ class drawAdjacent(Operator):
                 self.bricksDict[dictKey]["top_exposed"] = topExposed
                 self.bricksDict[dictKey]["bot_exposed"] = botExposed
                 keysToUpdate.append(dictKey)
-                delete(obj)
 
             # draw created bricks
             drawUpdatedBricks(cm, self.bricksDict, keysToUpdate, selectCreated=False)

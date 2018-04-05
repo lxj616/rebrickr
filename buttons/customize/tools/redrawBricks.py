@@ -70,10 +70,6 @@ class redrawBricks(Operator):
                 bricksDict, _ = self.bricksDicts[cm_id]
                 keysToUpdate = []
 
-                # delete objects to be updated
-                for obj in self.objNamesD[cm_id]:
-                    delete(obj)
-
                 # add keys for updated objects to simple bricksDict for drawing
                 keysToUpdate = [getDictKey(obj.name) for obj in self.objNamesD[cm_id]]
 

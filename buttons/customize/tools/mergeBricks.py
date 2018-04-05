@@ -85,8 +85,6 @@ class mergeBricks(Operator):
                     # split brick in matrix
                     splitKeys = Bricks.split(bricksDict, dictKey, cm=cm)
                     allSplitKeys += splitKeys
-                    # delete the object that was split
-                    delete(bpy.data.objects.get(obj_name))
 
                 # run self.mergeBricks
                 keysToUpdate = mergeBricks.mergeBricks(bricksDict, allSplitKeys, cm)
