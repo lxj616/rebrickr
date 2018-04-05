@@ -568,6 +568,13 @@ class BrickerBrickify(bpy.types.Operator):
             n = cm.materialName
             self.report({"WARNING"}, "Custom material '%(n)s' could not be found" % locals())
             return False
+        if cm.materialType == "SOURCE" and cm.colorSnap == "ABS":
+            if not hasattr(scn, "isBrickMaterialsInstalled") or not scn.isBrickMaterialsInstalled:
+                self.report({"WARNING"}, "ABS Plastic Materials must be installed from Blender Market")
+                return False
+            if not brick_materials_loaded():
+                self.report({"WARNING"}, "ABS Plastic Materials must be imported (see Bricker 'Materials' tab)")
+                return False
 
         self.clothMod = False
         source["ignored_mods"] = ""
