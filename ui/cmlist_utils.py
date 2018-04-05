@@ -114,6 +114,13 @@ def updateModelScale(self, context):
         parentOb.scale = Vector(s) * cm.transformScale
 
 
+def updateCircleVerts(self, context):
+    scn, cm, _ = getActiveContextInfo()
+    if (cm.circleVerts - 2) % 4 == 0:
+        cm.circleVerts += 1
+    cm.bricksAreDirty = True
+
+
 def dirtyAnim(self, context):
     scn, cm, _ = getActiveContextInfo()
     cm.animIsDirty = True

@@ -363,7 +363,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     circleVerts = IntProperty(
         name="Num Verts",
         description="Number of vertices for each circle of brick mesh",
-        update=dirtyBricks,
+        update=updateCircleVerts,
         min=4, max=64,
         default=16)
     # BEVEL SETTINGS

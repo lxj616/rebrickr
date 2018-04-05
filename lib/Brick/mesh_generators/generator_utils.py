@@ -181,23 +181,12 @@ def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme
                 v2 = vList1[-2]
                 v3 = vList2[-1]
                 bme.faces.new((v1, v2, v3))
-                if len(vList1) - len(vList2) == 2:
-                    v1 = vList1[-2]
-                    v2 = vList1[-3]
-                    v3 = vList2[-1]
-                    bme.faces.new((v1, v2, v3))
                 numIters = len(vList2)
             elif len(vList1) < len(vList2):
                 v1 = vList1[-1]
                 v2 = vList2[-2]
                 v3 = vList2[-1]
-                newFace = [v1, v2, v3]
                 bme.faces.new((v1, v2, v3))
-                if len(vList2) - len(vList1) == 2:
-                    v1 = vList1[-1]
-                    v2 = vList2[-3]
-                    v3 = vList2[-2]
-                    bme.faces.new((v1, v2, v3))
                 numIters = len(vList1)
             else:
                 numIters = len(vList1)
