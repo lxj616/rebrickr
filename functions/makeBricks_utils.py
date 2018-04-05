@@ -83,16 +83,22 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
     brickLoc = getBrickCenter(cm, bricksDict, key, loc, zStep) + locOffset
 
     if split:
-        # create new object with mesh data
-        brick = bpy.data.objects.new(brickD["name"], m)
-        brick.cmlist_id = cm.id
+        # get brick object
+        brick = bpy.data.objects.get(brickD["name"])
+        if brick:
+            # set brick.data to new mesh (resets materials)
+            brick.data = m
+        else:
+            # create new object with mesh data
+            brick = bpy.data.objects.new(brickD["name"], m)
+            brick.cmlist_id = cm.id
+            # add edge split modifier
+            addEdgeSplitMod(brick)
         # set brick location
         brick.location = brickLoc
         # set brick material
         if mat is not None or internalMat is not None:
             brick.data.materials.append(mat or internalMat)
-        # add edge split modifier
-        addEdgeSplitMod(brick)
         # append to bricksCreated
         bricksCreated.append(brick)
     else:

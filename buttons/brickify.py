@@ -235,7 +235,7 @@ class BrickerBrickify(bpy.types.Operator):
             cm.customized = False
 
         # delete old bricks if present
-        if self.action in ["UPDATE_MODEL"]:
+        if self.action in ["UPDATE_MODEL"] and (matrixReallyIsDirty(cm) or cm.buildIsDirty):
             # skip source, dupes, and parents
             trans_and_anim_data = BrickerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True, skipTransAndAnimData=skipTransAndAnimData)[4]
         else:

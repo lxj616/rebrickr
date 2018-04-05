@@ -226,11 +226,12 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 vg = brick.vertex_groups.new("%(name)s_bvl" % locals())
                 vertList = [v.index for v in brick.data.vertices if not v.select]
                 vg.add(vertList, 1, "ADD")
-                # set up remaining brick info
+                # set up remaining brick info if brick object just created
                 bGroup.objects.link(brick)
                 brick.parent = parent
-                scn.objects.link(brick)
-                brick.isBrick = True
+                if not brick.isBrick:
+                    scn.objects.link(brick)
+                    brick.isBrick = True
         # end progress bars
         updateProgressBars(printStatus, cursorStatus, 1, 0, "Linking to Scene", end=True)
     else:
