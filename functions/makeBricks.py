@@ -125,7 +125,10 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 if skipThisRow(cm, timeThrough, lowestZ, z):
                     continue
             # get availableKeys for attemptMerge
-            availableKeysBase = [keysDict[z + ii] for ii in range(maxBrickHeight) if ii + z in keysDict]
+            availableKeysBase = []
+            for ii in range(maxBrickHeight):
+                if ii + z in keysDict:
+                    availableKeysBase += keysDict[z + ii]
             # get small duplicate of bricksDict for variations
             if connectThresh > 1:
                 bricksDictsBase = {}
