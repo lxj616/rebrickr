@@ -231,7 +231,7 @@ class BrickerDelete(bpy.types.Operator):
         if modelType == "MODEL":
             bGroup = bpy.data.groups.get(Bricker_bricks_gn)
         elif modelType == "ANIMATION":
-            bGroup = bpy.data.groups.get(Bricker_bricks_gn + "_frame_" + str(cm.lastStartFrame))
+            bGroup = bpy.data.groups.get(Bricker_bricks_gn + "_f_" + str(cm.lastStartFrame))
         if bGroup and len(bGroup.objects) > 0:
             source.layers = list(bGroup.objects[0].layers)
         # reset source parent to original parent object
@@ -355,8 +355,8 @@ class BrickerDelete(bpy.types.Operator):
                 if percent < 1:
                     update_progress("Deleting", percent)
                     wm.progress_update(percent*100)
-                Bricker_bricks_cur_frame_gn = Bricker_bricks_gn + "_frame_" + str(i)
-                brickGroup = bpy.data.groups.get(Bricker_bricks_cur_frame_gn)
+                Bricker_bricks_curF_gn = Bricker_bricks_gn + "_f_" + str(i)
+                brickGroup = bpy.data.groups.get(Bricker_bricks_curF_gn)
                 if brickGroup:
                     bricks = list(brickGroup.objects)
                     if not skipTransAndAnimData:

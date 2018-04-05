@@ -75,7 +75,7 @@ def updateBevel(self, context):
             cm.lastBevelSegments = cm.bevelSegments
             cm.lastBevelProfile = cm.bevelProfile
     except Exception as e:
-        print("[Bricker] ERROR in updateBevel():", e)
+        raise Exception("[Bricker] ERROR in updateBevel():", e)
         pass
 
 

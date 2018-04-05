@@ -273,7 +273,7 @@ class drawAdjacent(Operator):
             co0 = self.bricksDict[theKey]["co"]
             co = self.getNewCoord(cm, co0, dimensions, side, newBrickHeight)
             self.bricksDict[adjacent_key] = createBricksDictEntry(
-                name=              'Bricker_%(n)s_brick_%(j)s__%(adjacent_key)s' % locals(),
+                name=              'Bricker_%(n)s_brick__%(adjacent_key)s' % locals(),
                 co=                co,
                 near_face=         self.bricksDict[dictKey]["near_face"],
                 near_intersection= self.bricksDict[dictKey]["near_intersection"],

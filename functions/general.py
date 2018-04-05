@@ -140,7 +140,7 @@ def getBricks(cm=None, typ=None):
     elif typ == "ANIM":
         bricks = []
         for cf in range(cm.lastStartFrame, cm.lastStopFrame+1):
-            gn = "Bricker_%(n)s_bricks_frame_%(cf)s" % locals()
+            gn = "Bricker_%(n)s_bricks_f_%(cf)s" % locals()
             bGroup = bpy.data.groups.get(gn)
             if bGroup:
                 bricks += list(bGroup.objects)
@@ -237,7 +237,7 @@ def getKeysInBrick(cm, size, key, loc=None, zStep=None):
     return ["{x},{y},{z}".format(x=x0 + x, y=y0 + y, z=z0 + z) for z in range(0, size[2], zStep) for y in range(size[1]) for x in range(size[0])]
 
 
-def isOnShell(bricksDict, key, loc=None, zStep=None):
+def isOnShell(cm, bricksDict, key, loc=None, zStep=None):
     """ check if any locations in brick are on the shell """
     size = bricksDict[key]["size"]
     brickKeys = getKeysInBrick(cm, size=size, key=key, loc=loc, zStep=zStep)
@@ -246,7 +246,7 @@ def isOnShell(bricksDict, key, loc=None, zStep=None):
 
 def getDictKey(name):
     """ get dict key details of obj """
-    dictKey = name.split("__")[1]
+    dictKey = name.split("__")[-1]
     return dictKey
 
 def getDictLoc(dictKey):

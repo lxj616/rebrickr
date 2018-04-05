@@ -125,10 +125,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 if skipThisRow(cm, timeThrough, lowestZ, z):
                     continue
             # get availableKeys for attemptMerge
-            availableKeysBase = []
-            for ii in range(maxBrickHeight):
-                if ii + z in keysDict:
-                    availableKeysBase += keysDict[z + ii]
+            availableKeysBase = [keysDict[z + ii] for ii in range(maxBrickHeight) if ii + z in keysDict]
             # get small duplicate of bricksDict for variations
             if connectThresh > 1:
                 bricksDictsBase = {}
@@ -223,7 +220,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 name = bricksDict[key]["name"]
                 brick = bpy.data.objects.get(name)
                 # create vert group for bevel mod (assuming only logo verts are selected):
-                vg = brick.vertex_groups.new("%(name)s_bevel" % locals())
+                vg = brick.vertex_groups.new("%(name)s_bvl" % locals())
                 vertList = [v.index for v in brick.data.vertices if not v.select]
                 vg.add(vertList, 1, "ADD")
                 # set up remaining brick info
@@ -237,12 +234,12 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
         m = combineMeshes(allBrickMeshes, printStatus)
         name = 'Bricker_%(n)s_bricks_combined' % locals()
         if frameNum:
-            name = "%(name)s_frame_%(frameNum)s" % locals()
+            name = "%(name)s_f_%(frameNum)s" % locals()
         allBricksObj = bpy.data.objects.new(name, m)
         allBricksObj.cmlist_id = cm.id
         if cm.brickType != "CUSTOM":
             # create vert group for bevel mod (assuming only logo verts are selected):
-            vg = allBricksObj.vertex_groups.new("%(name)s_bevel" % locals())
+            vg = allBricksObj.vertex_groups.new("%(name)s_bvl" % locals())
             vertList = [v.index for v in allBricksObj.data.vertices if not v.select]
             vg.add(vertList, 1, "ADD")
             # add edge split modifier

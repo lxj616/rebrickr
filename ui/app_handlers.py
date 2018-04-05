@@ -63,7 +63,7 @@ def handle_animation(scene):
             continue
         n = cm.source_name
         for cf in range(cm.lastStartFrame, cm.lastStopFrame + 1):
-            curBricks = bpy.data.groups.get("Bricker_%(n)s_bricks_frame_%(cf)s" % locals())
+            curBricks = bpy.data.groups.get("Bricker_%(n)s_bricks_f_%(cf)s" % locals())
             if curBricks is None:
                 continue
             adjusted_frame_current = getAnimAdjustedFrame(cm, scn.frame_current)
@@ -73,7 +73,7 @@ def handle_animation(scene):
                 if brick.hide == onCurF:
                     brick.hide = not onCurF
                     brick.hide_render = not onCurF
-                if scn.objects.active and "Bricker_%(n)s_bricks_combined_frame_" % locals() in scn.objects.active.name and onCurF:
+                if scn.objects.active and scn.objects.active.name.startswith("Bricker_%(n)s_bricks" % locals()) and onCurF:
                     select(brick, active=brick)
                 # prevent bricks from being selected on frame change
                 elif brick.select:
@@ -145,7 +145,7 @@ def handle_selections(scene):
                     cf = cm.stopFrame
                 elif cf < cm.startFrame:
                     cf = cm.startFrame
-                gn = "Bricker_%(n)s_bricks_frame_%(cf)s" % locals()
+                gn = "Bricker_%(n)s_bricks_f_%(cf)s" % locals()
                 if len(bpy.data.groups[gn].objects) > 0:
                     select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
                     scn.Bricker_last_active_object_name = scn.objects.active.name
@@ -371,6 +371,26 @@ def handle_upconversion(scene):
                 for group in bpy.data.groups:
                     if group.name.startswith("Rebrickr"):
                         group.name = group.name.replace("Rebrickr", "Bricker")
+            # convert from v1_3 to v1_4
+            if int(cm.version[2]) < 3:
+                # update "_frame_" to "_f_" in brick and group names
+                if cm.animated:
+                    for i in range(cm.lastStartFrame, cm.lastStopFrame + 1):
+                        Bricker_bricks_curF_gn = Bricker_bricks_gn + "_frame_" + str(i)
+                        bGroup = bpy.data.groups.get(Bricker_bricks_curF_gn)
+                        if bGroup is None:
+                            continue
+                        bGroup.name = rreplace(bGroup.name, "frame", "f")
+                        for obj in bGroup.objects:
+                            obj.name = rreplace(obj.name, "frame", "f")
+                elif cm.modelCreated:
+                    Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
+                    bGroup = bpy.data.groups.get(Bricker_bricks_gn)
+                    if bGroup is None:
+                        continue
+                    bGroup.name = rreplace(bGroup.name, "frame", "f")
+                    for obj in bGroup.objects:
+                        obj.name = rreplace(obj.name, "frame", "f")
 
 
 bpy.app.handlers.load_post.append(handle_upconversion)

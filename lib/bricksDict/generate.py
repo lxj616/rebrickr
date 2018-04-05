@@ -509,7 +509,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                     cm.activeKeyZ = int(keyVals[2])
                 # create bricksDict entry for current brick
                 bricksDict[bKey] = createBricksDictEntry(
-                    name= 'Bricker_%(n)s_brick_%(i)s__%(bKey)s' % locals(),
+                    name= 'Bricker_%(n)s_brick__%(bKey)s' % locals(),
                     val= brickFreqMatrix[x][y][z],
                     draw= draw,
                     co= (co - source_details.mid).to_tuple(),

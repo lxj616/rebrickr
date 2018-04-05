@@ -75,13 +75,13 @@ class move_to_layer_override(Operator):
         scn = context.scene
         for obj in bpy.context.selected_objects:
             obj.layers = self.layers
-            if not obj.name.startswith("Bricker_") or obj.name.index("_bricks_frame_") == -1:
+            if not obj.name.startswith("Bricker_") or obj.name.index("_bricks_f_") == -1:
                 continue
             for cm in scn.cmlist:
-                if obj.name[8:obj.name.index("_bricks_frame_")] != cm.source_name:
+                if obj.name[8:obj.name.index("_bricks_f_")] != cm.source_name:
                     continue
                 n = cm.source_name
                 for curFrame in range(cm.lastStartFrame, cm.lastStopFrame + 1):
-                    bricksCurF = bpy.data.objects.get("Bricker_%(n)s_bricks_frame_%(curFrame)s" % locals())
+                    bricksCurF = bpy.data.objects.get("Bricker_%(n)s_bricks_f_%(curFrame)s" % locals())
                     if bricksCurF.name != obj.name:
                         bricksCurF.layers = self.layers

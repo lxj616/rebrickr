@@ -111,7 +111,7 @@ def readModelFromFile(path, name):
         key = listToStr(dictLoc)
 
         bricksDict[key] = createBricksDictEntry(
-            name= "Bricker_%(modelName)s_brick_%(i)s__%(key)s" % locals(),
+            name= "Bricker_%(modelName)s_brick__%(key)s" % locals(),
             draw= True,
             val=  1,
             co=   tuple(loc),

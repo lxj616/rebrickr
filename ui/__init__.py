@@ -834,7 +834,7 @@ class DetailingPanel(Panel):
         try:
             ff = cm.lastStartFrame
             testBrick = getBricks()[0]
-            testBrick.modifiers[testBrick.name + '_bevel']
+            testBrick.modifiers[testBrick.name + '_bvl']
             row.prop(cm, "bevelWidth", text="Width")
             row = col.row(align=True)
             row.prop(cm, "bevelSegments", text="Segments")

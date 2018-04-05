@@ -273,6 +273,15 @@ def mean(lst):
     return sum(lst)/len(lst)
 
 
+def cap(string, max_len):
+    return string[:max_len] if len(string) > max_len else string
+
+
+def rreplace(s, old, new, occurrence=1):
+    li = s.rsplit(old, occurrence)
+    return new.join(li)
+
+
 def round_nearest(num, divisor):
     rem = num % divisor
     if rem > divisor / 2:

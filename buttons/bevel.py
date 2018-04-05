@@ -87,10 +87,10 @@ class BrickerBevel(bpy.types.Operator):
 
     @classmethod
     def removeBevelMods(self, objs):
-        """ removes bevel modifier 'obj.name + "_bevel"' for objects in 'objs' """
+        """ removes bevel modifier 'obj.name + "_bvl"' for objects in 'objs' """
         objs = confirmList(objs)
         for obj in objs:
-            obj.modifiers.remove(obj.modifiers[obj.name + "_bevel"])
+            obj.modifiers.remove(obj.modifiers[obj.name + "_bvl"])
 
     @classmethod
     def createBevelMods(self, cm, objs):
@@ -101,15 +101,15 @@ class BrickerBevel(bpy.types.Operator):
         for obj in objs:
             segments = cm.bevelSegments
             profile = cm.bevelProfile
-            vGroupName = obj.name + "_bevel"
+            vGroupName = obj.name + "_bvl"
             self.createBevelMod(obj=obj, width=cm.bevelWidth, segments=segments, profile=profile, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
 
     @classmethod
     def createBevelMod(self, obj, width=1, segments=1, profile=0.5, onlyVerts=False, limitMethod='NONE', angleLimit=0.523599, vertexGroup=None, offsetType='OFFSET'):
         """ create bevel modifier for 'obj' with given parameters """
-        dMod = obj.modifiers.get(obj.name + '_bevel')
+        dMod = obj.modifiers.get(obj.name + '_bvl')
         if not dMod:
-            dMod = obj.modifiers.new(obj.name + '_bevel', 'BEVEL')
+            dMod = obj.modifiers.new(obj.name + '_bvl', 'BEVEL')
             eMod = obj.modifiers.get('Edge Split')
             if eMod:
                 obj.modifiers.remove(eMod)

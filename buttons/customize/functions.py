@@ -200,7 +200,7 @@ def createAddlBricksDictEntry(cm, bricksDict, source_key, key, full_d, x, y, z):
     cm.numBricksGenerated += 1
     j = cm.numBricksGenerated
     n = cm.source_name
-    newName = "Bricker_%(n)s_brick_%(j)s__%(key)s" % locals()
+    newName = "Bricker_%(n)s_brick__%(key)s" % locals()
     newCO = tuple(Vector(brickD["co"]) + vec_mult(Vector((x, y, z)), full_d))
     bricksDict[key] = createBricksDictEntry(
         name=              newName,
@@ -262,7 +262,7 @@ def selectBricks(objNamesD, bricksDicts, brickSize="NULL", brickType="NULL", all
             dictLoc = getDictLoc(dictKey)
             siz = bricksDict[dictKey]["size"]
             typ = bricksDict[dictKey]["type"]
-            onShell = isOnShell(cm, bricksDict, dictKey, dictLoc, zStep)
+            onShell = isOnShell(cm, bricksDict, dictKey, loc=dictLoc, zStep=zStep)
 
             # get current brick object
             curObj = bpy.data.objects.get(obj_name)

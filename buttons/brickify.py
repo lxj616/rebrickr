@@ -429,10 +429,11 @@ class BrickerBrickify(bpy.types.Operator):
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
             pGroup = bpy.data.groups[Bricker_parent_on]  # redefine pGroup since it was removed
-            parent = bpy.data.objects.get(Bricker_parent_on + "_frame_" + str(curFrame))
+            p_name = "%(Bricker_parent_on)s_f_%(curFrame)s" % locals()
+            parent = bpy.data.objects.get(p_name)
             if parent is None:
-                m = bpy.data.meshes.new(Bricker_parent_on + "_frame_" + str(curFrame) + "_mesh")
-                parent = bpy.data.objects.new(Bricker_parent_on + "_frame_" + str(curFrame), m)
+                m = bpy.data.meshes.new("%(p_name)s_mesh" % locals())
+                parent = bpy.data.objects.new(p_name, m)
                 parent.location = source_details.mid - parent0.location
                 parent.parent = parent0
                 pGroup.objects.link(parent)
@@ -523,7 +524,7 @@ class BrickerBrickify(bpy.types.Operator):
         # update materials in bricksDict
         if cm.materialIsDirty or cm.matrixIsDirty: bricksDict = updateMaterials(bricksDict, source)
         # make bricks
-        group_name = 'Bricker_%(n)s_bricks_frame_%(curFrame)s' % locals() if curFrame is not None else "Bricker_%(n)s_bricks" % locals()
+        group_name = 'Bricker_%(n)s_bricks_f_%(curFrame)s' % locals() if curFrame is not None else "Bricker_%(n)s_bricks" % locals()
         bricksCreated, bricksDict = makeBricks(source, parent, refLogo, logo_details, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
         if selectCreated and len(bricksCreated) > 0:
             select(bricksCreated, active=bricksCreated[0], only=True)
@@ -537,6 +538,8 @@ class BrickerBrickify(bpy.types.Operator):
             if cm.customObjectName == "":
                 self.report({"WARNING"}, "Custom brick type object not specified.")
                 return False
+            if len(cm.source_name) > 30:
+                self.report({"WARNING"}, "Source object name too long (must be <= 30 characters)")
             customObj = bpy.data.objects.get(cm.customObjectName)
             if customObj is None:
                 n = cm.customObjectName
@@ -787,13 +790,13 @@ class BrickerBrickify(bpy.types.Operator):
             sourceDup = None
             if self.action == "UPDATE_ANIM":
                 # retrieve previously duplicated source
-                sourceDup = bpy.data.objects.get("Bricker_" + source_name + "_frame_" + str(curFrame))
+                sourceDup = bpy.data.objects.get("Bricker_" + source_name + "_f_" + str(curFrame))
                 if sourceDup is not None:
                     duplicates[curFrame] = {"obj":sourceDup, "isReused":True}
                     continue
             # duplicate source for current frame
             sourceDup = duplicateObj(lastObj)
-            sourceDup.name = "Bricker_" + cm.source_name + "_frame_" + str(curFrame)
+            sourceDup.name = "Bricker_" + cm.source_name + "_f_" + str(curFrame)
             if sourceDup.name not in dGroup.objects.keys():
                 dGroup.objects.link(sourceDup)
             duplicates[curFrame] = {"obj":sourceDup, "isReused":False}

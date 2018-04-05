@@ -110,7 +110,7 @@ class BrickerApplyMaterial(bpy.types.Operator):
                         brick.data.materials.clear(1)
                     # Assign it to object
                     brick.data.materials.append(mat)
-                elif self.action == "INTERNAL" and not isOnShell(cm, bricksDict, brick.name.split("__")[1], zStep):
+                elif self.action == "INTERNAL" and not isOnShell(cm, bricksDict, brick.name.split("__")[-1], zStep=zStep):
                     brick.data.materials.pop(0)
                     # Assign it to object
                     brick.data.materials.append(mat)
@@ -119,7 +119,7 @@ class BrickerApplyMaterial(bpy.types.Operator):
 
                 # update bricksDict mat_name values for split models
                 if cm.lastSplitModel:
-                    bricksDict[brick.name.split("__")[1]]["mat_name"] = matName
+                    bricksDict[brick.name.split("__")[-1]]["mat_name"] = matName
             # update bricksDict mat_name values for not split models
             if self.action == "CUSTOM" and not cm.lastSplitModel:
                 for k in bricksDict.keys():
@@ -152,7 +152,7 @@ class BrickerApplyMaterial(bpy.types.Operator):
                 mat = bpy.data.materials.get(brick_mats[randIdx])
                 brick.data.materials.append(mat)
                 if cm.lastSplitModel:
-                    bricksDict[brick.name.split("__")[1]]["mat_name"] = mat.name
+                    bricksDict[brick.name.split("__")[-1]]["mat_name"] = mat.name
                 continue
             elif len(lastMatSlots) == len(brick_mats):
                 brick_mats_dup = brick_mats.copy()
