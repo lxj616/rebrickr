@@ -89,12 +89,35 @@ class BrickerBrickify(bpy.types.Operator):
             return False
         return True
 
+    def modal(self, context, event):
+        try:
+            if event.type in {"ESC"}:
+                self.report({"INFO"}, "Brickify process cancelled")
+                # self.cancel(context)
+                return{"CANCELLED"}
+
+            if event.type in ["LEFTMOUSE", "RIGHTMOUSE"]:
+                return{"RUNNING_MODAL"}
+
+            if event.type not in ["TIMER", "TIMER_REPORT"]:
+                print(event.type)
+            return{"PASS_THROUGH"}
+        except:
+            handle_exception()
+            return{"CANCELLED"}
+
+
     def execute(self, context):
         try:
             scn, cm, _ = getActiveContextInfo()
             previously_animated = cm.animated
             previously_model_created = cm.modelCreated
-            self.runBrickify(context)
+            # create timer for modal
+            wm = context.window_manager
+            self._timer = wm.event_timer_add(0.1, context.window)
+            wm.modal_handler_add(self)
+            return{"RUNNING_MODAL"}
+            # self.runBrickify(context)
         except KeyboardInterrupt:
             if self.action in ["CREATE", "ANIMATE"]:
                 for n in self.createdObjects:
