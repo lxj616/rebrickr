@@ -326,9 +326,9 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
     denom = len(faceIdxMatrix) * len(faceIdxMatrix[0]) * len(faceIdxMatrix[0][0])
     old_percent = 0
 
-    xn0 = smoke_res[0] // len(faceIdxMatrix)
-    yn0 = smoke_res[1] // len(faceIdxMatrix[0])
-    zn0 = smoke_res[2] // len(faceIdxMatrix[0][0])
+    xn0 = smoke_res[0] / len(faceIdxMatrix)
+    yn0 = smoke_res[1] / len(faceIdxMatrix[0])
+    zn0 = smoke_res[2] / len(faceIdxMatrix[0][0])
     ave_denom = xn0 * yn0 * zn0
 
     if ave_denom == 0:
@@ -342,9 +342,9 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
                 old_percent = updateProgressBars(True, cursorStatus, (x * y * z) / denom, old_percent, "Shell")
                 d_acc = 0
                 c_acc = Vector((0, 0, 0))
-                for x1 in range(xn0 * x, xn0 * (x+1)):
-                    for y1 in range(yn0 * y, yn0 * (y+1)):
-                        for z1 in range(zn0 * z, zn0 * (z+1)):
+                for x1 in range(int(xn0 * x), int(xn0 * (x+1))):
+                    for y1 in range(int(yn0 * y), int(yn0 * (y+1))):
+                        for z1 in range(int(zn0 * z), int(zn0 * (z+1))):
                             cur_idx = (z1 * smoke_res[1] + y1) * smoke_res[0] + x1
                             d_acc += density_grid[cur_idx]
                             c_acc += Vector((color_grid[cur_idx * 4], color_grid[cur_idx * 4 + 1], color_grid[cur_idx * 4 + 2]))
