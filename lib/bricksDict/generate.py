@@ -36,6 +36,7 @@ from ...functions.common import *
 from ...functions.general import *
 from ...functions.generate_lattice import generateLattice
 from ...functions.wrappers import *
+from ...functions.smoke_sim import *
 from ..Brick import Bricks
 from bpy.types import Object
 
@@ -253,29 +254,29 @@ def updateInternal(bricksDict, cm, keys="ALL", clearExisting=False):
 def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", cursorStatus=False):
     """ returns new brickFreqMatrix """
     scn, cm, _ = getActiveContextInfo()
-    brickFreqMatrix = np.zeros((len(coordMatrix), len(coordMatrix[0]), len(coordMatrix[0][0]))).tolist()
+    brickFreqMatrix = deepcopy(faceIdxMatrix)
     axes = axes.lower()
 
     # initialize values used for printing status
-    denom = (len(coordMatrix[0][0]) + len(coordMatrix[0]) + len(coordMatrix))/100
+    denom = (len(brickFreqMatrix[0][0]) + len(brickFreqMatrix[0]) + len(brickFreqMatrix))/100
     if cursorStatus:
         wm = bpy.context.window_manager
         wm.progress_begin(0, 100)
 
     def printStatus(percentStart, num0, denom0, lastPercent):
         # print status to terminal
-        percent = percentStart + (len(coordMatrix)/denom * (num0/(denom0-1))) / 100
+        percent = percentStart + (len(brickFreqMatrix)/denom * (num0/(denom0-1))) / 100
         updateProgressBars(True, cursorStatus, percent, 0, "Shell")
         return percent
 
     percent0 = 0
     if "x" in axes:
         miniDist = Vector((0.00015, 0.0, 0.0))
-        for z in range(len(coordMatrix[0][0])):
+        for z in range(len(brickFreqMatrix[0][0])):
             # # print status to terminal
-            percent0 = printStatus(0, z, len(coordMatrix[0][0]), percent0)
-            for y in range(len(coordMatrix[0])):
-                for x in range(len(coordMatrix)):
+            percent0 = printStatus(0, z, len(brickFreqMatrix[0][0]), percent0)
+            for y in range(len(brickFreqMatrix[0])):
+                for x in range(len(brickFreqMatrix)):
                     intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z, miniDist)
                     if intersections == 0:
                         break
@@ -283,11 +284,11 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     percent1 = percent0
     if "y" in axes:
         miniDist = Vector((0.0, 0.00015, 0.0))
-        for z in range(len(coordMatrix[0][0])):
+        for z in range(len(brickFreqMatrix[0][0])):
             # # print status to terminal
-            percent1 = printStatus(percent0, z, len(coordMatrix[0][0]), percent1)
-            for x in range(len(coordMatrix)):
-                for y in range(len(coordMatrix[0])):
+            percent1 = printStatus(percent0, z, len(brickFreqMatrix[0][0]), percent1)
+            for x in range(len(brickFreqMatrix)):
+                for y in range(len(brickFreqMatrix[0])):
                     intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z, miniDist)
                     if intersections == 0:
                         break
@@ -295,30 +296,90 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     percent2 = percent1
     if "z" in axes:
         miniDist = Vector((0.0, 0.0, 0.00015))
-        for x in range(len(coordMatrix)):
+        for x in range(len(brickFreqMatrix)):
             # # print status to terminal
-            percent2 = printStatus(percent1, x, len(coordMatrix), percent2)
-            for y in range(len(coordMatrix[0])):
-                for z in range(len(coordMatrix[0][0])):
+            percent2 = printStatus(percent1, x, len(brickFreqMatrix), percent2)
+            for y in range(len(brickFreqMatrix[0])):
+                for z in range(len(brickFreqMatrix[0][0])):
                     intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
                     if intersections == 0:
                         break
 
-    # adjust brickFreqMatrix values
-    for x in range(len(coordMatrix)):
-        for y in range(len(coordMatrix[0])):
-            for z in range(len(coordMatrix[0][0])):
+
+    # mark inside freqs as internal (-1) and outside next to outsides for removal
+    adjustBFM(brickFreqMatrix, cm.verifyExposure, axes=axes)
+
+    # print status to terminal
+    updateProgressBars(True, cursorStatus, 1, 0, "Shell", end=True)
+
+    # update internals of brickFreqMatrix
+    updateInternals(brickFreqMatrix, cm=cm, faceIdxMatrix=faceIdxMatrix)
+
+    return brickFreqMatrix
+
+
+def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
+    scn, cm, _ = getActiveContextInfo()
+    density_grid, flame_grid, color_grid, smoke_res = getSmokeInfo(source)
+    brickFreqMatrix = deepcopy(faceIdxMatrix)
+    colorMatrix = deepcopy(faceIdxMatrix)
+    denom = len(faceIdxMatrix) * len(faceIdxMatrix[0]) * len(faceIdxMatrix[0][0])
+    old_percent = 0
+
+    xn0 = smoke_res[0] // len(faceIdxMatrix)
+    yn0 = smoke_res[1] // len(faceIdxMatrix[0])
+    zn0 = smoke_res[2] // len(faceIdxMatrix[0][0])
+    step = 1
+
+    if 0 in [xn0, yn0, zn0]:
+        return brickFreqMatrix, colorMatrix
+
+    # set up brickFreqMatrix values
+    for x in range(len(faceIdxMatrix)):
+        for y in range(len(faceIdxMatrix[0])):
+            for z in range(len(faceIdxMatrix[0][0])):
+                # print status to terminal
+                old_percent = updateProgressBars(True, cursorStatus, (x * y * z) / denom, old_percent, "Shell")
+                d_acc = 0
+                c_acc = Vector((0, 0, 0))
+                for x1 in range(xn0 * x, xn0 * (x+1), step):
+                    for y1 in range(yn0 * y, yn0 * (y+1), step):
+                        for z1 in range(zn0 * z, zn0 * (z+1), step):
+                            cur_idx = (z1 * smoke_res[1] + y1) * smoke_res[0] + x1
+                            d_acc += density_grid[cur_idx]
+                            c_acc += Vector((color_grid[cur_idx], color_grid[cur_idx + 1], color_grid[cur_idx + 2]))
+                d_ave = d_acc / (xn0 / step)
+                c_ave = c_acc / (xn0 / step)
+                brickFreqMatrix[x][y][z] = 0 if d_ave < cm.smokeThresh else 1
+                colorMatrix[x][y][z] = list(c_ave) + [d_ave]
+    # end progress bar
+    updateProgressBars(True, cursorStatus, 1, 0, "Shell", end=True)
+
+    # mark inside freqs as internal (-1) and outside next to outsides for removal
+    adjustBFM(brickFreqMatrix, False)
+
+    # update internals of brickFreqMatrix
+    updateInternals(brickFreqMatrix)
+
+    return brickFreqMatrix, colorMatrix
+
+
+def adjustBFM(brickFreqMatrix, verifyExposure, axes=""):
+    """ adjust brickFreqMatrix values """
+    for x in range(len(brickFreqMatrix)):
+        for y in range(len(brickFreqMatrix[0])):
+            for z in range(len(brickFreqMatrix[0][0])):
                 # if current location is inside (-1) and adjacent location is out of bounds, current location is shell (1)
                 if (("z" not in axes and
-                     (z in [0, len(coordMatrix[0][0])-1] or
+                     (z in [0, len(brickFreqMatrix[0][0])-1] or
                       brickFreqMatrix[x][y][z+1] == 0 or
                       brickFreqMatrix[x][y][z-1] == 0)) or
                     ("y" not in axes and
-                     (y in [0, len(coordMatrix[0])-1] or
+                     (y in [0, len(brickFreqMatrix[0])-1] or
                       brickFreqMatrix[x][y+1][z] == 0 or
                       brickFreqMatrix[x][y-1][z] == 0)) or
                     ("x" not in axes and
-                     (x in [0, len(coordMatrix)-1] or
+                     (x in [0, len(brickFreqMatrix)-1] or
                       brickFreqMatrix[x+1][y][z] == 0 or
                       brickFreqMatrix[x-1][y][z] == 0))
                    ):
@@ -327,8 +388,8 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                         # TODO: set faceIdxMatrix value to nearest shell value using some sort of built in nearest poly to point function
                     # continue since boundary locs should not be verified in this case
                     continue
-                if cm.verifyExposure:
-                    # If inside location (-1) intersects outside location (0), make it ouside (0)
+                # If inside location (-1) intersects outside location (0), make it ouside (0)
+                if verifyExposure:
                     if (brickFreqMatrix[x][y][z] == -1 and
                         (brickFreqMatrix[x+1][y][z] == 0 or
                          brickFreqMatrix[x-1][y][z] == 0 or
@@ -337,44 +398,40 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                          brickFreqMatrix[x][y][z+1] == 0 or
                          brickFreqMatrix[x][y][z-1] == 0)):
                         brickFreqMatrix[x][y][z] = 0
-                    # If shell location (1) does not intersect outside location (0), make it inside (-1)
-                    if (brickFreqMatrix[x][y][z] == 1 and
-                        brickFreqMatrix[x+1][y][z] != 0 and
-                        brickFreqMatrix[x-1][y][z] != 0 and
-                        brickFreqMatrix[x][y+1][z] != 0 and
-                        brickFreqMatrix[x][y-1][z] != 0 and
-                        brickFreqMatrix[x][y][z+1] != 0 and
-                        brickFreqMatrix[x][y][z-1] != 0):
-                        brickFreqMatrix[x][y][z] = -1
-    # mark outside brickFreqMatrix values not adjacent to an inside value for removal
-    for x in range(0, len(coordMatrix)):
-        for y in range(0, len(coordMatrix[0])):
-            for z in range(0, len(coordMatrix[0][0])):
+                # If shell location (1) does not intersect outside location (0), make it inside (-1)
+                if (brickFreqMatrix[x][y][z] == 1 and
+                    brickFreqMatrix[x+1][y][z] != 0 and
+                    brickFreqMatrix[x-1][y][z] != 0 and
+                    brickFreqMatrix[x][y+1][z] != 0 and
+                    brickFreqMatrix[x][y-1][z] != 0 and
+                    brickFreqMatrix[x][y][z+1] != 0 and
+                    brickFreqMatrix[x][y][z-1] != 0):
+                    brickFreqMatrix[x][y][z] = -1
+                # mark outside brickFreqMatrix values not adjacent to an inside value for removal
                 if (brickFreqMatrix[x][y][z] == 0 and
-                    (x == len(coordMatrix) - 1 or       brickFreqMatrix[x+1][y][z] == 0) and
-                    (x == 0 or                          brickFreqMatrix[x-1][y][z] == 0) and
-                    (y == len(coordMatrix[0]) - 1 or    brickFreqMatrix[x][y+1][z] == 0) and
-                    (y == 0 or                          brickFreqMatrix[x][y-1][z] == 0) and
-                    (z == len(coordMatrix[0][0]) - 1 or brickFreqMatrix[x][y][z+1] == 0) and
-                    (z == 0 or                          brickFreqMatrix[x][y][z-1] == 0)):
+                    (x == len(brickFreqMatrix) - 1 or       brickFreqMatrix[x+1][y][z] == 0) and
+                    (x == 0 or                              brickFreqMatrix[x-1][y][z] == 0) and
+                    (y == len(brickFreqMatrix[0]) - 1 or    brickFreqMatrix[x][y+1][z] == 0) and
+                    (y == 0 or                              brickFreqMatrix[x][y-1][z] == 0) and
+                    (z == len(brickFreqMatrix[0][0]) - 1 or brickFreqMatrix[x][y][z+1] == 0) and
+                    (z == 0 or                              brickFreqMatrix[x][y][z-1] == 0)):
                     brickFreqMatrix[x][y][z] = None
 
-    # print status to terminal
-    updateProgressBars(True, cursorStatus, 1, 0, "Shell", end=True)
 
-    # set up brickFreqMatrix values for bricks inside shell
+def updateInternals(brickFreqMatrix, cm=None, faceIdxMatrix=None):
+    """ set up brickFreqMatrix values for bricks inside shell (-1) """
     j = 1
     # NOTE: Following two lines are alternative for calculating partial brickFreqMatrix (insideness only calculated as deep as necessary)
-    # denom = min([(cm.shellThickness-1), max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)])/2
+    # denom = min([(cm.shellThickness-1), max(len(brickFreqMatrix)-2, len(brickFreqMatrix[0])-2, len(brickFreqMatrix[0][0])-2)])/2
     # for idx in range(cm.shellThickness-1):
     # NOTE: Following two lines are alternative for calculating full brickFreqMatrix
-    denom = max(len(coordMatrix)-2, len(coordMatrix[0])-2, len(coordMatrix[0][0])-2)/2
+    denom = max(len(brickFreqMatrix)-2, len(brickFreqMatrix[0])-2, len(brickFreqMatrix[0][0])-2)/2
     for i in range(100):
         j = round(j-0.01, 2)
         gotOne = False
-        for x in range(len(coordMatrix)):
-            for y in range(len(coordMatrix[0])):
-                for z in range(len(coordMatrix[0][0])):
+        for x in range(len(brickFreqMatrix)):
+            for y in range(len(brickFreqMatrix[0])):
+                for z in range(len(brickFreqMatrix[0][0])):
                     if brickFreqMatrix[x][y][z] != -1:
                         continue
                     idxsToCheck = [(x+1, y, z),
@@ -390,13 +447,12 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                             continue
                         if curVal == round(j + 0.01,2):
                             brickFreqMatrix[x][y][z] = j
-                            setNF(cm.matShellDepth, j, idx, (x,y,z), faceIdxMatrix)
+                            if faceIdxMatrix: setNF(cm.matShellDepth, j, idx, (x,y,z), faceIdxMatrix)
                             gotOne = True
                             break
         if not gotOne:
             break
 
-    return brickFreqMatrix
 
 def getThreshold(cm):
     """ returns threshold (draw bricks if returned val >= threshold) """
@@ -448,7 +504,7 @@ def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0, 0
            }
 
 @timed_call('Time Elapsed')
-def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
+def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=False):
     """ make dictionary with brick information at each coordinate of lattice surrounding source
     source         -- source object to construct lattice around
     source_details -- object details with subattributes for distance and midpoint of x, y, z axes
@@ -470,7 +526,11 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
     calculationAxes = cm.calculationAxes if cm.brickShell != "INSIDE" else "XYZ"
     # set up faceIdxMatrix and brickFreqMatrix
     faceIdxMatrix = np.zeros((len(coordMatrix), len(coordMatrix[0]), len(coordMatrix[0][0]))).tolist()
-    brickFreqMatrix = getBrickMatrix(source, faceIdxMatrix, coordMatrix, cm.brickShell, axes=calculationAxes, cursorStatus=cursorStatus)
+    if cm.isSmoke:
+        brickFreqMatrix, rgbaMatrix = getBrickMatrixSmoke(origSource, faceIdxMatrix, cm.brickShell, cursorStatus=cursorStatus)
+    else:
+        brickFreqMatrix = getBrickMatrix(source, faceIdxMatrix, coordMatrix, cm.brickShell, axes=calculationAxes, cursorStatus=cursorStatus)
+        rgbaMatrix = None
     # initialize active keys
     cm.activeKeyX = -1
     cm.activeKeyY = -1
@@ -499,7 +559,7 @@ def makeBricksDict(source, source_details, brickScale, cursorStatus=False):
                 ni = faceIdxMatrix[x][y][z]["loc"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 nn = faceIdxMatrix[x][y][z]["normal"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 normal_direction = getNormalDirection(nn)
-                rgba = getUVPixelColor(scn, cm, source, nf, ni, uv_images)
+                rgba = rgbaMatrix[x][y][z] if rgbaMatrix else getUVPixelColor(scn, cm, source, nf, ni, uv_images)
                 draw = brickFreqMatrix[x][y][z] >= threshold
                 # store first key to active keys
                 if cm.activeKeyX == -1 and draw:

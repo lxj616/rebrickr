@@ -132,7 +132,7 @@ class delete_override(Operator):
                 continue
             lastBlenderState = cm.blender_undo_state
             # get bricksDict from cache
-            bricksDict, loadedFromCache = getBricksDict(dType="MODEL", cm=cm, restrictContext=True)
+            bricksDict, loadedFromCache = getBricksDict(dType="MODEL", cm=cm)
             if not update_model:
                 continue
             if not loadedFromCache:

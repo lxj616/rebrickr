@@ -370,15 +370,12 @@ class ModelSettingsPanel(Panel):
     def draw(self, context):
         layout = self.layout
         scn, cm, _ = getActiveContextInfo()
+        source = bpy.data.objects.get(cm.source_name + (" (DO NOT RENAME)" if cm.modelCreated or cm.animated else ""))
 
         col = layout.column(align=True)
         # set up model dimensions variables sX, sY, and sZ
         s = Vector((-1, -1, -1))
         if cm.modelScaleX == -1 or cm.modelScaleY == -1 or cm.modelScaleZ == -1:
-            if not cm.modelCreated and not cm.animated:
-                source = bpy.data.objects.get(cm.source_name)
-            else:
-                source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
             if source:
                 source_details = bounds(source)
                 s.x = round(source_details.dist.x, 2)
@@ -423,6 +420,9 @@ class ModelSettingsPanel(Panel):
         row.prop(cm, "mergeSeed")
         row = col.row(align=True)
         row.prop(cm, "connectThresh")
+        if is_smoke(source):
+            row = col.row(align=True)
+            row.prop(cm, "smokeThresh")
         row.active = cm.brickType != "CUSTOM"
         col = layout.column(align=True)
         row = col.row(align=True)
@@ -983,9 +983,9 @@ class BrickDetailsPanel(Panel):
         col.prop(cm, "activeKeyZ", text="z")
 
         if cm.animated:
-            bricksDict, _ = getBricksDict(dType="ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current), restrictContext=True)
+            bricksDict, _ = getBricksDict(dType="ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current))
         elif cm.modelCreated:
-            bricksDict, _ = getBricksDict(cm=cm, restrictContext=True)
+            bricksDict, _ = getBricksDict(cm=cm)
         if bricksDict is None:
             layout.label("Matrix not available")
             return

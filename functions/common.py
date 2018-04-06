@@ -199,7 +199,7 @@ class Suppressor(object):
         pass
 
 
-def applyModifiers(obj, only=None, exclude=None, curFrame=None):
+def applyModifiers(obj, only=None, exclude=["SMOKE"], curFrame=None):
     hasArmature = False
     select(obj, active=True, only=True)
     # apply modifiers

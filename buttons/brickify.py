@@ -147,13 +147,19 @@ class BrickerBrickify(bpy.types.Operator):
         source.cmlist_id = cm.id
         skipTransAndAnimData = cm.animated or (cm.splitModel or cm.lastSplitModel) and (matrixReallyIsDirty(cm) or cm.buildIsDirty)
 
+        # # check if source object is smoke simulation domain
+        cm.isSmoke = is_smoke(source)
+        if cm.isSmoke != cm.lastIsSmoke:
+            cm.matrixIsDirty = True
+        # cm.isSmoke = True
+
         # clear cache if updating from previous version
         if createdWithUnsupportedVersion() and "UPDATE" in self.action:
             Caches.clearCache(cm)
 
         # make sure matrix really is dirty
         if cm.matrixIsDirty:
-            _, loadedFromCache = getBricksDict(dType="MODEL", cm=cm, restrictContext=True)
+            _, loadedFromCache = getBricksDict(dType="MODEL", cm=cm)
             if not matrixReallyIsDirty(cm) and loadedFromCache:
                 cm.matrixIsDirty = False
 
@@ -310,7 +316,7 @@ class BrickerBrickify(bpy.types.Operator):
         logo_details, refLogo = self.getLogo(scn, cm, dimensions)
 
         # create new bricks
-        group_name = self.createNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, logo_details, self.action, curFrame=None, sceneCurFrame=None)
+        group_name = self.createNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, logo_details, self.action, curFrame=None, sceneCurFrame=None, origSource=self.source)
 
         bGroup = bpy.data.groups.get(group_name)
         if bGroup:
@@ -444,7 +450,7 @@ class BrickerBrickify(bpy.types.Operator):
 
             # create new bricks
             try:
-                group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, logo_details, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame)
+                group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, logo_details, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame, origSource=self.source)
                 self.createdGroups.append(group_name)
             except KeyboardInterrupt:
                 self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
@@ -486,7 +492,7 @@ class BrickerBrickify(bpy.types.Operator):
             BrickerBevel.runBevelAction(bricks, cm)
 
     @classmethod
-    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, logo_details, action, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False, printStatus=True, redraw=False):
+    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, logo_details, action, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", replaceExistingGroup=True, selectCreated=False, printStatus=True, redraw=False, origSource=None):
         """ gets/creates bricksDict, runs makeBricks, and caches the final bricksDict """
         scn = bpy.context.scene
         cm = cm or scn.cmlist[scn.cmlist_index]
@@ -497,7 +503,7 @@ class BrickerBrickify(bpy.types.Operator):
             # multiply brickScale by offset distance
             brickScale2 = brickScale if cm.brickType != "CUSTOM" else vec_mult(brickScale, Vector((cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ)))
             # get bricks dictionary
-            bricksDict, loadedFromCache = getBricksDict(dType=action, source=source, source_details=source_details, dimensions=dimensions, brickScale=brickScale2, updateCursor=updateCursor, curFrame=curFrame)
+            bricksDict, loadedFromCache = getBricksDict(dType=action, source=source, source_details=source_details, dimensions=dimensions, brickScale=brickScale2, updateCursor=updateCursor, curFrame=curFrame, origSource=origSource, restrictContext=False)
         else:
             loadedFromCache = True
         # reset all values for certain keys in bricksDict dictionaries
@@ -522,7 +528,7 @@ class BrickerBrickify(bpy.types.Operator):
             updateInternal(bricksDict, cm, keys, clearExisting=loadedFromCache)
             cm.buildIsDirty = True
         # update materials in bricksDict
-        if cm.materialIsDirty or cm.matrixIsDirty: bricksDict = updateMaterials(bricksDict, source)
+        if cm.materialIsDirty or cm.matrixIsDirty: bricksDict = updateMaterials(bricksDict, source, origSource)
         # make bricks
         group_name = 'Bricker_%(n)s_bricks_f_%(curFrame)s' % locals() if curFrame is not None else "Bricker_%(n)s_bricks" % locals()
         bricksCreated, bricksDict = makeBricks(source, parent, refLogo, logo_details, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
@@ -613,9 +619,9 @@ class BrickerBrickify(bpy.types.Operator):
                     mod.show_viewport = False
                     ignoredMods.append(mod.name)
                 # these modifiers are unsupported - abort render if enabled
-                if mod.type in ["SMOKE"] and mod.show_viewport:
-                    self.report({"WARNING"}, "'" + str(mod.type) + "' modifier not supported by the Bricker.")
-                    return False
+                # if mod.type in ["SMOKE"] and mod.show_viewport:
+                #     self.report({"WARNING"}, "'" + str(mod.type) + "' modifier not supported by the Bricker.")
+                #     return False
                 # handle cloth modifier
                 if mod.type == "CLOTH" and mod.show_viewport:
                     self.clothMod = mod
@@ -641,6 +647,13 @@ class BrickerBrickify(bpy.types.Operator):
                 if mod.type in ["SOFT_BODY", "CLOTH"] and mod.show_viewport and not bpy.data.is_saved:
                     self.report({"WARNING"}, "Blend file must be saved before brickifying '" + str(mod.type) + "' modifiers.")
                     return False
+                if mod.type == "SMOKE" and mod.domain_settings and mod.show_viewport:
+                    if not bpy.data.is_saved:
+                        self.report({"WARNING"}, "Blend file must be saved before brickifying '" + str(mod.type) + "' modifiers.")
+                        return False
+                    if len(mod.domain_settings.density_grid) == 0:
+                        self.report({"WARNING"}, "Please bake the smoke simulation before Brickifying")
+                        return False
             # verify start frame is less than stop frame
             if cm.startFrame > cm.stopFrame:
                 self.report({"ERROR"}, "Start frame must be less than or equal to stop frame (see animation tab below).")

@@ -31,38 +31,49 @@ from ..Brick.legal_brick_sizes import *
 from ...functions import *
 
 
-def updateMaterials(bricksDict, source):
+def updateMaterials(bricksDict, source, origSource):
     """ sets all matNames in bricksDict based on near_face """
     scn, cm, _ = getActiveContextInfo()
-    if cm.useUVMap and (len(source.data.uv_layers) > 0 or cm.uvImageName != ""):
-        uv_images = getUVImages(source)
-    else:
-        uv_images = None
-    rgba_vals = []
-    # clear materials
-    for mat in bpy.data.materials:
-        if mat.name.startswith("Bricker_{}_mat_".format(cm.source_name)):
-            bpy.data.materials.remove(mat)
-    # get original matNames, and populate rgba_vals
-    for key in bricksDict.keys():
-        # skip irrelevant bricks
-        nf = bricksDict[key]["near_face"]
-        if not bricksDict[key]["draw"] or nf is None:
-            continue
-        # get RGBA value at nearest face intersection
-        ni = strToList(bricksDict[key]["near_intersection"], item_type=float)
-        rgba, matName = getBrickRGBA(scn, cm, source, nf, ni, uv_images)
-        # get material with snapped RGBA value
-        if rgba is None:
-            matName = ""
-        elif cm.colorSnap == "ABS" and brick_materials_loaded():
-            matName = findNearestBrickColorName(rgba)
-        elif cm.colorSnap == "RGB" or (cm.useUVMap and len(source.data.uv_layers) > 0):
+    if cm.isSmoke:
+        rgba_vals = []
+        for key in bricksDict.keys():
+            if not bricksDict[key]["draw"]:
+                continue
+            rgba = bricksDict[key]["rgba"]
             matName = createNewMaterial(cm.source_name, rgba, rgba_vals)
-        if rgba is not None:
+            bricksDict[key]["mat_name"] = matName
             rgba_vals.append(rgba)
-        bricksDict[key]["mat_name"] = matName
-    return bricksDict
+        return bricksDict
+    else:
+        if cm.useUVMap and (len(source.data.uv_layers) > 0 or cm.uvImageName != ""):
+            uv_images = getUVImages(source)
+        else:
+            uv_images = None
+        rgba_vals = []
+        # clear materials
+        for mat in bpy.data.materials:
+            if mat.name.startswith("Bricker_{}_mat_".format(cm.source_name)):
+                bpy.data.materials.remove(mat)
+        # get original matNames, and populate rgba_vals
+        for key in bricksDict.keys():
+            # skip irrelevant bricks
+            nf = bricksDict[key]["near_face"]
+            if not bricksDict[key]["draw"] or nf is None:
+                continue
+            # get RGBA value at nearest face intersection
+            ni = strToList(bricksDict[key]["near_intersection"], item_type=float)
+            rgba, matName = getBrickRGBA(scn, cm, source, nf, ni, uv_images)
+            # get material with snapped RGBA value
+            if rgba is None:
+                matName = ""
+            elif cm.colorSnap == "ABS" and brick_materials_loaded():
+                matName = findNearestBrickColorName(rgba)
+            elif cm.colorSnap == "RGB" or (cm.useUVMap and len(source.data.uv_layers) > 0):
+                matName = createNewMaterial(cm.source_name, rgba, rgba_vals)
+            if rgba is not None:
+                rgba_vals.append(rgba)
+            bricksDict[key]["mat_name"] = matName
+        return bricksDict
 
 
 # @timed_call('updateSizes', precision=5)
@@ -179,7 +190,10 @@ def getBrickExposure(cm, bricksDict, key=None, loc=None):
 
 
 def checkExposure(bricksDict, key, direction:int=1, obscuringTypes=[]):
-    val = bricksDict[key]["val"]
+    try:
+        val = bricksDict[key]["val"]
+    except KeyError:
+        return True
     parent_key = getParentKey(bricksDict, key)
     typ = bricksDict[parent_key]["type"]
     return val == 0 or typ not in obscuringTypes

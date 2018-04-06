@@ -384,6 +384,7 @@ class BrickerDelete(bpy.types.Operator):
         cm.lastBrickType = "NONE"
         cm.lastMatrixSettings = "NONE"
         cm.lastMaterialType = "NONE"
+        cm.lastIsSmoke = False
         cm.animIsDirty = True
         cm.materialIsDirty = True
         cm.modelIsDirty = True
@@ -397,3 +398,4 @@ class BrickerDelete(bpy.types.Operator):
         cm.activeKeyY = -1
         cm.activeKeyZ = -1
         cm.firstKey = ""
+        cm.isSmoke = False

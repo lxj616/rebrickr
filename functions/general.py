@@ -172,7 +172,7 @@ def getMatrixSettings(cm=None):
 
 
 def matrixReallyIsDirty(cm):
-    return cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings()
+    return (cm.matrixIsDirty) and cm.lastMatrixSettings != getMatrixSettings()
 
 
 def vecToStr(vec, separate_by=","):
@@ -328,3 +328,10 @@ def getExportPath(cm, fn, ext):
     fn0 = "" if lastSlash == -1 else cm.exportPath[lastSlash + 1:len(cm.exportPath)]
     fullPath = os.path.join(path, (fn if fn0 == "" else fn0) + ext)
     return fullPath
+
+
+def is_smoke(ob):
+    for mod in ob.modifiers:
+        if mod.type == "SMOKE" and mod.domain_settings and mod.show_viewport:
+            return True
+    return False

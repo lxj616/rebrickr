@@ -108,6 +108,18 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBuild,
         min=-1, max=5000,
         default=1000)
+    connectThresh = IntProperty(
+        name="Connectivity",
+        description="Quality of the model's brick connectivity (higher numbers are slower but better quality)",
+        update=dirtyBuild,
+        min=1, max=50,
+        default=1)
+    smokeThresh = FloatProperty(
+        name="Smoke Threshold",
+        description="Threshold for turning smoke density into bricks (lower values for denser model)",
+        update=dirtyMatrix,
+        min=0.01, max=100,
+        default=5)
     splitModel = BoolProperty(
         name="Split Model",
         description="Split model into separate objects (slower)",
@@ -154,12 +166,6 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         description="Thickness of the Brick shell",
         update=dirtyBuild,
         min=1, max=100,
-        default=1)
-    connectThresh = IntProperty(
-        name="Connectivity",
-        description="Quality of the model's brick connectivity (higher numbers are slower but better quality)",
-        update=dirtyBuild,
-        min=1, max=50,
         default=1)
 
     # BRICK TYPE SETTINGS
@@ -495,6 +501,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     brickTypesUsed = StringProperty(default="")  # list of brickTypes used separated by | (e.g. 'PLATE|BRICK|STUD')
     modelCreatedOnFrame = IntProperty(default=-1)
     numBricksGenerated = IntProperty(default=-1)
+    isSmoke = BoolProperty(default=False)
 
     # Properties for checking of model needs updating
     animIsDirty = BoolProperty(default=True)
@@ -518,6 +525,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     lastBevelWidth = FloatProperty()
     lastBevelSegments = IntProperty()
     lastBevelProfile = IntProperty()
+    lastIsSmoke = BoolProperty()
 
     # Bricker Version of Model
     version = StringProperty(default="1.0.4")

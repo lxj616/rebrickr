@@ -63,7 +63,7 @@ class bakeModel(Operator):
                                 "# Number of %(bType)s:  %(numBs)s" % locals(),
                                 ""]
             # get bricksDict and separate into strings
-            bricksDict, _ = getBricksDict(cm=cm, restrictContext=True)
+            bricksDict, _ = getBricksDict(cm=cm)
             bricksDictStrings = json.dumps(bricksDict).split("}, ")
             for i,string in enumerate(bricksDictStrings):
                 whitespace = " " if string.startswith("\"") else ""
