@@ -651,6 +651,9 @@ class BrickerBrickify(bpy.types.Operator):
                     if not bpy.data.is_saved:
                         self.report({"WARNING"}, "Blend file must be saved before brickifying '" + str(mod.type) + "' modifiers.")
                         return False
+                    if mod.domain_settings.use_adaptive_domain == True:
+                        self.report({"WARNING"}, "Adaptive domain not supported. Please disable 'Smoke Adaptive Domain' and re-bake the smoke simulation before Brickifying")
+                        return False
                     if len(mod.domain_settings.density_grid) == 0:
                         self.report({"WARNING"}, "Please bake the smoke simulation before Brickifying")
                         return False

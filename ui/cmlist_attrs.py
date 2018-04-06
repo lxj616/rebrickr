@@ -118,8 +118,8 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         name="Smoke Threshold",
         description="Threshold for turning smoke density into bricks (lower values for denser model)",
         update=dirtyMatrix,
-        min=0.01, max=100,
-        default=5)
+        min=0.0000000001, max=1,
+        default=0.1)
     splitModel = BoolProperty(
         name="Split Model",
         description="Split model into separate objects (slower)",
