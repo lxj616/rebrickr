@@ -325,6 +325,12 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
     colorMatrix = deepcopy(faceIdxMatrix)
     denom = len(faceIdxMatrix) * len(faceIdxMatrix[0]) * len(faceIdxMatrix[0][0])
     old_percent = 0
+    brightness = Vector([(cm.smokeBrightness - 1) / 5]*3)
+    s = cm.smokeSaturation
+    sr = (1 - s) * (0.3086 or 0.2125)
+    sg = (1 - s) * (0.6094 or 0.7154)
+    sb = (1 - s) * (0.0820 or 0.0721)
+    sat_mat = Matrix([[sr + s, sr, sr], [sg, sg + s, sg], [sb, sb, sb + s]])
 
     xn0 = smoke_res[0] / len(faceIdxMatrix)
     yn0 = smoke_res[1] / len(faceIdxMatrix[0])
@@ -356,6 +362,10 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
                 # f_ave = f_acc / ave_denom
                 alpha = d_ave  #+ f_ave
                 c_ave = c_acc / (ave_denom * (d_ave if alpha != 0 else 1))
+                # add brightness
+                c_ave += brightness
+                # add saturation
+                c_ave = c_ave * sat_mat
                 brickFreqMatrix[x][y][z] = 0 if alpha < cm.smokeThresh else 1
                 colorMatrix[x][y][z] = list(c_ave) + [alpha]
     # end progress bar

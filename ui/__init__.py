@@ -428,8 +428,10 @@ class ModelSettingsPanel(Panel):
             row.label("Smoke Settings:")
             row = col.row(align=True)
             row.prop(cm, "smokeThresh", text="Density Threshold")
-            # row = col.row(align=True)
-            # row.prop(cm, "smokeStep", text="Reduce Resolution")
+            row = col.row(align=True)
+            row.prop(cm, "smokeBrightness", text="Brightness")
+            row = col.row(align=True)
+            row.prop(cm, "smokeSaturation", text="Saturation")
 
         col = layout.column(align=True)
         row = col.row(align=True)
@@ -719,10 +721,7 @@ class MaterialsPanel(Panel):
                     row = col.row(align=True)
                     row.operator("bricker.apply_material", icon="FILE_TICK")
 
-        if cm.modelCreated or cm.animated:
-            obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
-        else:
-            obj = bpy.data.objects.get(cm.source_name)
+        obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)") if cm.modelCreated or cm.animated else bpy.data.objects.get(cm.source_name)
         if obj and cm.materialType == "SOURCE":
             if len(obj.data.uv_layers) > 0:
                 row = col.row(align=True)
@@ -748,9 +747,10 @@ class MaterialsPanel(Panel):
             if cm.colorSnap == "RGB":
                 row = col.row(align=True)
                 row.prop(cm, "colorSnapAmount")
+            if cm.colorSnap == "RGB" or (cm.useUVMap and len(obj.data.uv_layers) > 0) or is_smoke(obj):
                 row = col.row(align=True)
                 row.prop(cm, "includeTransparency")
-            elif cm.colorSnap == "ABS":
+            if cm.colorSnap == "ABS":
                 row = col.row(align=True)
                 if not brick_materials_installed:
                     row.label("'ABS Plastic Materials' not installed")

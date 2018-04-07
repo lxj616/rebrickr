@@ -120,12 +120,18 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyMatrix,
         min=0.0000000001, max=1,
         default=0.1)
-    # smokeStep = IntProperty(
-    #     name="Smoke Resolution Divisor",
-    #     description="Divisor for the baked resolution (higher numbers are faster but less accurate)",
-    #     update=dirtyMatrix,
-    #     min=1, max=100,
-    #     default=1)
+    smokeBrightness = FloatProperty(
+        name="Brightness",
+        description="Add brightness to colors read from smoke data",
+        update=dirtyMatrix,
+        min=-4, max=100,
+        default=1)
+    smokeSaturation = FloatProperty(
+        name="Saturation",
+        description="Change saturation level of colors read from smoke data",
+        update=dirtyMatrix,
+        min=0, max=100,
+        default=1)
     splitModel = BoolProperty(
         name="Split Model",
         description="Split model into separate objects (slower)",

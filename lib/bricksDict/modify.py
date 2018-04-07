@@ -40,8 +40,9 @@ def updateMaterials(bricksDict, source, origSource, curFrame=None):
         uv_images = None
     rgba_vals = []
     # clear materials
+    mat_name_start = "Bricker_{n}{f}".format(n=cm.source_name, f="f_%(curFrame)s" % locals() if curFrame else "")
     for mat in bpy.data.materials:
-        if mat.name.startswith("Bricker_{n}{f}".format(n=cm.source_name, f="f_%(curFrame)s" % locals() if curFrame else "")):
+        if mat.name.startswith(mat_name_start):
             bpy.data.materials.remove(mat)
     # get original matNames, and populate rgba_vals
     for key in bricksDict.keys():
