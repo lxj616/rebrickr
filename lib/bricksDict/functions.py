@@ -159,7 +159,7 @@ def getFirstNode(mat, type="BSDF_DIFFUSE"):
     return diffuse
 
 
-def createNewMaterial(model_name, rgba, rgba_vals, includeTransparency):
+def createNewMaterial(model_name, rgba, rgba_vals, includeTransparency, curFrame=None):
     """ create new material with specified rgba values """
     scn, cm, _ = getActiveContextInfo()
     # get or create material with unique color
@@ -172,7 +172,8 @@ def createNewMaterial(model_name, rgba, rgba_vals, includeTransparency):
             min_diff = diff
             r0, g0, b0, a0 = rgba_vals[i]
             break
-    mat_name = "Bricker_{}_mat_{}-{}-{}-{}".format(model_name, round(r0, 5), round(g0, 5), round(b0, 5), round(a0, 5))
+    mat_name_hash = str(hash_str(str(round(r0, 5)) + str(round(g0, 5)) + str(round(b0, 5)) + str(round(a0, 5))))[:14]
+    mat_name = "Bricker_{n}{f}_{hash}".format(n=model_name, f="_f_%(curFrame)s" % locals() if curFrame else "", hash=mat_name_hash)
     mat = bpy.data.materials.get(mat_name)
     mat_is_new = mat is None
     mat = mat or bpy.data.materials.new(name=mat_name)

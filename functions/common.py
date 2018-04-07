@@ -30,6 +30,7 @@ import operator
 import json
 import traceback
 import subprocess
+import hashlib
 from math import *
 
 # Blender imports
@@ -296,6 +297,10 @@ def round_up(num, divisor):
 
 def round_down(num, divisor):
     return num - (num % divisor)
+
+
+def hash_str(string):
+    return hashlib.md5(string.encode()).hexdigest()
 
 
 def confirmList(itemList):

@@ -348,7 +348,7 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
                         for z1 in range(int(zn0 * z), int(zn0 * (z+1))):
                             cur_idx = (z1 * smoke_res[1] + y1) * smoke_res[0] + x1
                             d = density_grid[cur_idx]
-                            f = flame_grid[cur_idx]
+                            # f = flame_grid[cur_idx]
                             d_acc += d
                             # f_acc += f
                             c_acc += d * Vector((color_grid[cur_idx * 4], color_grid[cur_idx * 4 + 1], color_grid[cur_idx * 4 + 2]))

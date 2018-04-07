@@ -31,7 +31,7 @@ from ..Brick.legal_brick_sizes import *
 from ...functions import *
 
 
-def updateMaterials(bricksDict, source, origSource):
+def updateMaterials(bricksDict, source, origSource, curFrame=None):
     """ sets all matNames in bricksDict based on near_face """
     scn, cm, _ = getActiveContextInfo()
     if cm.useUVMap and (len(source.data.uv_layers) > 0 or cm.uvImageName != ""):
@@ -41,7 +41,7 @@ def updateMaterials(bricksDict, source, origSource):
     rgba_vals = []
     # clear materials
     for mat in bpy.data.materials:
-        if mat.name.startswith("Bricker_{}_mat_".format(cm.source_name)):
+        if mat.name.startswith("Bricker_{n}{f}".format(n=cm.source_name, f="f_%(curFrame)s" % locals() if curFrame else "")):
             bpy.data.materials.remove(mat)
     # get original matNames, and populate rgba_vals
     for key in bricksDict.keys():
@@ -61,7 +61,7 @@ def updateMaterials(bricksDict, source, origSource):
         elif cm.colorSnap == "ABS" and brick_materials_loaded():
             matName = findNearestBrickColorName(rgba)
         elif cm.colorSnap == "RGB" or (cm.useUVMap and len(source.data.uv_layers) > 0) or cm.isSmoke:
-            matName = createNewMaterial(cm.source_name, rgba, rgba_vals, cm.includeTransparency)
+            matName = createNewMaterial(cm.source_name, rgba, rgba_vals, cm.includeTransparency, curFrame)
         if rgba is not None:
             rgba_vals.append(rgba)
         bricksDict[key]["mat_name"] = matName

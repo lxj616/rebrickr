@@ -330,6 +330,14 @@ def getExportPath(cm, fn, ext):
     return fullPath
 
 
+def shortenName(string:str, max_len:int=30):
+    """shortens string while maintaining uniqueness"""
+    if len(string) <= max_len:
+        return string
+    else:
+        return string[:math.ceil(max_len * 0.65)] + str(hash_str(string))[:math.floor(max_len * 0.35)]
+
+
 def is_smoke(ob):
     for mod in ob.modifiers:
         if mod.type == "SMOKE" and mod.domain_settings and mod.show_viewport:
