@@ -372,30 +372,31 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
 
 def adjustBFM(brickFreqMatrix, verifyExposure, axes=""):
     """ adjust brickFreqMatrix values """
-    for x in range(len(brickFreqMatrix)):
-        for y in range(len(brickFreqMatrix[0])):
-            for z in range(len(brickFreqMatrix[0][0])):
+    xL = len(brickFreqMatrix)
+    yL = len(brickFreqMatrix[0])
+    zL = len(brickFreqMatrix[0][0])
+    for x in range(xL):
+        for y in range(yL):
+            for z in range(zL):
                 # if current location is inside (-1) and adjacent location is out of bounds, current location is shell (1)
                 if (brickFreqMatrix[x][y][z] == -1 and
                     (("z" not in axes and
-                      (z in [0, len(brickFreqMatrix[0][0])-1] or
+                      (z in [0, zL-1] or
                        brickFreqMatrix[x][y][z+1] == 0 or
                        brickFreqMatrix[x][y][z-1] == 0)) or
                      ("y" not in axes and
-                      (y in [0, len(brickFreqMatrix[0])-1] or
+                      (y in [0, yL-1] or
                        brickFreqMatrix[x][y+1][z] == 0 or
                        brickFreqMatrix[x][y-1][z] == 0)) or
                      ("x" not in axes and
-                      (x in [0, len(brickFreqMatrix)-1] or
+                      (x in [0, xL-1] or
                        brickFreqMatrix[x+1][y][z] == 0 or
                        brickFreqMatrix[x-1][y][z] == 0))
                   )):
                     brickFreqMatrix[x][y][z] = 1
                     # TODO: set faceIdxMatrix value to nearest shell value using some sort of built in nearest poly to point function
                 # continue if curLoc is boundary loc
-                if (x in [0, len(brickFreqMatrix)-1] or
-                    y in [0, len(brickFreqMatrix[0])-1] or
-                    z in [0, len(brickFreqMatrix[0][0])-1]):
+                if (x in [0, xL-1] or y in [0, yL-1] or z in [0, zL-1]):
                     continue
                 # If inside location (-1) intersects outside location (0), make it ouside (0)
                 if verifyExposure:
@@ -418,16 +419,16 @@ def adjustBFM(brickFreqMatrix, verifyExposure, axes=""):
                     brickFreqMatrix[x][y][z] = -1
 
     # mark outside brickFreqMatrix values not adjacent to an inside value for removal
-    for x in range(len(brickFreqMatrix)):
-        for y in range(len(brickFreqMatrix[0])):
-            for z in range(len(brickFreqMatrix[0][0])):
+    for x in range(xL):
+        for y in range(yL):
+            for z in range(zL):
                 if (brickFreqMatrix[x][y][z] == 0 and
-                    (x == len(brickFreqMatrix) - 1 or       brickFreqMatrix[x+1][y][z] == 0) and
-                    (x == 0 or                              brickFreqMatrix[x-1][y][z] == 0) and
-                    (y == len(brickFreqMatrix[0]) - 1 or    brickFreqMatrix[x][y+1][z] == 0) and
-                    (y == 0 or                              brickFreqMatrix[x][y-1][z] == 0) and
-                    (z == len(brickFreqMatrix[0][0]) - 1 or brickFreqMatrix[x][y][z+1] == 0) and
-                    (z == 0 or                              brickFreqMatrix[x][y][z-1] == 0)):
+                    (x == xL - 1 or brickFreqMatrix[x+1][y][z] == 0) and
+                    (x == 0 or      brickFreqMatrix[x-1][y][z] == 0) and
+                    (y == yL - 1 or brickFreqMatrix[x][y+1][z] == 0) and
+                    (y == 0 or      brickFreqMatrix[x][y-1][z] == 0) and
+                    (z == zL - 1 or brickFreqMatrix[x][y][z+1] == 0) and
+                    (z == 0 or      brickFreqMatrix[x][y][z-1] == 0)):
                     brickFreqMatrix[x][y][z] = None
 
 
