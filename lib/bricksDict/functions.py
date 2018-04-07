@@ -159,7 +159,7 @@ def getFirstNode(mat, type="BSDF_DIFFUSE"):
     return diffuse
 
 
-def createNewMaterial(model_name, rgba, rgba_vals):
+def createNewMaterial(model_name, rgba, rgba_vals, includeTransparency):
     """ create new material with specified rgba values """
     scn, cm, _ = getActiveContextInfo()
     # get or create material with unique color
@@ -186,6 +186,16 @@ def createNewMaterial(model_name, rgba, rgba_vals):
             output = mat_nodes['Material Output']
             diffuse = mat_nodes['Diffuse BSDF']
             diffuse.inputs[0].default_value = rgba
+            if includeTransparency:
+                # create transparent and mix nodes
+                transparent = mat_nodes.new("ShaderNodeBsdfTransparent")
+                mix = mat_nodes.new("ShaderNodeMixShader")
+                # link these nodes together
+                mat_links.new(diffuse.outputs['BSDF'], mix.inputs[1])
+                mat_links.new(transparent.outputs['BSDF'], mix.inputs[2])
+                mat_links.new(mix.outputs['Shader'], output.inputs["Surface"])
+                # set mix factor to 1 - alpha
+                mix.inputs[0].default_value = 1 - rgba[3]
         else:
             if not mat.use_nodes:
                 mat.use_nodes = True

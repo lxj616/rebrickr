@@ -83,6 +83,28 @@ def handle_animation(scene):
 bpy.app.handlers.frame_change_pre.append(handle_animation)
 
 
+# @persistent
+# def makeUpdateButtonsAvailable(scene):
+#     scn = scene
+#     if not brickerIsActive():
+#         return
+#     for i, cm in enumerate(scn.cmlist):
+#         if not cm.modelCreated:
+#             continue
+#         source = bpy.data.objects[cm.source_name + (" (DO NOT RENAME)" if cm.modelCreated or cm.animated else "")]
+#         if is_smoke(source) or source.animation_data is not None:
+#             if is_smoke(source):
+#                 try:
+#                     safeLink(source)
+#                 except:
+#                     pass
+#                 safeUnlink(source)
+#             cm.matrixIsDirty = True
+#
+#
+# bpy.app.handlers.frame_change_post.append(makeUpdateButtonsAvailable)
+
+
 def isObjVisible(scn, cm, n):
     objVisible = False
     if cm.modelCreated or cm.animated:
@@ -128,10 +150,8 @@ def handle_selections(scene):
     elif scn.Bricker_last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
         scn.Bricker_last_cmlist_index = scn.cmlist_index
         cm = scn.cmlist[scn.cmlist_index]
-        obj = bpy.data.objects.get(cm.source_name)
-        if obj is None:
-            obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
-        if obj and cm.version[:3] != "1_0":
+        source = bpy.data.objects.get(cm.source_name + (" (DO NOT RENAME)" if cm.modelCreated or cm.animated else ""))
+        if source and cm.version[:3] != "1_0":
             if cm.modelCreated:
                 n = cm.source_name
                 bricks = getBricks()
@@ -150,8 +170,8 @@ def handle_selections(scene):
                     select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
                     scn.Bricker_last_active_object_name = scn.objects.active.name
             else:
-                select(obj, active=obj)
-            scn.Bricker_last_active_object_name = obj.name
+                select(source, active=source)
+            scn.Bricker_last_active_object_name = source.name
         else:
             for i in range(len(scn.cmlist)):
                 cm = scn.cmlist[i]

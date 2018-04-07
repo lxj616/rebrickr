@@ -47,7 +47,7 @@ def updateMaterials(bricksDict, source, origSource):
     for key in bricksDict.keys():
         # skip irrelevant bricks
         nf = bricksDict[key]["near_face"]
-        if not bricksDict[key]["draw"] or (nf is None or cm.isSmoke):
+        if not bricksDict[key]["draw"] or (nf is None and not cm.isSmoke):
             continue
         # get RGBA value at nearest face intersection
         if cm.isSmoke:
@@ -61,7 +61,7 @@ def updateMaterials(bricksDict, source, origSource):
         elif cm.colorSnap == "ABS" and brick_materials_loaded():
             matName = findNearestBrickColorName(rgba)
         elif cm.colorSnap == "RGB" or (cm.useUVMap and len(source.data.uv_layers) > 0) or cm.isSmoke:
-            matName = createNewMaterial(cm.source_name, rgba, rgba_vals)
+            matName = createNewMaterial(cm.source_name, rgba, rgba_vals, cm.includeTransparency)
         if rgba is not None:
             rgba_vals.append(rgba)
         bricksDict[key]["mat_name"] = matName

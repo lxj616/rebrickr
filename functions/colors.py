@@ -73,11 +73,12 @@ def getColors():
     return getColors.colors
 
 
-def findNearestBrickColorName(rgba):
-    return findNearestColorName(rgba, getColors())
+def findNearestBrickColorName(rgba, cm=None):
+    cm = cm or getActiveContextInfo()[1]
+    return findNearestColorName(rgba, cm, getColors())
 
 
-def distance(c1, c2):
+def distance(c1, c2, aWt=1):
     r1, g1, b1, a1 = c1
     r2, g2, b2, a2 = c2
     # a1 = c1[3]
@@ -93,14 +94,14 @@ def distance(c1, c2):
     diff =  0.30 * ((r1 - r2)**2)
     diff += 0.59 * ((g1 - g2)**2)
     diff += 0.11 * ((b1 - b2)**2)
-    diff += 1.00 * ((a1 - a2)**2)
+    diff += aWt * ((a1 - a2)**2)
     return diff
 
 
-def findNearestColorName(rgba, colorNames):
+def findNearestColorName(rgba, cm, colorNames):
     mindiff = None
     for colorName in colorNames:
-        diff = distance(rgba, colorNames[colorName])
+        diff = distance(rgba, colorNames[colorName], cm.transparentWeight)
         if mindiff is None or diff < mindiff:
             mindiff = diff
             mincolorname = colorName

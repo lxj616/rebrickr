@@ -151,7 +151,6 @@ class BrickerBrickify(bpy.types.Operator):
         cm.isSmoke = is_smoke(source)
         if cm.isSmoke != cm.lastIsSmoke:
             cm.matrixIsDirty = True
-        # cm.isSmoke = True
 
         # clear cache if updating from previous version
         if createdWithUnsupportedVersion() and "UPDATE" in self.action:
@@ -189,6 +188,7 @@ class BrickerBrickify(bpy.types.Operator):
         cm.lastMaterialType = cm.materialType
         cm.lastShellThickness = cm.shellThickness
         cm.lastMatrixSettings = getMatrixSettings()
+        cm.lastIsSmoke = cm.isSmoke
         cm.materialIsDirty = False
         cm.brickMaterialsAreDirty = False
         cm.modelIsDirty = False
@@ -380,10 +380,13 @@ class BrickerBrickify(bpy.types.Operator):
 
         # delete old bricks if present
         if self.action.startswith("UPDATE") and (matrixReallyIsDirty(cm) or cm.buildIsDirty or cm.lastSplitModel != cm.splitModel):
+            print(2)
             preservedFrames = None
             if self.updatedFramesOnly:
                 # preserve duplicates, parents, and bricks for frames that haven't changed
                 preservedFrames = [cm.startFrame, cm.stopFrame]
+                print(3)
+                print(preservedFrames)
             BrickerDelete.cleanUp("ANIMATION", skipDupes=not self.updatedFramesOnly, skipParents=not self.updatedFramesOnly, preservedFrames=preservedFrames)
             self.source.name = self.source.name + " (DO NOT RENAME)"
 
@@ -820,6 +823,9 @@ class BrickerBrickify(bpy.types.Operator):
             # duplicate source for current frame
             sourceDup = duplicateObj(lastObj)
             sourceDup.name = "Bricker_" + cm.source_name + "_f_" + str(curFrame)
+            for mod in sourceDup.modifiers:
+                if mod.type in ["SMOKE"]:
+                    mod.show_viewport = False
             if sourceDup.name not in dGroup.objects.keys():
                 dGroup.objects.link(sourceDup)
             duplicates[curFrame] = {"obj":sourceDup, "isReused":False}

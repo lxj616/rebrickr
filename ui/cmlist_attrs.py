@@ -120,6 +120,12 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyMatrix,
         min=0.0000000001, max=1,
         default=0.1)
+    # smokeStep = IntProperty(
+    #     name="Smoke Resolution Divisor",
+    #     description="Divisor for the baked resolution (higher numbers are faster but less accurate)",
+    #     update=dirtyMatrix,
+    #     min=1, max=100,
+    #     default=1)
     splitModel = BoolProperty(
         name="Split Model",
         description="Split model into separate objects (slower)",
@@ -301,6 +307,18 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         min=0.000001, max=1.0,
         default=0.00001,
         update=dirtyBuild)
+    includeTransparency = BoolProperty(
+        name="Include Transparency",
+        description="Mix diffuse and transparency nodes to represent alpha value of color picked",
+        default=False,
+        update=dirtyMaterial)
+    transparentWeight = FloatProperty(
+        name="Transparency Weight",
+        description="How much affect the transparency of the color has on the ABS color chosen",
+        precision=3,
+        min=0, max=2,
+        default=1,
+        update=dirtyMaterial)
 
     # BRICK DETAIL SETTINGS
     studDetail = EnumProperty(

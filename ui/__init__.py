@@ -420,13 +420,19 @@ class ModelSettingsPanel(Panel):
         row.prop(cm, "mergeSeed")
         row = col.row(align=True)
         row.prop(cm, "connectThresh")
-        if is_smoke(source):
-            row = col.row(align=True)
-            row.prop(cm, "smokeThresh")
         row.active = cm.brickType != "CUSTOM"
+
+        if is_smoke(source):
+            col = layout.column(align=True)
+            row = col.row(align=True)
+            row.label("Smoke Settings:")
+            row = col.row(align=True)
+            row.prop(cm, "smokeThresh", text="Density Threshold")
+            # row = col.row(align=True)
+            # row.prop(cm, "smokeStep", text="Reduce Resolution")
+
         col = layout.column(align=True)
         row = col.row(align=True)
-
         if not cm.useAnimation:
             row = col.row(align=True)
             row.prop(cm, "splitModel")
@@ -742,6 +748,8 @@ class MaterialsPanel(Panel):
             if cm.colorSnap == "RGB":
                 row = col.row(align=True)
                 row.prop(cm, "colorSnapAmount")
+                row = col.row(align=True)
+                row.prop(cm, "includeTransparency")
             elif cm.colorSnap == "ABS":
                 row = col.row(align=True)
                 if not brick_materials_installed:
@@ -750,6 +758,8 @@ class MaterialsPanel(Panel):
                     row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
                 elif scn.render.engine != 'CYCLES':
                     row.label("Switch to 'Cycles' for ABS Materials")
+                else:
+                    row.prop(cm, "transparentWeight")
 
             if scn.render.engine == "CYCLES" and cm.colorSnap != "NONE" and not cm.useUVMap:
                 col = layout.column(align=True)

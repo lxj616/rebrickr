@@ -346,10 +346,11 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
                     for y1 in range(int(yn0 * y), int(yn0 * (y+1))):
                         for z1 in range(int(zn0 * z), int(zn0 * (z+1))):
                             cur_idx = (z1 * smoke_res[1] + y1) * smoke_res[0] + x1
-                            d_acc += density_grid[cur_idx]
-                            c_acc += Vector((color_grid[cur_idx * 4], color_grid[cur_idx * 4 + 1], color_grid[cur_idx * 4 + 2]))
+                            d = density_grid[cur_idx]
+                            d_acc += d
+                            c_acc += d * Vector((color_grid[cur_idx * 4], color_grid[cur_idx * 4 + 1], color_grid[cur_idx * 4 + 2]))
                 d_ave = d_acc / ave_denom
-                c_ave = c_acc / ave_denom
+                c_ave = c_acc / (ave_denom * (d_ave if d_ave != 0 else 1))
                 brickFreqMatrix[x][y][z] = 0 if d_ave < cm.smokeThresh else 1
                 colorMatrix[x][y][z] = list(c_ave) + [d_ave]
     # end progress bar
@@ -407,7 +408,11 @@ def adjustBFM(brickFreqMatrix, verifyExposure, axes=""):
                     brickFreqMatrix[x][y][z+1] != 0 and
                     brickFreqMatrix[x][y][z-1] != 0):
                     brickFreqMatrix[x][y][z] = -1
-                # mark outside brickFreqMatrix values not adjacent to an inside value for removal
+
+    # mark outside brickFreqMatrix values not adjacent to an inside value for removal
+    for x in range(len(brickFreqMatrix)):
+        for y in range(len(brickFreqMatrix[0])):
+            for z in range(len(brickFreqMatrix[0][0])):
                 if (brickFreqMatrix[x][y][z] == 0 and
                     (x == len(brickFreqMatrix) - 1 or       brickFreqMatrix[x+1][y][z] == 0) and
                     (x == 0 or                              brickFreqMatrix[x-1][y][z] == 0) and
