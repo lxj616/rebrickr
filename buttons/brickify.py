@@ -24,6 +24,7 @@ import random
 import time
 import bmesh
 import os
+import sys
 import math
 import json
 
@@ -171,7 +172,7 @@ class BrickerBrickify(bpy.types.Operator):
             self.brickifyAnimation()
             cm.animIsDirty = False
 
-        if self.action in ["CREATE", "ANIMATE"]:
+        if source.name == cm.source_name:
             source.name = cm.source_name + " (DO NOT RENAME)"
 
         # set cmlist_id for all created objects
@@ -363,6 +364,7 @@ class BrickerBrickify(bpy.types.Operator):
 
         if self.action == "UPDATE_ANIM":
             safeLink(self.source)
+            self.source.name = cm.source_name  # fixes issue with smoke simulation cache
 
         # if there are no changes to apply, simply return "FINISHED"
         self.updatedFramesOnly = False
@@ -380,12 +382,10 @@ class BrickerBrickify(bpy.types.Operator):
 
         # delete old bricks if present
         if self.action.startswith("UPDATE") and (matrixReallyIsDirty(cm) or cm.buildIsDirty or cm.lastSplitModel != cm.splitModel):
-            print(2)
             preservedFrames = None
             if self.updatedFramesOnly:
                 # preserve duplicates, parents, and bricks for frames that haven't changed
                 preservedFrames = [cm.startFrame, cm.stopFrame]
-                print(3)
                 print(preservedFrames)
             BrickerDelete.cleanUp("ANIMATION", skipDupes=not self.updatedFramesOnly, skipParents=not self.updatedFramesOnly, preservedFrames=preservedFrames)
             self.source.name = self.source.name + " (DO NOT RENAME)"
@@ -531,7 +531,7 @@ class BrickerBrickify(bpy.types.Operator):
             updateInternal(bricksDict, cm, keys, clearExisting=loadedFromCache)
             cm.buildIsDirty = True
         # update materials in bricksDict
-        if cm.materialIsDirty or cm.matrixIsDirty: bricksDict = updateMaterials(bricksDict, source, origSource)
+        if cm.materialIsDirty or cm.matrixIsDirty or cm.animIsDirty: bricksDict = updateMaterials(bricksDict, source, origSource)
         # make bricks
         group_name = 'Bricker_%(n)s_bricks_f_%(curFrame)s' % locals() if curFrame is not None else "Bricker_%(n)s_bricks" % locals()
         bricksCreated, bricksDict = makeBricks(source, parent, refLogo, logo_details, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, customObj_details=customObj_details, group_name=group_name, replaceExistingGroup=replaceExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
@@ -825,14 +825,12 @@ class BrickerBrickify(bpy.types.Operator):
             sourceDup.name = "Bricker_" + cm.source_name + "_f_" + str(curFrame)
             for mod in sourceDup.modifiers:
                 if mod.type in ["SMOKE"]:
-                    mod.show_viewport = False
+                    sourceDup.modifiers.remove(mod)
+                    # mod.show_viewport = False
             if sourceDup.name not in dGroup.objects.keys():
                 dGroup.objects.link(sourceDup)
             duplicates[curFrame] = {"obj":sourceDup, "isReused":False}
             lastObj = sourceDup
-
-        denom = stopFrame - startFrame
-        update_progress("Applying Modifiers", 0)
 
         # apply parent transformation and shape keys
         for curFrame in range(startFrame, stopFrame + 1):
@@ -863,8 +861,14 @@ class BrickerBrickify(bpy.types.Operator):
                         mod.point_cache.use_library_path = True
                     if mod.point_cache.frame_end >= stopFrame:
                         mod.point_cache.frame_end = stopFrame
-                        override = {'scene': scn, 'active_object': lastObj, 'point_cache': mod.point_cache}
+                        override = {'scene': scn, 'active_object': lastObj, 'point_cache': mod.point_cache, 'window':bpy.context.window, 'blend_data':bpy.context.blend_data, 'region':bpy.context.region, 'area':bpy.context.area, 'screen':bpy.context.screen}
+                        sys.stdout.write("Baking...")
+                        sys.stdout.flush()
                         bpy.ops.ptcache.bake(override, bake=True)
+                    update_progress("Baking", 1)
+
+        denom = stopFrame - startFrame
+        update_progress("Applying Modifiers", 0)
 
         for curFrame in range(startFrame, stopFrame + 1):
             # print status

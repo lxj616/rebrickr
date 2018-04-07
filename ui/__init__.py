@@ -370,7 +370,7 @@ class ModelSettingsPanel(Panel):
     def draw(self, context):
         layout = self.layout
         scn, cm, _ = getActiveContextInfo()
-        source = bpy.data.objects.get(cm.source_name + (" (DO NOT RENAME)" if cm.modelCreated or cm.animated else ""))
+        source = bpy.data.objects.get(cm.source_name) or bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
 
         col = layout.column(align=True)
         # set up model dimensions variables sX, sY, and sZ

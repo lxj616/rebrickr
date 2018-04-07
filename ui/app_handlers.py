@@ -150,7 +150,7 @@ def handle_selections(scene):
     elif scn.Bricker_last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
         scn.Bricker_last_cmlist_index = scn.cmlist_index
         cm = scn.cmlist[scn.cmlist_index]
-        source = bpy.data.objects.get(cm.source_name + (" (DO NOT RENAME)" if cm.modelCreated or cm.animated else ""))
+        source = bpy.data.objects.get(cm.source_name) or bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         if source and cm.version[:3] != "1_0":
             if cm.modelCreated:
                 n = cm.source_name

@@ -371,23 +371,26 @@ def adjustBFM(brickFreqMatrix, verifyExposure, axes=""):
         for y in range(len(brickFreqMatrix[0])):
             for z in range(len(brickFreqMatrix[0][0])):
                 # if current location is inside (-1) and adjacent location is out of bounds, current location is shell (1)
-                if (("z" not in axes and
-                     (z in [0, len(brickFreqMatrix[0][0])-1] or
-                      brickFreqMatrix[x][y][z+1] == 0 or
-                      brickFreqMatrix[x][y][z-1] == 0)) or
-                    ("y" not in axes and
-                     (y in [0, len(brickFreqMatrix[0])-1] or
-                      brickFreqMatrix[x][y+1][z] == 0 or
-                      brickFreqMatrix[x][y-1][z] == 0)) or
-                    ("x" not in axes and
-                     (x in [0, len(brickFreqMatrix)-1] or
-                      brickFreqMatrix[x+1][y][z] == 0 or
-                      brickFreqMatrix[x-1][y][z] == 0))
-                   ):
-                    if brickFreqMatrix[x][y][z] == -1:
-                        brickFreqMatrix[x][y][z] = 1
-                        # TODO: set faceIdxMatrix value to nearest shell value using some sort of built in nearest poly to point function
-                    # continue since boundary locs should not be verified in this case
+                if (brickFreqMatrix[x][y][z] == -1 and
+                    (("z" not in axes and
+                      (z in [0, len(brickFreqMatrix[0][0])-1] or
+                       brickFreqMatrix[x][y][z+1] == 0 or
+                       brickFreqMatrix[x][y][z-1] == 0)) or
+                     ("y" not in axes and
+                      (y in [0, len(brickFreqMatrix[0])-1] or
+                       brickFreqMatrix[x][y+1][z] == 0 or
+                       brickFreqMatrix[x][y-1][z] == 0)) or
+                     ("x" not in axes and
+                      (x in [0, len(brickFreqMatrix)-1] or
+                       brickFreqMatrix[x+1][y][z] == 0 or
+                       brickFreqMatrix[x-1][y][z] == 0))
+                  )):
+                    brickFreqMatrix[x][y][z] = 1
+                    # TODO: set faceIdxMatrix value to nearest shell value using some sort of built in nearest poly to point function
+                # continue if curLoc is boundary loc
+                if (x in [0, len(brickFreqMatrix)-1] or
+                    y in [0, len(brickFreqMatrix[0])-1] or
+                    z in [0, len(brickFreqMatrix[0][0])-1]):
                     continue
                 # If inside location (-1) intersects outside location (0), make it ouside (0)
                 if verifyExposure:
