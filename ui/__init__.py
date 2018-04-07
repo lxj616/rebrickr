@@ -747,7 +747,7 @@ class MaterialsPanel(Panel):
             if cm.colorSnap == "RGB":
                 row = col.row(align=True)
                 row.prop(cm, "colorSnapAmount")
-            if cm.colorSnap == "RGB" or (cm.useUVMap and len(obj.data.uv_layers) > 0) or is_smoke(obj):
+            if cm.colorSnap == "RGB" or (cm.useUVMap and len(obj.data.uv_layers) > 0) or (cm.colorSnap == "NONE" and is_smoke(obj)):
                 row = col.row(align=True)
                 row.prop(cm, "includeTransparency")
             if cm.colorSnap == "ABS":
@@ -760,6 +760,11 @@ class MaterialsPanel(Panel):
                     row.label("Switch to 'Cycles' for ABS Materials")
                 else:
                     row.prop(cm, "transparentWeight")
+                # box = row.box()
+                # box.prop(cm, "materialsToUse")
+                # if cm.materialsToUse:
+                #     col = box.column()
+                #     layout.separator()
 
             if scn.render.engine == "CYCLES" and cm.colorSnap != "NONE" and not cm.useUVMap:
                 col = layout.column(align=True)

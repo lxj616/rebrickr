@@ -317,7 +317,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         name="Include Transparency",
         description="Mix diffuse and transparency nodes to represent alpha value of color picked",
         default=False,
-        update=dirtyMaterial)
+        update=dirtyMatrix)
     transparentWeight = FloatProperty(
         name="Transparency Weight",
         description="How much affect the transparency of the color has on the ABS color chosen",

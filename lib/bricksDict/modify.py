@@ -69,7 +69,6 @@ def updateMaterials(bricksDict, source, origSource, curFrame=None):
     return bricksDict
 
 
-# @timed_call('updateSizes', precision=5)
 def updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep, maxL, height3Only=False, mergeVertical=False, tallType="BRICK", shortType="PLATE"):
     """ update 'brickSizes' with available brick sizes surrounding bricksDict[key] """
     newMax1 = maxL[1]
