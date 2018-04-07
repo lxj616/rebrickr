@@ -40,12 +40,12 @@ def getSmokeInfo(smoke_obj):
         smoke_data = mod.domain_settings
         # get channel data
         density_grid = list(smoke_data.density_grid)
-        # flame_grid = list(smoke_data.flame_grid)
+        flame_grid = None  # list(smoke_data.flame_grid)
         color_grid = list(smoke_data.color_grid)
         # get resolution
         smoke_res = list(smoke_data.domain_resolution)
         if smoke_data.use_high_resolution:
             smoke_res = [int((smoke_data.amplify + 1) * i) for i in smoke_res]
-        return density_grid, None, color_grid, smoke_res
+        return density_grid, flame_grid, color_grid, smoke_res
     else:
         return None, None, None, None
