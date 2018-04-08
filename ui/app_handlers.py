@@ -43,16 +43,6 @@ def brickerRunningOp():
     return hasattr(scn, "Bricker_runningOperation") and scn.Bricker_runningOperation
 
 
-def getAnimAdjustedFrame(cm, frame):
-    if frame < cm.lastStartFrame:
-        curFrame = cm.lastStartFrame
-    elif frame > cm.lastStopFrame:
-        curFrame = cm.lastStopFrame
-    else:
-        curFrame = frame
-    return curFrame
-
-
 @persistent
 def handle_animation(scene):
     scn = scene

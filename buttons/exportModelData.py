@@ -51,6 +51,7 @@ class exportModelData(Operator):
             scn, cm, n = getActiveContextInfo()
             path = getExportPath(cm, n, ".py")
             bType = "Frames" if cm.animated else "Bricks"
+            bricksDict, _ = getBricksDict(cm=cm)
             numBs = len([b for b in bricksDict if not hasattr(b, "draw") or b.draw])
             # get model info
             modelInfoStrings = ["# Model Name:  " + cm.name,
@@ -60,7 +61,6 @@ class exportModelData(Operator):
                                 "# Number of %(bType)s:  %(numBs)s" % locals(),
                                 ""]
             # get bricksDict and separate into strings
-            bricksDict, _ = getBricksDict(cm=cm)
             bricksDictStrings = json.dumps(bricksDict).split("}, ")
             for i,string in enumerate(bricksDictStrings):
                 whitespace = " " if string.startswith("\"") else ""

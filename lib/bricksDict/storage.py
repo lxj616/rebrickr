@@ -44,8 +44,8 @@ def getBricksDict(dType="MODEL", source=None, source_details=None, dimensions=No
         loadedFromCache = True
         # if animated, index into that dict
         if "ANIM" in dType:
-            curFrame = curFrame or scn.frame_current
-            bricksDict = bricksDict[str(curFrame)]
+            adjusted_frame_current = getAnimAdjustedFrame(cm, curFrame)
+            bricksDict = bricksDict[str(adjusted_frame_current)]
     # if context restricted, return nothing
     elif restrictContext:
         return None, False

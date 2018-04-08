@@ -105,6 +105,16 @@ def bounds(obj, local=False):
     return info
 
 
+def getAnimAdjustedFrame(cm, frame):
+    if frame < cm.lastStartFrame:
+        curFrame = cm.lastStartFrame
+    elif frame > cm.lastStopFrame:
+        curFrame = cm.lastStopFrame
+    else:
+        curFrame = frame
+    return curFrame
+
+
 def setObjOrigin(obj, loc):
     # TODO: Speed up this function by not using the ops call
     # for v in obj.data.vertices:
