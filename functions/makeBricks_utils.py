@@ -160,42 +160,12 @@ def skipThisRow(cm, timeThrough, lowestZ, z):
     return False
 
 
-# def combineMeshes(meshes, printStatus):
-#     """ return combined mesh from 'meshes' """
-#     bm = bmesh.new()
-#     # add meshes to bmesh
-#     old_percent = 0
-#     numMeshes = len(meshes)
-#     for i,m in enumerate(meshes):
-#         # print status to terminal
-#         old_percent = updateProgressBars(printStatus, False, i/numMeshes, old_percent, "Joining Bricks")
-#         # pull edit mesh to bmesh
-#         bm.from_mesh(m)
-#     # end progress bar
-#     updateProgressBars(printStatus, False, 1, 0, "Joining Bricks", end=True)
-#     finalMesh = bpy.data.meshes.new("newMesh")
-#     bm.to_mesh(finalMesh)
-#     return finalMesh
-#
-
-def addToBMLoc(co:Vector, bm):
-    """ add 'co' to bmesh location """
-    for v in bm.verts:
-        v.co += co
-
-
 def getRandomLoc(randomLoc, rand, width, height):
     """ get random location between (0,0,0) and (width/2, width/2, height/2) """
     loc = Vector((0,0,0))
     loc.xy = [rand.uniform(-(width/2) * randomLoc, (width/2) * randomLoc)]*2
     loc.z = rand.uniform(-(height/2) * randomLoc, (height/2) * randomLoc)
     return loc
-
-
-def translateBack(bm, loc):
-    """ translate bm location by -loc """
-    for v in bm.verts:
-        v.co -= Vector(loc)
 
 
 def centerMeshOrigin(m, dimensions, size):
