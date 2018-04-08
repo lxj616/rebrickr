@@ -460,7 +460,7 @@ class BrickerBrickify(bpy.types.Operator):
                 if curFrame != cm.startFrame:
                     wm.progress_end()
                     cm.lastStartFrame = cm.startFrame
-                    cm.lastStopFrame = curFrame
+                    cm.lastStopFrame = curFrame - 1
                     scn.frame_set(sceneCurFrame)
                     cm.animated = True
                 return

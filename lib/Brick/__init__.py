@@ -65,11 +65,12 @@ class Bricks:
             bms = [bmesh.new()]
 
         # add brick mesh to bm mesh
-        junkMesh = bpy.data.meshes.new('Bricker_junkMesh')
+        junkMesh = bpy.data.meshes.get('Bricker_junkMesh')
+        if junkMesh is None:
+            junkMesh = bpy.data.meshes.new('Bricker_junkMesh')
         brickBM.to_mesh(junkMesh)
         for bm in bms:
             bm.from_mesh(junkMesh)
-        bpy.data.meshes.remove(junkMesh, do_unlink=True)
 
         # return bmesh objects
         return bms

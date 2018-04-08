@@ -100,7 +100,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     randS3 = np.random.RandomState(cm.mergeSeed+2)
 
     mats = []
-    allBrickMeshes = []
+    allMeshes = bmesh.new()
     lowestZ = -1
     availableKeys = []
     maxBrickHeight = 1 if zStep == 3 else max(legalBricks.keys())
@@ -196,11 +196,13 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     old_percent = updateProgressBars(printStatus, cursorStatus, 0, -1, "Building")
 
     # draw merged bricks
+    ft = True
     for i, k2 in enumerate(keys):
         if bricksDict[k2]["draw"] and bricksDict[k2]["parent"] == "self":
             loc = strToList(k2)
             # create brick based on the current brick info
-            drawBrick(cm, bricksDict, k2, loc, i, dimensions, zStep, bricksDict[k2]["size"], split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3)
+            drawBrick(ft, cm, bricksDict, k2, loc, i, dimensions, zStep, bricksDict[k2]["size"], split, customData, customObj_details, brickScale, bricksCreated, allMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3)
+            ft = False
             # print status to terminal and cursor
             old_percent = updateProgressBars(printStatus, cursorStatus, i/len(bricksDict.keys()), old_percent, "Building")
 
@@ -236,7 +238,8 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
         # end progress bars
         updateProgressBars(printStatus, cursorStatus, 1, 0, "Linking to Scene", end=True)
     else:
-        m = combineMeshes(allBrickMeshes, printStatus)
+        m = bpy.data.meshes.new("newMesh")
+        allMeshes.to_mesh(m)
         name = 'Bricker_%(n)s_bricks_combined' % locals()
         if frameNum:
             name = "%(name)s_f_%(frameNum)s" % locals()

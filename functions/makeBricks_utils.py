@@ -43,7 +43,7 @@ from .general import *
 from ..lib.caches import bricker_bm_cache
 
 
-def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, customData, customObj_details, brickScale, bricksCreated, allBrickMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3):
+def drawBrick(ft, cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, customData, customObj_details, brickScale, bricksCreated, allMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3):
     brickD = bricksDict[key]
     # check exposure of current [merged] brick
     if brickD["top_exposed"] is None or brickD["bot_exposed"] is None or cm.buildIsDirty:
@@ -72,7 +72,13 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
         # get brick mesh
         bm = getBrickMesh(cm, brickD, randS3, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.circleVerts)
         # create new mesh and send bm to it
-        m = bpy.data.meshes.new(brickD["name"] + 'Mesh')  # this name may already exist, causing duplicate names (.001, .002, etc.)
+        meshName = brickD["name"] + 'Mesh' if split else "Bricker_junkMesh"
+        m = bpy.data.meshes.get(meshName)
+        if m is None:
+            m = bpy.data.meshes.new(meshName)
+        elif len(m.materials.keys()) > 0:
+            m.materials.clear()
+        # send bmesh data to 'm' edit mesh
         bm.to_mesh(m)
     # center mesh origin
     centerMeshOrigin(m, dimensions, brickSize)
@@ -83,7 +89,6 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
     brickLoc = getBrickCenter(cm, bricksDict, key, loc, zStep) + locOffset
 
     if split:
-        # get brick object
         brick = bpy.data.objects.get(brickD["name"])
         if brick:
             # set brick.data to new mesh (resets materials)
@@ -118,8 +123,8 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
             brickD["mat_name"] = mat.name
             for p in m.polygons:
                 p.material_index = matIdx
-        # append mesh to allBrickMeshes list
-        allBrickMeshes.append(m)
+        # append mesh to allMeshes bmesh object
+        allMeshes.from_mesh(m)
 
     return bricksDict
 
@@ -155,23 +160,23 @@ def skipThisRow(cm, timeThrough, lowestZ, z):
     return False
 
 
-def combineMeshes(meshes, printStatus):
-    """ return combined mesh from 'meshes' """
-    bm = bmesh.new()
-    # add meshes to bmesh
-    old_percent = 0
-    numMeshes = len(meshes)
-    for i,m in enumerate(meshes):
-        # print status to terminal
-        old_percent = updateProgressBars(printStatus, False, i/numMeshes, old_percent, "Joining Bricks")
-        # pull edit mesh to bmesh
-        bm.from_mesh(m)
-    # end progress bar
-    updateProgressBars(printStatus, False, 1, 0, "Joining Bricks", end=True)
-    finalMesh = bpy.data.meshes.new("newMesh")
-    bm.to_mesh(finalMesh)
-    return finalMesh
-
+# def combineMeshes(meshes, printStatus):
+#     """ return combined mesh from 'meshes' """
+#     bm = bmesh.new()
+#     # add meshes to bmesh
+#     old_percent = 0
+#     numMeshes = len(meshes)
+#     for i,m in enumerate(meshes):
+#         # print status to terminal
+#         old_percent = updateProgressBars(printStatus, False, i/numMeshes, old_percent, "Joining Bricks")
+#         # pull edit mesh to bmesh
+#         bm.from_mesh(m)
+#     # end progress bar
+#     updateProgressBars(printStatus, False, 1, 0, "Joining Bricks", end=True)
+#     finalMesh = bpy.data.meshes.new("newMesh")
+#     bm.to_mesh(finalMesh)
+#     return finalMesh
+#
 
 def addToBMLoc(co:Vector, bm):
     """ add 'co' to bmesh location """
