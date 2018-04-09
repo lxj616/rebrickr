@@ -164,7 +164,7 @@ def createNewMaterial(model_name, rgba, rgba_vals, includeTransparency, curFrame
     scn, cm, _ = getActiveContextInfo()
     # get or create material with unique color
     min_diff = float("inf")
-    snapAmount = 0.0000001 if cm.colorSnap == "NONE" else cm.colorSnapAmount
+    snapAmount = 0.000001 if cm.colorSnap == "NONE" else cm.colorSnapAmount
     r0, g0, b0, a0 = rgba
     for i in range(len(rgba_vals)):
         diff = distance(rgba, rgba_vals[i])

@@ -62,7 +62,6 @@ def getLegoLogo(self, scn, cm, dimensions):
             if cm.logoDecimate != 0:
                 dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
                 dMod.ratio = 1 - (cm.logoDecimate / 10)
-                print(dMod.ratio)
                 select(refLogo, active=True, only=True)
                 bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
             safeUnlink(refLogo)

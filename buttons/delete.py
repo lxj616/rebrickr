@@ -33,7 +33,7 @@ from ..functions import *
 from .cache import *
 
 
-def getModelType(self, cm=None):
+def getModelType(cm=None):
     """ return 'MODEL' if modelCreated, 'ANIMATION' if animated """
     scn = bpy.context.scene
     cm = cm or scn.cmlist[scn.cmlist_index]
@@ -86,14 +86,14 @@ class BrickerDelete(bpy.types.Operator):
     # class methods
 
     @classmethod
-    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, skipTransAndAnimData=True, preservedFrames=None):
+    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, skipTransAndAnimData=True, preservedFrames=None, source_name=None):
         """ externally callable cleanup function for bricks, source, dupes, and parents """
         # set up variables
         scn = bpy.context.scene
         cm = cm or scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
-        source = bpy.data.objects.get("%(n)s (DO NOT RENAME)" % locals())
+        source = bpy.data.objects.get(source_name or "%(n)s (DO NOT RENAME)" % locals())
 
         # set all layers active temporarily
         curLayers = list(scn.layers)
@@ -106,14 +106,14 @@ class BrickerDelete(bpy.types.Operator):
 
         # clean up 'Bricker_[source name]' group
         if not skipSource:
-            cls.cleanSource(source, modelType)
+            cls.cleanSource(cm, source, modelType)
 
         # clean up 'Bricker_[source name]_dupes' group
         if groupExists(Bricker_source_dupes_gn) and not skipDupes:
-            cls.cleanDupes(preservedFrames, modelType)
+            cls.cleanDupes(cm, preservedFrames, modelType)
 
         if not skipParents:
-            brickLoc, brickRot, brickScl = cls.cleanParents(preservedFrames, modelType)
+            brickLoc, brickRot, brickScl = cls.cleanParents(cm, preservedFrames, modelType)
         else:
             brickLoc, brickRot, brickScl = None, None, None
 
@@ -221,8 +221,9 @@ class BrickerDelete(bpy.types.Operator):
         tag_redraw_areas("VIEW_3D")
 
     @classmethod
-    def cleanSource(cls, source, modelType):
-        scn, cm, n = getActiveContextInfo()
+    def cleanSource(cls, cm, source, modelType):
+        scn = bpy.context.scene
+        n = cm.source_name
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         # link source to scene
         if source not in list(scn.objects):
@@ -255,8 +256,9 @@ class BrickerDelete(bpy.types.Operator):
         source.cmlist_id = -1
 
     @classmethod
-    def cleanDupes(cls, preservedFrames, modelType):
-        scn, cm, n = getActiveContextInfo()
+    def cleanDupes(cls, cm, preservedFrames, modelType):
+        scn = bpy.context.scene
+        n = cm.source_name
         Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
         dGroup = bpy.data.groups[Bricker_source_dupes_gn]
         dObjects = list(dGroup.objects)
@@ -276,8 +278,9 @@ class BrickerDelete(bpy.types.Operator):
             bpy.data.groups.remove(dGroup, do_unlink=True)
 
     @classmethod
-    def cleanParents(cls, preservedFrames, modelType):
-        scn, cm, n = getActiveContextInfo()
+    def cleanParents(cls, cm, preservedFrames, modelType):
+        scn = bpy.context.scene
+        n = cm.source_name
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
         brickLoc, brickRot, brickScl = None, None, None

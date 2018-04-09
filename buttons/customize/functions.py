@@ -179,7 +179,6 @@ def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, dec=
             for y in range(brickSize[1]):
                 for z in range(1, targetHeight):
                     newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z])
-                    print(newKey)
                     # create new bricksDict entry if it doesn't exist
                     if newKey not in bricksDict:
                         bricksDict = createAddlBricksDictEntry(cm, bricksDict, key, newKey, full_d, x, y, z)

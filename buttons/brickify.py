@@ -387,7 +387,7 @@ class BrickerBrickify(bpy.types.Operator):
                 # preserve duplicates, parents, and bricks for frames that haven't changed
                 preservedFrames = [cm.startFrame, cm.stopFrame]
                 print(preservedFrames)
-            BrickerDelete.cleanUp("ANIMATION", skipDupes=not self.updatedFramesOnly, skipParents=not self.updatedFramesOnly, preservedFrames=preservedFrames)
+            BrickerDelete.cleanUp("ANIMATION", skipDupes=not self.updatedFramesOnly, skipParents=not self.updatedFramesOnly, preservedFrames=preservedFrames, source_name=self.source.name)
             self.source.name = self.source.name + " (DO NOT RENAME)"
 
         # get or create duplicate and parent groups
@@ -453,7 +453,7 @@ class BrickerBrickify(bpy.types.Operator):
 
             # create new bricks
             try:
-                group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, logo_details, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame, origSource=self.source)
+                group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, logo_details, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame, origSource=self.source, selectCreated=False)
                 self.createdGroups.append(group_name)
             except KeyboardInterrupt:
                 self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")

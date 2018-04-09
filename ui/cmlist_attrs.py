@@ -321,13 +321,13 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
                ("ABS", "ABS Plastic", "Use ABS Plastic Materials"),
                ("RGB", "RGB Average", "Use average RGB value of snapped colors")],
         update=dirtyMaterial,
-        default="NONE")
+        default="RGB")
     colorSnapAmount = FloatProperty(
         name="Color Snap Amount",
         description="Amount to snap colors by",
         precision=3,
-        min=0.000001, max=1.0,
-        default=0.00001,
+        min=0.00001, max=1.0,
+        default=0.0001,
         update=dirtyBuild)
     includeTransparency = BoolProperty(
         name="Include Transparency",

@@ -352,7 +352,7 @@ def handle_upconversion(scene):
             # convert from v1_2 to v1_3
             if int(cm.version[2]) < 3:
                 if cm.colorSnapAmount == 0:
-                    cm.colorSnapAmount = 0.00001
+                    cm.colorSnapAmount = 0.001
                 for obj in bpy.data.objects:
                     if obj.name.startswith("Rebrickr"):
                         obj.name = obj.name.replace("Rebrickr", "Bricker")
