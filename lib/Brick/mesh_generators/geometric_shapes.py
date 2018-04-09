@@ -200,7 +200,7 @@ def makeTube(r:float, h:float, t:float, N:int, co:Vector=Vector((0,0,0)), topFac
     return bme, {"outer":outerVerts, "inner":innerVerts}
 
 
-def connectCircles(circle1, circle2, bme, offset=0):
+def connectCircles(circle1, circle2, bme, offset=0, smooth=True):
     assert offset < len(circle1) - 1 and offset >= 0
     faces = []
     for v in range(len(circle1)):
@@ -209,5 +209,6 @@ def connectCircles(circle1, circle2, bme, offset=0):
         v3 = circle2[(v-1)]
         v4 = circle1[(v-1) - offset]
         f = bme.faces.new((v1, v2, v3, v4))
+        f.smooth = smooth
         faces.append(f)
     return bme, faces

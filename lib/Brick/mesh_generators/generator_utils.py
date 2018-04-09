@@ -120,7 +120,7 @@ def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme
     for xNum in range(brickSize[0]):
         for yNum in range(brickSize[1]):
             bme, innerCylinderVerts = makeCylinder(r, h, N, co=Vector((xNum*d.x*2,yNum*d.y*2,d.z - thickZ + h/2)), botFace=False, flipNormals=True, bme=bme)
-            botVertsD = createVertListDict(innerCylinderVerts, "bottom")
+            botVertsD = createVertListDict(innerCylinderVerts["bottom"])
             botVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = botVertsD
     connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, botVertsDofDs, xNum, yNum, bme, step=1)
 
@@ -138,12 +138,16 @@ def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, v5=None
             y = dimensions["width"] * yNum
             if hollow:
                 _, studVerts = makeTube(r, h, t, circleVerts, co=Vector((0, 0, z)), bme=bme)
-                selectVerts(studVerts["outer"]["bottom"] + studVerts["inner"]["bottom"])
+                bme.faces.new(studVerts["inner"]["bottom"])
             else:
-                _, studVerts = makeCylinder(r, h, circleVerts, co=Vector((x, y, z)), botFace=False, bme=bme)
-                selectVerts(studVerts["bottom"])
+                # split stud at center by creating cylinder and circle and joining them (allows Bevel to work correctly)
+                _, studVerts = makeCylinder(r, h/2, circleVerts, co=Vector((x, y, z + h/4)), botFace=False, bme=bme)
+                select(studVerts["bottom"])
+                circleStudVerts = makeCircle(r, circleVerts, co=Vector((x, y, z - h/2)), flipNormals=True, face=False, bme=bme)
+                # create faces connecting bottom of stud to circle
+                connectCircles(studVerts["bottom"], circleStudVerts[::-1], bme, smooth=True)
             if v5 is not None:
-                topVertsD = createVertListDict2(studVerts["outer"] if hollow else studVerts, "bottom")
+                topVertsD = createVertListDict2(studVerts["outer"]["bottom"] if hollow else circleStudVerts[::-1])
                 topVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = topVertsD
     if v5 is not None:
         connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, topVertsDofDs, xNum, yNum, bme, step=-1)
@@ -339,38 +343,38 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo,
     bme.faces.new([ppi, ppt] + lastSideVerts["Y+"])
 
 
-def createVertListDict(verts, dir="bottom"):
-    idx1 = int(round(len(verts[dir]) * (1) / 4)) - 1
-    idx2 = int(round(len(verts[dir]) * (2) / 4)) - 1
-    idx3 = int(round(len(verts[dir]) * (3) / 4)) - 1
-    idx4 = int(round(len(verts[dir]) * (4) / 4)) - 1
+def createVertListDict(verts):
+    idx1 = int(round(len(verts) * 1 / 4)) - 1
+    idx2 = int(round(len(verts) * 2 / 4)) - 1
+    idx3 = int(round(len(verts) * 3 / 4)) - 1
+    idx4 = int(round(len(verts) * 4 / 4)) - 1
 
-    vertListBDict = {"++":[verts[dir][idx] for idx in range(idx1 + 1, idx2)],
-                     "+-":[verts[dir][idx] for idx in range(idx2 + 1, idx3)],
-                     "--":[verts[dir][idx] for idx in range(idx3 + 1, idx4)],
-                     "-+":[verts[dir][idx] for idx in range(0,        idx1)],
-                     "y+":[verts[dir][idx1]],
-                     "x+":[verts[dir][idx2]],
-                     "y-":[verts[dir][idx3]],
-                     "x-":[verts[dir][idx4]]}
+    vertListBDict = {"++":[verts[idx] for idx in range(idx1 + 1, idx2)],
+                     "+-":[verts[idx] for idx in range(idx2 + 1, idx3)],
+                     "--":[verts[idx] for idx in range(idx3 + 1, idx4)],
+                     "-+":[verts[idx] for idx in range(0,        idx1)],
+                     "y+":[verts[idx1]],
+                     "x+":[verts[idx2]],
+                     "y-":[verts[idx3]],
+                     "x-":[verts[idx4]]}
 
     return vertListBDict
 
 
-def createVertListDict2(verts, dir="bottom"):
-    idx1 = int(round(len(verts[dir]) * (1) / 4)) - 1
-    idx2 = int(round(len(verts[dir]) * (2) / 4)) - 1
-    idx3 = int(round(len(verts[dir]) * (3) / 4)) - 1
-    idx4 = int(round(len(verts[dir]) * (4) / 4)) - 1
+def createVertListDict2(verts):
+    idx1 = int(round(len(verts) * 1 / 4)) - 1
+    idx2 = int(round(len(verts) * 2 / 4)) - 1
+    idx3 = int(round(len(verts) * 3 / 4)) - 1
+    idx4 = int(round(len(verts) * 4 / 4)) - 1
 
-    vertListBDict = {"--":[verts[dir][idx] for idx in range(idx1 + 1, idx2)],
-                     "-+":[verts[dir][idx] for idx in range(idx2 + 1, idx3)],
-                     "++":[verts[dir][idx] for idx in range(idx3 + 1, idx4)],
-                     "+-":[verts[dir][idx] for idx in range(0,        idx1)],
-                     "y-":[verts[dir][idx1]],
-                     "x-":[verts[dir][idx2]],
-                     "y+":[verts[dir][idx3]],
-                     "x+":[verts[dir][idx4]]}
+    vertListBDict = {"--":[verts[idx] for idx in range(idx1 + 1, idx2)],
+                     "-+":[verts[idx] for idx in range(idx2 + 1, idx3)],
+                     "++":[verts[idx] for idx in range(idx3 + 1, idx4)],
+                     "+-":[verts[idx] for idx in range(0,        idx1)],
+                     "y-":[verts[idx1]],
+                     "x-":[verts[idx2]],
+                     "y+":[verts[idx3]],
+                     "x+":[verts[idx4]]}
 
     return vertListBDict
 
