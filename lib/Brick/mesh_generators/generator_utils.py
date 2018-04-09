@@ -33,24 +33,6 @@ from .generator_utils import *
 from ....functions import *
 
 
-def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, hollow=False, zStep=1, inset=0):
-    r = dimensions["bar_radius" if hollow else "stud_radius"]
-    h = dimensions["stud_height"]
-    t = dimensions["stud_radius"] - dimensions["bar_radius"]
-    z = height / 2 + dimensions["stud_height"] / 2 - inset / 2
-    for xNum in range(brickSize[0]):
-        for yNum in range(brickSize[1]):
-            x = dimensions["width"] * xNum
-            y = dimensions["width"] * yNum
-            if hollow:
-                _, studVerts = makeTube(r, h, t, circleVerts, co=Vector((0, 0, z)), bme=bme)
-                selectVerts(studVerts["outer"]["bottom"] + studVerts["inner"]["bottom"])
-            else:
-                _, studVerts = makeCylinder(r, h + inset, circleVerts, co=Vector((x, y, z)), botFace=False, bme=bme)
-                selectVerts(studVerts["bottom"])
-    return studVerts
-
-
 def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme, hollow=None, add_beams=None):
     # initialize vars
     if hollow is None:
@@ -132,61 +114,89 @@ def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme
     thickZ = dimensions["thickness"]
     # make small cylinders
     botVertsDofDs = {}
+    r = dimensions["stud_radius"]-(2 * thickZ)
+    N = circleVerts
+    h = thickZ * 0.99
     for xNum in range(brickSize[0]):
         for yNum in range(brickSize[1]):
-            r = dimensions["stud_radius"]-(2 * thickZ)
-            N = circleVerts
-            h = thickZ * 0.99
             bme, innerCylinderVerts = makeCylinder(r, h, N, co=Vector((xNum*d.x*2,yNum*d.y*2,d.z - thickZ + h/2)), botFace=False, flipNormals=True, bme=bme)
-            botVertsD = createVertListBDict(innerCylinderVerts)
+            botVertsD = createVertListDict(innerCylinderVerts, "bottom")
             botVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = botVertsD
+    connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, botVertsDofDs, xNum, yNum, bme, step=1)
 
+
+def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, v5=None, v6=None, v7=None, v8=None, hollow=False):
+    r = dimensions["bar_radius" if hollow else "stud_radius"]
+    h = dimensions["stud_height"]
+    t = dimensions["stud_radius"] - dimensions["bar_radius"]
+    z = height / 2 + dimensions["stud_height"] / 2
+    # make studs
+    topVertsDofDs = {}
+    for xNum in range(brickSize[0]):
+        for yNum in range(brickSize[1]):
+            x = dimensions["width"] * xNum
+            y = dimensions["width"] * yNum
+            if hollow:
+                _, studVerts = makeTube(r, h, t, circleVerts, co=Vector((0, 0, z)), bme=bme)
+                selectVerts(studVerts["outer"]["bottom"] + studVerts["inner"]["bottom"])
+            else:
+                _, studVerts = makeCylinder(r, h, circleVerts, co=Vector((x, y, z)), botFace=False, bme=bme)
+                selectVerts(studVerts["bottom"])
+            if v5 is not None:
+                topVertsD = createVertListDict2(studVerts["outer"] if hollow else studVerts, "bottom")
+                topVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = topVertsD
+    if v5 is not None:
+        connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, topVertsDofDs, xNum, yNum, bme, step=-1)
+
+
+def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, vertsDofDs, xNum, yNum, bme, step=1):
+    thickZ = dimensions["thickness"]
     # Make corner faces
-    vList = botVertsDofDs["0,0"]["y-"] + botVertsDofDs["0,0"]["--"] + botVertsDofDs["0,0"]["x-"]
+    vList = vertsDofDs["0,0"]["y-"] + vertsDofDs["0,0"]["--"] + vertsDofDs["0,0"]["x-"]
     for i in range(1, len(vList)):
-        bme.faces.new((vList[i], vList[i-1], v5))
-    vList = botVertsDofDs[str(xNum) + "," + str(0)]["x+"] + botVertsDofDs[str(xNum) + "," + str(0)]["+-"] + botVertsDofDs[str(xNum) + "," + str(0)]["y-"]
+        bme.faces.new([vList[i], vList[i-1], v5][::step])
+    vList = vertsDofDs[str(xNum) + "," + str(0)]["x+"] + vertsDofDs[str(xNum) + "," + str(0)]["+-"] + vertsDofDs[str(xNum) + "," + str(0)]["y-"]
     for i in range(1, len(vList)):
-        bme.faces.new((vList[i], vList[i-1], v6))
-    vList = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["++"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["x+"]
+        bme.faces.new([vList[i], vList[i-1], v6][::step])
+    vList = vertsDofDs[str(xNum) + "," + str(yNum)]["y+"] + vertsDofDs[str(xNum) + "," + str(yNum)]["++"] + vertsDofDs[str(xNum) + "," + str(yNum)]["x+"]
     for i in range(1, len(vList)):
-        bme.faces.new((vList[i], vList[i-1], v7))
-    vList = botVertsDofDs[str(0) + "," + str(yNum)]["x-"] + botVertsDofDs[str(0) + "," + str(yNum)]["-+"] + botVertsDofDs[str(0) + "," + str(yNum)]["y+"]
+        bme.faces.new([vList[i], vList[i-1], v7][::step])
+    vList = vertsDofDs[str(0) + "," + str(yNum)]["x-"] + vertsDofDs[str(0) + "," + str(yNum)]["-+"] + vertsDofDs[str(0) + "," + str(yNum)]["y+"]
     for i in range(1, len(vList)):
-        bme.faces.new((vList[i], vList[i-1], v8))
+        bme.faces.new([vList[i], vList[i-1], v8][::step])
 
     # Make edge faces
     joinVerts = {"Y+":[v7, v8], "Y-":[v6, v5], "X+":[v7, v6], "X-":[v8, v5]}
     for xNum in range(brickSize[0]):
-        vertD = botVertsDofDs[str(xNum) + "," + str(yNum)]
+        vertD = vertsDofDs[str(xNum) + "," + str(yNum)]
         joinVerts["Y+"].append(vertD["y+"][0])
-        vertD = botVertsDofDs[str(xNum) + "," + str(0)]
+        vertD = vertsDofDs[str(xNum) + "," + str(0)]
         joinVerts["Y-"].append(vertD["y-"][0])
     for yNum in range(brickSize[1]):
-        vertD = botVertsDofDs[str(xNum) + "," + str(yNum)]
+        vertD = vertsDofDs[str(xNum) + "," + str(yNum)]
         joinVerts["X+"].append(vertD["x+"][0])
-        vertD = botVertsDofDs[str(0) + "," + str(yNum)]
+        vertD = vertsDofDs[str(0) + "," + str(yNum)]
         joinVerts["X-"].append(vertD["x-"][0])
     for item in joinVerts:
-        step = -1 if item in ["Y+", "X-"] else 1
-        bme.faces.new(joinVerts[item][::step])
+        step0 = -step if item in ["Y+", "X-"] else step
+        bme.faces.new(joinVerts[item][::step0])
 
     # Make in-between-insets faces along x axis
     for xNum in range(1, brickSize[0]):
         for yNum in range(brickSize[1]):
-            vList1 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["++"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["x+"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["+-"] + botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y-"]
-            vList2 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y+"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["-+"][::-1] + botVertsDofDs[str(xNum) + "," + str(yNum)]["x-"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["--"][::-1] + botVertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
+            vList1 = vertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"] + vertsDofDs[str(xNum-1) + "," + str(yNum)]["++"] + vertsDofDs[str(xNum-1) + "," + str(yNum)]["x+"] + vertsDofDs[str(xNum-1) + "," + str(yNum)]["+-"] + vertsDofDs[str(xNum-1) + "," + str(yNum)]["y-"]
+            vList2 = vertsDofDs[str(xNum) + "," + str(yNum)]["y+"] + vertsDofDs[str(xNum) + "," + str(yNum)]["-+"][::-1] + vertsDofDs[str(xNum) + "," + str(yNum)]["x-"] + vertsDofDs[str(xNum) + "," + str(yNum)]["--"][::-1] + vertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
             if len(vList1) > len(vList2):
                 v1 = vList1[-1]
                 v2 = vList1[-2]
                 v3 = vList2[-1]
-                bme.faces.new((v1, v2, v3))
+                bme.faces.new([v1, v2, v3][::step])
                 numIters = len(vList2)
             elif len(vList1) < len(vList2):
                 v1 = vList1[-1]
                 v2 = vList2[-2]
                 v3 = vList2[-1]
-                bme.faces.new((v1, v2, v3))
+                bme.faces.new([v1, v2, v3][::step])
                 numIters = len(vList1)
             else:
                 numIters = len(vList1)
@@ -195,35 +205,35 @@ def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme
                 v2 = vList1[i-1]
                 v3 = vList2[i-1]
                 v4 = vList2[i]
-                bme.faces.new((v1, v2, v3, v4))
+                bme.faces.new([v1, v2, v3, v4][::step])
 
     # Make in-between-inset quads
     for yNum in range(1, brickSize[1]):
         for xNum in range(1, brickSize[0]):
             # try:
-            v1 = botVertsDofDs[str(xNum-1) + "," + str(yNum)]["y-"][0]
-            v2 = botVertsDofDs[str(xNum) + "," + str(yNum)]["y-"][0]
-            v3 = botVertsDofDs[str(xNum) + "," + str(yNum-1)]["y+"][0]
-            v4 = botVertsDofDs[str(xNum-1) + "," + str(yNum-1)]["y+"][0]
-            bme.faces.new((v1, v2, v3, v4))
+            v1 = vertsDofDs[str(xNum-1) + "," + str(yNum)]["y-"][0]
+            v2 = vertsDofDs[str(xNum) + "," + str(yNum)]["y-"][0]
+            v3 = vertsDofDs[str(xNum) + "," + str(yNum-1)]["y+"][0]
+            v4 = vertsDofDs[str(xNum-1) + "," + str(yNum-1)]["y+"][0]
+            bme.faces.new([v1, v2, v3, v4][::step])
             # except ???Error:
             #     pass
 
     # Make final in-between-insets faces on extremes of x axis along y axis
     for yNum in range(1, brickSize[1]):
-        vList1 = botVertsDofDs[str(0) + "," + str(yNum-1)]["x-"] + botVertsDofDs[str(0) + "," + str(yNum-1)]["-+"] + botVertsDofDs[str(0) + "," + str(yNum-1)]["y+"]
-        vList2 = botVertsDofDs[str(0) + "," + str(yNum)]["x-"] + botVertsDofDs[str(0) + "," + str(yNum)]["--"][::-1] + botVertsDofDs[str(0) + "," + str(yNum)]["y-"]
+        vList1 = vertsDofDs[str(0) + "," + str(yNum-1)]["x-"] + vertsDofDs[str(0) + "," + str(yNum-1)]["-+"] + vertsDofDs[str(0) + "," + str(yNum-1)]["y+"]
+        vList2 = vertsDofDs[str(0) + "," + str(yNum)]["x-"] + vertsDofDs[str(0) + "," + str(yNum)]["--"][::-1] + vertsDofDs[str(0) + "," + str(yNum)]["y-"]
         if len(vList1) > len(vList2):
             v1 = vList1[-1]
             v2 = vList1[-2]
             v3 = vList2[-1]
-            bme.faces.new((v1, v2, v3))
+            bme.faces.new([v1, v2, v3][::step])
             numIters = len(vList2)
         elif len(vList1) < len(vList2):
             v1 = vList1[-1]
             v2 = vList2[-2]
             v3 = vList2[-1]
-            bme.faces.new((v1, v2, v3))
+            bme.faces.new([v1, v2, v3][::step])
             numIters = len(vList1)
         else:
             numIters = len(vList1)
@@ -232,21 +242,21 @@ def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme
             v2 = vList1[i-1]
             v3 = vList2[i-1]
             v4 = vList2[i]
-            bme.faces.new((v1, v2, v3, v4))
+            bme.faces.new([v1, v2, v3, v4][::step])
     for yNum in range(1, brickSize[1]):
-        vList1 = botVertsDofDs[str(xNum) + "," + str(yNum-1)]["x+"] + botVertsDofDs[str(xNum) + "," + str(yNum-1)]["++"][::-1] + botVertsDofDs[str(xNum) + "," + str(yNum-1)]["y+"]
-        vList2 = botVertsDofDs[str(xNum) + "," + str(yNum)]["x+"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["+-"] + botVertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
+        vList1 = vertsDofDs[str(xNum) + "," + str(yNum-1)]["x+"] + vertsDofDs[str(xNum) + "," + str(yNum-1)]["++"][::-1] + vertsDofDs[str(xNum) + "," + str(yNum-1)]["y+"]
+        vList2 = vertsDofDs[str(xNum) + "," + str(yNum)]["x+"] + vertsDofDs[str(xNum) + "," + str(yNum)]["+-"] + vertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
         if len(vList1) > len(vList2):
             v1 = vList1[-1]
             v2 = vList2[-1]
             v3 = vList1[-2]
-            bme.faces.new((v1, v2, v3))
+            bme.faces.new([v1, v2, v3][::step])
             numIters = len(vList2)
         elif len(vList1) < len(vList2):
             v1 = vList2[-1]
             v2 = vList2[-2]
             v3 = vList1[-1]
-            bme.faces.new((v1, v2, v3))
+            bme.faces.new([v1, v2, v3][::step])
             numIters = len(vList1)
         else:
             numIters = len(vList1)
@@ -255,7 +265,7 @@ def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme
             v2 = vList2[i-1]
             v3 = vList1[i-1]
             v4 = vList1[i]
-            bme.faces.new((v1, v2, v3, v4))
+            bme.faces.new([v1, v2, v3, v4][::step])
 
 
 def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo, ppo, pno, nni, npi, ppi, pni, nnt, npt, ppt, pnt, bme):
@@ -329,20 +339,38 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo,
     bme.faces.new([ppi, ppt] + lastSideVerts["Y+"])
 
 
-def createVertListBDict(verts):
-    idx4 = len(verts["bottom"]) - 1
-    idx1 = int(round(len(verts["bottom"]) * 1 / 4)) - 1
-    idx2 = int(round(len(verts["bottom"]) * 2 / 4)) - 1
-    idx3 = int(round(len(verts["bottom"]) * 3 / 4)) - 1
+def createVertListDict(verts, dir="bottom"):
+    idx1 = int(round(len(verts[dir]) * (1) / 4)) - 1
+    idx2 = int(round(len(verts[dir]) * (2) / 4)) - 1
+    idx3 = int(round(len(verts[dir]) * (3) / 4)) - 1
+    idx4 = int(round(len(verts[dir]) * (4) / 4)) - 1
 
-    vertListBDict = {"++":[verts["bottom"][idx] for idx in range(idx1 + 1, idx2)],
-                     "+-":[verts["bottom"][idx] for idx in range(idx2 + 1, idx3)],
-                     "--":[verts["bottom"][idx] for idx in range(idx3 + 1, idx4)],
-                     "-+":[verts["bottom"][idx] for idx in range(0,        idx1)],
-                     "y+":[verts["bottom"][idx1]],
-                     "x+":[verts["bottom"][idx2]],
-                     "y-":[verts["bottom"][idx3]],
-                     "x-":[verts["bottom"][idx4]]}
+    vertListBDict = {"++":[verts[dir][idx] for idx in range(idx1 + 1, idx2)],
+                     "+-":[verts[dir][idx] for idx in range(idx2 + 1, idx3)],
+                     "--":[verts[dir][idx] for idx in range(idx3 + 1, idx4)],
+                     "-+":[verts[dir][idx] for idx in range(0,        idx1)],
+                     "y+":[verts[dir][idx1]],
+                     "x+":[verts[dir][idx2]],
+                     "y-":[verts[dir][idx3]],
+                     "x-":[verts[dir][idx4]]}
+
+    return vertListBDict
+
+
+def createVertListDict2(verts, dir="bottom"):
+    idx1 = int(round(len(verts[dir]) * (1) / 4)) - 1
+    idx2 = int(round(len(verts[dir]) * (2) / 4)) - 1
+    idx3 = int(round(len(verts[dir]) * (3) / 4)) - 1
+    idx4 = int(round(len(verts[dir]) * (4) / 4)) - 1
+
+    vertListBDict = {"--":[verts[dir][idx] for idx in range(idx1 + 1, idx2)],
+                     "-+":[verts[dir][idx] for idx in range(idx2 + 1, idx3)],
+                     "++":[verts[dir][idx] for idx in range(idx3 + 1, idx4)],
+                     "+-":[verts[dir][idx] for idx in range(0,        idx1)],
+                     "y-":[verts[dir][idx1]],
+                     "x-":[verts[dir][idx2]],
+                     "y+":[verts[dir][idx3]],
+                     "x+":[verts[dir][idx4]]}
 
     return vertListBDict
 

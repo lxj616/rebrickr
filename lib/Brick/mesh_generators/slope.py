@@ -84,15 +84,14 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
     else:
         coord1 = -d
         coord2 = vec_mult(d, [1, scalar.y, 1])
-        v1, v2, d0, d1, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1 if detail == "FLAT" else 0, 0, 0, 1, 1], bme=bme)
+        v1, v2, d0, d1, v5, v6, v7, v8 = makeCube(coord1, coord2, [0, 1 if detail == "FLAT" else 0, 0, 0, 1, 1], bme=bme)
         # remove bottom verts on slope side
         bme.verts.remove(d0)
         bme.verts.remove(d1)
         # add face to opposite side from slope
         bme.faces.new((v1, v5, v8, v2))
-
-    # create stud
-    if stud and max(brickSize[:2]) != 1: addStuds(dimensions, height, [1] + adjustedBrickSize[1:], "CONE", circleVerts, bme, inset=thick.z * 0.9, hollow=brickSize[2] > 3)
+        # create stud
+        if stud: addStuds(dimensions, height, [1] + adjustedBrickSize[1:], "CONE", circleVerts, bme, v5, v6, v7, v8, inset=thick.z * 0.9, hollow=brickSize[2] > 3)
 
     # make square at end of slope
     coord1 = Vector((d.x * scalar.x, -d.y, -d.z + (dimensions["slit_height"] if max(brickSize[:2]) == 1 else 0)))

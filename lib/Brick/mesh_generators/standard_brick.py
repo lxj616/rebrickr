@@ -70,10 +70,10 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
     # create cube
     coord1 = -d
     coord2 = vec_mult(d, scalar)
-    v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [1, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
+    v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [0, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
 
     # add studs
-    if stud: addStuds(dimensions, height, brickSize, cm.brickType, circleVerts, bme, zStep=getZStep(cm), inset=thick.z * 0.9, hollow=brickSize[2] > 3 or "HOLES" in type)
+    if stud: addStuds(dimensions, height, brickSize, cm.brickType, circleVerts, bme, v5, v6, v7, v8, hollow=brickSize[2] > 3 or "HOLES" in type)
 
     # add details
     if detail != "FLAT":
