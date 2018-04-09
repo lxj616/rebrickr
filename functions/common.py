@@ -411,13 +411,11 @@ def delete(objList):
         objs.remove(obj, True)
 
 
-def duplicateObj(obj):
+def duplicateObj(obj, link_to_scene=False):
     copy = obj.copy()
     copy.data = copy.data.copy() # also duplicate mesh, remove for linked duplicate
-    bpy.context.scene.objects.link(copy)
-    # select(obj, active=True, only=True)
-    # bpy.ops.object.duplicate()
-    # copy = scn.objects.active
+    if link_to_scene:
+        bpy.context.scene.objects.link(copy)
     return copy
 
 

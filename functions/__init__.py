@@ -27,3 +27,4 @@ from .hashObject import *
 from .makeBricks import *
 from .transformData import *
 from .wrappers import *
+from .logo_obj import *

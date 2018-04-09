@@ -43,7 +43,7 @@ from .general import *
 from ..lib.caches import bricker_bm_cache
 
 
-def drawBrick(ft, cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, customData, customObj_details, brickScale, bricksCreated, allMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3):
+def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, customData, customObj_details, brickScale, bricksCreated, allMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3):
     brickD = bricksDict[key]
     # check exposure of current [merged] brick
     if brickD["top_exposed"] is None or brickD["bot_exposed"] is None or cm.buildIsDirty:
@@ -200,14 +200,16 @@ def randomizeRot(randomRot, rand, brickSize, m):
 
 def prepareLogoAndGetDetails(scn, cm, logo, dimensions):
     """ duplicate and normalize custom logo object; return logo and bounds(logo) """
-    if cm.logoDetail != "LEGO" and logo is not None:
-        # prepare for logo duplication
-        originalActiveName = scn.objects.active.name
+    if logo is None:
+        return None, logo
+    if cm.logoDetail != "LEGO":
+        # prepare custom object for duplication
         oldLayers = list(scn.layers)
         setLayers(logo.layers)
         logo.hide = False
-        # duplicate logo object
-        logo = duplicateObj(logo)
+    # duplicate logo object
+    logo = duplicateObj(logo)
+    if cm.logoDetail != "LEGO":
         # disable modifiers for logo object
         for mod in logo.modifiers:
             mod.show_viewport = False
@@ -215,27 +217,22 @@ def prepareLogoAndGetDetails(scn, cm, logo, dimensions):
         logo.parent = None
         select(logo, active=True, only=True)
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-        # select original selection
-        originalActive = bpy.data.objects[originalActiveName]
-        select(originalActive, active=True, only=True)
         # set scene layers back to original active layers
         setLayers(oldLayers)
-        # get logo details
-        logo_details = bounds(logo)
-        m = logo.data
-        # select all verts in logo
-        for v in m.vertices:
-            v.select = True
-        # scale logo
-        t_mat = Matrix.Translation(-logo_details.mid)
-        distMax = max(logo_details.dist.xy)
-        lw = dimensions["logo_width"] * cm.logoScale
-        s_mat = Matrix.Scale(lw / distMax, 4)
-        # transform logo into place
-        m.transform(t_mat)
-        m.transform(s_mat)
-    else:
-        logo_details = None
+    # get logo details
+    logo_details = bounds(logo)
+    m = logo.data
+    # select all verts in logo
+    for v in m.vertices:
+        v.select = True
+    # create transform and scale matrices
+    t_mat = Matrix.Translation(-logo_details.mid)
+    distMax = max(logo_details.dist.xy)
+    lw = dimensions["logo_width"] * (0.78 if cm.logoDetail == "LEGO" else cm.logoScale)
+    s_mat = Matrix.Scale(lw / distMax, 4)
+    # run transformations on logo mesh
+    m.transform(t_mat)
+    m.transform(s_mat)
     return logo_details, logo
 
 
@@ -245,10 +242,11 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
     if cm.brickType != "CUSTOM":
         custom_logo_used = logoToUse is not None and logo_type == "CUSTOM"
         bm_cache_string = json.dumps((cm.brickHeight, brickSize, undersideDetail,
-                                      cm.logoResolution if logoToUse is not None else None,
+                                      cm.logoResolutionFont if logoToUse is not None else None,
+                                      cm.logoResolutionBevel if logoToUse is not None else None,
+                                      logo_inset if logoToUse is not None else None,
                                       hash_object(logoToUse) if custom_logo_used else None,
                                       logo_scale if custom_logo_used else None,
-                                      logo_inset if custom_logo_used else None,
                                       useStud, cm.circleVerts, brickD["type"],
                                       brickD["flipped"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None,
                                       brickD["rotated"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None))
@@ -289,9 +287,9 @@ def getMaterial(cm, bricksDict, key, size, brick_mats=None, seedInc=None):
             matName = most_common(matsL)
         mat = bpy.data.materials.get(matName)
     elif cm.materialType == "RANDOM" and len(brick_mats) > 0:
-        randState.seed(cm.randomMatSeed + seedInc)
         if len(brick_mats) > 1:
             randState = np.random.RandomState(0)
+            randState.seed(cm.randomMatSeed + seedInc)
             randIdx = randState.randint(0, len(brick_mats))
         else:
             randIdx = 0

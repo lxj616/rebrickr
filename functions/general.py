@@ -52,7 +52,10 @@ def getActiveContextInfo(cm_idx=None):
 def safeUnlink(obj, hide=True, protect=True):
     scn = bpy.context.scene
     safeScn = getSafeScn()
-    scn.objects.unlink(obj)
+    try:
+        scn.objects.unlink(obj)
+    except RuntimeError:
+        pass
     safeScn.objects.link(obj)
     obj.protected = protect
     if hide:
@@ -349,6 +352,8 @@ def shortenName(string:str, max_len:int=30):
 
 
 def is_smoke(ob):
+    if ob is None:
+        return False
     for mod in ob.modifiers:
         if mod.type == "SMOKE" and mod.domain_settings and mod.show_viewport:
             return True

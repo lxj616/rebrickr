@@ -75,9 +75,6 @@ class BrickerBevel(bpy.types.Operator):
     @staticmethod
     def runBevelAction(bricks, cm, action="ADD", setBevel=False):
         """ chooses whether to add or remove bevel """
-        if cm.bevelWidth == -1 or setBevel:
-            # auto-set bevel width
-            cm.bevelWidth = cm.brickHeight/100
         if action == "REMOVE":
             BrickerBevel.removeBevelMods(bricks)
             cm.bevelAdded = False
@@ -102,7 +99,7 @@ class BrickerBevel(bpy.types.Operator):
             segments = cm.bevelSegments
             profile = cm.bevelProfile
             vGroupName = obj.name + "_bvl"
-            self.createBevelMod(obj=obj, width=cm.bevelWidth, segments=segments, profile=profile, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
+            self.createBevelMod(obj=obj, width=cm.bevelWidth * cm.brickHeight, segments=segments, profile=profile, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
 
     @classmethod
     def createBevelMod(self, obj, width=1, segments=1, profile=0.5, onlyVerts=False, limitMethod='NONE', angleLimit=0.523599, vertexGroup=None, offsetType='OFFSET'):

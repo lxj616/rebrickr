@@ -161,21 +161,14 @@ def makeLogoVariations(cm, dimensions, size, direction, all_vars, logo, logo_typ
         zRots = [randS0.randint(0,rot_vars) * rot_mult + rot_add]
     # get duplicate of logo mesh
     m = logo.data.copy()
-    if logo_type == "LEGO":
-        # get scale matrix
-        lw = dimensions["logo_width"] * cm.logoScale
-        s_mat = Matrix.Scale(lw, 4)
-        # transform logo into place
-        m.transform(s_mat)
 
     # create new bmeshes for each logo variation
     bms = [bmesh.new() for zRot in zRots]
     # get loc offsets
     zOffset = dimensions["logo_offset"] + (dimensions["height"] if "PLATES" in cm.brickType and size[2] == 3 else 0)
-    if logo_type != "LEGO" and logo_details is not None:
-        lw = dimensions["logo_width"] * cm.logoScale
-        distMax = max(logo_details.dist.xy)
-        zOffset += ((logo_details.dist.z * (lw / distMax)) / 2) * (1 - logo_inset * 2)
+    lw = dimensions["logo_width"] * (0.78 if cm.logoDetail == "LEGO" else cm.logoScale)
+    distMax = max(logo_details.dist.xy)
+    zOffset += ((logo_details.dist.z * (lw / distMax)) / 2) * (1 - logo_inset * 2)
     xyOffset = dimensions["width"] + dimensions["gap"]
     # cap x/y ranges so logos aren't created over slopes
     xR0 = size[0] - 1 if direction == "X-" else 0

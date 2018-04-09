@@ -343,14 +343,18 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
                ("NONE", "None", "Don't include Brick Logo on bricks")],
         update=dirtyBricks,
         default="NONE")
-    logoResolution = FloatProperty(
-        name="Logo Resolution",
-        description="Resolution of the Brick Logo",
+    logoResolutionFont = IntProperty(
+        name="Font Resolution",
+        description="Resolution of the brick logo font",
         update=dirtyBricks,
-        min=0.1, max=1,
-        step=1,
-        precision=1,
-        default=0.2)
+        min=1, max=32,
+        default=1)
+    logoResolutionBevel = IntProperty(
+        name="Bevel Resolution",
+        description="Resolution of the brick logo bevel",
+        update=dirtyBricks,
+        min=0, max=32,
+        default=1)
     logoObjectName = StringProperty(
         name="Logo Object Name",
         description="Name of the logo object",
@@ -371,7 +375,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBricks,
         precision=2,
         min=0.0, max=1.0,
-        default=0.02)
+        default=0.5)
     hiddenUndersideDetail = EnumProperty(
         name="Underside Detailing of Obstructed Bricks",
         description="Choose the level of detail to include for the underside of obstructed bricks",
@@ -402,7 +406,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         description="Bevel value/amount",
         step=1,
         min=0.000001, max=10,
-        default=-1,
+        default=0.01,
         update=updateBevel)
     bevelSegments = IntProperty(
         name="Bevel Resolution",
@@ -537,7 +541,6 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     matrixIsDirty = BoolProperty(default=True)
     internalIsDirty = BoolProperty(default=True)
     lastLogoDetail = StringProperty(default="NONE")
-    lastLogoResolution = FloatProperty(default=0)
     lastSplitModel = BoolProperty(default=False)
     lastStartFrame = IntProperty(default=-1)
     lastStopFrame = IntProperty(default=-1)

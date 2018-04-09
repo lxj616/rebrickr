@@ -810,7 +810,8 @@ class DetailingPanel(Panel):
         if cm.logoDetail != "NONE":
             if cm.logoDetail == "LEGO":
                 row = col.row(align=True)
-                row.prop(cm, "logoResolution", text="Logo Resolution")
+                row.prop(cm, "logoResolutionFont", text="Font Resolution")
+                row.prop(cm, "logoResolutionBevel", text="Bevel Resolution")
             else:
                 col = layout.column(align=True)
                 split = col.split(align=True, percentage=0.85)
@@ -820,8 +821,8 @@ class DetailingPanel(Panel):
                 col1.operator("bricker.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'logoObjectName'
                 row = col.row(align=True)
                 row.prop(cm, "logoScale", text="Logo Scale")
-                row = col.row(align=True)
-                row.prop(cm, "logoInset", text="Logo Inset")
+            row = col.row(align=True)
+            row.prop(cm, "logoInset", text="Logo Inset")
             col = layout.column(align=True)
         row = col.row(align=True)
         row.label("Underside:")

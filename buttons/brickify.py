@@ -182,7 +182,6 @@ class BrickerBrickify(bpy.types.Operator):
                 obj.cmlist_id = cm.id
 
         # # set final variables
-        cm.lastLogoResolution = cm.logoResolution
         cm.lastLogoDetail = cm.logoDetail
         cm.lastSplitModel = cm.splitModel
         cm.lastBrickType = cm.brickType
@@ -255,7 +254,7 @@ class BrickerBrickify(bpy.types.Operator):
             dGroup = bpy.data.groups.new(Bricker_source_dupes_gn)
             self.createdGroups.append(dGroup.name)
             # duplicate source and add duplicate to group
-            sourceDup = duplicateObj(self.source)
+            sourceDup = duplicateObj(self.source, link_to_scene=True)
             dGroup.objects.link(sourceDup)
             sourceDup.name = self.source.name + "_duplicate"
             if cm.useLocalOrient:
@@ -757,54 +756,12 @@ class BrickerBrickify(bpy.types.Operator):
             logo_details = None
         else:
             if cm.logoDetail == "LEGO":
-                refLogo = self.getLegoLogo(self, scn, cm, dimensions)
-                logo_details = bounds(refLogo)
+                refLogo = getLegoLogo(self, scn, cm, dimensions)
             else:
                 refLogo = bpy.data.objects.get(cm.logoObjectName)
-                # apply transformation to duplicate of logo object and normalize size/position
-                logo_details, refLogo = prepareLogoAndGetDetails(scn, cm, refLogo, dimensions)
+            # apply transformation to duplicate of logo object and normalize size/position
+            logo_details, refLogo = prepareLogoAndGetDetails(scn, cm, refLogo, dimensions)
         return logo_details, refLogo
-
-    def getLegoLogo(self, scn, cm, dimensions):
-        # update refLogo
-        if cm.logoDetail == "NONE":
-            refLogo = None
-        else:
-            decimate = False
-            r = cm.logoResolution
-            refLogoImport = bpy.data.objects.get("Bricker_refLogo")
-            if refLogoImport is not None:
-                refLogo = bpy.data.objects.get("Bricker_refLogo_%(r)s" % locals())
-                if refLogo is None:
-                    refLogo = bpy.data.objects.new("Bricker_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
-                    # queue for decimation
-                    decimate = True
-            else:
-                # import refLogo and add to group
-                refLogoImport = importLogo()
-                refLogoImport.name = "Bricker_refLogo"
-                safeUnlink(refLogoImport)
-                refLogo = bpy.data.objects.new("Bricker_refLogo_%(r)s" % locals(), refLogoImport.data.copy())
-                m = refLogo.data
-                # smooth faces
-                smoothMeshFaces(list(m.polygons))
-                # get transformation matrix
-                r_mat = Matrix.Rotation(math.radians(90.0), 4, 'X')
-                # transform logo into place
-                m.transform(r_mat)
-                # queue for decimation
-                decimate = True
-            # decimate refLogo
-            # TODO: Speed this up, if possible
-            if refLogo is not None and decimate and cm.logoResolution < 1:
-                dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
-                dMod.ratio = cm.logoResolution * 1.6
-                scn.objects.link(refLogo)
-                select(refLogo, active=True, only=True)
-                bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
-                safeUnlink(refLogo)
-
-        return refLogo
 
     def getDuplicateObjects(self, scn, cm, dGroup, source_name, startFrame, stopFrame):
         """ returns list of duplicates from self.source with all traits applied """
@@ -821,7 +778,7 @@ class BrickerBrickify(bpy.types.Operator):
                     duplicates[curFrame] = {"obj":sourceDup, "isReused":True}
                     continue
             # duplicate source for current frame
-            sourceDup = duplicateObj(lastObj)
+            sourceDup = duplicateObj(lastObj, link_to_scene=True)
             sourceDup.name = "Bricker_" + cm.source_name + "_f_" + str(curFrame)
             for mod in sourceDup.modifiers:
                 if mod.type in ["SMOKE"]:

@@ -378,7 +378,6 @@ class BrickerDelete(bpy.types.Operator):
         cm.transformScale = 1
         cm.modelCreatedOnFrame = -1
         cm.lastSourceMid = "-1,-1,-1"
-        cm.lastLogoResolution = 0
         cm.lastLogoDetail = "NONE"
         cm.lastSplitModel = False
         cm.lastBrickType = "NONE"

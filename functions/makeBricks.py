@@ -196,13 +196,11 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     old_percent = updateProgressBars(printStatus, cursorStatus, 0, -1, "Building")
 
     # draw merged bricks
-    ft = True
     for i, k2 in enumerate(keys):
         if bricksDict[k2]["draw"] and bricksDict[k2]["parent"] == "self":
             loc = strToList(k2)
             # create brick based on the current brick info
-            drawBrick(ft, cm, bricksDict, k2, loc, i, dimensions, zStep, bricksDict[k2]["size"], split, customData, customObj_details, brickScale, bricksCreated, allMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3)
-            ft = False
+            drawBrick(cm, bricksDict, k2, loc, i, dimensions, zStep, bricksDict[k2]["size"], split, customData, customObj_details, brickScale, bricksCreated, allMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3)
             # print status to terminal and cursor
             old_percent = updateProgressBars(printStatus, cursorStatus, i/len(bricksDict.keys()), old_percent, "Building")
 
@@ -225,6 +223,9 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 name = bricksDict[key]["name"]
                 brick = bpy.data.objects.get(name)
                 # create vert group for bevel mod (assuming only logo verts are selected):
+                vg = brick.vertex_groups.get("%(name)s_bvl" % locals())
+                if vg:
+                    brick.vertex_groups.remove(vg)
                 vg = brick.vertex_groups.new("%(name)s_bvl" % locals())
                 vertList = [v.index for v in brick.data.vertices if not v.select]
                 vg.add(vertList, 1, "ADD")
@@ -254,6 +255,9 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 addEdgeSplitMod(allBricksObj)
         if cm.brickType != "CUSTOM":
             # create vert group for bevel mod (assuming only logo verts are selected):
+            vg = allBricksObj.vertex_groups.get("%(name)s_bvl" % locals())
+            if vg:
+                allBricksObj.vertex_groups.remove(vg)
             vg = allBricksObj.vertex_groups.new("%(name)s_bvl" % locals())
             vertList = [v.index for v in allBricksObj.data.vertices if not v.select]
             vg.add(vertList, 1, "ADD")
