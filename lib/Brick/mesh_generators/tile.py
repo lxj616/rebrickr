@@ -43,7 +43,7 @@ def makeTile(dimensions:dict, brickSize:list, circleVerts:int=None, type:str=Non
         dimensions  -- dictionary containing brick dimensions
         brickSize   -- size of brick (e.g. standard 2x4 -> [2, 4, 3])
         circleVerts -- number of vertices per circle of cylinders
-        type        -- type of round 1x1 brick in ["CONE", "CYLINDER", "STUD", "STUD_HOLLOW"]
+        type        -- type of round 1x1 brick in ["CONE", "CYLINDER", "STUD", "HOLLOW_STUD"]
         detail      -- level of brick detail (options: ["FLAT", "LOW", "MEDIUM", "HIGH"])
         cm          -- cmlist item of model
         bme         -- bmesh object in which to create verts
@@ -55,7 +55,7 @@ def makeTile(dimensions:dict, brickSize:list, circleVerts:int=None, type:str=Non
 
     # get halfScale
     d = Vector((dimensions["width"] / 2, dimensions["width"] / 2, dimensions["height"] / 2))
-    d.z = d.z * (brickSize[2] if cm.brickType not in ["BRICKS", "CUSTOM"] else 1)
+    d.z = d.z * (brickSize[2] if flatBrickType(cm) else 1)
     # get scalar for d in positive xyz directions
     scalar = Vector((brickSize[0] * 2 - 1,
                      brickSize[1] * 2 - 1,

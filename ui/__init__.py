@@ -524,17 +524,16 @@ class BrickTypesPanel(Panel):
                     row = col.row(align=True)
                     row.prop(cm, "offsetBrickLayers")
 
-            col = layout.column(align=True)
-            col.label("Max Brick Size:")
-            split = col.split(align=True, percentage=0.5)
-
-            col1 = split.column(align=True)
-            row1 = col1.row(align=True)
-            row1.prop(cm, "maxWidth", text="Width")
-
-            col2 = split.column(align=True)
-            row2 = col2.row(align=True)
-            row2.prop(cm, "maxDepth", text="Depth")
+            if mergableBrickType(cm):
+                col = layout.column(align=True)
+                col.label("Max Brick Size:")
+                split = col.split(align=True, percentage=0.5)
+                col1 = split.column(align=True)
+                row1 = col1.row(align=True)
+                row1.prop(cm, "maxWidth", text="Width")
+                col2 = split.column(align=True)
+                row2 = col2.row(align=True)
+                row2.prop(cm, "maxDepth", text="Depth")
 
 
 class CustomizeModel(Panel):
@@ -812,17 +811,17 @@ class DetailingPanel(Panel):
                 row = col.row(align=True)
                 row.prop(cm, "logoResolutionFont", text="Font Resolution")
                 row.prop(cm, "logoResolutionBevel", text="Bevel Resolution")
+                row = col.row(align=True)
             else:
-                col = layout.column(align=True)
-                split = col.split(align=True, percentage=0.85)
+                row = col.row(align=True)
+                split = row.split(align=True, percentage=0.85)
                 col1 = split.column(align=True)
                 col1.prop_search(cm, "logoObjectName", scn, "objects", text="")
                 col1 = split.column(align=True)
                 col1.operator("bricker.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'logoObjectName'
                 row = col.row(align=True)
-                row.prop(cm, "logoScale", text="Logo Scale")
-            row = col.row(align=True)
-            row.prop(cm, "logoInset", text="Logo Inset")
+                row.prop(cm, "logoScale", text="Scale")
+            row.prop(cm, "logoInset", text="Inset")
             col = layout.column(align=True)
         row = col.row(align=True)
         row.label("Underside:")

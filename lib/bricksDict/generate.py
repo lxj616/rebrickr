@@ -602,7 +602,7 @@ def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=
                     near_normal= normal_direction,
                     rgba= rgba,
                     mat_name= "",  # defined in 'updateMaterials' function
-                    bType= "PLATE" if "PLATES" in cm.brickType else ("BRICK" if cm.brickType == "BRICKS" else cm.brickType),
+                    bType= "PLATE" if cm.brickType == "BRICKS AND PLATES" else (cm.brickType[:-1] if cm.brickType.endswith("S") else cm.brickType),
                 )
     cm.numBricksGenerated = i
 

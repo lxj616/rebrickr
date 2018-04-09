@@ -88,7 +88,7 @@ def updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep,
                 break
             # else, check vertically
             for k in range(0, maxL[2], zStep):
-                # if "PLATES" not in cm.brickType, skip second two iters
+                # if not mergeVertical, skip second two iters
                 if not mergeVertical and k > 0: continue
                 # break case 1
                 elif k >= newMax2: break
@@ -112,11 +112,13 @@ def updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep,
         if breakOuter2: break
 
 
-def attemptMerge(cm, bricksDict, key, availableKeys, defaultSize, zStep, randState, preferLargest=False, mergeVertical=True, shortType="PLATE", tallType="BRICK", height3Only=False):
+def attemptMerge(cm, bricksDict, key, availableKeys, defaultSize, zStep, randState, preferLargest=False, mergeVertical=True, targetType=None, height3Only=False):
     """ attempt to merge bricksDict[key] with adjacent bricks """
     # get loc from key
     loc = strToList(key)
     brickSizes = [defaultSize]
+    tallType = getTallType(cm, bricksDict[key], targetType)
+    shortType = getShortType(cm, bricksDict[key], targetType)
 
     if cm.brickType != "CUSTOM":
         # check width-depth and depth-width
@@ -137,7 +139,7 @@ def attemptMerge(cm, bricksDict, key, availableKeys, defaultSize, zStep, randSta
         bricksDict[k]["attempted_merge"] = True
         bricksDict[k]["parent"] = "self" if k == key else key
         # set brick type if necessary
-        if "PLATES" in cm.brickType:
+        if flatBrickType(cm):
             bricksDict[k]["type"] = shortType if brickSize[2] == 1 else tallType
 
     return brickSize
@@ -161,14 +163,14 @@ def getBrickExposure(cm, bricksDict, key=None, loc=None):
 
     # set z-indices
     idxZb = loc[2] - 1
-    idxZa = loc[2] + (size[2] if "PLATES" in cm.brickType else 1)
+    idxZa = loc[2] + (size[2] if flatBrickType(cm) else 1)
 
     # Iterate through brick locs in size to check top and bottom exposure
     keysInBrick = getKeysInBrick(cm, size, key, loc, zStep)
     for k in keysInBrick:
         x, y, _ = strToList(k)
         # don't check keys where keys above are in current brick
-        if bricksDict[k]["val"] != 1 and not ("PLATES" in cm.brickType and size[2] == 3):
+        if bricksDict[k]["val"] != 1 and not (flatBrickType(cm) and size[2] == 3):
             continue
         # check if brick top or bottom is exposed
         k0 = "{x},{y},{z}".format(x=x, y=y, z=idxZa)

@@ -75,7 +75,7 @@ legalBricks = {
                          {"s":[6, 6], "pt":"10202"},
                          {"s":[8, 16], "pt":"48288"}],
         "STUD":         [{"s":[1, 1], "pt":"4073"}],
-        "STUD_HOLLOW":  [{"s":[1, 1], "pt":"85861"}],
+        "HOLLOW_STUD":  [{"s":[1, 1], "pt":"85861"}],
         # "WING":[[2, 3],
         #         [2, 4],
         #         [3, 6],
@@ -165,10 +165,6 @@ def getLegalBrickSizes():
 def getLegalBricks():
     """ returns a list of legal brick sizes and part numbers """
     return legalBricks
-
-
-def getBrickTypes(height):
-    return bpy.props.Bricker_legal_brick_sizes[height].keys()
 
 
 def getTypesObscuringAbove():

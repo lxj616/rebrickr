@@ -71,7 +71,7 @@ class splitBricks(Operator):
         # iterate through cm_ids of selected objects
         for cm_id in self.objNamesD.keys():
             cm = getItemByID(scn.cmlist, cm_id)
-            if "PLATES" not in cm.brickType:
+            if not flatBrickType(cm):
                 continue
             bricksDict = self.bricksDicts[cm_id]
             # iterate through names of selected objects

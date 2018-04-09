@@ -112,7 +112,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     # initialize bricksCreated
     bricksCreated = []
     # set number of times to run through all keys
-    numIters = 2 if "PLATES" in cm.brickType else 1
+    numIters = 2 if flatBrickType(cm) else 1
     i = 0
     for timeThrough in range(numIters):
         # iterate through z locations in bricksDict (bottom to top)

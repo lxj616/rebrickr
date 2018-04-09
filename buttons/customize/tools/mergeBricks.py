@@ -140,9 +140,7 @@ class mergeBricks(Operator):
             if bricksDict[key]["parent"] not in [None, "self"]:
                 continue
             # attempt to merge current brick with other bricks in keys, according to available brick types
-            tallType = targetType if targetType in getBrickTypes(height=3) else bricksDict[key]["type"]
-            shortType = targetType if targetType in getBrickTypes(height=1) else (bricksDict[key]["type"] if bricksDict[key]["type"] in getBrickTypes(height=1) else "PLATE")
-            brickSize = attemptMerge(cm, bricksDict, key, keys, bricksDict[key]["size"], zStep, randState, preferLargest=True, mergeVertical=mergeVertical, shortType=shortType, tallType=tallType, height3Only=height3Only)
+            brickSize = attemptMerge(cm, bricksDict, key, keys, bricksDict[key]["size"], zStep, randState, preferLargest=True, mergeVertical=mergeVertical, targetType=targetType, height3Only=height3Only)
             # set exposure of current [merged] brick
             topExposed, botExposed = getBrickExposure(cm, bricksDict, key)
             bricksDict[key]["top_exposed"] = topExposed

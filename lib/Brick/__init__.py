@@ -43,7 +43,7 @@ class Bricks:
         # create brick mesh
         if type in ["BRICK", "PLATE", "CUSTOM"]:
             brickBM = makeStandardBrick(dimensions=dimensions, brickSize=size, type=type, circleVerts=circleVerts, detail=undersideDetail, stud=stud, cm=cm)
-        elif type in ["CYLINDER", "CONE", "STUD", "STUD_HOLLOW"]:
+        elif type in ["CYLINDER", "CONE", "STUD", "HOLLOW_STUD"]:
             brickBM = makeRound1x1(dimensions=dimensions, circleVerts=circleVerts, type=type, detail=undersideDetail, cm=cm)
         elif type in ["TILE", "TILE_GRILL"]:
             brickBM = makeTile(dimensions=dimensions, brickSize=size, circleVerts=circleVerts, type=type, detail=undersideDetail, cm=cm)
@@ -103,7 +103,7 @@ class Bricks:
         size = bricksDict[key]["size"]
         newSize = [1, 1, size[2]]
         zStep = getZStep(cm)
-        if "PLATES" in cm.brickType:
+        if flatBrickType(cm):
             if not v:
                 zStep = 3
             else:
@@ -165,7 +165,7 @@ def makeLogoVariations(cm, dimensions, size, direction, all_vars, logo, logo_typ
     # create new bmeshes for each logo variation
     bms = [bmesh.new() for zRot in zRots]
     # get loc offsets
-    zOffset = dimensions["logo_offset"] + (dimensions["height"] if "PLATES" in cm.brickType and size[2] == 3 else 0)
+    zOffset = dimensions["logo_offset"] + (dimensions["height"] if flatBrickType(cm) and size[2] == 3 else 0)
     lw = dimensions["logo_width"] * (0.78 if cm.logoDetail == "LEGO" else cm.logoScale)
     distMax = max(logo_details.dist.xy)
     zOffset += ((logo_details.dist.z * (lw / distMax)) / 2) * (1 - logo_inset * 2)

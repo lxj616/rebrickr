@@ -137,7 +137,7 @@ def addEdgeSplitMod(obj):
 def mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, defaultSize, zStep, randS1, mergeVertical=True):
     if brickD["size"] is None or (cm.buildIsDirty):
         preferLargest = brickD["val"] > 0 and brickD["val"] < 1
-        brickSize = attemptMerge(cm, bricksDict, key, keysNotChecked, defaultSize, zStep, randS1, preferLargest=preferLargest, mergeVertical=mergeVertical)
+        brickSize = attemptMerge(cm, bricksDict, key, keysNotChecked, defaultSize, zStep, randS1, preferLargest=preferLargest, mergeVertical=mergeVertical, height3Only=brickD["type"] in getBrickTypes(height=3))
     else:
         brickSize = brickD["size"]
     return brickSize
@@ -208,7 +208,7 @@ def prepareLogoAndGetDetails(scn, cm, logo, dimensions):
         setLayers(logo.layers)
         logo.hide = False
     # duplicate logo object
-    logo = duplicateObj(logo)
+    logo = duplicateObj(logo, link_to_scene=True)
     if cm.logoDetail != "LEGO":
         # disable modifiers for logo object
         for mod in logo.modifiers:

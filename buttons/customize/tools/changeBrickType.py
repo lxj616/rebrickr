@@ -125,7 +125,7 @@ class changeBrickType(Operator):
                     bricksDict[dictKey]["rotated"] = False if min(size[:2]) == 1 and max(size[:2]) > 1 else self.rotateBrick
 
                     # update height of brick if necessary, and update dictionary accordingly
-                    if "PLATES" in cm.brickType:
+                    if flatBrickType(cm):
                         dimensions = Bricks.get_dimensions(cm.brickHeight, getZStep(cm), cm.gap)
                         size = updateBrickSizeAndDict(dimensions, cm, bricksDict, size, dictKey, dictLoc, curHeight=size[2], targetType=targetBrickType)
 

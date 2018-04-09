@@ -184,9 +184,13 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     brickType = EnumProperty(
         name="Brick Type",
         description="Type of brick used to build the model",
-        items=[("PLATES", "Plates Only", "Use plates to build the model"),
-               ("BRICKS", "Bricks Only (fast)", "Use bricks to build the model"),
-               ("BRICKS AND PLATES", "Bricks and Plates", "Use bricks and plates to build the model"),
+        items=[("PLATES", "Plates", "Use this brick type to build the model"),
+               ("BRICKS", "Bricks (fast)", "Use this brick type to build the model"),
+               ("BRICKS AND PLATES", "Bricks and Plates", "Use this brick type to build the model"),
+               ("STUDS", "Studs", "Use this brick type to build the model"),
+               ("HOLLOW_STUDS", "Hollow Studs", "Use this brick type to build the model"),
+               ("CYLINDERS", "Cylinders (fast)", "Use this brick type to build the model"),
+               ("SLOPES", "Slopes (fast)", "Use this brick type to build the model"),
                ("CUSTOM", "Custom", "Use custom object to build the model")],
         update=dirtyMatrix,
         default="BRICKS")
@@ -370,7 +374,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=0.78)
     logoInset = FloatProperty(
         name="Logo Inset",
-        description="How deep to inset the logo into the stud",
+        description="Percentage inset of logo in stud",
         step=1,
         update=dirtyBricks,
         precision=2,
@@ -403,7 +407,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     # BEVEL SETTINGS
     bevelWidth = FloatProperty(
         name="Bevel Width",
-        description="Bevel value/amount",
+        description="Bevel amount (relative to Brick Height)",
         step=1,
         min=0.000001, max=10,
         default=0.01,

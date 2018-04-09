@@ -39,7 +39,7 @@ def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d,
         add_beams = brickSize[2] == 3 and (sum(brickSize[:2]) > 4 or min(brickSize[:2]) == 1 and max(brickSize[:2]) == 3) and detail in ["MEDIUM", "HIGH"]
     if hollow is None:
         hollow = brickSize[2] == 1 or min(brickSize[:2]) != 1
-    bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
+    bAndPBrick = flatBrickType(cm) and brickSize[2] == 3
     sides = [0, 1] + ([0, 0, 1, 1] if brickSize[0] < brickSize[1] else [1, 1, 0, 0])
     z1 = -d.z if not hollow else d.z - thick.z - dimensions["support_height_triple" if bAndPBrick else "support_height"]
     z2 = d.z - thick.z
@@ -138,19 +138,21 @@ def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, v5=None
             y = dimensions["width"] * yNum
             if hollow:
                 _, studVerts = makeTube(r, h, t, circleVerts, co=Vector((0, 0, z)), bme=bme)
-                bme.faces.new(studVerts["inner"]["bottom"])
+                if v5 is not None: bme.faces.new(studVerts["inner"]["bottom"])
             else:
                 # split stud at center by creating cylinder and circle and joining them (allows Bevel to work correctly)
-                _, studVerts = makeCylinder(r, h/2, circleVerts, co=Vector((x, y, z + h/4)), botFace=False, bme=bme)
+                _, studVerts = makeCylinder(r, h if v5 is None else h/2, circleVerts, co=Vector((x, y, z if v5 is None else z + h/4)), botFace=False, bme=bme)
                 select(studVerts["bottom"])
-                circleStudVerts = makeCircle(r, circleVerts, co=Vector((x, y, z - h/2)), flipNormals=True, face=False, bme=bme)
-                # create faces connecting bottom of stud to circle
-                connectCircles(studVerts["bottom"], circleStudVerts[::-1], bme, smooth=True)
+                if v5 is not None:
+                    circleStudVerts = makeCircle(r, circleVerts, co=Vector((x, y, z - h/2)), flipNormals=True, face=False, bme=bme)
+                    # create faces connecting bottom of stud to circle
+                    connectCircles(studVerts["bottom"], circleStudVerts[::-1], bme, smooth=True)
             if v5 is not None:
                 topVertsD = createVertListDict2(studVerts["outer"]["bottom"] if hollow else circleStudVerts[::-1])
                 topVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = topVertsD
     if v5 is not None:
         connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, topVertsDofDs, xNum, yNum, bme, step=-1)
+    return studVerts
 
 
 def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, vertsDofDs, xNum, yNum, bme, step=1):

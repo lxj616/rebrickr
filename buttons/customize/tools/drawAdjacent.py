@@ -96,7 +96,7 @@ class drawAdjacent(Operator):
             # check all 6 directions for action to be executed
             for i in range(6):
                 # if checking beneath obj, check 3 keys below instead of 1 key below
-                if i == 5 and "PLATES" in cm.brickType:
+                if i == 5 and flatBrickType(cm):
                     newBrickHeight = self.getNewBrickHeight(targetType)
                     decriment = newBrickHeight - 1
                 # if action should be executed (value changed in direction prop)
@@ -117,8 +117,8 @@ class drawAdjacent(Operator):
                 setCurBrickVal(self.bricksDict, curLoc)
 
             # attempt to merge created bricks
-            tallBandP = "PLATES" in cm.brickType and targetType in getBrickTypes(height=3)
-            keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm, mergeVertical=targetType in getBrickTypes(height=3), targetType=targetType, height3Only=tallBandP)
+            height3Only = "PLATES" in cm.brickType and targetType in getBrickTypes(height=3)
+            keysToUpdate = mergeBricks.mergeBricks(self.bricksDict, keysToMerge, cm, mergeVertical=targetType in getBrickTypes(height=3), targetType=targetType, height3Only=height3Only)
 
             # if bricks created on top or bottom, set exposure of original brick
             if self.zPos or self.zNeg:
@@ -333,8 +333,8 @@ class drawAdjacent(Operator):
                     elif side in [4, 5]:
                         keysToMerge.append(newKey)
             # update dictionary of locations above brick
-            if "PLATES" in cm.brickType and side in [4, 5]:
-                updateBrickSizeAndDict(dimensions, cm, self.bricksDict, side, [1, 1, newBrickHeight], adjacent_key, adjDictLoc, curType=curType, targetType=targetType, createdFrom=dictKey)
+            if flatBrickType(cm) and side in [4, 5]:
+                updateBrickSizeAndDict(dimensions, cm, self.bricksDict, [1, 1, newBrickHeight], adjacent_key, adjDictLoc, dec=2 if side == 5 else 0, curType=curType, targetType=targetType, createdFrom=dictKey)
             # update dictionary location of adjacent brick created
             adjBrickD["draw"] = True
             adjBrickD["type"] = targetType

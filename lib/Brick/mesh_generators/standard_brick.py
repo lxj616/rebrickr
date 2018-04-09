@@ -53,12 +53,12 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
     # create new bmesh object
     bme = bmesh.new() if not bme else bme
     cm = cm or getActiveContextInfo()[1]
-    bAndPBrick = "PLATES" in cm.brickType and brickSize[2] == 3
+    bAndPBrick = flatBrickType(cm) and brickSize[2] == 3
     height = dimensions["height"] * (3 if bAndPBrick else 1)
 
     # get halfScale
     d = Vector((dimensions["width"] / 2, dimensions["width"] / 2, dimensions["height"] / 2))
-    d.z = d.z * (brickSize[2] if cm.brickType not in ["BRICKS", "CUSTOM"] else 1)
+    d.z = d.z * (brickSize[2] if flatBrickType(cm) else 1)
     # get scalar for d in positive xyz directions
     scalar = Vector((brickSize[0] * 2 - 1,
                      brickSize[1] * 2 - 1,
@@ -70,10 +70,10 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
     # create cube
     coord1 = -d
     coord2 = vec_mult(d, scalar)
-    v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [0, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
+    v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [0 if stud else 1, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
 
     # add studs
-    if stud: addStuds(dimensions, height, brickSize, cm.brickType, circleVerts, bme, v5, v6, v7, v8, hollow=brickSize[2] > 3 or "HOLES" in type)
+    if stud: addStuds(dimensions, height, brickSize, cm.brickType, circleVerts, bme, v5=v5, v6=v6, v7=v7, v8=v8, hollow=brickSize[2] > 3 or "HOLES" in type)
 
     # add details
     if detail != "FLAT":

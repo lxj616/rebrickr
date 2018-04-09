@@ -160,6 +160,26 @@ def getBricks(cm=None, typ=None):
     return bricks
 
 
+def getBrickTypes(height):
+    return bpy.props.Bricker_legal_brick_sizes[height].keys()
+
+
+def flatBrickType(cm):
+    return "PLATE" in cm.brickType or "STUD" in cm.brickType
+
+
+def mergableBrickType(cm):
+    return "PLATE" in cm.brickType or "BRICK" in cm.brickType or "SLOPE" in cm.brickType
+
+
+def getTallType(cm, brickD, targetType=None):
+    return targetType if targetType in getBrickTypes(height=3) else (brickD["type"] if brickD["type"] in getBrickTypes(height=3) else "BRICK")
+
+
+def getShortType(cm, brickD, targetType=None):
+    return targetType if targetType in getBrickTypes(height=1) else (brickD["type"] if brickD["type"] in getBrickTypes(height=1) else "PLATE")
+
+
 def brick_materials_installed():
     scn = bpy.context.scene
     return hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
@@ -215,7 +235,7 @@ def isUnique(lst):
 
 
 def getZStep(cm):
-    return 3 if cm.brickType in ["BRICKS", "CUSTOM"] else 1
+    return 1 if flatBrickType(cm) else 3
 
 
 def gammaCorrect(rgba, val):

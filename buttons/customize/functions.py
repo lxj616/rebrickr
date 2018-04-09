@@ -146,7 +146,7 @@ def getAvailableTypes(by="SELECTION", includeSizes=[]):
             if objSize[2] not in [1, 3]: raise Exception("Custom Error Message: objSize not in [1, 3]")
             # build items
             items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[3] if includeSizes == "ALL" or objSize[:2] in legalBS[3][typ] + includeSizes]
-            if "PLATES" in cm.brickType:
+            if flatBrickType(cm):
                 items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[1] if includeSizes == "ALL" or objSize[:2] in legalBS[1][typ] + includeSizes]
     # clean up items
     items = uniquify2(items, innerType=tuple)
@@ -154,7 +154,7 @@ def getAvailableTypes(by="SELECTION", includeSizes=[]):
     # return items, or null if items was empty
     return items if len(items) > 0 else [("NULL", "Null", "")]
 
-def updateBrickSizeAndDict(dimensions, cm, bricksDict, side, brickSize, key, loc, curHeight=None, curType=None, targetHeight=None, targetType=None, createdFrom=None):
+def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, dec=0, curHeight=None, curType=None, targetHeight=None, targetType=None, createdFrom=None):
     brickD = bricksDict[key]
     assert targetHeight is not None or targetType is not None
     targetHeight = targetHeight or (1 if targetType in getBrickTypes(height=1) else 3)
@@ -166,7 +166,7 @@ def updateBrickSizeAndDict(dimensions, cm, bricksDict, side, brickSize, key, loc
         for x in range(brickSize[0]):
             for y in range(brickSize[1]):
                 for z in range(1, curHeight):
-                    newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z - (2 if side == 5 else 0)])
+                    newKey = listToStr([loc[0] + x, loc[1] + y, loc[2] + z - dec])
                     bricksDict[newKey]["parent"] = None
                     bricksDict[newKey]["draw"] = False
                     setCurBrickVal(bricksDict, strToList(newKey), action="REMOVE")
