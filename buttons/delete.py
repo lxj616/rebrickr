@@ -62,12 +62,14 @@ class BrickerDelete(bpy.types.Operator):
         return True
 
     def execute(self, context):
+        scn.Bricker_runningBlockingOperation = True
         try:
             scn, cm, _ = getActiveContextInfo()
             self.undo_stack.iterateStates(cm)
             self.runFullDelete()
         except:
             handle_exception()
+        scn.Bricker_runningBlockingOperation = False
 
         return{"FINISHED"}
 
@@ -131,7 +133,6 @@ class BrickerDelete(bpy.types.Operator):
     def runFullDelete(cls, cm=None):
         """ externally callable cleanup function for full delete action (clears everything from memory) """
         scn = bpy.context.scene
-        scn.Bricker_runningOperation = True
         cm = cm or scn.cmlist[scn.cmlist_index]
         modelType = getModelType(cm)
         n = cm.source_name
@@ -197,7 +198,6 @@ class BrickerDelete(bpy.types.Operator):
                     pass
 
             # return open layers to original
-            scn.Bricker_runningOperation = False
             setLayers(lastLayers)
 
             # delete custom properties from source
@@ -226,6 +226,7 @@ class BrickerDelete(bpy.types.Operator):
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         # link source to scene
         if source not in list(scn.objects):
+            # ensureObjNamesUnique(scn)
             safeLink(source)
         # set source layers to brick layers
         if modelType == "MODEL":

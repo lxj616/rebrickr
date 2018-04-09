@@ -28,7 +28,6 @@ from bpy.types import Operator
 
 # Addon imports
 from .undo_stack import *
-from ...ui.app_handlers import brickerRunningOp
 from ...functions import *
 
 
@@ -51,7 +50,7 @@ class InitializeUndoStack(Operator):
 
     def modal(self, context, event):
         scn = bpy.context.scene
-        if not self.undo_stack.isUpdating() and not brickerRunningOp() and scn.cmlist_index != -1:
+        if not self.undo_stack.isUpdating() and scn.cmlist_index != -1:
             global python_undo_state
             cm = scn.cmlist[scn.cmlist_index]
             if cm.id not in python_undo_state:

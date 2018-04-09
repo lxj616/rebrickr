@@ -461,12 +461,12 @@ class ModelSettingsPanel(Panel):
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         else:
             obj = bpy.data.objects.get(cm.source_name)
-        if obj and not cm.isWaterTight:
-            row = col.row(align=True)
-            # row.scale_y = 0.7
-            row.label("(Source is NOT single closed mesh)")
-            # row = col.row(align=True)
-            # row.operator("scene.make_closed_mesh", text="Make Single Closed Mesh", icon="EDIT")
+        # if obj and not cm.isWaterTight:
+        #     row = col.row(align=True)
+        #     # row.scale_y = 0.7
+        #     row.label("(Source is NOT single closed mesh)")
+        #     # row = col.row(align=True)
+        #     # row.operator("scene.make_closed_mesh", text="Make Single Closed Mesh", icon="EDIT")
 
 
 class BrickTypesPanel(Panel):
@@ -899,10 +899,10 @@ class SupportsPanel(Panel):
             obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
         else:
             obj = bpy.data.objects.get(cm.source_name)
-        if obj and not cm.isWaterTight:
-            row = col.row(align=True)
-            # row.scale_y = 0.7
-            row.label("(Source is NOT single closed mesh)")
+        # if obj and not cm.isWaterTight:
+        #     row = col.row(align=True)
+        #     # row.scale_y = 0.7
+        #     row.label("(Source is NOT single closed mesh)")
 
 
 class AdvancedPanel(Panel):

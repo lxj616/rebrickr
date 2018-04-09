@@ -91,6 +91,7 @@ class BrickerBrickify(bpy.types.Operator):
         return True
 
     def execute(self, context):
+        scn.Bricker_runningBlockingOperation = True
         try:
             scn, cm, _ = getActiveContextInfo()
             previously_animated = cm.animated
@@ -115,6 +116,7 @@ class BrickerBrickify(bpy.types.Operator):
             self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
         except:
             handle_exception()
+        scn.Bricker_runningBlockingOperation = False
         return{"FINISHED"}
 
     ################################################
@@ -138,9 +140,9 @@ class BrickerBrickify(bpy.types.Operator):
     def runBrickify(self, context):
         # set up variables
         scn, cm, n = getActiveContextInfo()
-        scn.Bricker_runningOperation = True
         self.undo_stack.iterateStates(cm)
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
+        ensureObjNamesUnique(getSafeScn())
 
         # get source and initialize values
         source = self.getObjectToBrickify(cm)
@@ -198,7 +200,6 @@ class BrickerBrickify(bpy.types.Operator):
         cm.internalIsDirty = False
         cm.modelCreated = "ANIM" not in self.action
         cm.animated = "ANIM" in self.action
-        scn.Bricker_runningOperation = False
         cm.version = bpy.props.bricker_version
         cm.exposeParent = False
 

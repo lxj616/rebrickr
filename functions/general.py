@@ -49,6 +49,20 @@ def getActiveContextInfo(cm_idx=None):
     return scn, cm, n
 
 
+def ensureObjNamesUnique(scn, throwError=False):
+    cm = getActiveContextInfo()[1]
+    # for object in scene
+    for obj_name in scn.objects.keys():
+        if obj_name != cm.source_name:
+            continue
+        elif throwError:
+            raise Exception("[Bricker] ")
+            break
+        # rename object if not part of a model or animation
+        obj = bpy.data.objects.get(obj_name)
+        if obj: obj.name = "%(obj_name)s.001" % locals()
+
+
 def safeUnlink(obj, hide=True, protect=True):
     scn = bpy.context.scene
     safeScn = getSafeScn()

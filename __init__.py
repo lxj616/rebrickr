@@ -77,7 +77,6 @@ def register():
 
     bpy.types.Scene.Bricker_printTimes = BoolProperty(default=False)
 
-    bpy.types.Scene.Bricker_runningOperation = BoolProperty(default=False)
     bpy.types.Scene.Bricker_last_layers = StringProperty(default="")
     bpy.types.Scene.Bricker_last_cmlist_index = IntProperty(default=-2)
     bpy.types.Scene.Bricker_active_object_name = StringProperty(default="")
@@ -127,7 +126,6 @@ def unregister():
     del Scn.Bricker_active_object_name
     del Scn.Bricker_last_cmlist_index
     del Scn.Bricker_last_layers
-    del Scn.Bricker_runningOperation
     del Scn.Bricker_printTimes
     del bpy.types.Object.cmlist_id
     del bpy.types.Object.isBrick

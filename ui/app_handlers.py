@@ -38,9 +38,9 @@ def brickerIsActive():
     return hasattr(bpy.props, "bricker_module_name") and bpy.props.bricker_module_name in bpy.context.user_preferences.addons.keys()
 
 
-def brickerRunningOp():
+def brickerRunningBlockingOp():
     scn = bpy.context.scene
-    return hasattr(scn, "Bricker_runningOperation") and scn.Bricker_runningOperation
+    return hasattr(scn, "Bricker_runningBlockingOperation") and scn.Bricker_runningBlockingOperation
 
 
 @persistent
@@ -116,7 +116,7 @@ def isObjVisible(scn, cm, n):
 @persistent
 def handle_selections(scene):
     scn = bpy.context.scene
-    if not brickerIsActive() or brickerRunningOp():
+    if not brickerIsActive() or brickerRunningBlockingOp():
         return
     # if scn.layers changes and active object is no longer visible, set scn.cmlist_index to -1
     if scn.Bricker_last_layers != str(list(scn.layers)):
@@ -201,15 +201,15 @@ def handle_selections(scene):
             return
         # if no matching cmlist item found, set cmlist_index to -1
         scn.cmlist_index = -1
-    if scn.cmlist_index != -1:
-        cm = scn.cmlist[scn.cmlist_index]
-        # keep isWaterTight updated
-        obj = bpy.data.objects.get(cm.source_name)
-        if obj and (len(obj.data.vertices) != cm.objVerts or len(obj.data.polygons) != cm.objPolys or len(obj.data.edges) != cm.objEdges):
-            cm.objVerts = len(obj.data.vertices)
-            cm.objPolys = len(obj.data.polygons)
-            cm.objEdges = len(obj.data.edges)
-            cm.isWaterTight = cm.objVerts + cm.objPolys - cm.objEdges == 2
+    # if scn.cmlist_index != -1:
+    #     cm = scn.cmlist[scn.cmlist_index]
+    #     # keep isWaterTight updated
+    #     obj = bpy.data.objects.get(cm.source_name)
+    #     if obj and (len(obj.data.vertices) != cm.objVerts or len(obj.data.polygons) != cm.objPolys or len(obj.data.edges) != cm.objEdges):
+    #         cm.objVerts = len(obj.data.vertices)
+    #         cm.objPolys = len(obj.data.polygons)
+    #         cm.objEdges = len(obj.data.edges)
+    #         cm.isWaterTight = cm.objVerts + cm.objPolys - cm.objEdges == 2
 
 
 bpy.app.handlers.scene_update_pre.append(handle_selections)
@@ -218,7 +218,7 @@ bpy.app.handlers.scene_update_pre.append(handle_selections)
 @persistent
 def prevent_user_from_viewing_storage_scene(scene):
     scn = bpy.context.scene
-    if not brickerIsActive() or brickerRunningOp():
+    if not brickerIsActive() or brickerRunningBlockingOp():
         return
     if scn.name == "Bricker_storage (DO NOT RENAME)":
         i = 0
@@ -229,25 +229,6 @@ def prevent_user_from_viewing_storage_scene(scene):
 
 
 bpy.app.handlers.scene_update_pre.append(prevent_user_from_viewing_storage_scene)
-
-
-@persistent
-def keep_object_names_unique(scene):
-    scn = bpy.context.scene
-    if not brickerIsActive() or brickerRunningOp():
-        return
-    # for object in scene
-    for obj_name in scn.objects.keys():
-        for cm in scn.cmlist:
-            if obj_name != cm.source_name:
-                continue
-            # rename object if not part of a model or animation
-            obj = bpy.data.objects.get(obj_name)
-            if obj and (cm.modelCreated or cm.animated):
-                obj.name = "%(obj_name)s.001" % locals()
-
-
-bpy.app.handlers.scene_update_pre.append(keep_object_names_unique)
 
 
 def find_3dview_space():
