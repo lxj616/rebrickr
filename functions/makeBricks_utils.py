@@ -242,8 +242,8 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
     if cm.brickType != "CUSTOM":
         custom_logo_used = logoToUse is not None and logo_type == "CUSTOM"
         bm_cache_string = json.dumps((cm.brickHeight, brickSize, undersideDetail,
-                                      cm.logoResolutionFont if logoToUse is not None else None,
-                                      cm.logoResolutionBevel if logoToUse is not None else None,
+                                      cm.logoResolution if logoToUse is not None else None,
+                                      cm.logoDecimate if logoToUse is not None else None,
                                       logo_inset if logoToUse is not None else None,
                                       hash_object(logoToUse) if custom_logo_used else None,
                                       logo_scale if custom_logo_used else None,

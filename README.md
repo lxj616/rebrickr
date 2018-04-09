@@ -19,13 +19,13 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add mode for selecting verts at locations next to bricks and adding bricks there
       * For animation, if last frame's brickFreqMatrix matches current frame's brickFreqMatrix, save time by just keeping that model around for another frame or duplicating it for the next frame or something
       * New feature: SNOT (studs not on top) functionality
-      * Add support for smoke animations
       * Add support for rigid bodies
       * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
       * Add 'exclusion' functionality so that one model doesn’t create bricks where another model already did
       * Add many more brick types, including inverted sloped bricks and tiles
       * Generate model with bricks and slopes to more closely approximate original mesh
       * Add merge option that creates either biggest bricks possible or randomly sampled like normal.
+      * Don't delete the Brick Group when updating
   * Known issues:
       * For models with thin outer shells, Bricker may use color of inside face instead of outside face for brick material (see snapchat hotdog file)
       * Applying model rotation when deleting brickified model whose source has rotated parent produces problematic results

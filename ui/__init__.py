@@ -809,8 +809,8 @@ class DetailingPanel(Panel):
         if cm.logoDetail != "NONE":
             if cm.logoDetail == "LEGO":
                 row = col.row(align=True)
-                row.prop(cm, "logoResolutionFont", text="Font Resolution")
-                row.prop(cm, "logoResolutionBevel", text="Bevel Resolution")
+                row.prop(cm, "logoResolution", text="Resolution")
+                row.prop(cm, "logoDecimate", text="Decimate")
                 row = col.row(align=True)
             else:
                 row = col.row(align=True)

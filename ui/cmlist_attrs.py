@@ -347,18 +347,18 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
                ("NONE", "None", "Don't include Brick Logo on bricks")],
         update=dirtyBricks,
         default="NONE")
-    logoResolutionFont = IntProperty(
-        name="Font Resolution",
-        description="Resolution of the brick logo font",
+    logoResolution = IntProperty(
+        name="Resolution",
+        description="Resolution of the brick logo",
         update=dirtyBricks,
-        min=1, max=32,
+        min=1, max=10,
         default=1)
-    logoResolutionBevel = IntProperty(
-        name="Bevel Resolution",
-        description="Resolution of the brick logo bevel",
+    logoDecimate = IntProperty(
+        name="Decimate",
+        description="Decimate the brick logo (lower number for higher resolution)",
         update=dirtyBricks,
-        min=0, max=32,
-        default=1)
+        min=0, max=10,
+        default=8)
     logoObjectName = StringProperty(
         name="Logo Object Name",
         description="Name of the logo object",

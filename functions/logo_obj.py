@@ -26,14 +26,23 @@ Created by Christopher Gearhart
 from .common import *
 from .general import *
 
+def removeDoubles(obj):
+    select(obj, active=True, only=True)
+    bpy.ops.object.editmode_toggle()
+    for v in refLogo.data.verts:
+        v.select = True
+    bpy.ops.mesh.remove_doubles()
+    bpy.ops.object.editmode_toggle()
+
+
 def getLegoLogo(self, scn, cm, dimensions):
     # update refLogo
     if cm.logoDetail == "NONE":
         refLogo = None
     else:
-        rf = cm.logoResolutionFont
-        rb = cm.logoResolutionBevel
-        refLogoName = "Bricker_LEGO_Logo_%(rf)s_%(rb)s" % locals()
+        r = cm.logoResolution
+        d = cm.logoDecimate
+        refLogoName = "Bricker_LEGO_Logo_%(r)s_%(d)s" % locals()
         refLogo = bpy.data.objects.get(refLogoName)
         if refLogo is None:
             # get logo text reference with current settings
@@ -45,7 +54,10 @@ def getLegoLogo(self, scn, cm, dimensions):
             safeLink(refLogo, unhide=True)
             select(refLogo, active=True, only=True)
             bpy.ops.object.convert(target='MESH')
-            refLogo.data.update()
+            removeDoubles(refLogo)
+            if cm.logoDecimate != 0:
+                # TODO: decimate refLogo
+                pass
             safeUnlink(refLogo)
 
     return refLogo
@@ -79,6 +91,6 @@ def getLegoLogoTxtObj(scn, cm, name):
         logo_txt.data.align_y = "CENTER"
         logo_txt.data.space_character = 0.8
     # set logo_txt_ref resolution
-    logo_txt.data.resolution_u = cm.logoResolutionFont
-    logo_txt.data.bevel_resolution = cm.logoResolutionBevel
+    logo_txt.data.resolution_u = cm.logoResolution - 1
+    logo_txt.data.bevel_resolution = cm.logoResolution - 1
     return logo_txt
