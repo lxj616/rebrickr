@@ -19,4 +19,12 @@
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
     """
 
-__all__ = ["customize", "bevel", "brickify", "cache", "delete", "exportLdraw", "eyedropper", "materials", "reportError", "exportModelData"]
+from .changeBrickType import *
+from .changeBrickMaterial import *
+from .drawAdjacent import *
+from .mergeBricks import *
+from .redrawBricks import *
+from .setExposure import *
+from .splitBricks import *
+from .select.bySize import *
+from .select.byType import *

@@ -19,4 +19,11 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-__all__ = ["caches", "preferences", "bricksDict"]
+# initialize the brick bmesh cache dictionary
+bricker_bm_cache = {}
+
+# initialize the source mesh cache dictionary
+bricker_source_mesh_cache = {}
+
+# initialize the BFMCache
+bricker_bfm_cache = {}

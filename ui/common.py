@@ -1,4 +1,4 @@
-'''
+"""
 Copyright (C) 2017 Bricks Brought to Life
 http://bblanimation.com/
 chris@bblanimation.com
@@ -17,6 +17,21 @@ Created by Christopher Gearhart
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-'''
+"""
 
-__all__ = ["caches", "preferences", "bricksDict"]
+# System imports
+# NONE!
+
+# Blender imports
+import bpy
+
+# Addon imports
+# NONE!
+
+
+def set_cursor(cursor):
+    # DEFAULT, NONE, WAIT, CROSSHAIR, MOVE_X, MOVE_Y, KNIFE, TEXT,
+    # PAINT_BRUSH, HAND, SCROLL_X, SCROLL_Y, SCROLL_XY, EYEDROPPER
+    for wm in bpy.data.window_managers:
+        for win in wm.windows:
+            win.cursor_modal_set(cursor)

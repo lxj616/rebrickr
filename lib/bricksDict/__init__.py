@@ -1,4 +1,4 @@
-'''
+"""
 Copyright (C) 2017 Bricks Brought to Life
 http://bblanimation.com/
 chris@bblanimation.com
@@ -17,6 +17,16 @@ Created by Christopher Gearhart
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-'''
+"""
 
-__all__ = ["caches", "preferences", "bricksDict"]
+# System imports
+# NONE!
+
+# Blender imports
+# NONE!
+
+# Addon imports
+from .generate import *
+from .modify import *
+from .functions import *
+from .storage import *

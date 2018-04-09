@@ -20,84 +20,117 @@
     """
 
 # system imports
-import bpy
 import time
 import bmesh
 import os
 import math
-from ..functions import *
+
+# Blender imports
+import bpy
 from mathutils import Matrix, Vector
 props = bpy.props
 
-def createBevelMod(obj, width=1, segments=1, profile=0.5, onlyVerts=False, limitMethod='NONE', angleLimit=0.523599, vertexGroup=None, offsetType='OFFSET'):
-    dMod = obj.modifiers.get(obj.name + '_bevel')
-    if not dMod:
-        dMod = obj.modifiers.new(obj.name + '_bevel', 'BEVEL')
-    dMod.use_only_vertices = onlyVerts
-    dMod.width = width
-    dMod.segments = segments
-    dMod.profile = profile
-    dMod.limit_method = limitMethod
-    dMod.angle_limit = angleLimit
-    dMod.offset_type = offsetType
+# Addon imports
+from ..functions import *
 
-def removeBevelMods(objs):
-    objs = confirmList(objs)
-    for obj in objs:
-        obj.modifiers.remove(obj.modifiers[obj.name + "_bevel"])
 
-class legoizerBevel(bpy.types.Operator):
-    """Add a bevel modifier to all bricks with the following settings"""        # blender will use this as a tooltip for menu items and buttons.
-    bl_idname = "scene.legoizer_bevel"                                          # unique identifier for buttons and menu items to reference.
-    bl_label = "Bevel Bricks"                                                   # display name in the interface.
+class BrickerBevel(bpy.types.Operator):
+    """Execute bevel modifier to all bricks with above settings"""
+    bl_idname = "bricker.bevel"
+    bl_label = "Bevel Bricks"
     bl_options = {"REGISTER", "UNDO"}
 
+    ################################################
+    # Blender Operator methods
+
     @classmethod
-    def poll(cls, context):
+    def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
         scn = context.scene
         try:
             cm = scn.cmlist[scn.cmlist_index]
-            n = cm.source_name
-            if groupExists("LEGOizer_%(n)s_bricks" % locals()):
-                return True
-        except:
+        except IndexError:
             return False
+        n = cm.source_name
+        if cm.modelCreated or cm.animated:
+            return True
         return False
 
-    action = bpy.props.EnumProperty(
-        items=(
-            ("CREATE", "Create", ""),
-            ("UPDATE", "Update", ""),
-            ("APPLY", "Apply", ""),
-            ("REMOVE", "Remove", ""),
-        ),
-        default="CREATE"
-    )
+    def execute(self, context):
+        try:
+            cm = getActiveContextInfo()[1]
+            # set bevel action to add or remove
+            action = "REMOVE" if cm.bevelAdded else "ADD"
+            # get bricks to bevel
+            bricks = getBricks()
+            # create or remove bevel
+            BrickerBevel.runBevelAction(bricks, cm, action, setBevel=True)
+        except:
+            handle_exception()
+        return{"FINISHED"}
+
+    #############################################
+    # class methods
 
     @staticmethod
-    def setBevelMods(bricks):
-        bricks = confirmList(bricks)
-        # get bricks to bevel
-        scn = bpy.context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
-        for brick in bricks:
-            createBevelMod(obj=brick, width=cm.bevelWidth, segments=cm.bevelResolution, limitMethod="ANGLE", angleLimit=30)
+    def runBevelAction(bricks, cm, action="ADD", setBevel=False):
+        """ chooses whether to add or remove bevel """
+        if action == "REMOVE":
+            BrickerBevel.removeBevelMods(bricks)
+            cm.bevelAdded = False
+        elif action == "ADD":
+            BrickerBevel.createBevelMods(cm, bricks)
+            cm.bevelAdded = True
 
-    def execute(self, context):
-        # get bricks to bevel
-        scn = context.scene
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
-        cm.bevelWidth = cm.brickHeight/100
-        # cm.bevelResolution = round(cm.studVerts/10)
-        bricks = list(bpy.data.groups["LEGOizer_%(n)s_bricks" % locals()].objects)
+    @classmethod
+    def removeBevelMods(self, objs):
+        """ removes bevel modifier 'obj.name + "_bvl"' for objects in 'objs' """
+        objs = confirmList(objs)
+        for obj in objs:
+            obj.modifiers.remove(obj.modifiers[obj.name + "_bvl"])
 
-        print(self.action)
-        if self.action == "REMOVE" or self.action == "APPLY":
-            removeBevelMods(objs=bricks)
-        else:
-            legoizerBevel.setBevelMods(bricks)
+    @classmethod
+    def createBevelMods(self, cm, objs):
+        """ runs 'createBevelMod' on objects in 'objs' """
+        # get objs to bevel
+        objs = confirmList(objs)
+        # create bevel modifiers for each object
+        for obj in objs:
+            segments = cm.bevelSegments
+            profile = cm.bevelProfile
+            vGroupName = obj.name + "_bvl"
+            self.createBevelMod(obj=obj, width=cm.bevelWidth * cm.brickHeight, segments=segments, profile=profile, limitMethod="VGROUP", vertexGroup=vGroupName, offsetType='WIDTH', angleLimit=1.55334)
 
-        return{"FINISHED"}
+    @classmethod
+    def createBevelMod(self, obj, width=1, segments=1, profile=0.5, onlyVerts=False, limitMethod='NONE', angleLimit=0.523599, vertexGroup=None, offsetType='OFFSET'):
+        """ create bevel modifier for 'obj' with given parameters """
+        dMod = obj.modifiers.get(obj.name + '_bvl')
+        if not dMod:
+            dMod = obj.modifiers.new(obj.name + '_bvl', 'BEVEL')
+            eMod = obj.modifiers.get('Edge Split')
+            if eMod:
+                obj.modifiers.remove(eMod)
+                obj.modifiers.new('Edge Split', 'EDGE_SPLIT')
+        # only update values if necessary (prevents multiple updates to mesh)
+        if dMod.use_only_vertices != onlyVerts:
+            dMod.use_only_vertices = onlyVerts
+        if dMod.width != width:
+            dMod.width = width
+        if dMod.segments != segments:
+            dMod.segments = segments
+        if dMod.profile != profile:
+            dMod.profile = profile
+        if dMod.limit_method != limitMethod:
+            dMod.limit_method = limitMethod
+        if vertexGroup and dMod.vertex_group != vertexGroup:
+            try:
+                dMod.vertex_group = vertexGroup
+            except Exception as e:
+                print("[Bricker]", e)
+                dMod.limit_method = "ANGLE"
+        if dMod.angle_limit != angleLimit:
+            dMod.angle_limit = angleLimit
+        if dMod.offset_type != offsetType:
+            dMod.offset_type = offsetType
+
+    #############################################
