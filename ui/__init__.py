@@ -527,13 +527,15 @@ class BrickTypesPanel(Panel):
             if mergableBrickType(cm):
                 col = layout.column(align=True)
                 col.label("Max Brick Size:")
-                split = col.split(align=True, percentage=0.5)
-                col1 = split.column(align=True)
-                row1 = col1.row(align=True)
-                row1.prop(cm, "maxWidth", text="Width")
-                col2 = split.column(align=True)
-                row2 = col2.row(align=True)
-                row2.prop(cm, "maxDepth", text="Depth")
+                row = col.row(align=True)
+                row.prop(cm, "maxWidth", text="Width")
+                row.prop(cm, "maxDepth", text="Depth")
+                row = col.row(align=True)
+                row.prop(cm, "legalBricksOnly")
+                row = col.row(align=True)
+                row.label("Merge Type:")
+                row = col.row(align=True)
+                row.prop(cm, "mergeType", text="")
 
 
 class CustomizeModel(Panel):

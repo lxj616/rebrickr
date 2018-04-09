@@ -81,7 +81,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=10)
     useAnimation = BoolProperty(
         name="Use Animation",
-        description="Create Brick Model for each frame, from start to stop frame (WARNING: Calculation takes time, and may result in large blend file size)",
+        description="Create Brick Model for each frame, from start to stop frame (WARNING: Calculation takes time, and may result in large blend file )",
         update=updateStartAndStopFrames,
         default=False)
 
@@ -211,15 +211,27 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         description="Maximum brick width",
         update=dirtyBuild,
         step=1,
-        min=1, max=16,
+        min=1, max=1000,
         default=2)
     maxDepth = IntProperty(
         name="Max Depth",
         description="Maximum brick depth",
         update=dirtyBuild,
         step=1,
-        min=1, max=24,
+        min=1, max=1000,
         default=10)
+    mergeType = EnumProperty(
+        name="Merge Type",
+        description="Type of algorithm to use for merging bricks together",
+        items=[("GREEDY", "Greedy", "Creates fewest amount of bricks possible"),
+               ("RANDOM", "Random", "Merges randomly for realistic build")],
+        update=dirtyBuild,
+        default="RANDOM")
+    legalBricksOnly = BoolProperty(
+        name="Legal Bricks Only",
+        description="Construct model using only legal brick sizes",
+        update=dirtyBuild,
+        default=True)
     customObjectName = StringProperty(
         name="Custom Object Name",
         description="Name of the object to use as bricks",
@@ -353,12 +365,19 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBricks,
         min=1, max=10,
         default=1)
-    logoDecimate = IntProperty(
+    logoResolution = IntProperty(
+        name="Resolution",
+        description="Resolution of the brick logo",
+        update=dirtyBricks,
+        min=1, max=10,
+        default=3)
+    logoDecimate = FloatProperty(
         name="Decimate",
         description="Decimate the brick logo (lower number for higher resolution)",
         update=dirtyBricks,
+        precision=0,
         min=0, max=10,
-        default=8)
+        default=7.25)
     logoObjectName = StringProperty(
         name="Logo Object Name",
         description="Name of the logo object",

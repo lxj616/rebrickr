@@ -45,7 +45,7 @@ from .makeBricks_utils import *
 
 
 @timed_call('Time Elapsed')
-def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=None, split=False, brickScale=None, customData=None, customObj_details=None, group_name=None, replaceExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True):
+def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=None, split=False, brickScale=None, customData=None, customObj_details=None, group_name=None, clearExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True):
     # set up variables
     scn = bpy.context.scene
     cm = cm or scn.cmlist[scn.cmlist_index]
@@ -65,7 +65,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     # get bricksDict keys in sorted order
     if keys == "ALL":
         keys = list(bricksDict.keys())
-    keys.sort()
+    keys.sort(key=None if cm.mergeType == "RANDOM" else lambda x: (strToList(x)[0], strToList(x)[1]))
     # get dictionary of keys based on z value
     keysDict = {}
     for k0 in keys:
@@ -84,9 +84,9 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     if bGroup is None:
         bGroup = bpy.data.groups.new(group_name)
     # else, replace existing group
-    elif replaceExistingGroup:
-        bpy.data.groups.remove(group=bGroup, do_unlink=True)
-        bGroup = bpy.data.groups.new(group_name)
+    elif clearExistingGroup:
+        for obj0 in bGroup.objects:
+            bGroup.objects.unlink(obj0)
 
     brick_mats = []
     brick_materials_installed = hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
@@ -142,8 +142,9 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             for j in range(connectThresh):
                 availableKeys = availableKeysBase.copy()
                 numBricks = 0
-                random.seed(cm.mergeSeed + i)
-                random.shuffle(keysDict[z])
+                if cm.mergeType == "RANDOM":
+                    random.seed(cm.mergeSeed + i)
+                    random.shuffle(keysDict[z])
                 # iterate through keys on current z level
                 for key in keysDict[z]:
                     i += 1 / connectThresh
@@ -230,7 +231,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 vertList = [v.index for v in brick.data.vertices if not v.select]
                 vg.add(vertList, 1, "ADD")
                 # set up remaining brick info if brick object just created
-                if replaceExistingGroup or brick.name not in bGroup.objects.keys():
+                if clearExistingGroup or brick.name not in bGroup.objects.keys():
                     bGroup.objects.link(brick)
                 brick.parent = parent
                 if not brick.isBrick:

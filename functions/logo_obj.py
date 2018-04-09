@@ -28,11 +28,12 @@ from .general import *
 
 def removeDoubles(obj):
     select(obj, active=True, only=True)
-    bpy.ops.object.editmode_toggle()
-    for v in refLogo.data.verts:
+    for v in obj.data.vertices:
         v.select = True
+    bpy.ops.object.editmode_toggle()
     bpy.ops.mesh.remove_doubles()
     bpy.ops.object.editmode_toggle()
+    obj.data.update()
 
 
 def getLegoLogo(self, scn, cm, dimensions):
@@ -51,13 +52,19 @@ def getLegoLogo(self, scn, cm, dimensions):
             refLogo = logo_txt_ref.copy()
             refLogo.data = logo_txt_ref.data.copy()
             refLogo.name = refLogoName
+            # convert text to mesh
             safeLink(refLogo, unhide=True)
             select(refLogo, active=True, only=True)
             bpy.ops.object.convert(target='MESH')
+            # remove duplicate verts
             removeDoubles(refLogo)
+            # decimate mesh
             if cm.logoDecimate != 0:
-                # TODO: decimate refLogo
-                pass
+                dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
+                dMod.ratio = 1 - (cm.logoDecimate / 10)
+                print(dMod.ratio)
+                select(refLogo, active=True, only=True)
+                bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
             safeUnlink(refLogo)
 
     return refLogo

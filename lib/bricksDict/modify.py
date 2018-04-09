@@ -75,7 +75,6 @@ def updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep,
     newMax2 = maxL[2]
     breakOuter1 = False
     breakOuter2 = False
-    # return
     for i in range(maxL[0]):
         for j in range(maxL[1]):
             # break case 1
@@ -105,7 +104,7 @@ def updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep,
                     newSize = [i+1, j+1, k+zStep]
                     if newSize in brickSizes:
                         continue
-                    if not (newSize[2] == 1 and height3Only) and newSize[:2] in bpy.props.Bricker_legal_brick_sizes[newSize[2]][tallType if newSize[2] == 3 else shortType]:
+                    if not (newSize[2] == 1 and height3Only) and (not cm.legalBricksOnly or newSize[:2] in bpy.props.Bricker_legal_brick_sizes[newSize[2]][tallType if newSize[2] == 3 else shortType]):
                         brickSizes.append(newSize)
             if breakOuter1: break
         breakOuter1 = False

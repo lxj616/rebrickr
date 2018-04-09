@@ -182,6 +182,8 @@ def getCMProps():
             "customObjectName",
             "maxWidth",
             "maxDepth",
+            "mergeType",
+            "legalBricksOnly",
             "splitModel",
             "internalSupports",
             "matShellDepth",
