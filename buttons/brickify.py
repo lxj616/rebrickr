@@ -91,9 +91,9 @@ class BrickerBrickify(bpy.types.Operator):
         return True
 
     def execute(self, context):
+        scn, cm, _ = getActiveContextInfo()
         scn.Bricker_runningBlockingOperation = True
         try:
-            scn, cm, _ = getActiveContextInfo()
             previously_animated = cm.animated
             previously_model_created = cm.modelCreated
             self.runBrickify(context)

@@ -75,6 +75,7 @@ def register():
     bpy.types.Object.cmlist_id = IntProperty(name='Custom Model ID', description="ID of cmlist entry to which this object refers", default=-1)
     bpy.types.Material.num_averaged = IntProperty(name='Colors Averaged', description="Number of colors averaged together", default=0)
 
+    bpy.types.Scene.Bricker_runningBlockingOperation = BoolProperty(default=False)
     bpy.types.Scene.Bricker_printTimes = BoolProperty(default=False)
 
     bpy.types.Scene.Bricker_last_layers = StringProperty(default="")
@@ -127,6 +128,8 @@ def unregister():
     del Scn.Bricker_last_cmlist_index
     del Scn.Bricker_last_layers
     del Scn.Bricker_printTimes
+    del Scn.Bricker_runningBlockingOperation
+    del bpy.types.Material.num_averaged
     del bpy.types.Object.cmlist_id
     del bpy.types.Object.isBrick
     del bpy.types.Object.isBrickifiedObject

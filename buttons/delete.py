@@ -62,9 +62,9 @@ class BrickerDelete(bpy.types.Operator):
         return True
 
     def execute(self, context):
+        scn, cm, _ = getActiveContextInfo()
         scn.Bricker_runningBlockingOperation = True
         try:
-            scn, cm, _ = getActiveContextInfo()
             self.undo_stack.iterateStates(cm)
             self.runFullDelete()
         except:
