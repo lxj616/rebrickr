@@ -251,9 +251,9 @@ def getMostCommonDir(i_s, i_e, norms):
 def setBrickTypeForSlope(bricksDict, key, keysInBrick):
     norms = [bricksDict[k]["near_normal"] for k in keysInBrick if bricksDict[k]["near_normal"] is not None]
     dir0 = getMostCommonDir(0, 1, norms) if len(norms) != 0 else ""
-    if dir0 == "^" and legalBrickSize(s=bricksDict[key]["size"], t="SLOPE") and not bricksDict[key]["top_exposed"]:
+    if dir0 == "^" and legalBrickSize(s=bricksDict[key]["size"], t="SLOPE") and bricksDict[key]["top_exposed"]:
         typ = "SLOPE"
-    elif dir0 == "v" and legalBrickSize(s=bricksDict[key]["size"], t="SLOPE_INVERTED") and not bricksDict[key]["bot_exposed"]:
+    elif dir0 == "v" and legalBrickSize(s=bricksDict[key]["size"], t="SLOPE_INVERTED") and bricksDict[key]["bot_exposed"]:
         typ = "SLOPE_INVERTED"
     else:
         typ = "BRICK"
