@@ -279,7 +279,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 for x in range(len(brickFreqMatrix)):
                     if highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].x + dist.x + miniDist.x < nextIntersection.x:
                         i = (i + 1) % 2
-                        if i == 0:
+                        if i == 0 and brickFreqMatrix[x][y][z] == 0:
                             brickFreqMatrix[x][y][z] = val
                             continue
                     intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z, miniDist)
@@ -300,7 +300,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 for y in range(len(brickFreqMatrix[0])):
                     if highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].y + dist.y + miniDist.y < nextIntersection.y:
                         i = (i + 1) % 2
-                        if i == 0:
+                        if i == 0 and brickFreqMatrix[x][y][z] == 0:
                             brickFreqMatrix[x][y][z] = val
                             continue
                     intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z, miniDist)
@@ -320,7 +320,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 for z in range(len(brickFreqMatrix[0][0])):
                     if highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].z + dist.z + miniDist.z < nextIntersection.z:
                         i = (i + 1) % 2
-                        if i == 0:
+                        if i == 0 and brickFreqMatrix[x][y][z] == 0:
                             brickFreqMatrix[x][y][z] = val
                             continue
                     intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
