@@ -75,7 +75,7 @@ legalBricks = {
                          {"s":[6, 6], "pt":"10202"},
                          {"s":[8, 16], "pt":"48288"}],
         "STUD":         [{"s":[1, 1], "pt":"4073"}],
-        "HOLLOW_STUD":  [{"s":[1, 1], "pt":"85861"}],
+        "STUD_HOLLOW":  [{"s":[1, 1], "pt":"85861"}],
         # "WING":[[2, 3],
         #         [2, 4],
         #         [3, 6],
@@ -125,6 +125,7 @@ legalBricks = {
                          {"s":[2, 8], "pt":"4445"},
                          {"s":[3, 3], "pt":"4161"},
                          {"s":[4, 3], "pt":"3297"}], # TODO: Add 6x3 option with studs missing between outer two (needs to be coded into slope.py generator)
+        "SLOPE_INVERTED":[],
         # "SLOPE_INVERTED":[[1, 2],
         #                   [1, 3],
         #                   [2, 2],

@@ -104,7 +104,7 @@ def test_brick_generators():
         newObjFromBmesh(6,  makeRound1x1(dimensions, circleVerts=16, type="CYLINDER",    detail=detail), "1x1 Round " + detail,  loc=(offset, 1.5,0))
         newObjFromBmesh(6,  makeRound1x1(dimensions, circleVerts=16, type="CONE",        detail=detail), "1x1 Cone "  + detail,  loc=(offset, 0.5,0))
         newObjFromBmesh(6,  makeRound1x1(dimensions, circleVerts=16, type="STUD",        detail=detail), "1x1 Stud "  + detail,  loc=(offset,-0.5,0))
-        newObjFromBmesh(6,  makeRound1x1(dimensions, circleVerts=16, type="HOLLOW_STUD", detail=detail), "1x1 Stud2 "  + detail, loc=(offset,-1.5,0))
+        newObjFromBmesh(6,  makeRound1x1(dimensions, circleVerts=16, type="STUD_HOLLOW", detail=detail), "1x1 Stud2 "  + detail, loc=(offset,-1.5,0))
         # SLOPE BRICKS
         i = 0
         for posNeg in ["+", "-"]:

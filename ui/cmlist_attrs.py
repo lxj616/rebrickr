@@ -196,7 +196,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     brickType = EnumProperty(
         name="Brick Type",
         description="Type of brick used to build the model",
-        items=[("HOLLOW_STUDS", "Hollow Studs", "Use this brick type to build the model"),
+        items=[("STUD_HOLLOWS", "Hollow Studs", "Use this brick type to build the model"),
                ("STUDS", "Studs", "Use this brick type to build the model"),
                ("SLOPES", "Slopes (fast)", "Use this brick type to build the model"),
                ("PLATES", "Plates", "Use this brick type to build the model"),

@@ -340,6 +340,23 @@ def getNormalDirection(normal, maxDist=0.77):
     return minDir
 
 
+def getFlipRot(dir):
+    flip = False
+    rot = False
+    if dir == "X-":
+        flip = True
+    elif dir == "Y+":
+        rot = True
+    elif dir == "Y-":
+        flip = True
+        rot = True
+    return flip, rot
+
+
+def legalBrickSize(s, t):
+     return s[:2] in bpy.props.Bricker_legal_brick_sizes[s[2]][t]
+
+
 def get_override(area_type, region_type):
     for area in bpy.context.screen.areas:
         if area.type == area_type:

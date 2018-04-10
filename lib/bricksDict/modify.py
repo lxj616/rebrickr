@@ -105,7 +105,7 @@ def updateBrickSizes(cm, bricksDict, key, availableKeys, loc, brickSizes, zStep,
                     newSize = [i+1, j+1, k+zStep]
                     if newSize in brickSizes:
                         continue
-                    if not (newSize[2] == 1 and height3Only) and (not cm.legalBricksOnly or newSize[:2] in bpy.props.Bricker_legal_brick_sizes[newSize[2]][tallType if newSize[2] == 3 else shortType]):
+                    if not (newSize[2] == 1 and height3Only) and (not cm.legalBricksOnly or legalBrickSize(s=newSize, t=tallType if newSize[2] == 3 else shortType)):
                         brickSizes.append(newSize)
             if breakOuter1: break
         breakOuter1 = False
@@ -141,6 +141,9 @@ def attemptMerge(cm, bricksDict, key, availableKeys, defaultSize, zStep, randSta
         # set brick type if necessary
         if flatBrickType(cm):
             bricksDict[k]["type"] = shortType if brickSize[2] == 1 else tallType
+    setFlippedAndRotated(bricksDict, key, keysInBrick)
+    if bricksDict[key]["type"] == "SLOPE":
+        setBrickTypeForSlope(bricksDict, key, keysInBrick)
 
     return brickSize
 
@@ -235,3 +238,29 @@ def brickAvail(cm, sourceBrick, brick):
         return False
     # returns True if brick is present, brick isn't drawn already, and brick materials match or mergeInconsistentMats is True, or one of the mats is "" (internal)
     return brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats or cm.materialType == "NONE")
+
+
+def getMostCommon(i_s, i_e, norms):
+    return most_common([n[i_s:i_e] if n is not None else "" for n in norms])
+
+def setBrickTypeForSlope(bricksDict, key, keysInBrick):
+    norms = [bricksDict[k]["near_normal"] for k in keysInBrick]
+    dir0 = getMostCommon(0, 1, norms)
+    if dir0 == "^":
+        typ = "SLOPE"
+    elif dir0 == "v" and legalBrickSize(s=bricksDict[key]["size"], t="SLOPE_INVERTED"):
+        typ = "SLOPE_INVERTED"
+    else:
+        typ = "BRICK"
+    bricksDict[key]["type"] = typ
+
+
+def setFlippedAndRotated(bricksDict, key, keysInBrick):
+    norms = [bricksDict[k]["near_normal"] for k in keysInBrick]
+
+    dir1 = getMostCommon(1, 3, norms)
+    flip, rot = getFlipRot(dir1)
+
+    # set flipped and rotated
+    bricksDict[key]["flipped"] = flip
+    bricksDict[key]["rotated"] = rot

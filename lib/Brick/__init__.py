@@ -43,11 +43,11 @@ class Bricks:
         # create brick mesh
         if type in ["BRICK", "PLATE", "CUSTOM"]:
             brickBM = makeStandardBrick(dimensions=dimensions, brickSize=size, type=type, circleVerts=circleVerts, detail=undersideDetail, stud=stud, cm=cm)
-        elif type in ["CYLINDER", "CONE", "STUD", "HOLLOW_STUD"]:
+        elif type in ["CYLINDER", "CONE", "STUD", "STUD_HOLLOW"]:
             brickBM = makeRound1x1(dimensions=dimensions, circleVerts=circleVerts, type=type, detail=undersideDetail, cm=cm)
         elif type in ["TILE", "TILE_GRILL"]:
             brickBM = makeTile(dimensions=dimensions, brickSize=size, circleVerts=circleVerts, type=type, detail=undersideDetail, cm=cm)
-        elif type in ["SLOPE", "TALL_SLOPE"]:
+        elif type in ["SLOPE", "SLOPE_INVERTED", "TALL_SLOPE"]:
             # determine brick direction
             directions = ["X+", "Y+", "X-", "Y-"]
             maxIdx = size.index(max(size[:2]))

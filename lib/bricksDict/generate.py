@@ -253,7 +253,6 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     axes = axes.lower()
     dist = coordMatrix[1][1][1] - coordMatrix[0][0][0]
     highEfficiency = cm.insidenessRayCastDir == "HIGH EFFICIENCY"
-    print(dist)
 
     # initialize values used for printing status
     denom = (len(brickFreqMatrix[0][0]) + len(brickFreqMatrix[0]) + len(brickFreqMatrix))/100
@@ -657,7 +656,8 @@ def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=
                 nf = faceIdxMatrix[x][y][z]["idx"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 ni = faceIdxMatrix[x][y][z]["loc"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 nn = faceIdxMatrix[x][y][z]["normal"] if type(faceIdxMatrix[x][y][z]) == dict else None
-                normal_direction = getNormalDirection(nn)
+                norm_dir = getNormalDirection(nn)
+                flipped, rotated = getFlipRot("" if norm_dir is None else norm_dir[1:])
                 rgba = rgbaMatrix[x][y][z] if rgbaMatrix else getUVPixelColor(scn, cm, source, nf, ni, uv_images)
                 draw = brickFreqMatrix[x][y][z] >= threshold
                 # create bricksDict entry for current brick
@@ -668,10 +668,12 @@ def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=
                     co= (co - source_details.mid).to_tuple(),
                     near_face= nf,
                     near_intersection= ni if ni is None else vecToStr(ni),
-                    near_normal= normal_direction,
+                    near_normal= norm_dir,
                     rgba= rgba,
                     mat_name= "",  # defined in 'updateMaterials' function
                     bType= "PLATE" if brickType == "BRICKS AND PLATES" else (brickType[:-1] if brickType.endswith("S") else brickType),
+                    flipped= flipped,
+                    rotated= rotated,
                 )
     cm.numBricksGenerated = i
 

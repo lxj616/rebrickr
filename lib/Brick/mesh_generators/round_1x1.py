@@ -42,14 +42,14 @@ def makeRound1x1(dimensions:dict, circleVerts:int=None, type:str="CYLINDER", det
     Keyword Arguments:
         dimensions  -- dictionary containing brick dimensions
         circleVerts -- number of vertices per circle of cylinders
-        type        -- type of round 1x1 brick in ["CONE", "CYLINDER", "STUD", "HOLLOW_STUD"]
+        type        -- type of round 1x1 brick in ["CONE", "CYLINDER", "STUD", "STUD_HOLLOW"]
         detail      -- level of brick detail (options: ["FLAT", "LOW", "MEDIUM", "HIGH"])
         cm          -- cmlist item of model
         bme         -- bmesh object in which to create verts
 
     """
     # ensure type argument passed is valid
-    assert type in ["CONE", "CYLINDER", "STUD", "HOLLOW_STUD"]
+    assert type in ["CONE", "CYLINDER", "STUD", "STUD_HOLLOW"]
     # create new bmesh object
     bme = bmesh.new() if not bme else bme
     cm = cm or getActiveContextInfo()[1]
@@ -63,7 +63,7 @@ def makeRound1x1(dimensions:dict, circleVerts:int=None, type:str="CYLINDER", det
     # if making stud, detail should never get beyond low
     detail = "LOW" if type == "STUD" and detail == "MEDIUM" else detail
     # if making hollow stud, detail should never get below medium
-    detail = "MEDIUM" if type == "HOLLOW_STUD" else detail
+    detail = "MEDIUM" if type == "STUD_HOLLOW" else detail
 
     # set brick height and thickness
     height = dimensions["height"] if not flatBrickType(cm) or "STUD" in type else dimensions["height"] * 3

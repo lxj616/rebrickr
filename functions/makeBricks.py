@@ -127,6 +127,9 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             topExposed, botExposed = getBrickExposure(cm, bricksDict, key)
             bricksDict[key]["top_exposed"] = topExposed
             bricksDict[key]["bot_exposed"] = botExposed
+            setFlippedAndRotated(bricksDict, key, [key])
+            if bricksDict[key]["type"] == "SLOPE":
+                setBrickTypeForSlope(bricksDict, key, [key])
     else:
         # initialize progress bar around cursor
         old_percent = updateProgressBars(printStatus, cursorStatus, 0, -1, "Merging")
