@@ -24,7 +24,6 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add 'exclusion' functionality so that one model doesn’t create bricks where another model already did
       * Add many more brick types, including inverted sloped bricks and tiles
       * Generate model with bricks and slopes to more closely approximate original mesh
-      * Don't delete the Brick Group when updating
       * Transfer matObj functionality to new custom list property
   * Known issues:
       * For models with thin outer shells, Bricker may use color of inside face instead of outside face for brick material (see snapchat hotdog file)

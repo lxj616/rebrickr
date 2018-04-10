@@ -189,7 +189,6 @@ class BrickerBrickify(bpy.types.Operator):
         cm.lastBrickType = cm.brickType
         cm.lastMaterialType = cm.materialType
         cm.lastShellThickness = cm.shellThickness
-        cm.lastInternalSupports = cm.internalSupports
         cm.lastMatrixSettings = getMatrixSettings()
         cm.lastIsSmoke = cm.isSmoke
         cm.materialIsDirty = False

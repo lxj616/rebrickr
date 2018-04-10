@@ -86,7 +86,8 @@ class InitializeUndoStack(Operator):
     def __init__(self):
         self.undo_stack = UndoStack.get_instance()
         bpy.props.bricker_initialized = True
-        self.report({"INFO"}, "Bricker initialized")
+        if self.action == "NONE":
+            self.report({"INFO"}, "Bricker initialized")
         # self.ui = Bricker_UI.get_instance()
 
     ###################################################

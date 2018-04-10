@@ -186,11 +186,6 @@ def updateBFMatrix(scn, cm, x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMat
 
     return intersections, nextIntersection
 
-def setNF(matShellDepth, j, orig, target, faceIdxMatrix):
-    """ match value in faceIdxMatrix of 'target' to 'orig' if within matShellDepth """
-    if ((1-j)*100) < matShellDepth:
-        faceIdxMatrix[target[0]][target[1]][target[2]] = faceIdxMatrix[orig[0]][orig[1]][orig[2]]
-
 def isInternal(bricksDict, key):
     """ check if brick entry in bricksDict is internal """
     val = bricksDict[key]["val"]
@@ -304,7 +299,6 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                     intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
                     if intersections == 0:
                         break
-
 
     # mark inside freqs as internal (-1) and outside next to outsides for removal
     adjustBFM(brickFreqMatrix, cm.verifyExposure, axes=axes)
@@ -453,6 +447,7 @@ def adjustBFM(brickFreqMatrix, verifyExposure, axes=""):
                     brickFreqMatrix[x][y][z] = None
 
 
+@timed_call("updateInternals", precision=5)
 def updateInternals(brickFreqMatrix, cm=None, faceIdxMatrix=None):
     """ set up brickFreqMatrix values for bricks inside shell (-1) """
     j = 1
@@ -464,6 +459,7 @@ def updateInternals(brickFreqMatrix, cm=None, faceIdxMatrix=None):
     for i in range(100):
         j = round(j-0.01, 2)
         gotOne = False
+        setNF = (1 - j) * 100 < cm.matShellDepth
         for x in range(len(brickFreqMatrix)):
             for y in range(len(brickFreqMatrix[0])):
                 for z in range(len(brickFreqMatrix[0][0])):
@@ -482,7 +478,45 @@ def updateInternals(brickFreqMatrix, cm=None, faceIdxMatrix=None):
                             continue
                         if curVal == round(j + 0.01,2):
                             brickFreqMatrix[x][y][z] = j
-                            if faceIdxMatrix: setNF(cm.matShellDepth, j, idx, (x,y,z), faceIdxMatrix)
+                            if faceIdxMatrix and setNF: faceIdxMatrix[x][y][z] = faceIdxMatrix[idx[0]][idx[1]][idx[2]]
+                            gotOne = True
+                            break
+        if not gotOne:
+            break
+
+
+def updateInternals(brickFreqMatrix, cm=None, faceIdxMatrix=None):
+    """ set up brickFreqMatrix values for bricks inside shell (-1) """
+    j = 1
+    # NOTE: Following two lines are alternative for calculating partial brickFreqMatrix (insideness only calculated as deep as necessary)
+    # denom = min([(cm.shellThickness-1), max(len(brickFreqMatrix)-2, len(brickFreqMatrix[0])-2, len(brickFreqMatrix[0][0])-2)])/2
+    # for idx in range(cm.shellThickness-1):
+    # NOTE: Following two lines are alternative for calculating full brickFreqMatrix
+    denom = max(len(brickFreqMatrix)-2, len(brickFreqMatrix[0])-2, len(brickFreqMatrix[0][0])-2)/2
+    for i in range(100):
+        j0 = j
+        j = round(j-0.01, 2)
+        gotOne = False
+        setNF = (1 - j) * 100 < cm.matShellDepth
+        for x in range(len(brickFreqMatrix)):
+            for y in range(len(brickFreqMatrix[0])):
+                for z in range(len(brickFreqMatrix[0][0])):
+                    if brickFreqMatrix[x][y][z] != -1:
+                        continue
+                    idxsToCheck = [(x+1, y, z),
+                                   (x-1, y, z),
+                                   (x, y+1, z),
+                                   (x, y-1, z),
+                                   (x, y, z+1),
+                                   (x, y, z-1)]
+                    for idx in idxsToCheck:
+                        try:
+                            curVal = brickFreqMatrix[idx[0]][idx[1]][idx[2]]
+                        except IndexError:
+                            continue
+                        if curVal == j0:
+                            brickFreqMatrix[x][y][z] = j
+                            if faceIdxMatrix and setNF: faceIdxMatrix[x][y][z] = faceIdxMatrix[idx[0]][idx[1]][idx[2]]
                             gotOne = True
                             break
         if not gotOne:
@@ -575,6 +609,7 @@ def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=
     i = 0
     bricksDict = {}
     threshold = getThreshold(cm)
+    brickType = cm.brickType  # prevents cm.brickType update function from running over and over in for loop
     # get uv_texture image and pixels for material calculation
     uv_images = getUVImages(source)
     for x in range(len(coordMatrix)):
@@ -596,12 +631,6 @@ def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=
                 normal_direction = getNormalDirection(nn)
                 rgba = rgbaMatrix[x][y][z] if rgbaMatrix else getUVPixelColor(scn, cm, source, nf, ni, uv_images)
                 draw = brickFreqMatrix[x][y][z] >= threshold
-                # store first key to active keys
-                if cm.activeKeyX == -1 and draw:
-                    keyVals = bKey.split(",")
-                    cm.activeKeyX = int(keyVals[0])
-                    cm.activeKeyY = int(keyVals[1])
-                    cm.activeKeyZ = int(keyVals[2])
                 # create bricksDict entry for current brick
                 bricksDict[bKey] = createBricksDictEntry(
                     name= 'Bricker_%(n)s_brick__%(bKey)s' % locals(),
@@ -613,7 +642,7 @@ def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=
                     near_normal= normal_direction,
                     rgba= rgba,
                     mat_name= "",  # defined in 'updateMaterials' function
-                    bType= "PLATE" if cm.brickType == "BRICKS AND PLATES" else (cm.brickType[:-1] if cm.brickType.endswith("S") else cm.brickType),
+                    bType= "PLATE" if brickType == "BRICKS AND PLATES" else (brickType[:-1] if brickType.endswith("S") else brickType),
                 )
     cm.numBricksGenerated = i
 

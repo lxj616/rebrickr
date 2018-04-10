@@ -587,7 +587,6 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     lastSourceMid = StringProperty(default="-1,-1,-1")
     lastMaterialType = StringProperty(default="SOURCE")
     lastShellThickness = IntProperty(default=1)
-    lastInternalSupports = StringProperty(default="")
     lastBrickType = StringProperty(default="BRICKS")
     lastMatrixSettings = StringProperty(default="")
     lastBevelWidth = FloatProperty()

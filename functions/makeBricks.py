@@ -65,7 +65,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     # get bricksDict keys in sorted order
     if keys == "ALL":
         keys = list(bricksDict.keys())
-    keys.sort(key=None if cm.mergeType == "RANDOM" else lambda x: (strToList(x)[0], strToList(x)[1]))
+    keys.sort(key=lambda x: (strToList(x)[0], strToList(x)[1]))
     # get dictionary of keys based on z value
     keysDict = {}
     for k0 in keys:
@@ -76,6 +76,12 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             else:
                 keysDict[z] = [k0]
     denom = sum([len(keysDict[z0]) for z0 in keysDict.keys()])
+    # store first key to active keys
+    if cm.activeKeyX == -1 and len(keys) > 0:
+        loc = strToList(keys[0])
+        cm.activeKeyX = int(loc[0])
+        cm.activeKeyY = int(loc[1])
+        cm.activeKeyZ = int(loc[2])
 
     # get brick group
     group_name = group_name or 'Bricker_%(n)s_bricks' % locals()

@@ -104,7 +104,7 @@ class BrickModelsPanel(Panel):
         row.template_list("Bricker_UL_cmlist_items", "", scn, "cmlist", scn, "cmlist_index", rows=rows)
 
         col = row.column(align=True)
-        col.operator("cmlist.list_action", icon='ZOOMIN', text="").action = 'ADD'
+        col.operator("cmlist.list_action" if bpy.props.bricker_initialized else "bricker.initialize", text="", icon="ZOOMIN").action = 'ADD'
         col.operator("cmlist.list_action", icon='ZOOMOUT', text="").action = 'REMOVE'
         col.menu("Bricker_specials_menu", icon='DOWNARROW_HLT', text="")
         if len(scn.cmlist) > 1:
@@ -728,9 +728,8 @@ class MaterialsPanel(Panel):
                 elif cm.materialIsDirty or cm.brickMaterialsAreDirty:
                     row = col.row(align=True)
                     row.label("Run 'Update Model' to apply changes")
-            col = layout.column(align=True)
         elif cm.materialType == "SOURCE":
-            if cm.lastShellThickness > 1 or cm.lastInternalSupports != "NONE":
+            if cm.shellThickness > 1 or cm.internalSupports != "NONE":
                 col = layout.column(align=True)
                 row = col.row(align=True)
                 row.prop_search(cm, "internalMatName", bpy.data, "materials", text="Internal")
@@ -740,11 +739,11 @@ class MaterialsPanel(Panel):
                 col = layout.column(align=True)
                 row = col.row(align=True)
                 row.prop(cm, "matShellDepth")
-            col = layout.column(align=True)
 
         obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)") if cm.modelCreated or cm.animated else bpy.data.objects.get(cm.source_name)
         if obj and cm.materialType == "SOURCE":
             if len(obj.data.uv_layers) > 0:
+                col = layout.column(align=True)
                 row = col.row(align=True)
                 row.prop(cm, "useUVMap", text="UV Map")
                 if cm.useUVMap:
