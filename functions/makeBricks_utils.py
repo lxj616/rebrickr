@@ -76,8 +76,6 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
         m = bpy.data.meshes.get(meshName)
         if m is None:
             m = bpy.data.meshes.new(meshName)
-        elif len(m.materials.keys()) > 0:
-            m.materials.clear()
         # send bmesh data to 'm' edit mesh
         bm.to_mesh(m)
     # center mesh origin
@@ -104,6 +102,8 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
         # set brick location
         brick.location = brickLoc
         # set brick material
+        if len(m.materials) > 0 or len(brick.material_slots) > 0:
+            m.materials.clear()
         if mat is not None or internalMat is not None:
             brick.data.materials.append(mat or internalMat)
         # append to bricksCreated
@@ -118,6 +118,8 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
             mats.append(mat)
             matIdx = len(mats) - 1
         # set material for mesh
+        if len(m.materials) > 0:
+            m.materials.clear()
         if mat is not None:
             m.materials.append(mat)
             brickD["mat_name"] = mat.name

@@ -196,14 +196,14 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     brickType = EnumProperty(
         name="Brick Type",
         description="Type of brick used to build the model",
-        items=[("PLATES", "Plates", "Use this brick type to build the model"),
-               ("BRICKS", "Bricks (fast)", "Use this brick type to build the model"),
-               ("BRICKS AND PLATES", "Bricks and Plates", "Use this brick type to build the model"),
+        items=[("HOLLOW_STUDS", "Hollow Studs", "Use this brick type to build the model"),
                ("STUDS", "Studs", "Use this brick type to build the model"),
-               ("HOLLOW_STUDS", "Hollow Studs", "Use this brick type to build the model"),
-               ("CYLINDERS", "Cylinders (fast)", "Use this brick type to build the model"),
                ("SLOPES", "Slopes (fast)", "Use this brick type to build the model"),
-               ("CUSTOM", "Custom", "Use custom object to build the model")],
+               ("PLATES", "Plates", "Use this brick type to build the model"),
+               ("CYLINDERS", "Cylinders (fast)", "Use this brick type to build the model"),
+               ("CUSTOM", "Custom", "Use custom object to build the model"),
+               ("BRICKS AND PLATES", "Bricks and Plates", "Use this brick type to build the model"),
+               ("BRICKS", "Bricks (fast)", "Use this brick type to build the model")],
         update=dirtyMatrix,
         default="BRICKS")
     alignBricks = BoolProperty(
@@ -587,6 +587,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     lastSourceMid = StringProperty(default="-1,-1,-1")
     lastMaterialType = StringProperty(default="SOURCE")
     lastShellThickness = IntProperty(default=1)
+    lastInternalSupports = StringProperty(default="")
     lastBrickType = StringProperty(default="BRICKS")
     lastMatrixSettings = StringProperty(default="")
     lastBevelWidth = FloatProperty()

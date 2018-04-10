@@ -730,7 +730,7 @@ class MaterialsPanel(Panel):
                     row.label("Run 'Update Model' to apply changes")
             col = layout.column(align=True)
         elif cm.materialType == "SOURCE":
-            if cm.shellThickness > 1 or cm.internalSupports != "NONE":
+            if cm.lastShellThickness > 1 or cm.lastInternalSupports != "NONE":
                 col = layout.column(align=True)
                 row = col.row(align=True)
                 row.prop_search(cm, "internalMatName", bpy.data, "materials", text="Internal")
