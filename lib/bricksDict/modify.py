@@ -57,10 +57,11 @@ def updateMaterials(bricksDict, source, origSource, curFrame=None):
             ni = strToList(bricksDict[key]["near_intersection"], item_type=float)
             rgba, matName = getBrickRGBA(scn, cm, source, nf, ni, uv_images)
         # get material with snapped RGBA value
+        matObj = getMatObject(cm)
         if rgba is None:
             matName = ""
-        elif cm.colorSnap == "ABS" and brick_materials_loaded():
-            matName = findNearestBrickColorName(rgba, matObj=getMatObject(cm))
+        elif cm.colorSnap == "ABS" and len(matObj.data.materials) > 0:
+            matName = findNearestBrickColorName(rgba, matObj=matObj)
         elif cm.colorSnap == "RGB" or (cm.useUVMap and len(source.data.uv_layers) > 0) or cm.isSmoke:
             matName = createNewMaterial(cm.source_name, rgba, rgba_vals, cm.includeTransparency, curFrame)
         if rgba is not None:

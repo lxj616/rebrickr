@@ -355,8 +355,8 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
                 yn = [int(yn0 * y), int(yn0 * (y + 1))]
                 zn = [int(zn0 * z), int(zn0 * (z + 1))]
                 xn[1] = xn[1] + 1 if xn[1] == xn[0] and xn[0] < smoke_res[0] else xn[1]
-                yn[1] = yn[1] + 1 if yn[1] == yn[0] and yn[0] < smoke_res[0] else yn[1]
-                zn[1] = zn[1] + 1 if zn[1] == zn[0] and zn[0] < smoke_res[0] else zn[1]
+                yn[1] = yn[1] + 1 if yn[1] == yn[0] and yn[0] < smoke_res[1] else yn[1]
+                zn[1] = zn[1] + 1 if zn[1] == zn[0] and zn[0] < smoke_res[2] else zn[1]
                 for x1 in range(xn[0], xn[1]):
                     for y1 in range(yn[0], yn[1]):
                         for z1 in range(zn[0], zn[1]):
