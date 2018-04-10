@@ -33,18 +33,12 @@ from .cmlist_utils import *
 
 
 # ui list item actions
-class Bricker_cmlist_actions(bpy.types.Operator):
+class cmlist_actions(bpy.types.Operator):
     bl_idname = "cmlist.list_action"
     bl_label = "Brick Model List Action"
 
-    action = bpy.props.EnumProperty(
-        items=(
-            ('UP', "Up", ""),
-            ('DOWN', "Down", ""),
-            ('REMOVE', "Remove", ""),
-            ('ADD', "Add", ""),
-        )
-    )
+    ################################################
+    # Blender Operator methods
 
     # @classmethod
     # def poll(self, context):
@@ -80,7 +74,23 @@ class Bricker_cmlist_actions(bpy.types.Operator):
             handle_exception()
         return{"FINISHED"}
 
-    def addItem(self):
+    ###################################################
+    # class variables
+
+    action = bpy.props.EnumProperty(
+        items=(
+            ('UP', "Up", ""),
+            ('DOWN', "Down", ""),
+            ('REMOVE', "Remove", ""),
+            ('ADD', "Add", ""),
+        )
+    )
+
+    #############################################
+    # class methods
+
+    @staticmethod
+    def addItem():
         scn = bpy.context.scene
         active_object = scn.objects.active
         # if active object isn't on visible layer, don't set it as default source for new model
@@ -167,6 +177,8 @@ class Bricker_cmlist_actions(bpy.types.Operator):
     def updateIdxs(self, cmlist):
         for i,cm in enumerate(cmlist):
             cm.idx = i
+
+    #############################################
 
 
 # copy settings from current index to all other indices

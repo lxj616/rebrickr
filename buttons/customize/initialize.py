@@ -30,6 +30,7 @@ from bpy.types import Operator
 from .undo_stack import *
 from ...ui.app_handlers import brickerRunningBlockingOp
 from ...functions import *
+from ...ui.cmlist_actions import *
 
 
 class InitializeUndoStack(Operator):
@@ -68,6 +69,9 @@ class InitializeUndoStack(Operator):
 
     def execute(self, context):
         # self.ui.start()
+        # add new scn.cmlist item
+        if self.action == "ADD":
+            cmlist_actions.addItem()
         # run modal
         context.window_manager.modal_handler_add(self)
         return {"RUNNING_MODAL"}
@@ -84,6 +88,17 @@ class InitializeUndoStack(Operator):
         bpy.props.bricker_initialized = True
         self.report({"INFO"}, "Bricker initialized")
         # self.ui = Bricker_UI.get_instance()
+
+    ###################################################
+    # class variables
+
+    action = bpy.props.EnumProperty(
+        items=(
+            ("NONE", "None", ""),
+            ("ADD", "Add Model", ""),
+        ),
+        default="NONE"
+    )
 
     ################################################
     # event handling functions

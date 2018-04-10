@@ -113,7 +113,9 @@ class BrickModelsPanel(Panel):
             col.operator("cmlist.list_action", icon='TRIA_DOWN', text="").action = 'DOWN'
 
         # draw menu options below UI list
-        if scn.cmlist_index != -1:
+        if scn.cmlist_index == -1:
+            layout.operator("cmlist.list_action" if bpy.props.bricker_initialized else "bricker.initialize", text="New Brick Model", icon="ZOOMIN").action = 'ADD'
+        else:
             cm = scn.cmlist[scn.cmlist_index]
             n = cm.source_name
             # first, draw source object text
@@ -197,8 +199,6 @@ class BrickModelsPanel(Panel):
 
             col = layout.column(align=True)
             row = col.row(align=True)
-        else:
-            layout.operator("cmlist.list_action", icon='ZOOMIN', text="New Brick Model").action = 'ADD'
 
         if bpy.data.texts.find('Bricker_log') >= 0:
             split = layout.split(align=True, percentage=0.9)
