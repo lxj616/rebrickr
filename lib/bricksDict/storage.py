@@ -38,7 +38,7 @@ def getBricksDict(dType="MODEL", source=None, source_details=None, dimensions=No
     cm = cm or scn.cmlist[scn.cmlist_index]
     loadedFromCache = False
     # if bricksDict can be pulled from cache
-    if not cm.matrixIsDirty and not (cm.BFMCache == "" and bricker_bfm_cache.get(cm.id) is None) and not (cm.animIsDirty and "ANIM" in dType):
+    if not cm.matrixIsDirty and not (cm.BFMCache not in [None, ""] and bricker_bfm_cache.get(cm.id) is None) and not (cm.animIsDirty and "ANIM" in dType):
         # try getting bricksDict from light cache, then deep cache
         bricksDict = bricker_bfm_cache.get(cm.id) or json.loads(cm.BFMCache)
         loadedFromCache = True

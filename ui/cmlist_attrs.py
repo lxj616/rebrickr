@@ -29,6 +29,7 @@ from bpy.props import *
 # Addon imports
 from ..functions import *
 from .cmlist_utils import *
+from .matlist_utils import *
 
 
 # Create custom property group
@@ -121,17 +122,28 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         min=0.0000000001, max=1,
         default=0.1)
     smokeBrightness = FloatProperty(
-        name="Brightness",
-        description="Add brightness to colors read from smoke data",
+        name="Smoke Brightness",
+        description="Add brightness to smoke colors read from smoke data",
         update=dirtyMatrix,
         min=-4, max=100,
         default=1)
     smokeSaturation = FloatProperty(
-        name="Saturation",
-        description="Change saturation level of colors read from smoke data",
+        name="Smoke Saturation",
+        description="Change saturation level of smoke colors read from smoke data",
         update=dirtyMatrix,
         min=0, max=100,
         default=1)
+    flameColor = FloatVectorProperty(
+        name="Hex Value",
+        subtype='COLOR',
+        update=dirtyMatrix,
+        default=[1.0, 0.75, 0.35])
+    flameIntensity = FloatProperty(
+        name="Flame Intensity",
+        description="Intensity of the flames",
+        update=dirtyMatrix,
+        min=1, max=50,
+        default=4)
     splitModel = BoolProperty(
         name="Split Model",
         description="Split model into separate objects (slower)",
@@ -288,7 +300,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyMaterial,
         default="")
     matShellDepth = IntProperty(
-        name="Material Shell Depth",
+        name="Shell Material Depth",
         description="Depth to which the outer materials should be applied (1 = Only exposed bricks",
         step=1,
         min=1, max=100,
@@ -296,7 +308,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyModel)
     mergeInconsistentMats = BoolProperty(
         name="Merge Inconsistent Materials",
-        description="Merge 1x1 bricks to form larger bricks whether or not they share a material",
+        description="Merge bricks whether or not they share a material",
         default=False,
         update=dirtyBuild)
     randomMatSeed = IntProperty(
@@ -341,6 +353,11 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         min=0, max=2,
         default=1,
         update=dirtyMaterial)
+    targetMaterial = StringProperty(
+        name="Target Material",
+        description="Select material to add to materials list",
+        update=addMaterialToList,
+        default="")
 
     # BRICK DETAIL SETTINGS
     studDetail = EnumProperty(

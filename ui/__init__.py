@@ -33,6 +33,8 @@ props = bpy.props
 from .cmlist_attrs import *
 from .cmlist_actions import *
 from .app_handlers import *
+from .matlist_window import *
+from .matlist_actions import *
 from ..lib.bricksDict import *
 from ..lib.Brick.test_brick_generators import *
 from ..buttons.delete import BrickerDelete
@@ -99,7 +101,7 @@ class BrickModelsPanel(Panel):
         else:
             rows = 4
         row = layout.row()
-        row.template_list("Bricker_UL_items", "", scn, "cmlist", scn, "cmlist_index", rows=rows)
+        row.template_list("Bricker_UL_cmlist_items", "", scn, "cmlist", scn, "cmlist_index", rows=rows)
 
         col = row.column(align=True)
         col.operator("cmlist.list_action", icon='ZOOMIN', text="").action = 'ADD'
@@ -417,21 +419,8 @@ class ModelSettingsPanel(Panel):
         row = col.row(align=True)
         row.prop(cm, "gap")
         row = col.row(align=True)
-        row.prop(cm, "mergeSeed")
-        row = col.row(align=True)
         row.prop(cm, "connectThresh")
         row.active = cm.brickType != "CUSTOM"
-
-        if is_smoke(source):
-            col = layout.column(align=True)
-            row = col.row(align=True)
-            row.label("Smoke Settings:")
-            row = col.row(align=True)
-            row.prop(cm, "smokeThresh", text="Density Threshold")
-            row = col.row(align=True)
-            row.prop(cm, "smokeBrightness", text="Brightness")
-            row = col.row(align=True)
-            row.prop(cm, "smokeSaturation", text="Saturation")
 
         col = layout.column(align=True)
         row = col.row(align=True)
@@ -467,6 +456,56 @@ class ModelSettingsPanel(Panel):
         #     row.label("(Source is NOT single closed mesh)")
         #     # row = col.row(align=True)
         #     # row.operator("scene.make_closed_mesh", text="Make Single Closed Mesh", icon="EDIT")
+
+
+
+class SmokeSettingsPanel(Panel):
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_label       = "Smoke Settings"
+    bl_idname      = "VIEW3D_PT_tools_Bricker_smoke_settings"
+    bl_context     = "objectmode"
+    bl_category    = "Bricker"
+    bl_options     = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(self, context):
+        """ ensures operator can execute (if not, returns false) """
+        if not settingsCanBeDrawn():
+            return False
+        scn = bpy.context.scene
+        if scn.cmlist_index == -1:
+            return False
+        cm = scn.cmlist[scn.cmlist_index]
+        source = bpy.data.objects.get(cm.source_name) or bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+        if source is None:
+            return False
+        return is_smoke(source)
+
+    def draw(self, context):
+        layout = self.layout
+        scn, cm, _ = getActiveContextInfo()
+        source = bpy.data.objects.get(cm.source_name) or bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+
+        col = layout.column(align=True)
+        if is_smoke(source):
+            row = col.row(align=True)
+            row.prop(cm, "smokeThresh", text="Smoke Density")
+
+        if is_smoke(source):
+            col = layout.column(align=True)
+            row = col.row(align=True)
+            row.label("Smoke Settings:")
+            row = col.row(align=True)
+            row.prop(cm, "smokeBrightness", text="Brightness")
+            row = col.row(align=True)
+            row.prop(cm, "smokeSaturation", text="Saturation")
+            row = col.row(align=True)
+            row.label("Flame Color:")
+            row = col.row(align=True)
+            row.prop(cm, "flameColor", text="")
+            row = col.row(align=True)
+            row.prop(cm, "flameIntensity", text="Intensity")
 
 
 class BrickTypesPanel(Panel):
@@ -531,11 +570,19 @@ class BrickTypesPanel(Panel):
                 row.prop(cm, "maxWidth", text="Width")
                 row.prop(cm, "maxDepth", text="Depth")
                 row = col.row(align=True)
-                row.prop(cm, "legalBricksOnly")
-                row = col.row(align=True)
                 row.label("Merge Type:")
                 row = col.row(align=True)
                 row.prop(cm, "mergeType", text="")
+                if cm.mergeType == "RANDOM":
+                    row = col.row(align=True)
+                    row.prop(cm, "mergeSeed")
+                elif cm.mergeType == "GREEDY":
+                    row = col.row(align=True)
+                    row.prop(cm, "legalBricksOnly")
+                row = col.row(align=True)
+                row.prop(cm, "mergeInconsistentMats")
+
+
 
 
 class CustomizeModel(Panel):
@@ -671,71 +718,39 @@ class MaterialsPanel(Panel):
                 row.operator("bricker.apply_material", icon="FILE_TICK")
         elif cm.materialType == "RANDOM":
             col = layout.column(align=True)
-            if bpy.context.scene.render.engine != 'CYCLES':
-                row = col.row(align=True)
-                row.label("Switch to 'Cycles Render' engine")
-            elif brick_materials_installed:
-                if not brick_materials_loaded():
-                    row = col.row(align=True)
-                    row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
-                    col = layout.column(align=True)
-                    col.scale_y = 0.7
-                    col.label("'Brick Materials' must be")
-                    col.label("imported")
-                else:
-                    row = col.row(align=True)
-                    row.prop(cm, "randomMatSeed")
-                    if cm.modelCreated or cm.animated:
-                        if not cm.brickMaterialsAreDirty and ((not cm.useAnimation and cm.lastSplitModel) or (cm.lastMaterialType == cm.materialType)):
-                            col = layout.column(align=True)
-                            row = col.row(align=True)
-                            row.operator("bricker.apply_material", icon="FILE_TICK")
-                        elif cm.materialIsDirty or cm.brickMaterialsAreDirty:
-                            row = col.row(align=True)
-                            row.label("Run 'Update Model' to apply changes")
-
-            else:
-                col.scale_y = 0.7
-                col.label("Requires the 'Brick Materials'")
-                col.label("addon, available for purchase")
-                col.label("at the Blender Market.")
-        elif cm.materialType == "SOURCE":
-            col = layout.column(align=True)
             row = col.row(align=True)
-            row.prop(cm, "mergeInconsistentMats")
+            row.prop(cm, "randomMatSeed")
+            if cm.modelCreated or cm.animated:
+                if not cm.brickMaterialsAreDirty and ((not cm.useAnimation and cm.lastSplitModel) or (cm.lastMaterialType == cm.materialType)):
+                    col = layout.column(align=True)
+                    row = col.row(align=True)
+                    row.operator("bricker.apply_material", icon="FILE_TICK")
+                elif cm.materialIsDirty or cm.brickMaterialsAreDirty:
+                    row = col.row(align=True)
+                    row.label("Run 'Update Model' to apply changes")
+            col = layout.column(align=True)
+        elif cm.materialType == "SOURCE":
             if cm.shellThickness > 1 or cm.internalSupports != "NONE":
                 col = layout.column(align=True)
                 row = col.row(align=True)
-                row.prop(cm, "matShellDepth")
-                row = col.row(align=True)
-                row.label("Internal:")
-                row = col.row(align=True)
-                row.prop_search(cm, "internalMatName", bpy.data, "materials", text="")
-                if brick_materials_installed:
-                    if scn.render.engine != 'CYCLES':
-                        row = col.row(align=True)
-                        row.label("Switch to 'Cycles' for Brick materials")
-                    elif not brick_materials_loaded():
-                        row = col.row(align=True)
-                        row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
+                row.prop_search(cm, "internalMatName", bpy.data, "materials", text="Internal")
                 if cm.modelCreated:
-                    row = col.row(align=True)
+                    row = col.row(align=False)
                     row.operator("bricker.apply_material", icon="FILE_TICK")
+                col = layout.column(align=True)
+                row = col.row(align=True)
+                row.prop(cm, "matShellDepth")
+            col = layout.column(align=True)
 
         obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)") if cm.modelCreated or cm.animated else bpy.data.objects.get(cm.source_name)
         if obj and cm.materialType == "SOURCE":
             if len(obj.data.uv_layers) > 0:
                 row = col.row(align=True)
-                row.prop(cm, "useUVMap")
+                row.prop(cm, "useUVMap", text="UV Map")
                 if cm.useUVMap:
-                    row = col.row(align=True)
-                    split = row.split(align=True, percentage=0.65)
+                    split = row.split(align=True, percentage=0.75)
                     split.prop_search(cm, "uvImageName", bpy.data, "images", text="")
-                    split.operator("image.open", icon="FILESEL", text="Open")
-                elif scn.render.engine == "CYCLES" and cm.colorSnap != "NONE" and not cm.useUVMap:
-                    col.separator()
-                    col.separator()
-                    col.separator()
+                    split.operator("image.open", icon="FILESEL", text="")
             if len(obj.data.vertex_colors) > 0:
                 col = layout.column(align=True)
                 col.scale_y = 0.7
@@ -748,25 +763,50 @@ class MaterialsPanel(Panel):
             if cm.colorSnap == "RGB":
                 row = col.row(align=True)
                 row.prop(cm, "colorSnapAmount")
-            if cm.colorSnap == "RGB" or (cm.useUVMap and len(obj.data.uv_layers) > 0) or (cm.colorSnap == "NONE" and is_smoke(obj)):
-                row = col.row(align=True)
-                row.prop(cm, "includeTransparency")
             if cm.colorSnap == "ABS":
                 row = col.row(align=True)
                 if not brick_materials_installed:
                     row.label("'ABS Plastic Materials' not installed")
-                elif not brick_materials_loaded():
-                    row.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
                 elif scn.render.engine != 'CYCLES':
                     row.label("Switch to 'Cycles' for ABS Materials")
                 else:
-                    row.prop(cm, "transparentWeight")
+                    row.prop(cm, "transparentWeight", text="Transparent Weight")
+
+
+        if cm.materialType == "RANDOM" or (cm.materialType == "SOURCE" and cm.colorSnap == "ABS"):
+            matObj = getMatObject(cm)
+            if matObj is not None:
+                # draw materials UI list and list actions
+                numMats = len(matObj.data.materials)
+                rows = 5 if numMats > 5 else (numMats if numMats > 2 else 2)
+                split = col.split(align=True, percentage=0.85)
+                col1 = split.column(align=True)
+                col1.template_list("MATERIAL_UL_matslots_example", "", matObj, "material_slots", matObj, "active_material_index", rows=rows)
+                col1 = split.column(align=True)
+                col1.operator("bricker.mat_list_action", icon='ZOOMOUT', text="").action = 'REMOVE'
+                col1.scale_y = 1 + rows
+                if not brick_materials_installed:
+                    col.label("'ABS Plastic Materials' not installed")
+                elif not brick_materials_loaded():
+                    col.operator("scene.append_abs_plastic_materials", text="Import Brick Materials", icon="IMPORT")
+                else:
+                    col.operator("bricker.add_abs_plastic_materials", text="Add ABS Plastic Materials", icon="ZOOMIN")
+                col = layout.column(align=True)
+                split = col.split(align=True, percentage=0.25)
+                col = split.column(align=True)
+                col.label("Add:")
+                col = split.column(align=True)
+                col.prop_search(cm, "targetMaterial", bpy.data, "materials", text="")
+                col = layout.column(align=True)
+
+
                 # box = row.box()
                 # box.prop(cm, "materialsToUse")
                 # if cm.materialsToUse:
                 #     col = box.column()
                 #     layout.separator()
 
+        if obj and cm.materialType == "SOURCE":
             if scn.render.engine == "CYCLES" and cm.colorSnap != "NONE" and not cm.useUVMap:
                 col = layout.column(align=True)
                 col.scale_y = 0.5
@@ -1014,11 +1054,8 @@ class BrickDetailsPanel(Panel):
             if len(bricksDict) == 0:
                 print("[Bricker] Skipped drawing Brick Details")
             elif str(e)[1:-1] == dictKey:
-                print("[Bricker] Key '" + str(dictKey) + "' not found")
-                # try:
-                #     print("Num Keys:", str(len(bricksDict)))
-                # except:
-                #     pass
+                pass
+                # print("[Bricker] Key '" + str(dictKey) + "' not found")
             elif dictKey is None:
                 print("[Bricker] Key not set (entered else)")
             else:

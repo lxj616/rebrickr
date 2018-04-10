@@ -347,21 +347,32 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
                 # print status to terminal
                 old_percent = updateProgressBars(True, cursorStatus, (x * y * z) / denom, old_percent, "Shell")
                 d_acc = 0
-                # f_acc = 0
-                c_acc = Vector((0, 0, 0))
-                for x1 in range(int(xn0 * x), int(xn0 * (x+1))):
-                    for y1 in range(int(yn0 * y), int(yn0 * (y+1))):
-                        for z1 in range(int(zn0 * z), int(zn0 * (z+1))):
+                f_acc = 0
+                cs_acc = Vector((0, 0, 0))
+                cf_acc = Vector((0, 0, 0))
+                # get indices for
+                xn = [int(xn0 * x), int(xn0 * (x + 1))]
+                yn = [int(yn0 * y), int(yn0 * (y + 1))]
+                zn = [int(zn0 * z), int(zn0 * (z + 1))]
+                xn[1] = xn[1] + 1 if xn[1] == xn[0] and xn[0] < smoke_res[0] else xn[1]
+                yn[1] = yn[1] + 1 if yn[1] == yn[0] and yn[0] < smoke_res[0] else yn[1]
+                zn[1] = zn[1] + 1 if zn[1] == zn[0] and zn[0] < smoke_res[0] else zn[1]
+                for x1 in range(xn[0], xn[1]):
+                    for y1 in range(yn[0], yn[1]):
+                        for z1 in range(zn[0], zn[1]):
                             cur_idx = (z1 * smoke_res[1] + y1) * smoke_res[0] + x1
                             d = density_grid[cur_idx]
-                            # f = flame_grid[cur_idx]
+                            f = flame_grid[cur_idx]
                             d_acc += d
-                            # f_acc += f
-                            c_acc += d * Vector((color_grid[cur_idx * 4], color_grid[cur_idx * 4 + 1], color_grid[cur_idx * 4 + 2]))
+                            f_acc += f
+                            cs_acc += d * Vector((color_grid[cur_idx * 4], color_grid[cur_idx * 4 + 1], color_grid[cur_idx * 4 + 2]))
+                            cf_acc += Vector(f * cm.flameIntensity * (cm.flameColor * f))
                 d_ave = d_acc / ave_denom
-                # f_ave = f_acc / ave_denom
-                alpha = d_ave  #+ f_ave
-                c_ave = c_acc / (ave_denom * (d_ave if alpha != 0 else 1))
+                f_ave = f_acc / ave_denom
+                alpha = d_ave + f_ave
+                cs_ave = cs_acc / (ave_denom * (d_ave if d_ave != 0 else 1))
+                cf_ave = cf_acc / (ave_denom * (f_ave if f_ave != 0 else 1))
+                c_ave = (cs_ave + cf_ave)
                 # add brightness
                 c_ave += brightness
                 # add saturation
@@ -433,12 +444,12 @@ def adjustBFM(brickFreqMatrix, verifyExposure, axes=""):
         for y in range(yL):
             for z in range(zL):
                 if (brickFreqMatrix[x][y][z] == 0 and
-                    (x == xL - 1 or brickFreqMatrix[x+1][y][z] == 0) and
-                    (x == 0 or      brickFreqMatrix[x-1][y][z] == 0) and
-                    (y == yL - 1 or brickFreqMatrix[x][y+1][z] == 0) and
-                    (y == 0 or      brickFreqMatrix[x][y-1][z] == 0) and
-                    (z == zL - 1 or brickFreqMatrix[x][y][z+1] == 0) and
-                    (z == 0 or      brickFreqMatrix[x][y][z-1] == 0)):
+                    (x == xL - 1 or brickFreqMatrix[x+1][y][z] in [0, None]) and
+                    (x == 0 or      brickFreqMatrix[x-1][y][z] in [0, None]) and
+                    (y == yL - 1 or brickFreqMatrix[x][y+1][z] in [0, None]) and
+                    (y == 0 or      brickFreqMatrix[x][y-1][z] in [0, None]) and
+                    (z == zL - 1 or brickFreqMatrix[x][y][z+1] in [0, None]) and
+                    (z == 0 or      brickFreqMatrix[x][y][z-1] in [0, None])):
                     brickFreqMatrix[x][y][z] = None
 
 

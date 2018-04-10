@@ -89,10 +89,9 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             bGroup.objects.unlink(obj0)
 
     brick_mats = []
-    brick_materials_installed = hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
-    if cm.materialType == "RANDOM" and brick_materials_installed:
-        mats0 = bpy.data.materials.keys()
-        brick_mats = [color for color in bpy.props.abs_plastic_materials if color in mats0 and color in getAbsPlasticMaterialNames()]
+    if cm.materialType == "RANDOM":
+        matObj = getMatObject(cm)
+        brick_mats = list(matObj.data.materials.keys())
 
     # initialize random states
     randS1 = np.random.RandomState(cm.mergeSeed)  # for brickSize calc

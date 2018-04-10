@@ -363,7 +363,7 @@ def handle_upconversion(scene):
                     if group.name.startswith("Rebrickr"):
                         group.name = group.name.replace("Rebrickr", "Bricker")
             # convert from v1_3 to v1_4
-            if int(cm.version[2]) < 3:
+            if int(cm.version[2]) < 4:
                 # update "_frame_" to "_f_" in brick and group names
                 if cm.animated:
                     for i in range(cm.lastStartFrame, cm.lastStopFrame + 1):
@@ -382,6 +382,11 @@ def handle_upconversion(scene):
                     bGroup.name = rreplace(bGroup.name, "frame", "f")
                     for obj in bGroup.objects:
                         obj.name = rreplace(obj.name, "frame", "f")
+                # create "Bricker_cm.id_mats" object for each cmlist idx
+                matObjName = "Bricker_{}_mats".format(cm.id)
+                matObj = bpy.data.objects.get(matObjName)
+                if matObj is None:
+                    matObj = bpy.data.objects.new(matObjName, bpy.data.meshes.new(matObjName + "_mesh"))
 
 
 bpy.app.handlers.load_post.append(handle_upconversion)

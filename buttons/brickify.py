@@ -307,7 +307,7 @@ class BrickerBrickify(bpy.types.Operator):
         # if parent doesn't exist, get parent with new location
         parentLoc = sourceDup_details.mid
         if parent is None:
-            parent = self.getParent(Bricker_parent_on, parentLoc)
+            parent = self.getNewParent(Bricker_parent_on, parentLoc)
             cm.parent_name = parent.name
             pGroup.objects.link(parent)
         parent["loc_diff"] = self.source.location - parentLoc
@@ -403,7 +403,7 @@ class BrickerBrickify(bpy.types.Operator):
         # get parent object
         parent0 = bpy.data.objects.get(Bricker_parent_on)
         if parent0 is None:
-            parent0 = self.getParent(Bricker_parent_on, self.source.location)
+            parent0 = self.getNewParent(Bricker_parent_on, self.source.location)
             pGroup.objects.link(parent0)
             cm.parent_name = parent0.name
         self.createdObjects.append(parent0.name)
@@ -583,6 +583,10 @@ class BrickerBrickify(bpy.types.Operator):
                 return False
             if not brick_materials_loaded():
                 self.report({"WARNING"}, "ABS Plastic Materials must be imported (see Bricker 'Materials' tab)")
+                return False
+            matObj = getMatObject(cm)
+            if len(matObj.data.materials) == 0:
+                self.report({"WARNING"}, "No ABS Plastic Materials found in Materials to be used")
                 return False
 
         self.clothMod = False
@@ -861,7 +865,7 @@ class BrickerBrickify(bpy.types.Operator):
             objToBrickify = bpy.data.objects.get(cm.source_name) or bpy.context.active_object
         return objToBrickify
 
-    def getParent(self, Bricker_parent_on, loc):
+    def getNewParent(self, Bricker_parent_on, loc):
         m = bpy.data.meshes.new(Bricker_parent_on + "_mesh")
         parent = bpy.data.objects.new(Bricker_parent_on, m)
         parent.location = loc

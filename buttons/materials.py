@@ -89,6 +89,10 @@ class BrickerApplyMaterial(bpy.types.Operator):
         # set up variables
         scn, cm, _ = getActiveContextInfo()
         bricksDict, _ = getBricksDict(cm=cm)
+        if bricksDict is None:
+            self.report({"WARNING"}, "Materials could not be applied manually. Please run 'Update Model'")
+            cm.matrixIsDirty = True
+            return
         bricks = getBricks()
         zStep = getZStep(cm)
         cm.lastMaterialType = cm.materialType
@@ -134,9 +138,9 @@ class BrickerApplyMaterial(bpy.types.Operator):
         # initialize list of brick materials
         brick_mats = []
         mats = bpy.data.materials.keys()
-        for color in bpy.props.abs_plastic_materials:
-            if color in mats and color in getAbsPlasticMaterialNames():
-                brick_mats.append(color)
+        matObj = getMatObject(cm)
+        for color in matObj.data.materials.keys():
+            brick_mats.append(color)
         randS0 = np.random.RandomState(0)
         # if model is split, apply a random material to each brick
         for i, brick in enumerate(bricks):

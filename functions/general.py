@@ -174,6 +174,14 @@ def getBricks(cm=None, typ=None):
     return bricks
 
 
+def getMatObject(cm=None):
+    cm = cm or getActiveContextInfo()[1]
+    n = cm.id
+    Bricker_mat_on = "Bricker_%(n)s_mats" % locals()
+    matObj = bpy.data.objects.get(Bricker_mat_on)
+    return matObj
+
+
 def getBrickTypes(height):
     return bpy.props.Bricker_legal_brick_sizes[height].keys()
 

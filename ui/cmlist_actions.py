@@ -33,7 +33,7 @@ from .cmlist_utils import *
 
 
 # ui list item actions
-class Bricker_Uilist_actions(bpy.types.Operator):
+class Bricker_cmlist_actions(bpy.types.Operator):
     bl_idname = "cmlist.list_action"
     bl_label = "Brick Model List Action"
 
@@ -129,6 +129,12 @@ class Bricker_Uilist_actions(bpy.types.Operator):
         item.idx = len(scn.cmlist)-1
         item.startFrame = scn.frame_start
         item.stopFrame = scn.frame_end
+        # create new matObj for current cmlist id
+        matObjName = "Bricker_{}_mats".format(i)
+        matObj = bpy.data.objects.get(matObjName)
+        if matObj is None:
+            matObj = bpy.data.objects.new(matObjName, bpy.data.meshes.new(matObjName + "_mesh"))
+        getSafeScn().objects.link(matObj)
 
     def removeItem(self, idx):
         scn, cm, sn = getActiveContextInfo()
@@ -136,6 +142,10 @@ class Bricker_Uilist_actions(bpy.types.Operator):
         if not cm.modelCreated and not cm.animated:
             if len(scn.cmlist) - 1 == scn.cmlist_index:
                 scn.cmlist_index -= 1
+            # remove matObj for current cmlist id
+            matObj = bpy.data.objects.get("Bricker_{}_mats".format(cm.id))
+            if matObj is not None:
+                bpy.data.objects.remove(matObj)
             scn.cmlist.remove(idx)
             if scn.cmlist_index == -1 and len(scn.cmlist) > 0:
                 scn.cmlist_index = 0
@@ -157,23 +167,6 @@ class Bricker_Uilist_actions(bpy.types.Operator):
     def updateIdxs(self, cmlist):
         for i,cm in enumerate(cmlist):
             cm.idx = i
-
-
-# -------------------------------------------------------------------
-# draw
-# -------------------------------------------------------------------
-
-class Bricker_UL_items(UIList):
-
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        # Make sure your code supports all 3 layout types
-        if self.layout_type in {'GRID'}:
-            layout.alignment = 'CENTER'
-        split = layout.split(0.9)
-        split.prop(item, "name", text="", emboss=False, translate=False, icon='MOD_REMESH')
-
-    def invoke(self, context, event):
-        pass
 
 
 # copy settings from current index to all other indices
@@ -250,3 +243,20 @@ class Bricker_Uilist_pasteSettings(bpy.types.Operator):
         except:
             handle_exception()
         return{'FINISHED'}
+
+
+# -------------------------------------------------------------------
+# draw
+# -------------------------------------------------------------------
+
+class Bricker_UL_cmlist_items(UIList):
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        # Make sure your code supports all 3 layout types
+        if self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+        split = layout.split(0.9)
+        split.prop(item, "name", text="", emboss=False, translate=False, icon='MOD_REMESH')
+
+    def invoke(self, context, event):
+        pass
