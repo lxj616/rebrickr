@@ -298,3 +298,7 @@ def getMaterial(cm, bricksDict, key, size, brick_mats=None, seedInc=None):
         matName = brick_mats[randIdx]
         mat = bpy.data.materials.get(matName)
     return mat
+
+def updateBrickSizesAndTypesUsed(cm, sz, typ):
+        cm.brickSizesUsed += sz if cm.brickSizesUsed == "" else ("|" + sz if sz not in cm.brickSizesUsed.split("|") else "")
+        cm.brickTypesUsed += typ if cm.brickTypesUsed == "" else ("|" + str(typ) if typ not in cm.brickTypesUsed.split("|") else "")

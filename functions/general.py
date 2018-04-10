@@ -190,8 +190,8 @@ def flatBrickType(cm):
     return "PLATE" in cm.brickType or "STUD" in cm.brickType
 
 
-def mergableBrickType(cm):
-    return "PLATE" in cm.brickType or "BRICK" in cm.brickType or "SLOPE" in cm.brickType
+def mergableBrickType(cm, up=False):
+    return "PLATE" in cm.brickType or "BRICK" in cm.brickType or "SLOPE" in cm.brickType or (up and ("CYLINDER" in cm.brickType))
 
 
 def getTallType(cm, brickD, targetType=None):

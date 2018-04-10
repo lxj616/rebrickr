@@ -52,9 +52,6 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     n = cm.source_name
     zStep = getZStep(cm)
 
-    # initialize progress bar around cursor
-    old_percent = updateProgressBars(printStatus, cursorStatus, 0, -1, "Merging")
-
     # reset brickSizes/TypesUsed
     if keys == "ALL":
         cm.brickSizesUsed = ""
@@ -117,88 +114,104 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     # initialize bricksCreated
     bricksCreated = []
     # set number of times to run through all keys
-    numIters = 2 if flatBrickType(cm) else 1
+    numIters = 2 if cm.brickType == "BRICKS AND PLATES" else 1
     i = 0
-    for timeThrough in range(numIters):
-        # iterate through z locations in bricksDict (bottom to top)
-        for z in sorted(keysDict.keys()):
-            # skip second and third rows on first time through
-            if numIters == 2 and cm.alignBricks:
-                # initialize lowestZ if not done already
-                if lowestZ == -0.1:
-                    lowestZ = z
-                if skipThisRow(cm, timeThrough, lowestZ, z):
-                    continue
-            # get availableKeys for attemptMerge
-            availableKeysBase = []
-            for ii in range(maxBrickHeight):
-                if ii + z in keysDict:
-                    availableKeysBase += keysDict[z + ii]
-            # get small duplicate of bricksDict for variations
-            if connectThresh > 1:
-                bricksDictsBase = {}
-                for k4 in availableKeysBase:
-                    bricksDictsBase[k4] = deepcopy(bricksDict[k4])
-                bricksDicts = [deepcopy(bricksDictsBase) for j in range(connectThresh)]
-                numAlignedEdges = [0 for idx in range(connectThresh)]
-            else:
-                bricksDicts = [bricksDict]
-            # calculate build variations for current z level
-            for j in range(connectThresh):
-                availableKeys = availableKeysBase.copy()
-                numBricks = 0
-                if cm.mergeType == "RANDOM":
-                    random.seed(cm.mergeSeed + i)
-                    random.shuffle(keysDict[z])
-                # iterate through keys on current z level
-                for key in keysDict[z]:
-                    i += 1 / connectThresh
-                    brickD = bricksDicts[j][key]
-                    # skip keys that are already drawn or have attempted merge
-                    if brickD["attempted_merge"] or brickD["parent"] not in [None, "self"]:
-                        # remove ignored keys from availableKeys (for attemptMerge)
-                        if key in availableKeys:
-                            availableKeys.remove(key)
+    # if merging unnecessary, simply update bricksDict values
+    if not (mergableBrickType(cm, up=zStep == 1) and (cm.maxDepth != 1 or cm.maxWidth != 1)):
+        size = [1, 1, zStep]
+        updateBrickSizesAndTypesUsed(cm, listToStr(size), bricksDict[keys[0]]["type"])
+        availableKeys = keys
+        for key in keys:
+            bricksDict[key]["parent"] = "self"
+            bricksDict[key]["size"] = size
+            topExposed, botExposed = getBrickExposure(cm, bricksDict, key)
+            bricksDict[key]["top_exposed"] = topExposed
+            bricksDict[key]["bot_exposed"] = botExposed
+    else:
+        # initialize progress bar around cursor
+        old_percent = updateProgressBars(printStatus, cursorStatus, 0, -1, "Merging")
+        # run merge operations (twice if flat brick type)
+        for timeThrough in range(numIters):
+            # iterate through z locations in bricksDict (bottom to top)
+            for z in sorted(keysDict.keys()):
+                # skip second and third rows on first time through
+                if numIters == 2 and cm.alignBricks:
+                    # initialize lowestZ if not done already
+                    if lowestZ == -0.1:
+                        lowestZ = z
+                    if skipThisRow(cm, timeThrough, lowestZ, z):
                         continue
-
-                    # initialize loc
-                    loc = strToList(key)
-
-                    # merge current brick with available adjacent bricks
-                    brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDicts[j], key, availableKeys, [1, 1, zStep], zStep, randS1, mergeVertical=mergeVertical)
-                    brickD["size"] = brickSize
-                    # iterate number aligned edges and bricks if generating multiple variations
-                    if connectThresh > 1:
-                        numAlignedEdges[j] += getNumAlignedEdges(cm, bricksDict, brickSize, key, loc, zStep)
-                        numBricks += 1
-                    # add brickSize to cm.brickSizesUsed if not already there
-                    brickSizeStr = listToStr(sorted(brickSize[:2]) + [brickSize[2]])
-                    cm.brickSizesUsed += brickSizeStr if cm.brickSizesUsed == "" else ("|" + brickSizeStr if brickSizeStr not in cm.brickSizesUsed.split("|") else "")
-                    cm.brickTypesUsed += brickD["type"] if cm.brickTypesUsed == "" else ("|" + str(brickD["type"]) if brickD["type"] not in cm.brickTypesUsed.split("|") else "")
-
-                    # print status to terminal and cursor
-                    cur_percent = (i / denom)
-                    old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Merging")
-
-                    # remove keys in new brick from availableKeys (for attemptMerge)
-                    updateKeysLists(cm, brickSize, loc, availableKeys, key)
-
+                # get availableKeys for attemptMerge
+                availableKeysBase = []
+                for ii in range(maxBrickHeight):
+                    if ii + z in keysDict:
+                        availableKeysBase += keysDict[z + ii]
+                # get small duplicate of bricksDict for variations
                 if connectThresh > 1:
-                    # if no aligned edges / bricks found, skip to next z level
-                    if numAlignedEdges[j] == 0:
-                        i += (len(keysDict[z]) * connectThresh - 1) / connectThresh
-                        break
-                    # add double the number of bricks so connectivity threshold is weighted towards larger bricks
-                    numAlignedEdges[j] += numBricks * 2
+                    bricksDictsBase = {}
+                    for k4 in availableKeysBase:
+                        bricksDictsBase[k4] = deepcopy(bricksDict[k4])
+                    bricksDicts = [deepcopy(bricksDictsBase) for j in range(connectThresh)]
+                    numAlignedEdges = [0 for idx in range(connectThresh)]
+                else:
+                    bricksDicts = [bricksDict]
+                # calculate build variations for current z level
+                for j in range(connectThresh):
+                    availableKeys = availableKeysBase.copy()
+                    numBricks = 0
+                    if cm.mergeType == "RANDOM":
+                        random.seed(cm.mergeSeed + i)
+                        random.shuffle(keysDict[z])
+                    # iterate through keys on current z level
+                    for key in keysDict[z]:
+                        i += 1 / connectThresh
+                        brickD = bricksDicts[j][key]
+                        # skip keys that are already drawn or have attempted merge
+                        if brickD["attempted_merge"] or brickD["parent"] not in [None, "self"]:
+                            # remove ignored keys from availableKeys (for attemptMerge)
+                            if key in availableKeys:
+                                availableKeys.remove(key)
+                            continue
 
-            # choose optimal variation from above for current z level
-            if connectThresh > 1:
-                optimalTest = numAlignedEdges.index(min(numAlignedEdges))
-                for k3 in bricksDicts[optimalTest]:
-                    bricksDict[k3] = bricksDicts[optimalTest][k3]
+                        # initialize loc
+                        loc = strToList(key)
 
-    # switch progress bars to 'Building'
-    updateProgressBars(printStatus, cursorStatus, 1, 0, "Merging", end=True)
+                        # merge current brick with available adjacent bricks
+                        brickSize = mergeWithAdjacentBricks(cm, brickD, bricksDicts[j], key, availableKeys, [1, 1, zStep], zStep, randS1, mergeVertical=mergeVertical)
+                        brickD["size"] = brickSize
+                        # iterate number aligned edges and bricks if generating multiple variations
+                        if connectThresh > 1:
+                            numAlignedEdges[j] += getNumAlignedEdges(cm, bricksDict, brickSize, key, loc, zStep)
+                            numBricks += 1
+                        # add brickSize to cm.brickSizesUsed if not already there
+                        brickSizeStr = listToStr(sorted(brickSize[:2]) + [brickSize[2]])
+                        updateBrickSizesAndTypesUsed(cm, brickSizeStr, brickD["type"])
+
+                        # print status to terminal and cursor
+                        cur_percent = (i / denom)
+                        old_percent = updateProgressBars(printStatus, cursorStatus, cur_percent, old_percent, "Merging")
+
+                        # remove keys in new brick from availableKeys (for attemptMerge)
+                        updateKeysLists(cm, brickSize, loc, availableKeys, key)
+
+                    if connectThresh > 1:
+                        # if no aligned edges / bricks found, skip to next z level
+                        if numAlignedEdges[j] == 0:
+                            i += (len(keysDict[z]) * connectThresh - 1) / connectThresh
+                            break
+                        # add double the number of bricks so connectivity threshold is weighted towards larger bricks
+                        numAlignedEdges[j] += numBricks * 2
+
+                # choose optimal variation from above for current z level
+                if connectThresh > 1:
+                    optimalTest = numAlignedEdges.index(min(numAlignedEdges))
+                    for k3 in bricksDicts[optimalTest]:
+                        bricksDict[k3] = bricksDicts[optimalTest][k3]
+
+        # end 'Merging' progress bar
+        updateProgressBars(printStatus, cursorStatus, 1, 0, "Merging", end=True)
+
+    # begin 'Building' progress bar
     old_percent = updateProgressBars(printStatus, cursorStatus, 0, -1, "Building")
 
     # draw merged bricks
