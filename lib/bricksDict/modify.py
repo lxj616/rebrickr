@@ -141,6 +141,11 @@ def attemptMerge(cm, bricksDict, key, availableKeys, defaultSize, zStep, randSta
         # set brick type if necessary
         if flatBrickType(cm):
             bricksDict[k]["type"] = shortType if brickSize[2] == 1 else tallType
+    # set exposure of current [merged] brick
+    topExposed, botExposed = getBrickExposure(cm, bricksDict, key)
+    bricksDict[key]["top_exposed"] = topExposed
+    bricksDict[key]["bot_exposed"] = botExposed
+    # set flipped and rotated
     setFlippedAndRotated(bricksDict, key, keysInBrick)
     if bricksDict[key]["type"] == "SLOPE":
         setBrickTypeForSlope(bricksDict, key, keysInBrick)
@@ -246,9 +251,9 @@ def getMostCommonDir(i_s, i_e, norms):
 def setBrickTypeForSlope(bricksDict, key, keysInBrick):
     norms = [bricksDict[k]["near_normal"] for k in keysInBrick if bricksDict[k]["near_normal"] is not None]
     dir0 = getMostCommonDir(0, 1, norms) if len(norms) != 0 else ""
-    if dir0 == "^" and legalBrickSize(s=bricksDict[key]["size"], t="SLOPE")::
+    if dir0 == "^" and legalBrickSize(s=bricksDict[key]["size"], t="SLOPE") and not bricksDict[key]["top_exposed"]:
         typ = "SLOPE"
-    elif dir0 == "v" and legalBrickSize(s=bricksDict[key]["size"], t="SLOPE_INVERTED"):
+    elif dir0 == "v" and legalBrickSize(s=bricksDict[key]["size"], t="SLOPE_INVERTED") and not bricksDict[key]["bot_exposed"]:
         typ = "SLOPE_INVERTED"
     else:
         typ = "BRICK"

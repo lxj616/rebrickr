@@ -141,10 +141,6 @@ class mergeBricks(Operator):
                 continue
             # attempt to merge current brick with other bricks in keys, according to available brick types
             brickSize = attemptMerge(cm, bricksDict, key, keys, bricksDict[key]["size"], zStep, randState, preferLargest=True, mergeVertical=mergeVertical, targetType=targetType, height3Only=height3Only)
-            # set exposure of current [merged] brick
-            topExposed, botExposed = getBrickExposure(cm, bricksDict, key)
-            bricksDict[key]["top_exposed"] = topExposed
-            bricksDict[key]["bot_exposed"] = botExposed
             updatedKeys.append(key)
         return updatedKeys
 

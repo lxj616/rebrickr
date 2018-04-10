@@ -158,6 +158,7 @@ class BrickerBrickify(bpy.types.Operator):
         # clear cache if updating from previous version
         if createdWithUnsupportedVersion() and "UPDATE" in self.action:
             Caches.clearCache(cm)
+            cm.matrixIsDirty = True
 
         # make sure matrix really is dirty
         if cm.matrixIsDirty:

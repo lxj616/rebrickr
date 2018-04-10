@@ -327,7 +327,10 @@ def safe_unlink_parent(scene):
             Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
             p = bpy.data.objects.get(Bricker_parent_on)
             if (cm.modelCreated or cm.animated) and not cm.exposeParent:
-                safeUnlink(p)
+                try:
+                    safeUnlink(p)
+                except RuntimeError:
+                    pass
 
 
 bpy.app.handlers.save_post.append(safe_unlink_parent)
@@ -375,6 +378,7 @@ def handle_upconversion(scene):
                         for obj in bGroup.objects:
                             obj.name = rreplace(obj.name, "frame", "f")
                 elif cm.modelCreated:
+                    n = cm.source_name
                     Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
                     bGroup = bpy.data.groups.get(Bricker_bricks_gn)
                     if bGroup is None:
