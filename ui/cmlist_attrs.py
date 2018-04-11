@@ -189,7 +189,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         name="Shell Thickness",
         description="Thickness of the Brick shell",
         update=dirtyBuild,
-        min=1, max=100,
+        min=1, max=50,
         default=1)
 
     # BRICK TYPE SETTINGS
@@ -303,7 +303,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         name="Shell Material Depth",
         description="Depth to which the outer materials should be applied (1 = Only exposed bricks",
         step=1,
-        min=1, max=100,
+        min=1, max=50,
         default=1,
         update=dirtyModel)
     mergeInconsistentMats = BoolProperty(

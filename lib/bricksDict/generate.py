@@ -404,11 +404,12 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
                 c_ave = c_ave * sat_mat
                 brickFreqMatrix[x][y][z] = 0 if alpha < (1 - cm.smokeDensity) else 1
                 colorMatrix[x][y][z] = list(c_ave) + [alpha]
-    # end progress bar
-    updateProgressBars(True, cursorStatus, 1, 0, "Shell", end=True)
 
     # mark inside freqs as internal (-1) and outside next to outsides for removal
     adjustBFM(brickFreqMatrix, False)
+
+    # end progress bar
+    updateProgressBars(True, cursorStatus, 1, 0, "Shell", end=True)
 
     # update internals of brickFreqMatrix
     updateInternals(brickFreqMatrix, cm)
@@ -486,12 +487,15 @@ def updateInternals(brickFreqMatrix, cm=None, faceIdxMatrix=None):
     # for idx in range(cm.shellThickness-1):
     # NOTE: Following two lines are alternative for calculating full brickFreqMatrix
     denom = max(len(brickFreqMatrix)-2, len(brickFreqMatrix[0])-2, len(brickFreqMatrix[0][0])-2)/2
-    for i in range(100):
+    old_percent = 0
+    old_percent = updateProgressBars(True, False, 0, -1, "Internal")
+    for i in range(50):
         j0 = j
         j = round(j-0.01, 2)
         gotOne = False
-        setNF = (1 - j) * 100 < cm.matShellDepth
         for x in range(len(brickFreqMatrix)):
+            # print status to terminal
+            old_percent = updateProgressBars(True, False, ((i + x / len(brickFreqMatrix)) ** 0.6) / 7.07107, old_percent, "Internal")
             for y in range(len(brickFreqMatrix[0])):
                 for z in range(len(brickFreqMatrix[0][0])):
                     if brickFreqMatrix[x][y][z] != -1:
@@ -509,11 +513,13 @@ def updateInternals(brickFreqMatrix, cm=None, faceIdxMatrix=None):
                             continue
                         if curVal == j0:
                             brickFreqMatrix[x][y][z] = j
-                            if faceIdxMatrix and setNF: faceIdxMatrix[x][y][z] = faceIdxMatrix[idx[0]][idx[1]][idx[2]]
+                            if faceIdxMatrix: faceIdxMatrix[x][y][z] = faceIdxMatrix[idx[0]][idx[1]][idx[2]]
                             gotOne = True
                             break
         if not gotOne:
             break
+    # end progress bar
+    updateProgressBars(True, False, 1, 0, "Internal", end=True)
 
 
 def getThreshold(cm):
