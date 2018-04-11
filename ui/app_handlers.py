@@ -194,7 +194,7 @@ def handle_selections(scene):
             active_obj = scn.objects.active
             if active_obj.isBrick:
                 # adjust scn.active_brick_detail based on active brick
-                x0, y0, z0 = getDictLoc(getDictKey(active_obj.name))
+                x0, y0, z0 = getDictLoc(getDictKey(active_obj.name.split("__")[-1]))
                 cm.activeKeyX = x0
                 cm.activeKeyY = y0
                 cm.activeKeyZ = z0

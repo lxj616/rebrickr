@@ -194,7 +194,7 @@ def getCMProps():
             "colorSnapAmount",
             "transparentWeight",
             "colStep",
-            "smokeThresh",
+            "smokeDensity",
             "smokeSaturation",
             "smokeBrightness",
             "flameColor",

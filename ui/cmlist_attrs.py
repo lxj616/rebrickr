@@ -115,12 +115,12 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBuild,
         min=1, max=50,
         default=1)
-    smokeThresh = FloatProperty(
-        name="Smoke Threshold",
-        description="Threshold for turning smoke density into bricks (lower values for denser model)",
+    smokeDensity = FloatProperty(
+        name="Smoke Density",
+        description="Density of brickified smoke (threshold for smoke: 1 - d)",
         update=dirtyMatrix,
-        min=0.0000000001, max=1,
-        default=0.1)
+        min=0, max=1,
+        default=0.9)
     smokeBrightness = FloatProperty(
         name="Smoke Brightness",
         description="Add brightness to smoke colors read from smoke data",
@@ -198,7 +198,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         description="Type of brick used to build the model",
         items=[("STUD_HOLLOWS", "Hollow Studs", "Use this brick type to build the model"),
                ("STUDS", "Studs", "Use this brick type to build the model"),
-               ("SLOPES", "Slopes (fast)", "Use this brick type to build the model"),
+               # ("SLOPES", "Slopes (fast)", "Use this brick type to build the model"),
                ("PLATES", "Plates", "Use this brick type to build the model"),
                ("CYLINDERS", "Cylinders (fast)", "Use this brick type to build the model"),
                ("CUSTOM", "Custom", "Use custom object to build the model"),

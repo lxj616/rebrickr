@@ -490,12 +490,12 @@ class SmokeSettingsPanel(Panel):
         col = layout.column(align=True)
         if is_smoke(source):
             row = col.row(align=True)
-            row.prop(cm, "smokeThresh", text="Smoke Density")
+            row.prop(cm, "smokeDensity", text="Density")
 
         if is_smoke(source):
             col = layout.column(align=True)
             row = col.row(align=True)
-            row.label("Smoke Settings:")
+            row.label("Smoke Color:")
             row = col.row(align=True)
             row.prop(cm, "smokeBrightness", text="Brightness")
             row = col.row(align=True)
@@ -1110,8 +1110,9 @@ class ExportPanel(Panel):
         col = layout.column(align=True)
         col.prop(cm, "exportPath", text="")
         col = layout.column(align=True)
-        row = col.row(align=True)
-        row.operator("bricker.export_model_data", text="Export Model Data", icon="EXPORT")
+        if bpy.props.bricker_developer_mode > 0:
+            row = col.row(align=True)
+            row.operator("bricker.export_model_data", text="Export Model Data", icon="EXPORT")
         if (cm.modelCreated or cm.animated) and cm.brickType != "CUSTOM":
             row = col.row(align=True)
             row.operator("bricker.export_ldraw", text="Export Ldraw", icon="EXPORT")

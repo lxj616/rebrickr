@@ -399,7 +399,7 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
                 c_ave += brightness
                 # add saturation
                 c_ave = c_ave * sat_mat
-                brickFreqMatrix[x][y][z] = 0 if alpha < cm.smokeThresh else 1
+                brickFreqMatrix[x][y][z] = 0 if alpha < (1 - cm.smokeDensity) else 1
                 colorMatrix[x][y][z] = list(c_ave) + [alpha]
     # end progress bar
     updateProgressBars(True, cursorStatus, 1, 0, "Shell", end=True)
@@ -408,7 +408,7 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
     adjustBFM(brickFreqMatrix, False)
 
     # update internals of brickFreqMatrix
-    updateInternals(brickFreqMatrix)
+    updateInternals(brickFreqMatrix, cm)
 
     return brickFreqMatrix, colorMatrix
 
@@ -473,44 +473,6 @@ def adjustBFM(brickFreqMatrix, verifyExposure, axes=""):
                     (z == zL - 1 or brickFreqMatrix[x][y][z+1] in [0, None]) and
                     (z == 0 or      brickFreqMatrix[x][y][z-1] in [0, None])):
                     brickFreqMatrix[x][y][z] = None
-
-
-@timed_call("updateInternals", precision=5)
-def updateInternals(brickFreqMatrix, cm=None, faceIdxMatrix=None):
-    """ set up brickFreqMatrix values for bricks inside shell (-1) """
-    j = 1
-    # NOTE: Following two lines are alternative for calculating partial brickFreqMatrix (insideness only calculated as deep as necessary)
-    # denom = min([(cm.shellThickness-1), max(len(brickFreqMatrix)-2, len(brickFreqMatrix[0])-2, len(brickFreqMatrix[0][0])-2)])/2
-    # for idx in range(cm.shellThickness-1):
-    # NOTE: Following two lines are alternative for calculating full brickFreqMatrix
-    denom = max(len(brickFreqMatrix)-2, len(brickFreqMatrix[0])-2, len(brickFreqMatrix[0][0])-2)/2
-    for i in range(100):
-        j = round(j-0.01, 2)
-        gotOne = False
-        setNF = (1 - j) * 100 < cm.matShellDepth
-        for x in range(len(brickFreqMatrix)):
-            for y in range(len(brickFreqMatrix[0])):
-                for z in range(len(brickFreqMatrix[0][0])):
-                    if brickFreqMatrix[x][y][z] != -1:
-                        continue
-                    idxsToCheck = [(x+1, y, z),
-                                   (x-1, y, z),
-                                   (x, y+1, z),
-                                   (x, y-1, z),
-                                   (x, y, z+1),
-                                   (x, y, z-1)]
-                    for idx in idxsToCheck:
-                        try:
-                            curVal = brickFreqMatrix[idx[0]][idx[1]][idx[2]]
-                        except IndexError:
-                            continue
-                        if curVal == round(j + 0.01,2):
-                            brickFreqMatrix[x][y][z] = j
-                            if faceIdxMatrix and setNF: faceIdxMatrix[x][y][z] = faceIdxMatrix[idx[0]][idx[1]][idx[2]]
-                            gotOne = True
-                            break
-        if not gotOne:
-            break
 
 
 def updateInternals(brickFreqMatrix, cm=None, faceIdxMatrix=None):
