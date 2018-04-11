@@ -312,7 +312,8 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     if "z" in axes:
         miniDist = Vector((0.0, 0.0, 0.00015))
         for x in range(len(brickFreqMatrix)):
-            # # print status to terminal
+            # print status to terminal
+            percent2 = printStatus(percent1, x, len(brickFreqMatrix), percent2)
             for y in range(len(brickFreqMatrix[0])):
                 nextIntersection = None
                 i = 0
