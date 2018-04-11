@@ -184,7 +184,7 @@ def updateBFMatrix(scn, cm, x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMat
             if type(faceIdxMatrix[x1][y1][z1]) != dict or faceIdxMatrix[x1][y1][z1]["dist"] > lastIntersection["dist"]:
                 faceIdxMatrix[x1][y1][z1] = lastIntersection
 
-    return intersections, nextIntersection
+    return intersections, nextIntersection, edgeIntersects
 
 def isInternal(bricksDict, key):
     """ check if brick entry in bricksDict is internal """
@@ -276,14 +276,15 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 nextIntersection = None
                 i = 0
                 for x in range(len(brickFreqMatrix)):
-                    if highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].x + dist.x + miniDist.x < nextIntersection.x:
-                        i = (i + 1) % 2
-                        if i == 0 and brickFreqMatrix[x][y][z] == 0:
+                    # skip current loc if casting ray is unnecessary (sets outside vals to last found val)
+                    if i == 1 and highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].x + dist.x + miniDist.x < nextIntersection.x:
+                        if brickFreqMatrix[x][y][z] == 0:
                             brickFreqMatrix[x][y][z] = val
+                        if brickFreqMatrix[x][y][z] == val:
                             continue
-                    intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z, miniDist)
-                    if i == 1:
-                        val = brickFreqMatrix[x][y][z]
+                    intersections, nextIntersection, edgeIntersects = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z, miniDist)
+                    i = 0 if edgeIntersects else 1
+                    val = brickFreqMatrix[x][y][z]
                     if intersections == 0:
                         break
 
@@ -297,14 +298,15 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 nextIntersection = None
                 i = 0
                 for y in range(len(brickFreqMatrix[0])):
-                    if highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].y + dist.y + miniDist.y < nextIntersection.y:
-                        i = (i + 1) % 2
-                        if i == 0 and brickFreqMatrix[x][y][z] == 0:
+                    # skip current loc if casting ray is unnecessary (sets outside vals to last found val)
+                    if i == 1 and highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].y + dist.y + miniDist.y < nextIntersection.y:
+                        if brickFreqMatrix[x][y][z] == 0:
                             brickFreqMatrix[x][y][z] = val
+                        if brickFreqMatrix[x][y][z] == val:
                             continue
-                    intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z, miniDist)
-                    if i == 1:
-                        val = brickFreqMatrix[x][y][z]
+                    intersections, nextIntersection, edgeIntersects = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z, miniDist)
+                    i = 0 if edgeIntersects else 1
+                    val = brickFreqMatrix[x][y][z]
                     if intersections == 0:
                         break
 
@@ -317,14 +319,16 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 nextIntersection = None
                 i = 0
                 for z in range(len(brickFreqMatrix[0][0])):
-                    if highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].z + dist.z + miniDist.z < nextIntersection.z:
-                        i = (i + 1) % 2
-                        if i == 0 and brickFreqMatrix[x][y][z] == 0:
+                    # skip current loc if casting ray is unnecessary (sets outside vals to last found val)
+                    if i == 1 and highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].z + dist.z + miniDist.z < nextIntersection.z:
+                        if brickFreqMatrix[x][y][z] == 0:
                             brickFreqMatrix[x][y][z] = val
+                        if brickFreqMatrix[x][y][z] == val:
                             continue
-                    intersections, nextIntersection = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
-                    if i == 1:
-                        val = brickFreqMatrix[x][y][z]
+                    # cast rays and update brickFreqMatrix
+                    intersections, nextIntersection, edgeIntersects = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
+                    i = 0 if edgeIntersects else 1
+                    val = brickFreqMatrix[x][y][z]
                     if intersections == 0:
                         break
 
@@ -517,7 +521,7 @@ def getThreshold(cm):
     """ returns threshold (draw bricks if returned val >= threshold) """
     return 1.01 - (cm.shellThickness / 100)
 
-def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0, 0, 0), near_face:int=None, near_intersection:str=None, near_normal:tuple=None, rgba:tuple=None, mat_name:str=None, parent:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
+def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0, 0, 0), near_face:int=None, near_intersection:str=None, near_normal:tuple=None, rgba:tuple=None, mat_name:str=None, parent:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, obscures:list=[False]*6, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
     """
     create an entry in the dictionary of brick locations
 
@@ -531,11 +535,12 @@ def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0, 0
     near_normal       -- normal of the nearest face intersection
     rgba              -- [red, green, blue, alpha] values of brick color
     mat_name          -- name of material attributed to bricks at this location
-    parent      -- key into brick dictionary with information about the parent brick merged with this one
+    parent            -- key into brick dictionary with information about the parent brick merged with this one
     size              -- 3D size of brick (e.g. standard 2x4 brick -> [2, 4, 3])
     attempted_merge   -- attempt has been made in makeBricks function to merge this brick with nearby bricks
     top_exposed       -- top of brick is visible to camera
     bot_exposed       -- bottom of brick is visible to camera
+    obscures          -- obscures neighboring locations [+z, -z, +x, -x, +y, -y]
     type              -- type of brick
     flipped           -- brick is flipped over non-mirrored axis
     rotated           -- brick is rotated 90 degrees about the Z axis
@@ -556,6 +561,7 @@ def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0, 0
             "attempted_merge":attempted_merge,
             "top_exposed":top_exposed,
             "bot_exposed":bot_exposed,
+            "obscures":obscures,
             "type":bType,
             "flipped":flipped,
             "rotated":rotated,
@@ -619,6 +625,7 @@ def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=
                 ni = faceIdxMatrix[x][y][z]["loc"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 nn = faceIdxMatrix[x][y][z]["normal"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 norm_dir = getNormalDirection(nn)
+                bType = "PLATE" if brickType == "BRICKS AND PLATES" else (brickType[:-1] if brickType.endswith("S") else brickType)
                 flipped, rotated = getFlipRot("" if norm_dir is None else norm_dir[1:])
                 rgba = rgbaMatrix[x][y][z] if rgbaMatrix else getUVPixelColor(scn, cm, source, nf, ni, uv_images)
                 draw = brickFreqMatrix[x][y][z] >= threshold
@@ -633,7 +640,8 @@ def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=
                     near_normal= norm_dir,
                     rgba= rgba,
                     mat_name= "",  # defined in 'updateMaterials' function
-                    bType= "PLATE" if brickType == "BRICKS AND PLATES" else (brickType[:-1] if brickType.endswith("S") else brickType),
+                    obscures= [brickFreqMatrix[x][y][z] != 0]*6,
+                    bType= bType,
                     flipped= flipped,
                     rotated= rotated,
                 )
