@@ -161,7 +161,7 @@ def updateBFMatrix(scn, cm, x0, y0, z0, coordMatrix, faceIdxMatrix, brickFreqMat
     try:
         rayEnd = coordMatrix[x1][y1][z1]
     except IndexError:
-        return -1, None
+        return -1, None, True
     # check if point can be thrown away
     ray = rayEnd - orig
     edgeLen = ray.length
@@ -252,7 +252,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     brickFreqMatrix = deepcopy(faceIdxMatrix)
     axes = axes.lower()
     dist = coordMatrix[1][1][1] - coordMatrix[0][0][0]
-    highEfficiency = cm.insidenessRayCastDir == "HIGH EFFICIENCY"
+    highEfficiency = cm.insidenessRayCastDir in ["HIGH EFFICIENCY", "XYZ"]
 
     # initialize values used for printing status
     denom = (len(brickFreqMatrix[0][0]) + len(brickFreqMatrix[0]) + len(brickFreqMatrix))/100
@@ -277,13 +277,11 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 i = 0
                 for x in range(len(brickFreqMatrix)):
                     # skip current loc if casting ray is unnecessary (sets outside vals to last found val)
-                    if i == 1 and highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].x + dist.x + miniDist.x < nextIntersection.x:
-                        if brickFreqMatrix[x][y][z] == 0:
-                            brickFreqMatrix[x][y][z] = val
-                        if brickFreqMatrix[x][y][z] == val:
-                            continue
+                    if i == 2 and highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].x + dist.x + miniDist.x < nextIntersection.x:
+                        brickFreqMatrix[x][y][z] = val
+                        continue
                     intersections, nextIntersection, edgeIntersects = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x+1, y, z, miniDist)
-                    i = 0 if edgeIntersects else 1
+                    i = 0 if edgeIntersects else (2 if i == 1 else 1)
                     val = brickFreqMatrix[x][y][z]
                     if intersections == 0:
                         break
@@ -299,13 +297,13 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 i = 0
                 for y in range(len(brickFreqMatrix[0])):
                     # skip current loc if casting ray is unnecessary (sets outside vals to last found val)
-                    if i == 1 and highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].y + dist.y + miniDist.y < nextIntersection.y:
+                    if i == 2 and highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].y + dist.y + miniDist.y < nextIntersection.y:
                         if brickFreqMatrix[x][y][z] == 0:
                             brickFreqMatrix[x][y][z] = val
                         if brickFreqMatrix[x][y][z] == val:
                             continue
                     intersections, nextIntersection, edgeIntersects = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y+1, z, miniDist)
-                    i = 0 if edgeIntersects else 1
+                    i = 0 if edgeIntersects else (2 if i == 1 else 1)
                     val = brickFreqMatrix[x][y][z]
                     if intersections == 0:
                         break
@@ -320,14 +318,14 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                 i = 0
                 for z in range(len(brickFreqMatrix[0][0])):
                     # skip current loc if casting ray is unnecessary (sets outside vals to last found val)
-                    if i == 1 and highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].z + dist.z + miniDist.z < nextIntersection.z:
+                    if i == 2 and highEfficiency and nextIntersection is not None and coordMatrix[x][y][z].z + dist.z + miniDist.z < nextIntersection.z:
                         if brickFreqMatrix[x][y][z] == 0:
                             brickFreqMatrix[x][y][z] = val
                         if brickFreqMatrix[x][y][z] == val:
                             continue
                     # cast rays and update brickFreqMatrix
                     intersections, nextIntersection, edgeIntersects = updateBFMatrix(scn, cm, x, y, z, coordMatrix, faceIdxMatrix, brickFreqMatrix, brickShell, source, x, y, z+1, miniDist)
-                    i = 0 if edgeIntersects else 1
+                    i = 0 if edgeIntersects else (2 if i == 1 else 1)
                     val = brickFreqMatrix[x][y][z]
                     if intersections == 0:
                         break
