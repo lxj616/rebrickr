@@ -58,8 +58,7 @@ class changeBrickType(Operator):
                 continue
             # get cmlist item referred to by object
             cm = getItemByID(scn.cmlist, obj.cmlist_id)
-            if cm.lastBrickType != "CUSTOM":
-                return True
+            return True
         return False
 
     def execute(self, context):
@@ -87,6 +86,9 @@ class changeBrickType(Operator):
                 # initialize vars
                 bricksDict = self.bricksDicts[cm_id]
                 keysToUpdate = []
+                if "CUSTOM" in targetBrickType and not customValidObject(self, cm):
+                    typ = targetBrickType
+                    continue
 
                 # iterate through names of selected objects
                 for obj_name in self.objNamesD[cm_id]:
@@ -120,6 +122,7 @@ class changeBrickType(Operator):
                         if obstructed: continue
 
                     # set type of parent brick to targetBrickType
+                    lastType = bricksDict[dictKey]["type"]
                     bricksDict[dictKey]["type"] = targetBrickType
                     bricksDict[dictKey]["flipped"] = self.flipBrick
                     bricksDict[dictKey]["rotated"] = False if min(size[:2]) == 1 and max(size[:2]) > 1 else self.rotateBrick
@@ -147,6 +150,8 @@ class changeBrickType(Operator):
                 bricksWereGenerated = bricksWereGenerated or len(keysToUpdate) > 0
 
                 # draw updated brick
+                if "CUSTOM" in targetBrickType:
+                    cm.hasCustomBrick = True
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=False)
                 # model is now customized
                 cm.customized = True

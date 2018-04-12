@@ -128,7 +128,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             bricksDict[key]["top_exposed"] = topExposed
             bricksDict[key]["bot_exposed"] = botExposed
             setFlippedAndRotated(bricksDict, key, [key])
-            if bricksDict[key]["type"] == "SLOPE":
+            if bricksDict[key]["type"] == "SLOPE" and cm.brickType == "SLOPES":
                 setBrickTypeForSlope(bricksDict, key, [key])
     else:
         # initialize progress bar around cursor

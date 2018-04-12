@@ -300,10 +300,10 @@ def getDetailsAndBounds(source, cm=None):
 
 def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=None):
     """ returns arguments for makeBricksDict function """
-    source = source or bpy.data.objects.get(cm.source_name) or bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+    source = source or bpy.data.objects.get(cm.source_name)
     if source_details is None or dimensions is None:
         source_details, dimensions = getDetailsAndBounds(source, cm)
-    if cm.brickType == "CUSTOM":
+    if cm.brickType == "CUSTOM" or cm.hasCustomBrick:
         scn = bpy.context.scene
         # get custom object
         customObj = bpy.data.objects[cm.customObjectName]
@@ -339,6 +339,7 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
     else:
         customData = None
         customObj_details = None
+    if cm.brickType != "CUSTOM":
         brickScale = Vector((dimensions["width"] + dimensions["gap"],
                     dimensions["width"] + dimensions["gap"],
                     dimensions["height"]+ dimensions["gap"]))

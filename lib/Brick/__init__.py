@@ -41,7 +41,7 @@ class Bricks:
         cm = cm or getActiveContextInfo()[1]
 
         # create brick mesh
-        if type in ["BRICK", "PLATE", "CUSTOM"]:
+        if type in ["BRICK", "PLATE"] or "CUSTOM" in type:
             brickBM = makeStandardBrick(dimensions=dimensions, brickSize=size, type=type, circleVerts=circleVerts, detail=undersideDetail, stud=stud, cm=cm)
         elif type in ["CYLINDER", "CONE", "STUD", "STUD_HOLLOW"]:
             brickBM = makeRound1x1(dimensions=dimensions, circleVerts=circleVerts, type=type, detail=undersideDetail, cm=cm)

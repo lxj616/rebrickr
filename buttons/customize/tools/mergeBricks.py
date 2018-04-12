@@ -57,7 +57,7 @@ class mergeBricks(Operator):
                 continue
             # get cmlist item referred to by object
             cm = getItemByID(scn.cmlist, obj.cmlist_id)
-            if cm.lastBrickType == "CUSTOM" or cm.buildIsDirty:
+            if cm.lastBrickType != "CUSTOM" or cm.buildIsDirty:
                 continue
             i += 1
             if i == 2:

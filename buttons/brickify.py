@@ -40,7 +40,6 @@ from .delete import BrickerDelete
 from .bevel import BrickerBevel
 from .cache import *
 from ..lib.bricksDict import *
-from ..ui.cmlist_utils import dirtyMatrix
 from ..functions import *
 
 
@@ -142,7 +141,7 @@ class BrickerBrickify(bpy.types.Operator):
         scn, cm, n = getActiveContextInfo()
         self.undo_stack.iterateStates(cm)
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
-        ensureObjNamesUnique(getSafeScn())
+        # ensureObjNamesUnique(getSafeScn())
 
         # get source and initialize values
         source = self.getObjectToBrickify(cm)
@@ -174,9 +173,6 @@ class BrickerBrickify(bpy.types.Operator):
         else:
             self.brickifyAnimation()
             cm.animIsDirty = False
-
-        if source.name == cm.source_name:
-            source.name = cm.source_name + " (DO NOT RENAME)"
 
         # set cmlist_id for all created objects
         for obj_name in self.createdObjects:
@@ -235,7 +231,7 @@ class BrickerBrickify(bpy.types.Operator):
         if self.action in ["UPDATE_MODEL"] and not updateCanRun("MODEL"):
             return{"FINISHED"}
 
-        sto_scn = bpy.data.scenes.get("Bricker_storage (DO NOT RENAME)")
+        sto_scn = bpy.data.scenes.get("Bricker_storage (DO NOT MODIFY)")
         if sto_scn:
             sto_scn.update()
 
@@ -389,7 +385,6 @@ class BrickerBrickify(bpy.types.Operator):
                 preservedFrames = [cm.startFrame, cm.stopFrame]
                 print(preservedFrames)
             BrickerDelete.cleanUp("ANIMATION", skipDupes=not self.updatedFramesOnly, skipParents=not self.updatedFramesOnly, preservedFrames=preservedFrames, source_name=self.source.name)
-            self.source.name = self.source.name + " (DO NOT RENAME)"
 
         # get or create duplicate and parent groups
         dGroup = bpy.data.groups.get(Bricker_source_dupes_gn)
@@ -544,36 +539,8 @@ class BrickerBrickify(bpy.types.Operator):
 
     def isValid(self, scn, cm, source, Bricker_bricks_gn):
         """ returns True if brickify action can run, else report WARNING/ERROR and return False """
-        if cm.brickType == "CUSTOM":
-            if cm.customObjectName == "":
-                self.report({"WARNING"}, "Custom brick type object not specified.")
-                return False
-            if len(cm.source_name) > 30:
-                self.report({"WARNING"}, "Source object name too long (must be <= 30 characters)")
-            customObj = bpy.data.objects.get(cm.customObjectName)
-            if customObj is None:
-                n = cm.customObjectName
-                self.report({"WARNING"}, "Custom brick type object '%(n)s' could not be found" % locals())
-                return False
-            if cm.customObjectName == cm.source_name and (not (cm.animated or cm.modelCreated) or customObj.protected):
-                self.report({"WARNING"}, "Source object cannot be its own brick type.")
-                return False
-            if customObj.type != "MESH":
-                self.report({"WARNING"}, "Custom brick type object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
-                return False
-            custom_details = bounds(customObj)
-            zeroDistAxes = ""
-            if custom_details.dist.x < 0.00001:
-                zeroDistAxes += "X"
-            if custom_details.dist.y < 0.00001:
-                zeroDistAxes += "Y"
-            if custom_details.dist.z < 0.00001:
-                zeroDistAxes += "Z"
-            if zeroDistAxes != "":
-                axisStr = "axis" if len(zeroDistAxes) == 1 else "axes"
-                warningMsg = "Custom brick type object is to small along the '%(zeroDistAxes)s' %(axisStr)s (<0.00001). Please select another object or extrude it along the '%(zeroDistAxes)s' %(axisStr)s." % locals()
-                self.report({"WARNING"}, warningMsg)
-                return False
+        if cm.brickType == "CUSTOM" and not customValidObject(self, cm):
+            return False
         if cm.materialType == "CUSTOM" and cm.materialName != "" and bpy.data.materials.find(cm.materialName) == -1:
             n = cm.materialName
             self.report({"WARNING"}, "Custom material '%(n)s' could not be found" % locals())
@@ -858,10 +825,7 @@ class BrickerBrickify(bpy.types.Operator):
         return duplicates
 
     def getObjectToBrickify(self, cm):
-        if self.action in ["UPDATE_MODEL", "UPDATE_ANIM"]:
-            objToBrickify = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
-        else:
-            objToBrickify = bpy.data.objects.get(cm.source_name) or bpy.context.active_object
+        objToBrickify = bpy.data.objects.get(cm.source_name) or bpy.context.active_object
         return objToBrickify
 
     def getNewParent(self, Bricker_parent_on, loc):

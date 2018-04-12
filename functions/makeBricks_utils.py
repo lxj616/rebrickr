@@ -65,7 +65,7 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
     ### CREATE BRICK ###
 
     # add brick with new mesh data at original location
-    if brickD["type"] == "CUSTOM":
+    if "CUSTOM" in brickD["type"]:
         # copy custom mesh
         m = customData.copy()
     else:
@@ -89,15 +89,21 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
     if split:
         brick = bpy.data.objects.get(brickD["name"])
         if brick:
+            # NOTE: last brick mesh is left in memory (faster)
             # set brick.data to new mesh (resets materials)
             brick.data = m
-            # NOTE: last brick mesh is left in memory (faster)
+            # add/remove edge split modifier if necessary
+            eMod = brick.modifiers.get('Edge Split')
+            if not eMod and "CUSTOM" not in brickD["type"]:
+                addEdgeSplitMod(brick)
+            elif eMod and "CUSTOM" in brickD["type"]:
+                brick.modifiers.remove(eMod)
         else:
             # create new object with mesh data
             brick = bpy.data.objects.new(brickD["name"], m)
             brick.cmlist_id = cm.id
             # add edge split modifier
-            if cm.brickType != "CUSTOM":
+            if "CUSTOM" not in brickD["type"]:
                 addEdgeSplitMod(brick)
         # set brick location
         brick.location = brickLoc

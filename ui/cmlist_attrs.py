@@ -247,7 +247,6 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     customObjectName = StringProperty(
         name="Custom Object Name",
         description="Name of the object to use as bricks",
-        update=dirtyMatrix,
         default="")
     distOffsetX = FloatProperty(
         name="X",
@@ -570,6 +569,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     modelCreatedOnFrame = IntProperty(default=-1)
     numBricksGenerated = IntProperty(default=-1)
     isSmoke = BoolProperty(default=False)
+    hasCustomBrick = BoolProperty(default=False)
 
     # Properties for checking of model needs updating
     animIsDirty = BoolProperty(default=True)

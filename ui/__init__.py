@@ -131,10 +131,7 @@ class BrickModelsPanel(Panel):
                 col1 = layout.column(align=True)
 
             # initialize obj variable
-            if cm.modelCreated or cm.animated:
-                obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
-            else:
-                obj = bpy.data.objects.get(cm.source_name)
+            obj = bpy.data.objects.get(cm.source_name)
 
             # if undo stack not initialized, draw initialize button
             if not bpy.props.bricker_initialized:
@@ -372,7 +369,7 @@ class ModelSettingsPanel(Panel):
     def draw(self, context):
         layout = self.layout
         scn, cm, _ = getActiveContextInfo()
-        source = bpy.data.objects.get(cm.source_name) or bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+        source = bpy.data.objects.get(cm.source_name)
 
         col = layout.column(align=True)
         # set up model dimensions variables sX, sY, and sZ
@@ -446,10 +443,7 @@ class ModelSettingsPanel(Panel):
             row.prop(cm, "calculationAxes", text="")
         row = col.row(align=True)
         row.prop(cm, "shellThickness", text="Thickness")
-        if cm.modelCreated or cm.animated:
-            obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
-        else:
-            obj = bpy.data.objects.get(cm.source_name)
+        obj = bpy.data.objects.get(cm.source_name)
         # if obj and not cm.isWaterTight:
         #     row = col.row(align=True)
         #     # row.scale_y = 0.7
@@ -477,7 +471,7 @@ class SmokeSettingsPanel(Panel):
         if scn.cmlist_index == -1:
             return False
         cm = scn.cmlist[scn.cmlist_index]
-        source = bpy.data.objects.get(cm.source_name) or bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+        source = bpy.data.objects.get(cm.source_name)
         if source is None:
             return False
         return is_smoke(source)
@@ -485,7 +479,7 @@ class SmokeSettingsPanel(Panel):
     def draw(self, context):
         layout = self.layout
         scn, cm, _ = getActiveContextInfo()
-        source = bpy.data.objects.get(cm.source_name) or bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+        source = bpy.data.objects.get(cm.source_name)
 
         col = layout.column(align=True)
         if is_smoke(source):
@@ -531,30 +525,7 @@ class BrickTypesPanel(Panel):
         row = col.row(align=True)
         row.prop(cm, "brickType", text="")
 
-        if cm.brickType == "CUSTOM":
-            col = layout.column(align=True)
-            split = col.split(align=True, percentage=0.85)
-            col1 = split.column(align=True)
-            col1.prop_search(cm, "customObjectName", scn, "objects", text='')
-            col1 = split.column(align=True)
-            col1.operator("bricker.eye_dropper", icon="EYEDROPPER", text="").target_prop = 'customObjectName'
-
-            col = layout.column(align=True)
-            col.label("Distance Offset:")
-            split = col.split(align=True, percentage=0.333)
-
-            col = split.column(align=True)
-            row = col.row(align=True)
-            row.prop(cm, "distOffsetX", text="X")
-
-            col = split.column(align=True)
-            row = col.row(align=True)
-            row.prop(cm, "distOffsetY", text="Y")
-
-            col = split.column(align=True)
-            row = col.row(align=True)
-            row.prop(cm, "distOffsetZ", text="Z")
-        else:
+        if cm.brickType != "CUSTOM":
             if cm.brickType == "BRICKS AND PLATES":
                 col = layout.column(align=True)
                 row = col.row(align=True)
@@ -582,7 +553,28 @@ class BrickTypesPanel(Panel):
                 row = col.row(align=True)
                 row.prop(cm, "mergeInconsistentMats")
 
+        if cm.brickType != "CUSTOM":
+            col.label("Custom Brick Objects:")
+        else:
+            col = layout.column(align=True)
+        split = col.split(align=True, percentage=0.7)
+        col1 = split.column(align=True)
+        col1.prop_search(cm, "customObjectName", scn, "objects", text='')
+        col1 = split.column(align=True)
+        col1.operator("bricker.eye_dropper", icon="EYEDROPPER", text="").target_prop = "customObjectName"
+        col1 = split.column(align=True)
+        col1.operator("bricker.redraw_custom", icon="FILE_REFRESH", text="").target_prop = "customObjectName"
 
+
+        if cm.brickType == "CUSTOM":
+            col.label("Distance Offset:")
+            split = col.split(align=True, percentage=0.333)
+            col = split.column(align=True)
+            col.prop(cm, "distOffsetX", text="X")
+            col = split.column(align=True)
+            col.prop(cm, "distOffsetY", text="Y")
+            col = split.column(align=True)
+            col.prop(cm, "distOffsetZ", text="Z")
 
 
 class CustomizeModel(Panel):
@@ -740,7 +732,7 @@ class MaterialsPanel(Panel):
                 row = col.row(align=True)
                 row.prop(cm, "matShellDepth")
 
-        obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)") if cm.modelCreated or cm.animated else bpy.data.objects.get(cm.source_name)
+        obj = bpy.data.objects.get(cm.source_name)
         if obj and cm.materialType == "SOURCE":
             if len(obj.data.uv_layers) > 0:
                 col = layout.column(align=True)
@@ -934,10 +926,7 @@ class SupportsPanel(Panel):
             row.prop(cm, "colThickness")
             row = col.row(align=True)
             row.prop(cm, "colStep")
-        if cm.modelCreated or cm.animated:
-            obj = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
-        else:
-            obj = bpy.data.objects.get(cm.source_name)
+        obj = bpy.data.objects.get(cm.source_name)
         # if obj and not cm.isWaterTight:
         #     row = col.row(align=True)
         #     # row.scale_y = 0.7

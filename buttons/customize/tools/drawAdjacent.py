@@ -128,6 +128,8 @@ class drawAdjacent(Operator):
                 keysToUpdate.append(dictKey)
 
             # draw created bricks
+            if "CUSTOM" in self.brickType:
+                cm.hasCustomBrick = True
             drawUpdatedBricks(cm, self.bricksDict, keysToUpdate, selectCreated=False)
 
             # select original brick
@@ -296,7 +298,7 @@ class drawAdjacent(Operator):
             elif adjBrickD["created_from"] == dictKey:
                 # update bricksDict values for brick being removed
                 x0, y0, z0 = adjDictLoc
-                brickKeys = [listToStr([x0, y0, z0 + z]) for z in range(3 if side in [4, 5] else 1)]
+                brickKeys = [listToStr([x0, y0, z0 + z]) for z in range((getZStep(cm) + 2) % 4 if side in [4, 5] else 1)]
                 for k in brickKeys:
                     self.bricksDict[k]["draw"] = False
                     setCurBrickVal(self.bricksDict, strToList(k), action="REMOVE")

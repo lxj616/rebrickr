@@ -35,9 +35,9 @@ from .common import *
 
 
 def getSafeScn():
-    safeScn = bpy.data.scenes.get("Bricker_storage (DO NOT RENAME)")
+    safeScn = bpy.data.scenes.get("Bricker_storage (DO NOT MODIFY)")
     if safeScn == None:
-        safeScn = bpy.data.scenes.new("Bricker_storage (DO NOT RENAME)")
+        safeScn = bpy.data.scenes.new("Bricker_storage (DO NOT MODIFY)")
     return safeScn
 
 
@@ -459,3 +459,35 @@ def is_adaptive(ob):
         if mod.type == "SMOKE" and mod.domain_settings and mod.domain_settings.use_adaptive_domain:
             return True
     return False
+
+def customValidObject(self, cm):
+    if cm.customObjectName == "":
+        self.report({"WARNING"}, "Custom brick type object not specified.")
+        return False
+    if len(cm.source_name) > 30:
+        self.report({"WARNING"}, "Source object name too long (must be <= 30 characters)")
+    customObj = bpy.data.objects.get(cm.customObjectName)
+    if customObj is None:
+        n = cm.customObjectName
+        self.report({"WARNING"}, "Custom brick type object '%(n)s' could not be found" % locals())
+        return False
+    if cm.customObjectName == cm.source_name and (not (cm.animated or cm.modelCreated) or customObj.protected):
+        self.report({"WARNING"}, "Source object cannot be its own brick type.")
+        return False
+    if customObj.type != "MESH":
+        self.report({"WARNING"}, "Custom brick type object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
+        return False
+    custom_details = bounds(customObj)
+    zeroDistAxes = ""
+    if custom_details.dist.x < 0.00001:
+        zeroDistAxes += "X"
+    if custom_details.dist.y < 0.00001:
+        zeroDistAxes += "Y"
+    if custom_details.dist.z < 0.00001:
+        zeroDistAxes += "Z"
+    if zeroDistAxes != "":
+        axisStr = "axis" if len(zeroDistAxes) == 1 else "axes"
+        warningMsg = "Custom brick type object is to small along the '%(zeroDistAxes)s' %(axisStr)s (<0.00001). Please select another object or extrude it along the '%(zeroDistAxes)s' %(axisStr)s." % locals()
+        self.report({"WARNING"}, warningMsg)
+        return False
+    return True

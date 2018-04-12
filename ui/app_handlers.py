@@ -81,7 +81,7 @@ bpy.app.handlers.frame_change_pre.append(handle_animation)
 #     for i, cm in enumerate(scn.cmlist):
 #         if not cm.modelCreated:
 #             continue
-#         source = bpy.data.objects[cm.source_name + (" (DO NOT RENAME)" if cm.modelCreated or cm.animated else "")]
+#         source = bpy.data.objects[cm.source_name)
 #         if is_smoke(source) or source.animation_data is not None:
 #             if is_smoke(source):
 #                 try:
@@ -140,7 +140,7 @@ def handle_selections(scene):
     elif scn.Bricker_last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
         scn.Bricker_last_cmlist_index = scn.cmlist_index
         cm = scn.cmlist[scn.cmlist_index]
-        source = bpy.data.objects.get(cm.source_name) or bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+        source = bpy.data.objects.get(cm.source_name)
         if source and cm.version[:3] != "1_0":
             if cm.modelCreated:
                 n = cm.source_name
@@ -220,7 +220,7 @@ def prevent_user_from_viewing_storage_scene(scene):
     scn = bpy.context.scene
     if not brickerIsActive() or brickerRunningBlockingOp():
         return
-    if scn.name == "Bricker_storage (DO NOT RENAME)":
+    if scn.name == "Bricker_storage (DO NOT MODIFY)":
         i = 0
         if bpy.data.scenes[i].name == scn.name:
             i += 1
@@ -391,6 +391,14 @@ def handle_upconversion(scene):
                 matObj = bpy.data.objects.get(matObjName)
                 if matObj is None:
                     matObj = bpy.data.objects.new(matObjName, bpy.data.meshes.new(matObjName + "_mesh"))
+                # update storage scene name
+                sto_scn = bpy.data.scenes.get("Bricker_storage (DO NOT MODIFY)")
+                sto_scn.name.replace("RENAME", "MODIFY")
+                # update names of Bricker source objects
+                for cm in scn.cmlist:
+                    old_source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+                    if old_source is not None:
+                        old_source.name = cm.source_name
 
 
 bpy.app.handlers.load_post.append(handle_upconversion)

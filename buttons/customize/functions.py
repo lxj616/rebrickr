@@ -41,7 +41,7 @@ def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
     print("[Bricker] redrawing...")
     # get arguments for createNewBricks
     n = cm.source_name
-    source = bpy.data.objects.get(n + " (DO NOT RENAME)") or bpy.data.objects.get(n)
+    source = bpy.data.objects.get(n)
     source_details, dimensions = getDetailsAndBounds(source, cm)
     Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
     parent = bpy.data.objects.get(Bricker_parent_on)
@@ -134,7 +134,6 @@ def getAvailableTypes(by="SELECTION", includeSizes=[]):
     objNamesD, bricksDicts = createObjNamesAndBricksDictsDs(objs)
     for cm_id in objNamesD.keys():
         cm = getItemByID(scn.cmlist, cm_id)
-        items += [("CUSTOM", "Custom", "")] if cm.brickType == "CUSTOM" else []
         bricksDict = bricksDicts[cm_id]
         objSizes = []
         for obj_name in objNamesD[cm_id]:

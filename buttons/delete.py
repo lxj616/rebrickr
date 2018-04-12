@@ -93,7 +93,7 @@ class BrickerDelete(bpy.types.Operator):
         cm = cm or scn.cmlist[scn.cmlist_index]
         n = cm.source_name
         Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
-        source = bpy.data.objects.get(source_name or "%(n)s (DO NOT RENAME)" % locals())
+        source = bpy.data.objects.get(source_name or n)
 
         # set all layers active temporarily
         curLayers = list(scn.layers)
@@ -136,7 +136,7 @@ class BrickerDelete(bpy.types.Operator):
         cm = cm or scn.cmlist[scn.cmlist_index]
         modelType = getModelType(cm)
         n = cm.source_name
-        source = bpy.data.objects.get("%(n)s (DO NOT RENAME)" % locals())
+        source = bpy.data.objects.get(n)
         origFrame = scn.frame_current
         scn.frame_set(cm.modelCreatedOnFrame)
         # store pivot point for model
@@ -402,3 +402,4 @@ class BrickerDelete(bpy.types.Operator):
         cm.activeKeyZ = -1
         cm.firstKey = ""
         cm.isSmoke = False
+        cm.hasCustomBrick = False
