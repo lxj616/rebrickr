@@ -639,6 +639,19 @@ class BrickerBrickify(bpy.types.Operator):
                     warningMsg += "'%(i)s', " % locals()
                 self.report({"WARNING"}, warningMsg[:-2])
 
+        # Verify smoke simulation is set up correctly
+        for mod in source.modifiers:
+            if mod.type == "SMOKE" and mod.domain_settings and mod.show_viewport:
+                if not bpy.data.is_saved:
+                    self.report({"WARNING"}, "Blend file must be saved before brickifying '" + str(mod.type) + "' modifiers.")
+                    return False
+                if mod.domain_settings.use_adaptive_domain == True:
+                    self.report({"WARNING"}, "Adaptive domain not supported. Please disable 'Smoke Adaptive Domain' and re-bake the smoke simulation before Brickifying")
+                    return False
+                if len(mod.domain_settings.density_grid) == 0:
+                    self.report({"WARNING"}, "Please bake the smoke simulation before Brickifying")
+                    return False
+
         if self.action == "CREATE":
             # if source is soft body or cloth and is enabled, prompt user to apply the modifiers
             for mod in source.modifiers:
@@ -652,16 +665,6 @@ class BrickerBrickify(bpy.types.Operator):
                 if mod.type in ["SOFT_BODY", "CLOTH"] and mod.show_viewport and not bpy.data.is_saved:
                     self.report({"WARNING"}, "Blend file must be saved before brickifying '" + str(mod.type) + "' modifiers.")
                     return False
-                if mod.type == "SMOKE" and mod.domain_settings and mod.show_viewport:
-                    if not bpy.data.is_saved:
-                        self.report({"WARNING"}, "Blend file must be saved before brickifying '" + str(mod.type) + "' modifiers.")
-                        return False
-                    if mod.domain_settings.use_adaptive_domain == True:
-                        self.report({"WARNING"}, "Adaptive domain not supported. Please disable 'Smoke Adaptive Domain' and re-bake the smoke simulation before Brickifying")
-                        return False
-                    if len(mod.domain_settings.density_grid) == 0:
-                        self.report({"WARNING"}, "Please bake the smoke simulation before Brickifying")
-                        return False
             # verify start frame is less than stop frame
             if cm.startFrame > cm.stopFrame:
                 self.report({"ERROR"}, "Start frame must be less than or equal to stop frame (see animation tab below).")

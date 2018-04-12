@@ -207,8 +207,8 @@ def applyModifiers(obj, only=None, exclude=["SMOKE"], curFrame=None):
     for mod in obj.modifiers:
         # only = ["SUBSURF", "ARMATURE", "SOLIDIFY", "MIRROR", "ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN", "FLUID_SIMULATION"]
         if (only is None or mod.type in only) and (exclude is None or mod.type not in exclude) and mod.show_viewport:
-            if curFrame and mod.type in ["CLOTH", "SOFT_BODY", "ARMATURE"]:
-                pass
+            # if curFrame and mod.type in ["CLOTH", "SOFT_BODY", "ARMATURE"]:
+            #     pass
             try:
                 with Suppressor():
                     bpy.ops.object.modifier_apply(apply_as='DATA', modifier=mod.name)

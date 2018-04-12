@@ -27,8 +27,9 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Transfer matObj functionality to new custom list property
       * Rewrite top and bottom exposure to only include current brick (not exposure of whole brick). Checking exposure of brick then should be function that checks each location in brick
       * Compute top and bottom exposure when generating bricksDict
+      * If cloth sim/soft body anim already baked before Brickify action, no need to run bake again
+      * Bake run while brickifying cloth sim/soft body anim should stick around after brickified animation deleted
+      * See if there's another way to calculate brickFreqMatrix for cloth sim/soft body anim besides baking and applying the modifier
   * Known issues:
       * For models with thin outer shells, Bricker may use color of inside face instead of outside face for brick material (see snapchat hotdog file)
       * Applying model rotation when deleting brickified model whose source has rotated parent produces problematic results
-      * Bricks with 14 verts on cylinder have strange errors
-      * Shell progress bar does not update appropriately

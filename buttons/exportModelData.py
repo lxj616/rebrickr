@@ -50,6 +50,9 @@ class exportModelData(Operator):
         try:
             scn, cm, n = getActiveContextInfo()
             path = getExportPath(cm, n, ".py")
+            if not os.access(path, os.W_OK):
+                self.report({"WARNING"}, "Blender does not have write permissions for the following path: " + path)
+                return {"CANCELLED"}
             bType = "Frames" if cm.animated else "Bricks"
             bricksDict, _ = getBricksDict(cm=cm)
             numBs = len([b for b in bricksDict if not hasattr(b, "draw") or b.draw])

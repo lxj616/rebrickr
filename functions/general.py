@@ -380,19 +380,20 @@ def getExportPath(cm, fn, ext):
     path = cm.exportPath
     lastSlash = path.rfind("/")
     path = path[:len(path) if lastSlash == -1 else lastSlash + 1]
-    blendPathSplit = bpy.path.abspath("//")[:-1].split("/")
-    # if no user input, use default render location
-    if path == "":
-        path = bpy.path.abspath("//") or "/tmp/"
+    blendPath = bpy.path.abspath("//") or "/tmp/"
+    blendPathSplit = blendPath[:-1].split("/")
     # if relative path, construct path from user input
-    elif path.startswith("//"):
+    if path.startswith("//"):
         splitPath = path[2:].split("/")
         while len(splitPath) > 0 and splitPath[0] == "..":
             splitPath.pop(0)
             blendPathSplit.pop()
         newPath = "/".join(splitPath)
-        blendPath = "/".join(blendPathSplit)
+        fullBlendPath = "/".join(blendPathSplit)
         path = os.path.join(blendPath, newPath)
+    # if path is blank at this point, use default render location
+    if path == "":
+        path = blendPath
     # check to make sure dumpLoc exists on local machine
     if not os.path.exists(path):
         os.mkdir(path)

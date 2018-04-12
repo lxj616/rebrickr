@@ -63,6 +63,9 @@ class exportLdraw(Operator):
         """ create and write Ldraw file """
         scn, cm, n = getActiveContextInfo()
         path = getExportPath(cm, n, ".ldr")
+        if not os.access(path, os.W_OK):
+            self.report({"WARNING"}, "Blender does not have write permissions for the following path: " + path)
+            return {"CANCELLED"}
         f = open(path, "w")
         # write META commands
         f.write("0 %(n)s\n" % locals())

@@ -50,6 +50,9 @@ class bakeModel(Operator):
         try:
             scn, cm, n = getActiveContextInfo()
             path = getExportPath(cm, n, ".py")
+            if not os.access(path, os.W_OK):
+                self.report({"WARNING"}, "Blender does not have write permissions for the following path: " + path)
+                return {"CANCELLED"}
             # Apply modifiers
             # remove from group
             # clear parent and keep transform
