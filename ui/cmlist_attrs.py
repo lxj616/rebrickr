@@ -137,7 +137,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         name="Hex Value",
         subtype='COLOR',
         update=dirtyMatrix,
-        default=[1.0, 0.75, 0.35])
+        default=[1.0, 0.63, 0.2])
     flameIntensity = FloatProperty(
         name="Flame Intensity",
         description="Intensity of the flames",

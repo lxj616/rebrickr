@@ -343,9 +343,9 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     return brickFreqMatrix
 
 
-def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
+def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, source_details, cursorStatus=False):
     scn, cm, _ = getActiveContextInfo()
-    density_grid, flame_grid, color_grid, smoke_res = getSmokeInfo(source)
+    density_grid, flame_grid, color_grid, smoke_res, adapt, res, max_res = getSmokeInfo(source)
     brickFreqMatrix = deepcopy(faceIdxMatrix)
     colorMatrix = deepcopy(faceIdxMatrix)
     denom = len(faceIdxMatrix) * len(faceIdxMatrix[0]) * len(faceIdxMatrix[0][0])
@@ -357,28 +357,50 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
     sb = (1 - s) * (0.0820 or 0.0721)
     sat_mat = Matrix([[sr + s, sr, sr], [sg, sg + s, sg], [sb, sb, sb + s]])
 
-    xn0 = smoke_res[0] / len(faceIdxMatrix)
-    yn0 = smoke_res[1] / len(faceIdxMatrix[0])
-    zn0 = smoke_res[2] / len(faceIdxMatrix[0][0])
+    # get starting and ending idx
+    if adapt:
+        source_details_adapt = bounds(source)
+        adapt_min = source_details_adapt.min
+        adapt_max = source_details_adapt.max
+        full_min = source_details.min
+        full_max = source_details.max
+        full_dist = full_max - full_min
+        if 0 in full_dist:
+            return brickFreqMatrix, colorMatrix
+        start_percent = vec_div(adapt_min - full_min, full_dist)
+        end_percent   = vec_div(adapt_max - full_min, full_dist)
+        s_idx = [len(faceIdxMatrix) * start_percent.x, len(faceIdxMatrix[0]) * start_percent.y, len(faceIdxMatrix[0][0]) * start_percent.z]
+        e_idx = [len(faceIdxMatrix) * end_percent.x,   len(faceIdxMatrix[0]) * end_percent.y,   len(faceIdxMatrix[0][0]) * end_percent.z]
+    else:
+        s_idx = [0, 0, 0]
+        e_idx = [len(faceIdxMatrix), len(faceIdxMatrix[0]), len(faceIdxMatrix[0][0])]
+
+    xn0 = smoke_res[0] / (e_idx[0] - s_idx[0])
+    yn0 = smoke_res[1] / (e_idx[1] - s_idx[1])
+    zn0 = smoke_res[2] / (e_idx[2] - s_idx[2])
     ave_denom = xn0 * yn0 * zn0
 
     if ave_denom == 0:
         return brickFreqMatrix, colorMatrix
 
     # set up brickFreqMatrix values
-    for x in range(len(faceIdxMatrix)):
-        for y in range(len(faceIdxMatrix[0])):
-            for z in range(len(faceIdxMatrix[0][0])):
+    for x in range(int(s_idx[0]), int(e_idx[0])):
+        for y in range(int(s_idx[1]), int(e_idx[1])):
+            for z in range(int(s_idx[2]), int(e_idx[2])):
                 # print status to terminal
                 old_percent = updateProgressBars(True, cursorStatus, (x * y * z) / denom, old_percent, "Shell")
                 d_acc = 0
                 f_acc = 0
                 cs_acc = Vector((0, 0, 0))
                 cf_acc = Vector((0, 0, 0))
+                ave_denom = xn0 * yn0 * zn0  # resets every iteration
                 # get indices for
-                xn = [int(xn0 * x), int(xn0 * (x + 1))]
-                yn = [int(yn0 * y), int(yn0 * (y + 1))]
-                zn = [int(zn0 * z), int(zn0 * (z + 1))]
+                x0 = x - int(s_idx[0])
+                y0 = y - int(s_idx[1])
+                z0 = z - int(s_idx[2])
+                xn = [int(xn0 * x0), int(xn0 * (x0 + 1))]
+                yn = [int(yn0 * y0), int(yn0 * (y0 + 1))]
+                zn = [int(zn0 * z0), int(zn0 * (z0 + 1))]
                 xn[1] = xn[1] + 1 if xn[1] == xn[0] and xn[0] < smoke_res[0] else xn[1]
                 yn[1] = yn[1] + 1 if yn[1] == yn[0] and yn[0] < smoke_res[1] else yn[1]
                 zn[1] = zn[1] + 1 if zn[1] == zn[0] and zn[0] < smoke_res[2] else zn[1]
@@ -386,7 +408,11 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, cursorStatus=False):
                     for y1 in range(yn[0], yn[1]):
                         for z1 in range(zn[0], zn[1]):
                             cur_idx = (z1 * smoke_res[1] + y1) * smoke_res[0] + x1
-                            d = density_grid[cur_idx]
+                            try:
+                                d = density_grid[cur_idx]
+                            except IndexError:
+                                ave_denom -= 1
+                                continue
                             f = flame_grid[cur_idx]
                             d_acc += d
                             f_acc += f
@@ -597,7 +623,7 @@ def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=
     # set up faceIdxMatrix and brickFreqMatrix
     faceIdxMatrix = np.zeros((len(coordMatrix), len(coordMatrix[0]), len(coordMatrix[0][0]))).tolist()
     if cm.isSmoke:
-        brickFreqMatrix, rgbaMatrix = getBrickMatrixSmoke(origSource, faceIdxMatrix, cm.brickShell, cursorStatus=cursorStatus)
+        brickFreqMatrix, rgbaMatrix = getBrickMatrixSmoke(origSource, faceIdxMatrix, cm.brickShell, source_details, cursorStatus=cursorStatus)
     else:
         brickFreqMatrix = getBrickMatrix(source, faceIdxMatrix, coordMatrix, cm.brickShell, axes=calculationAxes, cursorStatus=cursorStatus)
         rgbaMatrix = None

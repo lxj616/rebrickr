@@ -89,7 +89,39 @@ def safeLink(obj, unhide=False, protect=False):
         pass
 
 
-def bounds(obj, local=False):
+def getBoundsBF(obj):
+    """ brute force method for obtaining object bounding box """
+    # initialize min and max
+    min = Vector((math.inf, math.inf, math.inf))
+    max = Vector((-math.inf, -math.inf, -math.inf))
+    # calculate min and max verts
+    for v in obj.data.vertices:
+        if v.co.x > max.x:
+            max.x = v.co.x
+        elif v.co.x < min.x:
+            min.x = v.co.x
+        if v.co.y > max.y:
+            max.y = v.co.y
+        elif v.co.y < min.y:
+            min.y = v.co.y
+        if v.co.z > max.z:
+            max.z = v.co.z
+        elif v.co.z < min.z:
+            min.z = v.co.z
+    # set up bounding box list of coord lists
+    bound_box = [list(min),
+                 [min.x, min.y, min.z],
+                 [min.x, min.y, max.z],
+                 [min.x, max.y, max.z],
+                 [min.x, max.y, min.z],
+                 [max.x, min.y, min.z],
+                 [max.y, min.y, max.z],
+                 list(max),
+                 [max.x, max.y, min.z]]
+    return bound_box
+
+
+def bounds(obj, local=False, use_adaptive_domain=True):
     """
     returns object details with the following subattribute Vectors:
 
@@ -100,7 +132,7 @@ def bounds(obj, local=False):
 
     """
 
-    local_coords = obj.bound_box[:]
+    local_coords = getBoundsBF(obj) if is_smoke(obj) and is_adaptive(obj) and not use_adaptive_domain else obj.bound_box[:]
     om = obj.matrix_world
 
     if not local:
@@ -416,5 +448,14 @@ def is_smoke(ob):
         return False
     for mod in ob.modifiers:
         if mod.type == "SMOKE" and mod.domain_settings and mod.show_viewport:
+            return True
+    return False
+
+
+def is_adaptive(ob):
+    if ob is None:
+        return False
+    for mod in ob.modifiers:
+        if mod.type == "SMOKE" and mod.domain_settings and mod.domain_settings.use_adaptive_domain:
             return True
     return False

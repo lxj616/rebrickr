@@ -379,7 +379,7 @@ class ModelSettingsPanel(Panel):
         s = Vector((-1, -1, -1))
         if cm.modelScaleX == -1 or cm.modelScaleY == -1 or cm.modelScaleZ == -1:
             if source:
-                source_details = bounds(source)
+                source_details = bounds(source, use_adaptive_domain=False)
                 s.x = round(source_details.dist.x, 2)
                 s.y = round(source_details.dist.y, 2)
                 s.z = round(source_details.dist.z, 2)

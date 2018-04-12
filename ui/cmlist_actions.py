@@ -118,7 +118,7 @@ class cmlist_actions(bpy.types.Operator):
             # set up default brickHeight values
             source = bpy.data.objects.get(item.source_name)
             if source:
-                source_details = bounds(source)
+                source_details = bounds(source, use_adaptive_domain=False)
                 h = max(source_details.dist)
                 # update brick height based on model height
                 item.brickHeight = h / 20
