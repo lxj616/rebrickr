@@ -532,7 +532,7 @@ class BrickerBrickify(bpy.types.Operator):
             updateInternal(bricksDict, cm, keys, clearExisting=loadedFromCache)
             cm.buildIsDirty = True
         # update materials in bricksDict
-        if cm.materialIsDirty or cm.matrixIsDirty or cm.animIsDirty: bricksDict = updateMaterials(bricksDict, source, origSource, curFrame)
+        if cm.materialType != "NONE" and (cm.materialIsDirty or cm.matrixIsDirty or cm.animIsDirty): bricksDict = updateMaterials(bricksDict, source, origSource, curFrame)
         # make bricks
         group_name = 'Bricker_%(n)s_bricks_f_%(curFrame)s' % locals() if curFrame is not None else "Bricker_%(n)s_bricks" % locals()
         bricksCreated, bricksDict = makeBricks(source, parent, refLogo, logo_details, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, customObj_details=customObj_details, group_name=group_name, clearExistingGroup=clearExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
@@ -645,9 +645,10 @@ class BrickerBrickify(bpy.types.Operator):
                 if not bpy.data.is_saved:
                     self.report({"WARNING"}, "Blend file must be saved before brickifying '" + str(mod.type) + "' modifiers.")
                     return False
-                if len(mod.domain_settings.density_grid) == 0:
+                if len(mod.domain_settings.density_grid) == 0 or (self.action == "ANIMATE" and not mod.domain_settings.point_cache.is_baked):
                     self.report({"WARNING"}, "Please bake the smoke simulation before Brickifying")
                     return False
+
 
         if self.action == "CREATE":
             # if source is soft body or cloth and is enabled, prompt user to apply the modifiers

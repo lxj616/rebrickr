@@ -42,17 +42,16 @@ def getSmokeInfo(smoke_obj):
         flame_grid = list(smoke_data.flame_grid)
         color_grid = list(smoke_data.color_grid)
         # get resolution
-        smoke_res = getSmokeRes(smoke_data)
+        domain_res = getDomainRes(smoke_data)
         adapt = smoke_data.use_adaptive_domain
-        res = Vector(smoke_data.domain_resolution)
         max_res_i = smoke_data.resolution_max
-        max_res = Vector(res) * (max_res_i / max(res))
-        return density_grid, flame_grid, color_grid, smoke_res, adapt, res, max_res
+        max_res = Vector(domain_res) * (max_res_i / max(domain_res))
+        return density_grid, flame_grid, color_grid, domain_res, max_res, adapt
     else:
-        return None, None, None, None
+        return [None]*6
 
 
-def getSmokeRes(smoke_data):
+def getDomainRes(smoke_data):
     smoke_res = list(smoke_data.domain_resolution)
     if smoke_data.use_high_resolution:
         smoke_res = [int((smoke_data.amplify + 1) * i) for i in smoke_res]

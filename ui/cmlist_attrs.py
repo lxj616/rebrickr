@@ -289,7 +289,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
                ("CUSTOM", "Custom", "Choose a custom material to apply to all generated bricks"),
                ("SOURCE", "Use Source Materials", "Apply material based on closest intersecting face")],
         update=dirtyMaterial,
-        default="SOURCE")
+        default="NONE")
     materialName = StringProperty(
         name="Material Name",
         description="Name of the material to apply to all bricks",
@@ -339,7 +339,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         description="Amount to snap colors by",
         precision=3,
         min=0.00001, max=1.0,
-        default=0.0001,
+        default=0.001,
         update=dirtyBuild)
     includeTransparency = BoolProperty(
         name="Include Transparency",
