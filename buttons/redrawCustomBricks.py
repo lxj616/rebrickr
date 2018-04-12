@@ -60,21 +60,17 @@ class BrickerRedrawCustomBricks(bpy.types.Operator):
             handle_exception()
         return{"FINISHED"}
 
-    ###################################################
-    # class variables
-
     target_prop = StringProperty(default="")
 
     #############################################
     # class methods
 
-    @staticmethod
-    def redrawCustomBricks():
+    def redrawCustomBricks(self):
         cm = getActiveContextInfo()[1]
         bricksDict, _ = getBricksDict(cm=cm)
         if bricksDict is None:
             return
-        keysToUpdate = [k for k in bricksDict if "CUSTOM" in bricksDict[k]["type"]]
+        keysToUpdate = [k for k in bricksDict if bricksDict[k]["type"] == "CUSTOM " + self.target_prop[-1]]
         if len(keysToUpdate) != 0:
             drawUpdatedBricks(cm, bricksDict, keysToUpdate)
 

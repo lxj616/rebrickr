@@ -53,7 +53,7 @@ def getBricksDict(dType="MODEL", source=None, source_details=None, dimensions=No
     else:
         # get arguments for makeBricksDict function call
         if source is None or source_details is None or dimensions is None or brickScale is None:
-            source, source_details, dimensions, brickScale, _, _ = getArgumentsForBricksDict(cm)
+            source, source_details, dimensions, brickScale, _ = getArgumentsForBricksDict(cm)
         # create new bricksDict
         bricksDict = makeBricksDict(source, source_details, brickScale, origSource=origSource, cursorStatus=updateCursor)
     return bricksDict, loadedFromCache

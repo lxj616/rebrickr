@@ -301,46 +301,48 @@ def getDetailsAndBounds(source, cm=None):
 def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=None):
     """ returns arguments for makeBricksDict function """
     source = source or bpy.data.objects.get(cm.source_name)
+    customData = [None] * 3
     if source_details is None or dimensions is None:
         source_details, dimensions = getDetailsAndBounds(source, cm)
-    if cm.brickType == "CUSTOM" or cm.hasCustomBrick:
-        scn = bpy.context.scene
-        # get custom object
-        customObj = bpy.data.objects[cm.customObjectName]
-        oldLayers = list(scn.layers) # store scene layers for later reset
-        setLayers(customObj.layers)
-        # duplicate custom object
-        customObj0 = duplicateObj(customObj, link_to_scene=True)
-        customObj0.parent = None
-        select(customObj0, active=True, only=True)
-        # apply transformation to custom object
-        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-        select(source, active=True, only=True)
-        # get custom object details
-        customObj_details = bounds(customObj0)
-        # set brick scale
-        scale = cm.brickHeight/customObj_details.dist.z
-        brickScale = Vector((scale * customObj_details.dist.x + dimensions["gap"],
-                    scale * customObj_details.dist.y + dimensions["gap"],
-                    scale * customObj_details.dist.z + dimensions["gap"]))
-        # get transformation matrices
-        t_mat = Matrix.Translation(-customObj_details.mid)
-        maxDist = max(customObj_details.dist)
-        s_mat_x = Matrix.Scale((brickScale.x - dimensions["gap"]) / customObj_details.dist.x, 4, Vector((1, 0, 0)))
-        s_mat_y = Matrix.Scale((brickScale.y - dimensions["gap"]) / customObj_details.dist.y, 4, Vector((0, 1, 0)))
-        s_mat_z = Matrix.Scale((brickScale.z - dimensions["gap"]) / customObj_details.dist.z, 4, Vector((0, 0, 1)))
-        # apply transformation to custom object dup mesh
-        customObj0.data.transform(t_mat)
-        customObj0.data.transform(s_mat_x * s_mat_y * s_mat_z)
-        customData = customObj0.data
-        # remove duplicate of custom object
-        bpy.data.objects.remove(customObj0, True)
-        setLayers(oldLayers)
-    else:
-        customData = None
-        customObj_details = None
+    for i, customInfo in enumerate([[cm.hasCustomObj1, cm.customObjectName1], [cm.hasCustomObj2, cm.customObjectName2], [cm.hasCustomObj3, cm.customObjectName3]]):
+        hasCustomObj = customInfo[0]
+        customObjName = customInfo[1]
+        if (i == 0 and cm.brickType == "CUSTOM") or hasCustomObj:
+            scn = bpy.context.scene
+            # get custom object
+            customObj = bpy.data.objects[customObjName]
+            oldLayers = list(scn.layers) # store scene layers for later reset
+            setLayers(customObj.layers)
+            # duplicate custom object
+            customObj0 = duplicateObj(customObj, link_to_scene=True)
+            customObj0.parent = None
+            select(customObj0, active=True, only=True)
+            # apply transformation to custom object
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            select(source, active=True, only=True)
+            # get custom object details
+            curCustomObj_details = bounds(customObj0)
+            # set brick scale
+            scale = cm.brickHeight/curCustomObj_details.dist.z
+            brickScale = Vector((scale * curCustomObj_details.dist.x + dimensions["gap"],
+                        scale * curCustomObj_details.dist.y + dimensions["gap"],
+                        scale * curCustomObj_details.dist.z + dimensions["gap"]))
+            # get transformation matrices
+            t_mat = Matrix.Translation(-curCustomObj_details.mid)
+            maxDist = max(curCustomObj_details.dist)
+            s_mat_x = Matrix.Scale((brickScale.x - dimensions["gap"]) / curCustomObj_details.dist.x, 4, Vector((1, 0, 0)))
+            s_mat_y = Matrix.Scale((brickScale.y - dimensions["gap"]) / curCustomObj_details.dist.y, 4, Vector((0, 1, 0)))
+            s_mat_z = Matrix.Scale((brickScale.z - dimensions["gap"]) / curCustomObj_details.dist.z, 4, Vector((0, 0, 1)))
+            # apply transformation to custom object dup mesh
+            customObj0.data.transform(t_mat)
+            customObj0.data.transform(s_mat_x * s_mat_y * s_mat_z)
+            curCustomData = customObj0.data
+            # remove duplicate of custom object
+            bpy.data.objects.remove(customObj0, True)
+            setLayers(oldLayers)
+            customData[i] = curCustomData
     if cm.brickType != "CUSTOM":
         brickScale = Vector((dimensions["width"] + dimensions["gap"],
                     dimensions["width"] + dimensions["gap"],
                     dimensions["height"]+ dimensions["gap"]))
-    return source, source_details, dimensions, brickScale, customData, customObj_details
+    return source, source_details, dimensions, brickScale, customData

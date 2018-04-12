@@ -82,6 +82,7 @@ class drawAdjacent(Operator):
             obj = scn.objects.active
             initial_active_obj_name = obj.name
             keysToMerge = []
+            updateHasCustomObjs(cm, targetType)
 
             # get dict key details of current obj
             dictKey = getDictKey(obj.name)
@@ -128,8 +129,6 @@ class drawAdjacent(Operator):
                 keysToUpdate.append(dictKey)
 
             # draw created bricks
-            if "CUSTOM" in self.brickType:
-                cm.hasCustomBrick = True
             drawUpdatedBricks(cm, self.bricksDict, keysToUpdate, selectCreated=False)
 
             # select original brick

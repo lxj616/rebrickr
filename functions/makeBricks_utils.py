@@ -43,7 +43,7 @@ from .general import *
 from ..lib.caches import bricker_bm_cache
 
 
-def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, customData, customObj_details, brickScale, bricksCreated, allMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3):
+def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, customData, brickScale, bricksCreated, allMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3):
     brickD = bricksDict[key]
     # check exposure of current [merged] brick
     if brickD["top_exposed"] is None or brickD["bot_exposed"] is None or cm.buildIsDirty:
@@ -65,9 +65,12 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
     ### CREATE BRICK ###
 
     # add brick with new mesh data at original location
-    if "CUSTOM" in brickD["type"]:
-        # copy custom mesh
-        m = customData.copy()
+    if brickD["type"] == "CUSTOM 1":
+        m = customData[0].copy()
+    elif brickD["type"] == "CUSTOM 2":
+        m = customData[1].copy()
+    elif brickD["type"] == "CUSTOM 3":
+        m = customData[2].copy()
     else:
         # get brick mesh
         bm = getBrickMesh(cm, brickD, randS3, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.circleVerts)
@@ -247,7 +250,7 @@ def prepareLogoAndGetDetails(scn, cm, logo, dimensions):
 def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoToUse, logo_type, logo_details, logo_scale, logo_inset, useStud, circleVerts):
     # get bm_cache_string
     bm_cache_string = ""
-    if cm.brickType != "CUSTOM":
+    if "CUSTOM" not in cm.brickType:
         custom_logo_used = logoToUse is not None and logo_type == "CUSTOM"
         bm_cache_string = json.dumps((cm.brickHeight, brickSize, undersideDetail,
                                       cm.logoResolution if logoToUse is not None else None,

@@ -86,9 +86,7 @@ class changeBrickType(Operator):
                 # initialize vars
                 bricksDict = self.bricksDicts[cm_id]
                 keysToUpdate = []
-                if "CUSTOM" in targetBrickType and not customValidObject(self, cm):
-                    typ = targetBrickType
-                    continue
+                updateHasCustomObjs(cm, targetBrickType)
 
                 # iterate through names of selected objects
                 for obj_name in self.objNamesD[cm_id]:
@@ -150,8 +148,6 @@ class changeBrickType(Operator):
                 bricksWereGenerated = bricksWereGenerated or len(keysToUpdate) > 0
 
                 # draw updated brick
-                if "CUSTOM" in targetBrickType:
-                    cm.hasCustomBrick = True
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=False)
                 # model is now customized
                 cm.customized = True

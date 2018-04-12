@@ -244,9 +244,17 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         description="Construct model using only legal brick sizes",
         update=dirtyBuild,
         default=True)
-    customObjectName = StringProperty(
-        name="Custom Object Name",
-        description="Name of the object to use as bricks",
+    customObjectName1 = StringProperty(
+        name="Custom Object Name 1",
+        description="Name of custom object 1 to use as bricks",
+        default="")
+    customObjectName2 = StringProperty(
+        name="Custom Object Name 2",
+        description="Name of custom object 2 to use as bricks",
+        default="")
+    customObjectName3 = StringProperty(
+        name="Custom Object Name 3",
+        description="Name of custom object 3 to use as bricks",
         default="")
     distOffsetX = FloatProperty(
         name="X",
@@ -569,7 +577,9 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     modelCreatedOnFrame = IntProperty(default=-1)
     numBricksGenerated = IntProperty(default=-1)
     isSmoke = BoolProperty(default=False)
-    hasCustomBrick = BoolProperty(default=False)
+    hasCustomObj1 = BoolProperty(default=False)
+    hasCustomObj2 = BoolProperty(default=False)
+    hasCustomObj3 = BoolProperty(default=False)
 
     # Properties for checking of model needs updating
     animIsDirty = BoolProperty(default=True)

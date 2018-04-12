@@ -392,7 +392,7 @@ class ModelSettingsPanel(Panel):
                 r = vec_div(s, full_d)
             elif cm.brickType == "CUSTOM":
                 customObjFound = False
-                customObj = bpy.data.objects.get(cm.customObjectName)
+                customObj = bpy.data.objects.get(cm.customObjectName1)
                 if customObj and customObj.type == "MESH":
                     custom_details = bounds(customObj)
                     if 0 not in custom_details.dist.to_tuple():
@@ -557,13 +557,18 @@ class BrickTypesPanel(Panel):
             col.label("Custom Brick Objects:")
         else:
             col = layout.column(align=True)
-        split = col.split(align=True, percentage=0.7)
-        col1 = split.column(align=True)
-        col1.prop_search(cm, "customObjectName", scn, "objects", text='')
-        col1 = split.column(align=True)
-        col1.operator("bricker.eye_dropper", icon="EYEDROPPER", text="").target_prop = "customObjectName"
-        col1 = split.column(align=True)
-        col1.operator("bricker.redraw_custom", icon="FILE_REFRESH", text="").target_prop = "customObjectName"
+            col.label("Brick Type Object:")
+        for prop in ["customObjectName1", "customObjectName2", "customObjectName3"]:
+            if prop[-1] == "2" and cm.brickType == "CUSTOM":
+                col = layout.column(align=True)
+                col.label("Other Objects:")
+            split = col.split(align=True, percentage=0.65)
+            col1 = split.column(align=True)
+            col1.prop_search(cm, prop, scn, "objects", text="")
+            col1 = split.column(align=True)
+            col1.operator("bricker.eye_dropper", icon="EYEDROPPER", text="").target_prop = prop
+            col1 = split.column(align=True)
+            col1.operator("bricker.redraw_custom", icon="FILE_REFRESH", text="").target_prop = prop
 
 
         if cm.brickType == "CUSTOM":

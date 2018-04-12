@@ -402,4 +402,6 @@ class BrickerDelete(bpy.types.Operator):
         cm.activeKeyZ = -1
         cm.firstKey = ""
         cm.isSmoke = False
-        cm.hasCustomBrick = False
+        cm.hasCustomObj1 = False
+        cm.hasCustomObj2 = False
+        cm.hasCustomObj3 = False

@@ -132,10 +132,18 @@ def getAvailableTypes(by="SELECTION", includeSizes=[]):
     scn = bpy.context.scene
     objs = bpy.context.selected_objects if by == "SELECTION" else [scn.objects.active]
     objNamesD, bricksDicts = createObjNamesAndBricksDictsDs(objs)
+    invalidItems = []
     for cm_id in objNamesD.keys():
         cm = getItemByID(scn.cmlist, cm_id)
         bricksDict = bricksDicts[cm_id]
         objSizes = []
+        # check that customObjects are valid
+        for idx in range(3):
+            targetType = "CUSTOM " + str(idx + 1)
+            warningMsg = customValidObject(cm, targetType=targetType, idx=idx)
+            if warningMsg is not None and itemFromType(targetType) not in invalidItems:
+                invalidItems.append(itemFromType(targetType))
+        # build items list
         for obj_name in objNamesD[cm_id]:
             dictKey = getDictKey(obj_name)
             objSize = bricksDict[dictKey]["size"]
@@ -144,14 +152,22 @@ def getAvailableTypes(by="SELECTION", includeSizes=[]):
             objSizes.append(objSize)
             if objSize[2] not in [1, 3]: raise Exception("Custom Error Message: objSize not in [1, 3]")
             # build items
-            items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[3] if includeSizes == "ALL" or objSize[:2] in legalBS[3][typ] + includeSizes]
+            items += [itemFromType(typ) for typ in legalBS[3] if includeSizes == "ALL" or objSize[:2] in legalBS[3][typ] + includeSizes]
             if flatBrickType(cm):
-                items += [(typ.upper(), typ.title().replace("_", " "), "") for typ in legalBS[1] if includeSizes == "ALL" or objSize[:2] in legalBS[1][typ] + includeSizes]
+                items += [itemFromType(typ) for typ in legalBS[1] if includeSizes == "ALL" or objSize[:2] in legalBS[1][typ] + includeSizes]
     # clean up items
     items = uniquify2(items, innerType=tuple)
     items.sort(key=lambda k: k[0])
+    # remove invalid items
+    for itm in invalidItems:
+        if itm in items:
+            items.remove(itm)
     # return items, or null if items was empty
     return items if len(items) > 0 else [("NULL", "Null", "")]
+
+
+def itemFromType(typ):
+    return (typ.upper(), typ.title().replace("_", " "), "")
 
 def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, dec=0, curHeight=None, curType=None, targetHeight=None, targetType=None, createdFrom=None):
     brickD = bricksDict[key]

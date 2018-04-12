@@ -255,7 +255,8 @@ def brick_materials_loaded():
 
 def getMatrixSettings(cm=None):
     cm = cm or getActiveContextInfo()[1]
-    return listToStr([cm.brickHeight, cm.gap, cm.brickType, cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ, cm.customObjectName, cm.useNormals, cm.verifyExposure, cm.insidenessRayCastDir, cm.castDoubleCheckRays, cm.brickShell, cm.calculationAxes])
+    # TODO: Maybe remove custom object names from this?
+    return listToStr([cm.brickHeight, cm.gap, cm.brickType, cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ, cm.customObjectName1, cm.customObjectName2, cm.customObjectName3, cm.useNormals, cm.verifyExposure, cm.insidenessRayCastDir, cm.castDoubleCheckRays, cm.brickShell, cm.calculationAxes])
 
 
 def matrixReallyIsDirty(cm):
@@ -460,34 +461,48 @@ def is_adaptive(ob):
             return True
     return False
 
-def customValidObject(self, cm):
-    if cm.customObjectName == "":
-        self.report({"WARNING"}, "Custom brick type object not specified.")
-        return False
-    if len(cm.source_name) > 30:
-        self.report({"WARNING"}, "Source object name too long (must be <= 30 characters)")
-    customObj = bpy.data.objects.get(cm.customObjectName)
-    if customObj is None:
-        n = cm.customObjectName
-        self.report({"WARNING"}, "Custom brick type object '%(n)s' could not be found" % locals())
-        return False
-    if cm.customObjectName == cm.source_name and (not (cm.animated or cm.modelCreated) or customObj.protected):
-        self.report({"WARNING"}, "Source object cannot be its own brick type.")
-        return False
-    if customObj.type != "MESH":
-        self.report({"WARNING"}, "Custom brick type object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
-        return False
-    custom_details = bounds(customObj)
-    zeroDistAxes = ""
-    if custom_details.dist.x < 0.00001:
-        zeroDistAxes += "X"
-    if custom_details.dist.y < 0.00001:
-        zeroDistAxes += "Y"
-    if custom_details.dist.z < 0.00001:
-        zeroDistAxes += "Z"
-    if zeroDistAxes != "":
-        axisStr = "axis" if len(zeroDistAxes) == 1 else "axes"
-        warningMsg = "Custom brick type object is to small along the '%(zeroDistAxes)s' %(axisStr)s (<0.00001). Please select another object or extrude it along the '%(zeroDistAxes)s' %(axisStr)s." % locals()
-        self.report({"WARNING"}, warningMsg)
-        return False
-    return True
+def customValidObject(cm, targetType="Custom 0", idx=None):
+    for i, customInfo in enumerate([[cm.hasCustomObj1, cm.customObjectName1], [cm.hasCustomObj2, cm.customObjectName2], [cm.hasCustomObj3, cm.customObjectName3]]):
+        hasCustomObj = customInfo[0]
+        if idx is not None and idx != i:
+            continue
+        elif not hasCustomObj and not (i == 0 and cm.brickType == "CUSTOM") and int(targetType.split(" ")[-1]) != i + 1:
+            continue
+        customObjName = customInfo[1]
+        if customObjName == "":
+            warningMsg = "Custom object {} not specified.".format(i + 1)
+            return warningMsg
+        customObj = bpy.data.objects.get(customObjName)
+        if customObj is None:
+            n = customObjName
+            warningMsg = "Custom brick type object '%(n)s' could not be found" % locals()
+            return warningMsg
+        if customObjName == cm.source_name and (not (cm.animated or cm.modelCreated) or customObj.protected):
+            warningMsg = "Source object cannot be its own custom brick."
+            return warningMsg
+        if customObj.type != "MESH":
+            warningMsg = "Custom object {} is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).".format(i + 1)
+            return warningMsg
+        custom_details = bounds(customObj)
+        zeroDistAxes = ""
+        if custom_details.dist.x < 0.00001:
+            zeroDistAxes += "X"
+        if custom_details.dist.y < 0.00001:
+            zeroDistAxes += "Y"
+        if custom_details.dist.z < 0.00001:
+            zeroDistAxes += "Z"
+        if zeroDistAxes != "":
+            axisStr = "axis" if len(zeroDistAxes) == 1 else "axes"
+            warningMsg = "Custom brick type object is to small along the '%(zeroDistAxes)s' %(axisStr)s (<0.00001). Please select another object or extrude it along the '%(zeroDistAxes)s' %(axisStr)s." % locals()
+            return warningMsg
+    return None
+
+
+def updateHasCustomObjs(cm, typ):
+    # update hasCustomObj
+    if typ == "CUSTOM 1":
+        cm.hasCustomObj1 = True
+    if typ == "CUSTOM 2":
+        cm.hasCustomObj2 = True
+    if typ == "CUSTOM 3":
+        cm.hasCustomObj3 = True

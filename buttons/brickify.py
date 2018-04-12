@@ -496,7 +496,7 @@ class BrickerBrickify(bpy.types.Operator):
         scn = bpy.context.scene
         cm = cm or scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        _, _, _, brickScale, customData, customObj_details = getArgumentsForBricksDict(cm, source=source, source_details=source_details, dimensions=dimensions)
+        _, _, _, brickScale, customData = getArgumentsForBricksDict(cm, source=source, source_details=source_details, dimensions=dimensions)
         updateCursor = action in ["CREATE", "UPDATE_MODEL"]  # evaluates to boolean value
         if bricksDict is None:
             # multiply brickScale by offset distance
@@ -530,7 +530,7 @@ class BrickerBrickify(bpy.types.Operator):
         if cm.materialType != "NONE" and (cm.materialIsDirty or cm.matrixIsDirty or cm.animIsDirty): bricksDict = updateMaterials(bricksDict, source, origSource, curFrame)
         # make bricks
         group_name = 'Bricker_%(n)s_bricks_f_%(curFrame)s' % locals() if curFrame is not None else "Bricker_%(n)s_bricks" % locals()
-        bricksCreated, bricksDict = makeBricks(source, parent, refLogo, logo_details, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, customObj_details=customObj_details, group_name=group_name, clearExistingGroup=clearExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
+        bricksCreated, bricksDict = makeBricks(source, parent, refLogo, logo_details, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, group_name=group_name, clearExistingGroup=clearExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
         if selectCreated and len(bricksCreated) > 0:
             select(bricksCreated, active=bricksCreated[0], only=True)
         # store current bricksDict to cache
@@ -539,8 +539,13 @@ class BrickerBrickify(bpy.types.Operator):
 
     def isValid(self, scn, cm, source, Bricker_bricks_gn):
         """ returns True if brickify action can run, else report WARNING/ERROR and return False """
-        if cm.brickType == "CUSTOM" and not customValidObject(self, cm):
-            return False
+        if (cm.brickType == "CUSTOM" or cm.hasCustomObj1 or cm.hasCustomObj2 or cm.hasCustomObj3):
+            warningMsg = customValidObject(cm)
+            if warningMsg is not None:
+                self.report({"WARNING"}, warningMsg)
+                return False
+        if len(cm.source_name) > 30:
+            self.report({"WARNING"}, "Source object name too long (must be <= 30 characters)")
         if cm.materialType == "CUSTOM" and cm.materialName != "" and bpy.data.materials.find(cm.materialName) == -1:
             n = cm.materialName
             self.report({"WARNING"}, "Custom material '%(n)s' could not be found" % locals())
