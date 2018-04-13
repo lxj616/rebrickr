@@ -144,6 +144,7 @@ def dirtyMatrix(self=None, context=None):
 def dirtyInternal(self, context):
     scn, cm, _ = getActiveContextInfo()
     cm.internalIsDirty = True
+    cm.buildIsDirty = True
 
 
 def dirtyBuild(self, context):
@@ -209,13 +210,12 @@ def getCMProps():
             "randomMatSeed",
             "useUVMap",
             "useNormals",
-            "verifyExposure",
             "insidenessRayCastDir",
             "castDoubleCheckRays",
             "startFrame",
             "stopFrame",
             "useAnimation",
-            "autoUpdateExposed",
+            "autoUpdateOnDelete",
             "brickShell",
             "calculationAxes",
             "useLocalOrient",

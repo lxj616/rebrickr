@@ -50,6 +50,11 @@ class changeMaterial(Operator):
         """ ensures operator can execute (if not, returns False) """
         scn = bpy.context.scene
         objs = bpy.context.selected_objects
+        if scn.cmlist_index == -1:
+            return False
+        cm = scn.cmlist[scn.cmlist_index]
+        if cm.materialIsDirty or cm.matrixIsDirty or cm.buildIsDirty:
+            return False
         # check that at least 1 object is selected and is brick
         for obj in objs:
             if not obj.isBrick:
@@ -80,6 +85,7 @@ class changeMaterial(Operator):
                     keysInBrick = getKeysInBrick(cm, bricksDict[dictKey]["size"], dictKey)
                     for k in keysInBrick:
                         bricksDict[k]["mat_name"] = targetMatName
+                        bricksDict[k]["custom_mat_name"] = True
                     # delete the object that was split
                     keysToUpdate.append(dictKey)
 

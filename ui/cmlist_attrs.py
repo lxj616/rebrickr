@@ -282,9 +282,9 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=1)
 
     # CUSTOMIZE SETTINGS
-    autoUpdateExposed = BoolProperty(
-        name="Auto Update Exposed",
-        description="When bricks are deleted, automatically update bricks that become exposed",
+    autoUpdateOnDelete = BoolProperty(
+        name="Auto Update on Delete",
+        description="Draw newly exposed bricks when existing bricks are deleted",
         default=True)
 
     # MATERIAL & COLOR SETTINGS
@@ -343,7 +343,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default="RGB")
     colorSnapAmount = FloatProperty(
         name="Color Snap Amount",
-        description="Amount to snap colors by",
+        description="Threshold for combining colors together",
         precision=3,
         min=0.00001, max=1.0,
         default=0.001,
@@ -355,21 +355,21 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyMatrix)
     transparentWeight = FloatProperty(
         name="Transparency Weight",
-        description="How much affect the transparency of the color has on the ABS color chosen",
+        description="How much affect color transparency has on chosen ABS color",
         precision=3,
         min=0, max=2,
         default=1,
         update=dirtyMaterial)
     targetMaterial = StringProperty(
         name="Target Material",
-        description="Select material to add to materials list",
+        description="Add material to materials list",
         update=addMaterialToList,
         default="")
 
     # BRICK DETAIL SETTINGS
     studDetail = EnumProperty(
         name="Stud Detailing",
-        description="Choose where to draw the studs",
+        description="Choose where to draw brick studs",
         items=[("ALL", "On All Bricks", "Include Brick Logo only on bricks with studs exposed"),
                ("EXPOSED", "On Exposed Bricks", "Include Brick Logo only on bricks with studs exposed"),
                ("NONE", "None", "Don't include Brick Logo on bricks")],
@@ -377,7 +377,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default="EXPOSED")
     logoDetail = EnumProperty(
         name="Logo Detailing",
-        description="Choose where to draw the logo",
+        description="Choose logo type to draw on brick studs",
         items=[("CUSTOM", "Custom Logo", "Choose a mesh object to use as the brick stud logo"),
                ("LEGO", "LEGO Logo", "Include a LEGO logo on each stud"),
                ("NONE", "None", "Don't include Brick Logo on bricks")],
@@ -404,12 +404,12 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=7.25)
     logoObjectName = StringProperty(
         name="Logo Object Name",
-        description="Name of the logo object",
+        description="Name of the custom logo object",
         update=dirtyBricks,
         default="")
     logoScale = FloatProperty(
         name="Logo Scale",
-        description="Scale of the logo (relative to stud scale)",
+        description="Logo scale relative to stud scale",
         step=1,
         update=dirtyBricks,
         precision=2,
@@ -425,25 +425,25 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=0.5)
     hiddenUndersideDetail = EnumProperty(
         name="Underside Detailing of Obstructed Bricks",
-        description="Choose the level of detail to include for the underside of obstructed bricks",
+        description="Level of detail on underside of obstructed bricks",
         items=[("FLAT", "Flat", "draw single face on brick underside"),
                ("LOW", "Low", "Draw minimal details on brick underside"),
-               ("MEDIUM", "Medium", "Draw most details on brick underside"),
-               ("HIGH", "High", "Draw intricate details on brick underside")],
+               ("MEDIUM", "Medium", "Draw adequate details on brick underside"),
+               ("HIGH", "High", "Draw true-to-life details on brick underside")],
         update=dirtyBricks,
         default="FLAT")
     exposedUndersideDetail = EnumProperty(
         name="Underside Detailing of Exposed Bricks",
-        description="Choose the level of detail to include for the underside of exposed bricks",
-        items=[("FLAT", "Flat", "draw single face on brick underside"),
+        description="Level of detail on underside of exposed bricks",
+        items=[("FLAT", "Flat", "Draw single face on brick underside"),
                ("LOW", "Low", "Draw minimal details on brick underside"),
-               ("MEDIUM", "Medium", "Draw most details on brick underside"),
-               ("HIGH", "High", "Draw intricate details on brick underside")],
+               ("MEDIUM", "Medium", "Draw adequate details on brick underside"),
+               ("HIGH", "High", "Draw true-to-life details on brick underside")],
         update=dirtyBricks,
         default="FLAT")
     circleVerts = IntProperty(
         name="Num Verts",
-        description="Number of vertices for each circle of brick mesh",
+        description="Number of vertices in each circle in brick mesh",
         update=updateCircleVerts,
         min=4, max=64,
         default=16)
@@ -485,12 +485,12 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyInternal,
         step=1,
         min=2, max=25,
-        default=2)
+        default=4)
     alternateXY = BoolProperty(
         name="Alternate X and Y",
         description="Alternate back-and-forth and side-to-side beams",
         update=dirtyInternal,
-        default=False)
+        default=True)
     colThickness = IntProperty(
         name="Thickness",
         description="Thickness of the columns",
@@ -508,8 +508,8 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     # ADVANCED SETTINGS
     insidenessRayCastDir = EnumProperty(
         name="Insideness Ray Cast Direction",
-        description="Choose which axis/axes to cast rays for calculation of insideness",
-        items=[("HIGH EFFICIENCY", "High Efficiency", "Reuses single ray casted in brickFreqMatrix calculations"),
+        description="Ray cast method for calculation of insideness",
+        items=[("HIGH EFFICIENCY", "High Efficiency", "Reuses single intersection ray cast for insideness calculation"),
                ("X", "X", "Cast rays along X axis for insideness calculations"),
                ("Y", "Y", "Cast rays along Y axis for insideness calculations"),
                ("Z", "Z", "Cast rays along Z axis for insideness calculations"),
@@ -518,7 +518,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default="HIGH EFFICIENCY")
     castDoubleCheckRays = BoolProperty(
         name="Cast Both Directions",
-        description="Cast rays in both positive and negative directions on the axes specified for insideness calculation (Favors outside; uncheck to cast only in positive direction)",
+        description="Cast additional ray(s) the opposite direction for insideness calculation (Slightly slower but much more accurate if mesh is not single closed mesh)",
         default=True,
         update=dirtyMatrix)
     useNormals = BoolProperty(
@@ -526,14 +526,9 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         description="Use normals to calculate insideness of bricks (WARNING: May produce inaccurate model if source is not single closed mesh)",
         default=False,
         update=dirtyMatrix)
-    verifyExposure = BoolProperty(
-        name="Verify Exposure",
-        description="Run additional calculations to verify exposure of studs and underside detailing (WARNING: May compromise 'Shell Thickness' functionality if source is not single closed mesh)",
-        default=False,
-        update=dirtyMatrix)
     useLocalOrient = BoolProperty(
         name="Use Local Orient",
-        description="When bricks are deleted, automatically update bricks that become exposed",
+        description="Generate bricks based on local orientation of source object",
         default=False)
 
     # EXPORT SETTINGS

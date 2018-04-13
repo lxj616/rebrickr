@@ -281,7 +281,9 @@ def getMaterial(cm, bricksDict, key, size, brick_mats=None, seedInc=None):
     mat = None
     highestVal = 0
     matsL = []
-    if cm.materialType == "CUSTOM":
+    if bricksDict[key]["custom_mat_name"] and not cm.materialIsDirty or cm.matrixIsDirty or cm.buildIsDirty:
+        mat = bpy.data.materials.get(bricksDict[key]["mat_name"])
+    elif cm.materialType == "CUSTOM":
         mat = bpy.data.materials.get(cm.materialName)
     elif cm.materialType == "SOURCE":
         # get most frequent material in brick size

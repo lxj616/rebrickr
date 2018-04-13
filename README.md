@@ -30,6 +30,7 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * If cloth sim/soft body anim already baked before Brickify action, no need to run bake again
       * Bake run while brickifying cloth sim/soft body anim should stick around after brickified animation deleted
       * See if there's another way to calculate brickFreqMatrix for cloth sim/soft body anim besides baking and applying the modifier
+      * Fix issues with 'Change Material' button
   * Known issues:
       * For models with thin outer shells, Bricker may use color of inside face instead of outside face for brick material (see snapchat hotdog file)
       * Applying model rotation when deleting brickified model whose source has rotated parent produces problematic results

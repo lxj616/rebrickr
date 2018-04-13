@@ -175,6 +175,10 @@ class delete_override(Operator):
                 for k0 in keysToUpdate.copy():
                     keysToUpdate += Bricks.split(bricksDict, k0, cm=cm)
                 keysToUpdate = uniquify1(keysToUpdate)
+                # remove duplicate keys from the list and delete those objects
+                for k2 in keysToUpdate:
+                    brick = bpy.data.objects.get(bricksDict[k2]["name"])
+                    delete(brick)
                 # create new bricks at all keysToUpdate locations (attempts merge as well)
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=False)
                 iteratedStates = True
@@ -213,7 +217,7 @@ class delete_override(Operator):
 
     def updateAdjBricksDicts(self, scn, cm, bricksDict, zStep, curKey, keysToUpdate, x, y, z):
         adjKeys, adjBrickVals = getAdjKeysAndBrickVals(bricksDict, key=curKey)
-        if min(adjBrickVals) == 0 and cm.autoUpdateExposed and cm.lastSplitModel:
+        if min(adjBrickVals) == 0 and cm.autoUpdateOnDelete and cm.lastSplitModel:
             # set adjacent bricks to shell if deleted brick was on shell
             for k0 in adjKeys:
                 if bricksDict[k0]["val"] != 0:  # if adjacent brick not outside

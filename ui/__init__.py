@@ -661,12 +661,12 @@ class CustomizeModel(Panel):
         row = col1.row(align=True)
         row.operator("bricker.change_brick_type", text="Change Type")
         # change material type
-        row = col1.row(align=True)
-        row.operator("bricker.change_brick_material", text="Change Material")
+        # row = col1.row(align=True)
+        # row.operator("bricker.change_brick_material", text="Change Material")
         # additional controls
         col = layout.column(align=True)
         row = col.row(align=True)
-        row.prop(cm, "autoUpdateExposed")
+        row.prop(cm, "autoUpdateOnDelete")
         # row = col.row(align=True)
         # row.operator("bricker.redraw_bricks")
 
@@ -976,8 +976,6 @@ class AdvancedPanel(Panel):
         row.prop(cm, "castDoubleCheckRays")
         row = col.row(align=True)
         row.prop(cm, "useNormals")
-        row = col.row(align=True)
-        row.prop(cm, "verifyExposure")
         if not cm.useAnimation and not (cm.modelCreated or cm.animated):
             row = col.row(align=True)
             row.label("Model Orientation:")

@@ -128,7 +128,7 @@ def rayObjIntersections(scn, cm, point, direction, miniDist:Vector, edgeLen, obj
             if count%2 == 0 and not (cm.useNormals and firstDirection > 0):
                 outsideL[0] = 1
 
-    # run more checks if verifyExposure is True
+    # run more checks
     if cm.insidenessRayCastDir != "HIGH EFFICIENCY":
         dir0 = Vector((direction[2], direction[0], direction[1]))
         dir1 = Vector((direction[1], direction[2], direction[0]))
@@ -332,7 +332,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
                         break
 
     # mark inside freqs as internal (-1) and outside next to outsides for removal
-    adjustBFM(brickFreqMatrix, cm.verifyExposure, axes=axes)
+    adjustBFM(brickFreqMatrix, axes=axes)
 
     # print status to terminal
     updateProgressBars(True, cursorStatus, 1, 0, "Shell", end=True)
@@ -444,7 +444,7 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, source_details, curso
     return brickFreqMatrix, colorMatrix
 
 
-def adjustBFM(brickFreqMatrix, verifyExposure, axes=""):
+def adjustBFM(brickFreqMatrix, axes=""):
     """ adjust brickFreqMatrix values """
     xL = len(brickFreqMatrix)
     yL = len(brickFreqMatrix[0])
@@ -472,16 +472,15 @@ def adjustBFM(brickFreqMatrix, verifyExposure, axes=""):
                 # continue if curLoc is boundary loc
                 if (x in [0, xL-1] or y in [0, yL-1] or z in [0, zL-1]):
                     continue
-                # If inside location (-1) intersects outside location (0), make it ouside (0)
-                if verifyExposure:
-                    if (brickFreqMatrix[x][y][z] == -1 and
-                        (brickFreqMatrix[x+1][y][z] == 0 or
-                         brickFreqMatrix[x-1][y][z] == 0 or
-                         brickFreqMatrix[x][y+1][z] == 0 or
-                         brickFreqMatrix[x][y-1][z] == 0 or
-                         brickFreqMatrix[x][y][z+1] == 0 or
-                         brickFreqMatrix[x][y][z-1] == 0)):
-                        brickFreqMatrix[x][y][z] = 0
+                # # If inside location (-1) intersects outside location (0), make it ouside (0)
+                # if (brickFreqMatrix[x][y][z] == -1 and
+                #     (brickFreqMatrix[x+1][y][z] == 0 or
+                #      brickFreqMatrix[x-1][y][z] == 0 or
+                #      brickFreqMatrix[x][y+1][z] == 0 or
+                #      brickFreqMatrix[x][y-1][z] == 0 or
+                #      brickFreqMatrix[x][y][z+1] == 0 or
+                #      brickFreqMatrix[x][y][z-1] == 0)):
+                #     brickFreqMatrix[x][y][z] = 0
                 # If shell location (1) does not intersect outside location (0), make it inside (-1)
                 if (brickFreqMatrix[x][y][z] == 1 and
                     brickFreqMatrix[x+1][y][z] != 0 and
@@ -553,7 +552,7 @@ def getThreshold(cm):
     """ returns threshold (draw bricks if returned val >= threshold) """
     return 1.01 - (cm.shellThickness / 100)
 
-def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0, 0, 0), near_face:int=None, near_intersection:str=None, near_normal:tuple=None, rgba:tuple=None, mat_name:str=None, parent:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, obscures:list=[False]*6, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
+def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0, 0, 0), near_face:int=None, near_intersection:str=None, near_normal:tuple=None, rgba:tuple=None, mat_name:str=None, custom_mat_name:bool=False, parent:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, obscures:list=[False]*6, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
     """
     create an entry in the dictionary of brick locations
 
@@ -567,6 +566,7 @@ def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0, 0
     near_normal       -- normal of the nearest face intersection
     rgba              -- [red, green, blue, alpha] values of brick color
     mat_name          -- name of material attributed to bricks at this location
+    custom_mat_name   -- mat_name was set with 'Change Material' customization tool
     parent            -- key into brick dictionary with information about the parent brick merged with this one
     size              -- 3D size of brick (e.g. standard 2x4 brick -> [2, 4, 3])
     attempted_merge   -- attempt has been made in makeBricks function to merge this brick with nearby bricks
@@ -588,6 +588,7 @@ def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0, 0
             "near_normal":near_normal,
             "rgba":rgba,
             "mat_name":mat_name,
+            "custom_mat_name":custom_mat_name,
             "parent":parent,
             "size":size,
             "attempted_merge":attempted_merge,

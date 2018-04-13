@@ -68,9 +68,8 @@ class BrickerRevertSettings(Operator):
         cm.customObjectName2 = settings[7]
         cm.customObjectName3 = settings[8]
         cm.useNormals = str_to_bool(settings[9])
-        cm.verifyExposure = str_to_bool(settings[10])
-        cm.insidenessRayCastDir = settings[11]
-        cm.castDoubleCheckRays = str_to_bool(settings[12])
-        cm.brickShell = settings[13]
-        cm.calculationAxes = settings[14]
+        cm.insidenessRayCastDir = settings[10]
+        cm.castDoubleCheckRays = str_to_bool(settings[11])
+        cm.brickShell = settings[12]
+        cm.calculationAxes = settings[13]
         cm.matrixIsDirty = False
