@@ -125,7 +125,6 @@ legalBricks = {
                          {"s":[2, 8], "pt":"4445"},
                          {"s":[3, 3], "pt":"4161"},
                          {"s":[4, 3], "pt":"3297"}], # TODO: Add 6x3 option with studs missing between outer two (needs to be coded into slope.py generator)
-        "SLOPE_INVERTED":[],
         # "SLOPE_INVERTED":[[1, 2],
         #                   [1, 3],
         #                   [2, 2],
