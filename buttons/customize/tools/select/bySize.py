@@ -76,14 +76,6 @@ class selectBricksBySize(Operator):
     def get_items(self, context):
         items = getUsedSizes()
         return items
-    # get items for include prop
-    def get_items1(self, context):
-        cm = getActiveContextInfo()[1]
-        items = [("EXT", "Externals", "")]
-        if cm.shellThickness > 1 or cm.internalSupports != "NONE":
-            items += [("INT", "Internals", "")]
-            items += [("BOTH", "Both", "")]
-        return items
 
     # define props for popup
     brickSize = bpy.props.EnumProperty(
@@ -101,6 +93,8 @@ class selectBricksBySize(Operator):
     include = bpy.props.EnumProperty(
         name="Include",
         description="Include bricks on shell, inside shell, or both",
-        items=get_items1)
+        items = [("EXT", "Externals", ""),
+                 ("INT", "Internals", ""),
+                 ("BOTH", "Both", "")])
 
     ###################################################
