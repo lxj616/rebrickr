@@ -375,7 +375,8 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, source_details, curso
         e_idx = [len(faceIdxMatrix), len(faceIdxMatrix[0]), len(faceIdxMatrix[0][0])]
 
     # get number of iterations from s_idx to e_idx for x, y, z
-    d = Vector((int(e_idx[0] - s_idx[0]), int(e_idx[1] - s_idx[1]), int(e_idx[2] - s_idx[2])))
+    d = Vector((int(e_idx[0]) - int(s_idx[0]), int(e_idx[1]) - int(s_idx[1]), int(e_idx[2]) - int(s_idx[2])))
+    d = Vector((int(e_idx[0]) - int(s_idx[0]), int(e_idx[1]) - int(s_idx[1]), int(e_idx[2]) - int(s_idx[2])))
     # verify bounding box is larger than 0 in all directions
     if 0 in d:
         return brickFreqMatrix, colorMatrix

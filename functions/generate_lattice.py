@@ -50,9 +50,10 @@ def generateLattice(vertDist:Vector, scale:Vector, offset:Vector=Vector((0, 0, 0
                   scale.z / vertDist.z))
     # round up lattice res
     res = Vector(round_up(round(val), 2) for val in res)
+    h_res = res / 2
     # populate coord matrix
     nx, ny, nz = int(res.x) + 2, int(res.y) + 2, int(res.z) + 2
-    create_coord = lambda v: vec_mult(v - res / 2, vertDist) + offset
+    create_coord = lambda v: vec_mult(v - h_res, vertDist) + offset
     coordMatrix = [[[create_coord(Vector((x, y, z))) for z in range(nz)] for y in range(ny)] for x in range(nx)]
 
     if visualize:
