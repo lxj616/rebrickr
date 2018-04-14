@@ -140,6 +140,7 @@ class delete_override(Operator):
                 continue
             keysToUpdate = []
             zStep = getZStep(cm)
+            deletedKeys = []
 
             for obj_name in objNamesD[cm_id]:
                 # get dict key details of current obj
@@ -153,6 +154,7 @@ class delete_override(Operator):
                     for y in range(y0, y0 + objSize[1]):
                         for z in range(z0, z0 + (objSize[2]//zStep)):
                             curKey = listToStr([x, y, z])
+                            deletedKeys.append(curKey)
                             # reset bricksDict values
                             bricksDict[curKey]["draw"] = False
                             bricksDict[curKey]["val"] = 0
@@ -163,7 +165,7 @@ class delete_override(Operator):
                             bricksDict[curKey]["top_exposed"] = False
                             bricksDict[curKey]["bot_exposed"] = False
                             # make adjustments to adjacent bricks
-                            self.updateAdjBricksDicts(scn, cm, bricksDict, zStep, curKey, keysToUpdate, x, y, z)
+                            self.updateAdjBricksDicts(scn, cm, bricksDict, zStep, curKey, keysToUpdate, deletedKeys, x, y, z)
             # dirtyBuild if it wasn't already
             lastBuildIsDirty = cm.buildIsDirty
             if not lastBuildIsDirty:
@@ -215,11 +217,14 @@ class delete_override(Operator):
 
         return protected
 
-    def updateAdjBricksDicts(self, scn, cm, bricksDict, zStep, curKey, keysToUpdate, x, y, z):
+    def updateAdjBricksDicts(self, scn, cm, bricksDict, zStep, curKey, keysToUpdate, deletedKeys, x, y, z):
         adjKeys, adjBrickVals = getAdjKeysAndBrickVals(bricksDict, key=curKey)
-        if min(adjBrickVals) == 0 and cm.autoUpdateOnDelete and cm.lastSplitModel:
+        if cm.autoUpdateOnDelete and cm.lastSplitModel:
             # set adjacent bricks to shell if deleted brick was on shell
             for k0 in adjKeys:
+                # TODO: maybe find a way to make this check faster (ensures deleted key doesn't get redrawn)
+                if k0 in deletedKeys:
+                    continue
                 if bricksDict[k0]["val"] != 0:  # if adjacent brick not outside
                     bricksDict[k0]["val"] = 1
                     if not bricksDict[k0]["draw"]:
