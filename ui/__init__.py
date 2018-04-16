@@ -691,11 +691,11 @@ class MaterialsPanel(Panel):
     def draw(self, context):
         layout = self.layout
         scn, cm, _ = getActiveContextInfo()
+        obj = bpy.data.objects.get(cm.source_name)
 
         col = layout.column(align=True)
         row = col.row(align=True)
         row.prop(cm, "materialType", text="")
-
 
         if cm.materialType == "CUSTOM":
             col = layout.column(align=True)
@@ -726,32 +726,35 @@ class MaterialsPanel(Panel):
                     col = layout.column(align=True)
                     row = col.row(align=True)
                     row.operator("bricker.apply_material", icon="FILE_TICK")
-        elif cm.materialType == "SOURCE":
-            if cm.shellThickness > 1 or cm.internalSupports != "NONE":
-                col = layout.column(align=True)
-                row = col.row(align=True)
-                row.prop_search(cm, "internalMatName", bpy.data, "materials", text="Internal")
-                if cm.modelCreated:
-                    row = col.row(align=False)
-                    row.operator("bricker.apply_material", icon="FILE_TICK")
-                col = layout.column(align=True)
-                row = col.row(align=True)
-                row.prop(cm, "matShellDepth")
-
-        obj = bpy.data.objects.get(cm.source_name)
-        if obj and cm.materialType == "SOURCE":
-            if len(obj.data.uv_layers) > 0:
-                col = layout.column(align=True)
-                row = col.row(align=True)
-                row.prop(cm, "useUVMap", text="UV Map")
-                if cm.useUVMap:
-                    split = row.split(align=True, percentage=0.75)
-                    split.prop_search(cm, "uvImageName", bpy.data, "images", text="")
-                    split.operator("image.open", icon="FILESEL", text="")
+        elif cm.materialType == "SOURCE" and obj:
+            col = layout.column(align=True)
+            col.active = len(obj.data.uv_layers) > 0
+            row = col.row(align=True)
+            row.prop(cm, "useUVMap", text="UV Map")
+            if cm.useUVMap:
+                split = row.split(align=True, percentage=0.75)
+                split.prop_search(cm, "uvImageName", bpy.data, "images", text="")
+                split.operator("image.open", icon="FILESEL", text="")
             if len(obj.data.vertex_colors) > 0:
                 col = layout.column(align=True)
                 col.scale_y = 0.7
                 col.label("(Vertex colors not supported)")
+            if cm.shellThickness > 1 or cm.internalSupports != "NONE":
+                if len(obj.data.uv_layers) <= 0:
+                    col = layout.column(align=True)
+                row = col.row(align=True)
+                row.label("Internal Material:")
+                row = col.row(align=True)
+                row.prop_search(cm, "internalMatName", bpy.data, "materials", text="")
+                row = col.row(align=True)
+                row.prop(cm, "matShellDepth")
+                if cm.modelCreated:
+                    row = col.row(align=True)
+                    if cm.matShellDepth <= cm.lastMatShellDepth:
+                        row.operator("bricker.apply_material", icon="FILE_TICK")
+                    else:
+                        row.label("Run 'Update Model' to apply changes")
+
             col = layout.column(align=True)
             row = col.row(align=True)
             row.label("Color Snapping:")
@@ -768,7 +771,6 @@ class MaterialsPanel(Panel):
                     row.label("Switch to 'Cycles' for ABS Materials")
                 else:
                     row.prop(cm, "transparentWeight", text="Transparent Weight")
-
 
         if cm.materialType == "RANDOM" or (cm.materialType == "SOURCE" and cm.colorSnap == "ABS"):
             matObj = getMatObject(cm)
@@ -796,25 +798,15 @@ class MaterialsPanel(Panel):
                 col.prop_search(cm, "targetMaterial", bpy.data, "materials", text="")
                 col = layout.column(align=True)
 
-
-                # box = row.box()
-                # box.prop(cm, "materialsToUse")
-                # if cm.materialsToUse:
-                #     col = box.column()
-                #     layout.separator()
-
-        if obj and cm.materialType == "SOURCE":
-            if scn.render.engine == "CYCLES" and cm.colorSnap != "NONE" and not cm.useUVMap:
-                col = layout.column(align=True)
-                col.scale_y = 0.5
-                col.label("Color snap based on default RGB")
-                col.separator()
-                col.label("values of first 'Diffuse' node")
-                col.separator()
-                col.label("found in source material")
-                col.separator()
-                col.separator()
-                col.separator()
+        if cm.materialType == "SOURCE" and obj and scn.render.engine == "CYCLES" and cm.colorSnap != "NONE" and (not cm.useUVMap or len(obj.data.uv_layers) == 0):
+            col = layout.column(align=True)
+            col.scale_y = 0.5
+            col.label("Based on RGB value of")
+            col.separator()
+            col.label("first 'Diffuse' node")
+            col.separator()
+            col.separator()
+            col.separator()
 
 
 class DetailingPanel(Panel):

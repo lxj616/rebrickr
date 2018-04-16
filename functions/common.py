@@ -374,7 +374,8 @@ def hide(objList):
 def unhide(objList):
     objList = confirmList(objList)
     for obj in objList:
-        obj.hide = False
+        if obj.hide:
+            obj.hide = False
 
 
 def setActiveObj(obj, scene=None):

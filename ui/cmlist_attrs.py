@@ -325,7 +325,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=1000)
     useUVMap = BoolProperty(
         name="Use UV Map",
-        description="Transfer colors from source UV map",
+        description="Transfer colors from source UV map (source must be unwrapped)",
         default=True,
         update=dirtyMaterial)
     uvImageName = StringProperty(
@@ -593,6 +593,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     lastShellThickness = IntProperty(default=1)
     lastBrickType = StringProperty(default="BRICKS")
     lastMatrixSettings = StringProperty(default="")
+    lastMatShellDepth = IntProperty(default=1)
     lastBevelWidth = FloatProperty()
     lastBevelSegments = IntProperty()
     lastBevelProfile = IntProperty()

@@ -346,6 +346,7 @@ class BrickerDelete(bpy.types.Operator):
                     cls.updateAnimationData(bricks, trans_and_anim_data)
                 last_percent = 0
                 # remove objects
+                unhide(bricks)
                 select(bricks, only=True)
                 bpy.ops.object.delete(update_model=False, undo=False)
                 bpy.data.groups.remove(brickGroup, do_unlink=True)

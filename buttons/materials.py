@@ -114,8 +114,9 @@ class BrickerApplyMaterial(bpy.types.Operator):
                         brick.data.materials.clear(1)
                     # Assign it to object
                     brick.data.materials.append(mat)
-                elif self.action == "INTERNAL" and not isOnShell(cm, bricksDict, brick.name.split("__")[-1], zStep=zStep):
-                    brick.data.materials.pop(0)
+                elif self.action == "INTERNAL" and not isOnShell(cm, bricksDict, brick.name.split("__")[-1], zStep=zStep, shellDepth=cm.matShellDepth) and cm.matShellDepth <= cm.lastMatShellDepth:
+                    if len(brick.data.materials) > 0:
+                        brick.data.materials.pop(0)
                     # Assign it to object
                     brick.data.materials.append(mat)
                     for i in range(len(brick.data.materials)-1):
@@ -132,6 +133,7 @@ class BrickerApplyMaterial(bpy.types.Operator):
 
         tag_redraw_areas(["VIEW_3D", "PROPERTIES", "NODE_EDITOR"])
         cm.materialIsDirty = False
+        cm.lastMatShellDepth = cm.matShellDepth
 
     @classmethod
     def applyRandomMaterial(self, scn, cm, context, bricks, bricksDict):

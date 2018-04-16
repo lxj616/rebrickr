@@ -325,11 +325,14 @@ def getKeysInBrick(cm, size, key, loc=None, zStep=None):
     return ["{x},{y},{z}".format(x=x0 + x, y=y0 + y, z=z0 + z) for z in range(0, size[2], zStep) for y in range(size[1]) for x in range(size[0])]
 
 
-def isOnShell(cm, bricksDict, key, loc=None, zStep=None):
+def isOnShell(cm, bricksDict, key, loc=None, zStep=None, shellDepth=1):
     """ check if any locations in brick are on the shell """
     size = bricksDict[key]["size"]
     brickKeys = getKeysInBrick(cm, size=size, key=key, loc=loc, zStep=zStep)
-    return bricksDict[key]["val"] == 1 or 1 in [bricksDict[k]["val"] for k in brickKeys]
+    for k in brickKeys:
+        if bricksDict[k]["val"] >= 1 - (shellDepth - 1) / 100:
+            return True
+    return False
 
 
 def getDictKey(name):
