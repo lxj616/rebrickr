@@ -140,11 +140,12 @@ class cmlist_actions(bpy.types.Operator):
         item.startFrame = scn.frame_start
         item.stopFrame = scn.frame_end
         # create new matObj for current cmlist id
-        matObjName = "Bricker_{}_mats".format(i)
-        matObj = bpy.data.objects.get(matObjName)
-        if matObj is None:
-            matObj = bpy.data.objects.new(matObjName, bpy.data.meshes.new(matObjName + "_mesh"))
-        getSafeScn().objects.link(matObj)
+        matObjNames = ["Bricker_{}_RANDOM_mats".format(i), "Bricker_{}_ABS_mats".format(i)]
+        for n in matObjNames:
+            matObj = bpy.data.objects.get(n)
+            if matObj is None:
+                matObj = bpy.data.objects.new(n, bpy.data.meshes.new(n + "_mesh"))
+                getSafeScn().objects.link(matObj)
 
     def removeItem(self, idx):
         scn, cm, sn = getActiveContextInfo()
@@ -153,9 +154,11 @@ class cmlist_actions(bpy.types.Operator):
             if len(scn.cmlist) - 1 == scn.cmlist_index:
                 scn.cmlist_index -= 1
             # remove matObj for current cmlist id
-            matObj = bpy.data.objects.get("Bricker_{}_mats".format(cm.id))
-            if matObj is not None:
-                bpy.data.objects.remove(matObj)
+            matObjNames = ["Bricker_{}_RANDOM_mats".format(cm.id), "Bricker_{}_ABS_mats".format(cm.id)]
+            for n in matObjNames:
+                matObj = bpy.data.objects.get(n)
+                if matObj is not None:
+                    bpy.data.objects.remove(matObj)
             scn.cmlist.remove(idx)
             if scn.cmlist_index == -1 and len(scn.cmlist) > 0:
                 scn.cmlist_index = 0

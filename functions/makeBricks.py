@@ -93,7 +93,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
 
     brick_mats = []
     if cm.materialType == "RANDOM":
-        matObj = getMatObject(cm)
+        matObj = getMatObject(cm, typ="RANDOM")
         brick_mats = list(matObj.data.materials.keys())
 
     # initialize random states

@@ -57,7 +57,7 @@ def updateMaterials(bricksDict, source, origSource, curFrame=None):
             ni = strToList(bricksDict[key]["near_intersection"], item_type=float)
             rgba, matName = getBrickRGBA(scn, cm, source, nf, ni, uv_images)
         # get material with snapped RGBA value
-        matObj = getMatObject(cm)
+        matObj = getMatObject(cm, typ="ABS")
         if rgba is None:
             matName = ""
         elif cm.colorSnap == "ABS" and len(matObj.data.materials) > 0:

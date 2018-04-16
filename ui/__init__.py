@@ -773,7 +773,7 @@ class MaterialsPanel(Panel):
                     row.prop(cm, "transparentWeight", text="Transparent Weight")
 
         if cm.materialType == "RANDOM" or (cm.materialType == "SOURCE" and cm.colorSnap == "ABS"):
-            matObj = getMatObject(cm)
+            matObj = getMatObject(cm, typ="RANDOM" if cm.materialType == "RANDOM" else "ABS")
             if matObj is not None:
                 # draw materials UI list and list actions
                 numMats = len(matObj.data.materials)

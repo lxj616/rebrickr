@@ -58,7 +58,7 @@ class Bricker_matlist_actions(bpy.types.Operator):
     def execute(self, context):
         try:
             scn, cm, n = getActiveContextInfo()
-            matObj = getMatObject(cm)
+            matObj = getMatObject(cm, typ="RANDOM" if cm.materialType == "RANDOM" else "ABS")
             idx = matObj.active_material_index
 
             if self.action == 'REMOVE':

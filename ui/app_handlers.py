@@ -386,14 +386,16 @@ def handle_upconversion(scene):
                     bGroup.name = rreplace(bGroup.name, "frame", "f")
                     for obj in bGroup.objects:
                         obj.name = rreplace(obj.name, "frame", "f")
-                # create "Bricker_cm.id_mats" object for each cmlist idx
-                matObjName = "Bricker_{}_mats".format(cm.id)
-                matObj = bpy.data.objects.get(matObjName)
-                if matObj is None:
-                    matObj = bpy.data.objects.new(matObjName, bpy.data.meshes.new(matObjName + "_mesh"))
                 # update storage scene name
                 sto_scn = bpy.data.scenes.get("Bricker_storage (DO NOT MODIFY)")
                 sto_scn.name.replace("RENAME", "MODIFY")
+                # create "Bricker_cm.id_mats" object for each cmlist idx
+                matObjNames = ["Bricker_{}_RANDOM_mats".format(cm.id), "Bricker_{}_ABS_mats".format(cm.id)]
+                for n in matObjNames:
+                    matObj = bpy.data.objects.get(n)
+                    if matObj is None:
+                        matObj = bpy.data.objects.new(n, bpy.data.meshes.new(n + "_mesh"))
+                        sto_scn.objects.link(matObj)
                 # update names of Bricker source objects
                 for cm in scn.cmlist:
                     old_source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")

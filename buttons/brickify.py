@@ -554,7 +554,7 @@ class BrickerBrickify(bpy.types.Operator):
             if not hasattr(scn, "isBrickMaterialsInstalled") or not scn.isBrickMaterialsInstalled:
                 self.report({"WARNING"}, "ABS Plastic Materials must be installed from Blender Market")
                 return False
-            matObj = getMatObject(cm)
+            matObj = getMatObject(cm, typ="ABS")
             if len(matObj.data.materials) == 0:
                 self.report({"WARNING"}, "No ABS Plastic Materials found in Materials to be used")
                 return False

@@ -31,13 +31,17 @@ from ..functions import *
 
 def addMaterialToList(self, context):
     scn, cm, n = getActiveContextInfo()
-    matObj = getMatObject(cm)
+    typ = "RANDOM" if cm.materialType == "RANDOM" else "ABS"
+    matObj = getMatObject(cm, typ=typ)
     numMats = len(matObj.data.materials)
     mat = bpy.data.materials.get(cm.targetMaterial)
+    brick_mats_installed = hasattr(scn, "isBrickMaterialsInstalled") and scn.isBrickMaterialsInstalled
     if mat is None:
         return
     elif mat.name in matObj.data.materials.keys():
         cm.targetMaterial = "Already in list!"
+    elif typ == "ABS" and brick_mats_installed and mat.name not in bpy.props.abs_plastic_materials:
+        cm.targetMaterial = "Not ABS Plastic material"
     elif matObj is not None:
         matObj.data.materials.append(mat)
         cm.targetMaterial = ""

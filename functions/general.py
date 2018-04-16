@@ -206,10 +206,10 @@ def getBricks(cm=None, typ=None):
     return bricks
 
 
-def getMatObject(cm=None):
+def getMatObject(cm=None, typ="RANDOM"):
     cm = cm or getActiveContextInfo()[1]
     n = cm.id
-    Bricker_mat_on = "Bricker_%(n)s_mats" % locals()
+    Bricker_mat_on = "Bricker_%(n)s_%(typ)s_mats" % locals()
     matObj = bpy.data.objects.get(Bricker_mat_on)
     return matObj
 

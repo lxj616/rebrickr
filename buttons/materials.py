@@ -140,7 +140,7 @@ class BrickerApplyMaterial(bpy.types.Operator):
         # initialize list of brick materials
         brick_mats = []
         mats = bpy.data.materials.keys()
-        matObj = getMatObject(cm)
+        matObj = getMatObject(cm, typ="RANDOM")
         for color in matObj.data.materials.keys():
             brick_mats.append(color)
         randS0 = np.random.RandomState(0)
