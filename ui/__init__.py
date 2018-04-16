@@ -726,6 +726,7 @@ class MaterialsPanel(Panel):
                     col = layout.column(align=True)
                     row = col.row(align=True)
                     row.operator("bricker.apply_material", icon="FILE_TICK")
+            col = layout.column(align=True)
         elif cm.materialType == "SOURCE" and obj:
             col = layout.column(align=True)
             col.active = len(obj.data.uv_layers) > 0
@@ -796,7 +797,6 @@ class MaterialsPanel(Panel):
                 col.label("Add:")
                 col = split.column(align=True)
                 col.prop_search(cm, "targetMaterial", bpy.data, "materials", text="")
-                col = layout.column(align=True)
 
         if cm.materialType == "SOURCE" and obj and scn.render.engine == "CYCLES" and cm.colorSnap != "NONE" and (not cm.useUVMap or len(obj.data.uv_layers) == 0):
             col = layout.column(align=True)
