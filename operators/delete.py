@@ -218,7 +218,7 @@ class delete_override(Operator):
         return protected
 
     def updateAdjBricksDicts(self, scn, cm, bricksDict, zStep, curKey, keysToUpdate, deletedKeys, x, y, z):
-        adjKeys, adjBrickVals = getAdjKeysAndBrickVals(bricksDict, key=curKey)
+        adjKeys = getAdjKeysAndBrickVals(bricksDict, key=curKey)[0]
         if cm.autoUpdateOnDelete and cm.lastSplitModel:
             # set adjacent bricks to shell if deleted brick was on shell
             for k0 in adjKeys:

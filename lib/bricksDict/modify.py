@@ -256,7 +256,6 @@ def setBrickTypeForSlope(bricksDict, key, keysInBrick):
     elif (dir0 == "v" and legalBrickSize(s=bricksDict[key]["size"], t="SLOPE_INVERTED") and bricksDict[key]["bot_exposed"]):
         typ = "SLOPE_INVERTED"
     else:
-        print(1)
         typ = "BRICK"
     bricksDict[key]["type"] = typ
 

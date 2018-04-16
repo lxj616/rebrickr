@@ -95,6 +95,7 @@ class drawAdjacent(Operator):
             decriment = 0
             dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)
             # check all 6 directions for action to be executed
+            print("*"*60)
             for i in range(6):
                 # if checking beneath obj, check 3 keys below instead of 1 key below
                 if i == 5 and flatBrickType(cm):

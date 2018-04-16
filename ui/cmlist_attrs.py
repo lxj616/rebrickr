@@ -156,7 +156,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         step=1,
         precision=3,
         min=0, max=1,
-        default=0.005)
+        default=0.01)
     randomRot = FloatProperty(
         name="Random Rotation",
         description="Max random rotation applied to each brick",

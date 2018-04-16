@@ -209,7 +209,7 @@ class changeBrickType(Operator):
                 # check if brick spans 3 matrix locations
                 bAndPBrick = "PLATES" in cm.brickType and size[2] == 3
 
-                # # verify exposure above and below
+                # verify exposure above and below
                 brickLocs = getLocsInBrick(cm, size, dictKey, dictLoc, zStep=3)
                 for curLoc in brickLocs:
                     bricksDict = verifyBrickExposureAboveAndBelow(scn, cm, curLoc, bricksDict, decriment=3 if bAndPBrick else 1)

@@ -57,10 +57,8 @@ def drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=True):
 
 def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
     assert loc or key
-    if loc:
-        x, y, z = loc
-    else:
-        x, y, z = strToList(key)
+    keyError = False
+    x, y, z = loc or strToList(key)
     adjKeys = [listToStr([x+1, y, z]),
                listToStr([x-1, y, z]),
                listToStr([x, y+1, z]),
@@ -73,12 +71,13 @@ def getAdjKeysAndBrickVals(bricksDict, loc=None, key=None):
             adjBrickVals.append(bricksDict[key]["val"])
         except KeyError:
             adjKeys.remove(key)
-    return adjKeys, adjBrickVals
+            keyError = True
+    return adjKeys, adjBrickVals, keyError
 
 
 def setCurBrickVal(bricksDict, loc, action="ADD"):
-    _, adjBrickVals = getAdjKeysAndBrickVals(bricksDict, loc=loc)
-    if action == "ADD" and (0 in adjBrickVals or len(adjBrickVals) == 0 or min(adjBrickVals) == 1):
+    _, adjBrickVals, keyError = getAdjKeysAndBrickVals(bricksDict, loc=loc)
+    if action == "ADD" and (keyError or 0 in adjBrickVals or len(adjBrickVals) == 0 or min(adjBrickVals) == 1):
         newVal = 1
     elif action == "REMOVE" and 0 in adjBrickVals:
         newVal = 0
