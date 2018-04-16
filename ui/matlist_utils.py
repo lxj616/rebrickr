@@ -32,6 +32,7 @@ from ..functions import *
 def addMaterialToList(self, context):
     scn, cm, n = getActiveContextInfo()
     matObj = getMatObject(cm)
+    numMats = len(matObj.data.materials)
     mat = bpy.data.materials.get(cm.targetMaterial)
     if mat is None:
         return
@@ -40,3 +41,5 @@ def addMaterialToList(self, context):
     elif matObj is not None:
         matObj.data.materials.append(mat)
         cm.targetMaterial = ""
+    if numMats < len(matObj.data.materials) and not cm.lastSplitModel:
+        cm.materialIsDirty = True

@@ -77,4 +77,5 @@ class Bricker_matlist_actions(bpy.types.Operator):
         if idx >= len(matObj.data.materials) or idx < 0 or len(matObj.data.materials) == 0:
             return
         mat = matObj.data.materials.pop(idx)
-        cm.materialIsDirty = True
+        if not cm.lastSplitModel:
+            cm.materialIsDirty = True

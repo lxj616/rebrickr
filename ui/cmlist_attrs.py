@@ -579,7 +579,6 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     # Properties for checking of model needs updating
     animIsDirty = BoolProperty(default=True)
     materialIsDirty = BoolProperty(default=True)
-    brickMaterialsAreDirty = BoolProperty(default=True)
     modelIsDirty = BoolProperty(default=True)
     buildIsDirty = BoolProperty(default=True)
     bricksAreDirty = BoolProperty(default=True)

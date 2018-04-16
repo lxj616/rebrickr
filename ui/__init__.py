@@ -718,13 +718,14 @@ class MaterialsPanel(Panel):
             row = col.row(align=True)
             row.prop(cm, "randomMatSeed")
             if cm.modelCreated or cm.animated:
-                if not cm.brickMaterialsAreDirty and ((not cm.useAnimation and cm.lastSplitModel) or (cm.lastMaterialType == cm.materialType)):
+                if cm.materialIsDirty and not cm.lastSplitModel:
+                    col = layout.column(align=True)
+                    row = col.row(align=True)
+                    row.label("Run 'Update Model' to apply changes")
+                elif cm.lastMaterialType == cm.materialType or (not cm.useAnimation and cm.lastSplitModel):
                     col = layout.column(align=True)
                     row = col.row(align=True)
                     row.operator("bricker.apply_material", icon="FILE_TICK")
-                elif cm.materialIsDirty or cm.brickMaterialsAreDirty:
-                    row = col.row(align=True)
-                    row.label("Run 'Update Model' to apply changes")
         elif cm.materialType == "SOURCE":
             if cm.shellThickness > 1 or cm.internalSupports != "NONE":
                 col = layout.column(align=True)

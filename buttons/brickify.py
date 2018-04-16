@@ -52,10 +52,10 @@ def updateCanRun(type):
     else:
         commonNeedsUpdate = (cm.logoDetail != "NONE" and cm.logoDetail != "LEGO") or cm.brickType == "CUSTOM" or cm.modelIsDirty or cm.matrixIsDirty or cm.internalIsDirty or cm.buildIsDirty or cm.bricksAreDirty
         if type == "ANIMATION":
-            return commonNeedsUpdate or (cm.materialType != "CUSTOM" and (cm.materialIsDirty or cm.brickMaterialsAreDirty))
+            return commonNeedsUpdate or (cm.materialType != "CUSTOM" and cm.materialIsDirty)
         elif type == "MODEL":
             Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
-            return commonNeedsUpdate or (cm.materialType != "CUSTOM" and not (cm.materialType == "RANDOM" and not (cm.splitModel or cm.lastMaterialType != cm.materialType)) and (cm.materialIsDirty or cm.brickMaterialsAreDirty)) or (groupExists(Bricker_bricks_gn) and len(bpy.data.groups[Bricker_bricks_gn].objects) == 0)
+            return commonNeedsUpdate or (groupExists(Bricker_bricks_gn) and len(bpy.data.groups[Bricker_bricks_gn].objects) == 0) or (cm.materialType != "CUSTOM" and (cm.materialType != "RANDOM" or cm.splitModel or cm.lastMaterialType != cm.materialType or cm.materialIsDirty) and cm.materialIsDirty)
 
 
 def importLogo():
@@ -189,7 +189,6 @@ class BrickerBrickify(bpy.types.Operator):
         cm.lastMatrixSettings = getMatrixSettings()
         cm.lastIsSmoke = cm.isSmoke
         cm.materialIsDirty = False
-        cm.brickMaterialsAreDirty = False
         cm.modelIsDirty = False
         cm.buildIsDirty = False
         cm.bricksAreDirty = False
