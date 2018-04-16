@@ -63,103 +63,9 @@ class changeBrickType(Operator):
 
     def execute(self, context):
         try:
-            # revert to last bricksDict
-            self.undo_stack.matchPythonToBlenderState()
-            # push to undo stack
-            if self.orig_undo_stack_length == self.undo_stack.getLength():
-                self.undo_stack.undo_push('change_type', affected_ids=list(self.objNamesD.keys()))
-            scn = bpy.context.scene
-            legalBrickSizes = bpy.props.Bricker_legal_brick_sizes
-            # get original active and selected objects
-            active_obj = scn.objects.active
-            initial_active_obj_name = active_obj.name if active_obj else ""
-            selected_objects = bpy.context.selected_objects
-            objNamesToSelect = []
-            bricksWereGenerated = False
-            # only reference self.brickType once (runs get_items)
-            targetBrickType = self.brickType
-
-            # iterate through cm_ids of selected objects
-            for cm_id in self.objNamesD.keys():
-                cm = getItemByID(scn.cmlist, cm_id)
-                self.undo_stack.iterateStates(cm)
-                # initialize vars
-                bricksDict = self.bricksDicts[cm_id]
-                keysToUpdate = []
-                updateHasCustomObjs(cm, targetBrickType)
-
-                # iterate through names of selected objects
-                for obj_name in self.objNamesD[cm_id]:
-                    # initialize vars
-                    dictKey = getDictKey(obj_name)
-                    dictLoc = getDictLoc(dictKey)
-                    x0, y0, z0 = dictLoc
-                    # get size of current brick (e.g. [2, 4, 1])
-                    size = bricksDict[dictKey]["size"]
-                    typ = bricksDict[dictKey]["type"]
-
-                    # skip bricks that are already of type self.brickType
-                    if (typ == targetBrickType and
-                        (typ != "SLOPE" or
-                         bricksDict[dictKey]["flipped"] == self.flipBrick and
-                         bricksDict[dictKey]["rotated"] == self.rotateBrick)):
-                        continue
-                    # skip bricks that can't be turned into the chosen brick type
-                    elif size[:2] not in legalBrickSizes[3 if targetBrickType in getBrickTypes(height=3) else 1][targetBrickType]:
-                        continue
-
-                    # verify locations above are not obstructed
-                    if targetBrickType in getBrickTypes(height=3) and size[2] == 1:
-                        aboveKeys = [listToStr([x0 + x, y0 + y, z0 + z]) for z in range(1, 3) for y in range(size[1]) for x in range(size[0])]
-                        obstructed = False
-                        for curKey in aboveKeys:
-                            if curKey in bricksDict and bricksDict[curKey]["draw"]:
-                                self.report({"INFO"}, "Could not change to type {brickType}; some locations are occupied".format(brickType=targetBrickType))
-                                obstructed = True
-                                break
-                        if obstructed: continue
-
-                    # set type of parent brick to targetBrickType
-                    lastType = bricksDict[dictKey]["type"]
-                    bricksDict[dictKey]["type"] = targetBrickType
-                    bricksDict[dictKey]["flipped"] = self.flipBrick
-                    bricksDict[dictKey]["rotated"] = False if min(size[:2]) == 1 and max(size[:2]) > 1 else self.rotateBrick
-
-                    # update height of brick if necessary, and update dictionary accordingly
-                    if flatBrickType(cm):
-                        dimensions = Bricks.get_dimensions(cm.brickHeight, getZStep(cm), cm.gap)
-                        size = updateBrickSizeAndDict(dimensions, cm, bricksDict, size, dictKey, dictLoc, curHeight=size[2], targetType=targetBrickType)
-
-                    # check if brick spans 3 matrix locations
-                    bAndPBrick = "PLATES" in cm.brickType and size[2] == 3
-
-                    # # verify exposure above and below
-                    brickLocs = getLocsInBrick(cm, size, dictKey, dictLoc, zStep=3)
-                    for curLoc in brickLocs:
-                        bricksDict = verifyBrickExposureAboveAndBelow(scn, cm, curLoc, bricksDict, decriment=3 if bAndPBrick else 1)
-                        # add bricks to keysToUpdate
-                        keysToUpdate += [getParentKey(bricksDict, listToStr([x0 + x, y0 + y, z0 + z])) for z in [-1, 0, 3 if bAndPBrick else 1] for y in range(size[1]) for x in range(size[0])]
-                    objNamesToSelect += [bricksDict[listToStr(loc)]["name"] for loc in brickLocs]
-
-                # uniquify keysToUpdate and remove null keys
-                keysToUpdate = uniquify1(keysToUpdate)
-                keysToUpdate = [x for x in keysToUpdate if x != None]
-                # if something was updated, set bricksWereGenerated
-                bricksWereGenerated = bricksWereGenerated or len(keysToUpdate) > 0
-
-                # draw updated brick
-                drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=False)
-                # model is now customized
-                cm.customized = True
-            # select original bricks
-            orig_obj = bpy.data.objects.get(initial_active_obj_name)
-            objsToSelect = [bpy.data.objects.get(n) for n in objNamesToSelect if bpy.data.objects.get(n) is not None]
-            select(objsToSelect, active=orig_obj if orig_obj else None)
-            self.brickType = typ if not bricksWereGenerated else targetBrickType
-            # print helpful message to user in blender interface
-            if bricksWereGenerated:
-                self.report({"INFO"}, "Changed bricks to type '{targetType}'".format(size=listToStr(size).replace(",", "x"), targetType=targetBrickType))
+            self.changeType()
         except:
+            scn.Bricker_runningBlockingOperation = False
             handle_exception()
         return {"FINISHED"}
 
@@ -226,5 +132,109 @@ class changeBrickType(Operator):
         name="Rotate 90 Degrees",
         description="Rotate the brick about the Z axis (brick width & depth must be equivalent)",
         default=False)
+
+    ###################################################
+    # class methods
+
+    def changeType(self):
+        # revert to last bricksDict
+        self.undo_stack.matchPythonToBlenderState()
+        # push to undo stack
+        if self.orig_undo_stack_length == self.undo_stack.getLength():
+            self.undo_stack.undo_push('change_type', affected_ids=list(self.objNamesD.keys()))
+        scn = bpy.context.scene
+        scn.Bricker_runningBlockingOperation = True
+        legalBrickSizes = bpy.props.Bricker_legal_brick_sizes
+        # get original active and selected objects
+        active_obj = scn.objects.active
+        initial_active_obj_name = active_obj.name if active_obj else ""
+        selected_objects = bpy.context.selected_objects
+        objNamesToSelect = []
+        bricksWereGenerated = False
+        # only reference self.brickType once (runs get_items)
+        targetBrickType = self.brickType
+
+        # iterate through cm_ids of selected objects
+        for cm_id in self.objNamesD.keys():
+            cm = getItemByID(scn.cmlist, cm_id)
+            self.undo_stack.iterateStates(cm)
+            # initialize vars
+            bricksDict = self.bricksDicts[cm_id]
+            keysToUpdate = []
+            updateHasCustomObjs(cm, targetBrickType)
+
+            # iterate through names of selected objects
+            for obj_name in self.objNamesD[cm_id]:
+                # initialize vars
+                dictKey = getDictKey(obj_name)
+                dictLoc = getDictLoc(dictKey)
+                x0, y0, z0 = dictLoc
+                # get size of current brick (e.g. [2, 4, 1])
+                size = bricksDict[dictKey]["size"]
+                typ = bricksDict[dictKey]["type"]
+
+                # NOTE: the following causes problems when the function is re-run. To fix this, store all types of objs in __init__ first.
+                # # skip bricks that are already of type self.brickType
+                # if (typ == targetBrickType and
+                #     (typ != "SLOPE" or
+                #      bricksDict[dictKey]["flipped"] == self.flipBrick and
+                #      bricksDict[dictKey]["rotated"] == self.rotateBrick)):
+                #     continue
+                # skip bricks that can't be turned into the chosen brick type
+                if size[:2] not in legalBrickSizes[3 if targetBrickType in getBrickTypes(height=3) else 1][targetBrickType]:
+                    continue
+
+                # verify locations above are not obstructed
+                if targetBrickType in getBrickTypes(height=3) and size[2] == 1:
+                    aboveKeys = [listToStr([x0 + x, y0 + y, z0 + z]) for z in range(1, 3) for y in range(size[1]) for x in range(size[0])]
+                    obstructed = False
+                    for curKey in aboveKeys:
+                        if curKey in bricksDict and bricksDict[curKey]["draw"]:
+                            self.report({"INFO"}, "Could not change to type {brickType}; some locations are occupied".format(brickType=targetBrickType))
+                            obstructed = True
+                            break
+                    if obstructed: continue
+
+                # set type of parent brick to targetBrickType
+                lastType = bricksDict[dictKey]["type"]
+                bricksDict[dictKey]["type"] = targetBrickType
+                bricksDict[dictKey]["flipped"] = self.flipBrick
+                bricksDict[dictKey]["rotated"] = False if min(size[:2]) == 1 and max(size[:2]) > 1 else self.rotateBrick
+
+                # update height of brick if necessary, and update dictionary accordingly
+                if flatBrickType(cm):
+                    dimensions = Bricks.get_dimensions(cm.brickHeight, getZStep(cm), cm.gap)
+                    size = updateBrickSizeAndDict(dimensions, cm, bricksDict, size, dictKey, dictLoc, curHeight=size[2], targetType=targetBrickType)
+
+                # check if brick spans 3 matrix locations
+                bAndPBrick = "PLATES" in cm.brickType and size[2] == 3
+
+                # # verify exposure above and below
+                brickLocs = getLocsInBrick(cm, size, dictKey, dictLoc, zStep=3)
+                for curLoc in brickLocs:
+                    bricksDict = verifyBrickExposureAboveAndBelow(scn, cm, curLoc, bricksDict, decriment=3 if bAndPBrick else 1)
+                    # add bricks to keysToUpdate
+                    keysToUpdate += [getParentKey(bricksDict, listToStr([x0 + x, y0 + y, z0 + z])) for z in [-1, 0, 3 if bAndPBrick else 1] for y in range(size[1]) for x in range(size[0])]
+                objNamesToSelect += [bricksDict[listToStr(loc)]["name"] for loc in brickLocs]
+
+            # uniquify keysToUpdate and remove null keys
+            keysToUpdate = uniquify1(keysToUpdate)
+            keysToUpdate = [x for x in keysToUpdate if x != None]
+            # if something was updated, set bricksWereGenerated
+            bricksWereGenerated = bricksWereGenerated or len(keysToUpdate) > 0
+
+            # draw updated brick
+            drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=False)
+            # model is now customized
+            cm.customized = True
+        # select original bricks
+        orig_obj = bpy.data.objects.get(initial_active_obj_name)
+        objsToSelect = [bpy.data.objects.get(n) for n in objNamesToSelect if bpy.data.objects.get(n) is not None]
+        select(objsToSelect, active=orig_obj if orig_obj else None)
+        self.brickType = typ if not bricksWereGenerated else targetBrickType
+        scn.Bricker_runningBlockingOperation = False
+        # print helpful message to user in blender interface
+        if bricksWereGenerated:
+            self.report({"INFO"}, "Changed bricks to type '{targetType}'".format(size=listToStr(size).replace(",", "x"), targetType=targetBrickType))
 
     #############################################

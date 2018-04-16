@@ -114,6 +114,7 @@ class changeMaterial(Operator):
         # initialize vars
         selected_objects = bpy.context.selected_objects
         self.objNamesD, self.bricksDicts = createObjNamesAndBricksDictsDs(selected_objects)
+        self.mat_name = "NONE"
         # push to undo stack
         self.undo_stack = UndoStack.get_instance()
         self.cached_bfm = self.undo_stack.undo_push('change material', list(self.objNamesD.keys()))

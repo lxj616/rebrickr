@@ -74,11 +74,9 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 keysDict[z] = [k0]
     denom = sum([len(keysDict[z0]) for z0 in keysDict.keys()])
     # store first key to active keys
-    if cm.activeKeyX == -1 and len(keys) > 0:
+    if cm.activeKey[0] == -1 and len(keys) > 0:
         loc = strToList(keys[0])
-        cm.activeKeyX = int(loc[0])
-        cm.activeKeyY = int(loc[1])
-        cm.activeKeyZ = int(loc[2])
+        cm.activeKey = loc
 
     # get brick group
     group_name = group_name or 'Bricker_%(n)s_bricks' % locals()

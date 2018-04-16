@@ -97,16 +97,16 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
             brick.data = m
             # add/remove edge split modifier if necessary
             eMod = brick.modifiers.get('Edge Split')
-            if not eMod and "CUSTOM" not in brickD["type"]:
+            if not eMod and useEdgeSplitMod(cm, brickD):
                 addEdgeSplitMod(brick)
-            elif eMod and "CUSTOM" in brickD["type"]:
+            elif eMod and not useEdgeSplitMod(cm, brickD):
                 brick.modifiers.remove(eMod)
         else:
             # create new object with mesh data
             brick = bpy.data.objects.new(brickD["name"], m)
             brick.cmlist_id = cm.id
             # add edge split modifier
-            if "CUSTOM" not in brickD["type"]:
+            if useEdgeSplitMod(cm, brickD):
                 addEdgeSplitMod(brick)
         # set brick location
         brick.location = brickLoc
@@ -138,6 +138,17 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
         allMeshes.from_mesh(m)
 
     return bricksDict
+
+
+def useEdgeSplitMod(cm, brickD):
+    typ = brickD["type"]
+    if ("CUSTOM" not in brickD["type"] or
+        (typ == "CUSTOM 1" and cm.customObjectName1.startswith("Bricker_")) or
+        (typ == "CUSTOM 2" and cm.customObjectName2.startswith("Bricker_")) or
+        (typ == "CUSTOM 3" and cm.customObjectName3.startswith("Bricker_"))):
+        return True
+    else:
+        return False
 
 
 def addEdgeSplitMod(obj):
@@ -259,6 +270,7 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
                                       hash_object(logoToUse) if custom_logo_used else None,
                                       logo_scale if custom_logo_used else None,
                                       useStud, cm.circleVerts, brickD["type"],
+                                      dimensions["gap"],
                                       brickD["flipped"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None,
                                       brickD["rotated"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None))
 

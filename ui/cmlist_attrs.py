@@ -256,30 +256,15 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         name="Custom Object Name 3",
         description="Name of custom object 3 to use as bricks",
         default="")
-    distOffsetX = FloatProperty(
-        name="X",
-        description="Offset of custom bricks on X axis (1.0 = side-by-side)",
+    distOffset = FloatVectorProperty(
+        name="Offset Distance",
+        description="Offset of custom bricks (1.0 = side-by-side)",
         update=dirtyMatrix,
         step=1,
         precision=3,
+        subtype="TRANSLATION",
         min=0.001, max=2,
-        default=1)
-    distOffsetY = FloatProperty(
-        name="Y",
-        description="Offset of custom bricks on Y axis (1.0 = side-by-side)",
-        step=1,
-        update=dirtyMatrix,
-        precision=3,
-        min=0.001, max=2,
-        default=1)
-    distOffsetZ = FloatProperty(
-        name="Z",
-        description="Offset of custom bricks on Z axis (1.0 = side-by-side)",
-        step=1,
-        update=dirtyMatrix,
-        precision=3,
-        min=0.001, max=2,
-        default=1)
+        default=(1, 1, 1))
 
     # CUSTOMIZE SETTINGS
     autoUpdateOnDelete = BoolProperty(
@@ -539,9 +524,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default="//")
 
     # Source Object Properties
-    modelScaleX = FloatProperty(default=-1)
-    modelScaleY = FloatProperty(default=-1)
-    modelScaleZ = FloatProperty(default=-1)
+    modelScalePreview = FloatVectorProperty(default=(-1, -1, -1))
     objVerts = IntProperty(default=0)
     objPolys = IntProperty(default=0)
     objEdges = IntProperty(default=0)
@@ -555,9 +538,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     blender_undo_state = IntProperty(default=0)
 
     # Back-End UI Properties
-    activeKeyX = IntProperty(default=-1)
-    activeKeyY = IntProperty(default=-1)
-    activeKeyZ = IntProperty(default=-1)
+    activeKey = IntVectorProperty(default=(-1,-1,-1))
     firstKey = StringProperty(default="")
 
     # Internal Model Properties
@@ -604,3 +585,6 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     # Left over attrs from earlier versions
     maxBrickScale1 = IntProperty(default=-1)
     maxBrickScale2 = IntProperty(default=-1)
+    distOffsetX = FloatProperty(default=-1)
+    distOffsetY = FloatProperty(default=-1)
+    distOffsetZ = FloatProperty(default=-1)

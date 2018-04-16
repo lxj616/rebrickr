@@ -61,9 +61,9 @@ class BrickerRevertSettings(Operator):
         cm.brickHeight = float(settings[0])
         cm.gap = float(settings[1])
         cm.brickType = settings[2]
-        cm.distOffsetX = float(settings[3])
-        cm.distOffsetY = float(settings[4])
-        cm.distOffsetZ = float(settings[5])
+        cm.distOffset[0] = float(settings[3])
+        cm.distOffset[1] = float(settings[4])
+        cm.distOffset[2] = float(settings[5])
         cm.customObjectName1 = settings[6]
         cm.customObjectName2 = settings[7]
         cm.customObjectName3 = settings[8]

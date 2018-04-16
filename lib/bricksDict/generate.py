@@ -631,9 +631,7 @@ def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=
         brickFreqMatrix = getBrickMatrix(source, faceIdxMatrix, coordMatrix, cm.brickShell, axes=calculationAxes, cursorStatus=cursorStatus)
         rgbaMatrix = None
     # initialize active keys
-    cm.activeKeyX = -1
-    cm.activeKeyY = -1
-    cm.activeKeyZ = -1
+    cm.activeKey = (-1, -1, -1)
 
     # create bricks dictionary with brickFreqMatrix values
     i = 0

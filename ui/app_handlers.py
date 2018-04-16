@@ -195,9 +195,7 @@ def handle_selections(scene):
             if active_obj.isBrick:
                 # adjust scn.active_brick_detail based on active brick
                 x0, y0, z0 = getDictLoc(getDictKey(active_obj.name.split("__")[-1]))
-                cm.activeKeyX = x0
-                cm.activeKeyY = y0
-                cm.activeKeyZ = z0
+                cm.activeKey = (x0, y0, z0)
             return
         # if no matching cmlist item found, set cmlist_index to -1
         scn.cmlist_index = -1
@@ -396,11 +394,15 @@ def handle_upconversion(scene):
                     if matObj is None:
                         matObj = bpy.data.objects.new(n, bpy.data.meshes.new(n + "_mesh"))
                         sto_scn.objects.link(matObj)
-                # update names of Bricker source objects
                 for cm in scn.cmlist:
+                    # update names of Bricker source objects
                     old_source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
                     if old_source is not None:
                         old_source.name = cm.source_name
+                    # transfer dist offset values to new prop locations
+                    if cm.distOffsetX != -1:
+                        cm.distOffset = (cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ)
+
 
 
 bpy.app.handlers.load_post.append(handle_upconversion)

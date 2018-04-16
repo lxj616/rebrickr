@@ -398,9 +398,7 @@ class BrickerDelete(bpy.types.Operator):
         cm.armature = False
         cm.exposeParent = False
         cm.version = bpy.props.bricker_version
-        cm.activeKeyX = -1
-        cm.activeKeyY = -1
-        cm.activeKeyZ = -1
+        cm.activeKey = (-1, -1, -1)
         cm.firstKey = ""
         cm.isSmoke = False
         cm.hasCustomObj1 = False

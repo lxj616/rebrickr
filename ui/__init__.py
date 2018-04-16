@@ -374,14 +374,14 @@ class ModelSettingsPanel(Panel):
         col = layout.column(align=True)
         # set up model dimensions variables sX, sY, and sZ
         s = Vector((-1, -1, -1))
-        if cm.modelScaleX == -1 or cm.modelScaleY == -1 or cm.modelScaleZ == -1:
+        if -1 in cm.modelScalePreview:
             if source:
                 source_details = bounds(source, use_adaptive_domain=False)
                 s.x = round(source_details.dist.x, 2)
                 s.y = round(source_details.dist.y, 2)
                 s.z = round(source_details.dist.z, 2)
         else:
-            s = Vector((cm.modelScaleX, cm.modelScaleY, cm.modelScaleZ))
+            s = Vector(cm.modelScalePreview)
         # draw Brick Model dimensions to UI if set
         if -1 not in s:
             if cm.brickType != "CUSTOM":
@@ -560,6 +560,9 @@ class BrickTypesPanel(Panel):
             col.label("Brick Type Object:")
         for prop in ["customObjectName1", "customObjectName2", "customObjectName3"]:
             if prop[-1] == "2" and cm.brickType == "CUSTOM":
+                col.label("Distance Offset:")
+                row = col.row(align=True)
+                row.prop(cm, "distOffset", text="")
                 col = layout.column(align=True)
                 col.label("Other Objects:")
             split = col.split(align=True, percentage=0.65)
@@ -569,17 +572,6 @@ class BrickTypesPanel(Panel):
             col1.operator("bricker.eye_dropper", icon="EYEDROPPER", text="").target_prop = prop
             col1 = split.column(align=True)
             col1.operator("bricker.redraw_custom", icon="FILE_REFRESH", text="").target_prop = prop
-
-
-        if cm.brickType == "CUSTOM":
-            col.label("Distance Offset:")
-            split = col.split(align=True, percentage=0.333)
-            col = split.column(align=True)
-            col.prop(cm, "distOffsetX", text="X")
-            col = split.column(align=True)
-            col.prop(cm, "distOffsetY", text="Y")
-            col = split.column(align=True)
-            col.prop(cm, "distOffsetZ", text="Z")
 
 
 class CustomizeModel(Panel):
@@ -661,8 +653,8 @@ class CustomizeModel(Panel):
         row = col1.row(align=True)
         row.operator("bricker.change_brick_type", text="Change Type")
         # change material type
-        # row = col1.row(align=True)
-        # row.operator("bricker.change_brick_material", text="Change Material")
+        row = col1.row(align=True)
+        row.operator("bricker.change_brick_material", text="Change Material")
         # additional controls
         col = layout.column(align=True)
         row = col.row(align=True)
@@ -1015,13 +1007,8 @@ class BrickDetailsPanel(Panel):
             return
 
         col1 = layout.column(align=True)
-        split = col1.split(align=True, percentage=0.33)
-        col = split.column(align=True)
-        col.prop(cm, "activeKeyX", text="x")
-        col = split.column(align=True)
-        col.prop(cm, "activeKeyY", text="y")
-        col = split.column(align=True)
-        col.prop(cm, "activeKeyZ", text="z")
+        row = col1.row(align=True)
+        row.prop(cm, "activeKey", text="")
 
         if cm.animated:
             bricksDict, _ = getBricksDict(dType="ANIM", cm=cm, curFrame=getAnimAdjustedFrame(cm, scn.frame_current))
@@ -1031,7 +1018,7 @@ class BrickDetailsPanel(Panel):
             layout.label("Matrix not available")
             return
         try:
-            dictKey = listToStr([cm.activeKeyX, cm.activeKeyY, cm.activeKeyZ])
+            dictKey = listToStr(list(cm.activeKey))
             brickD = bricksDict[dictKey]
         except Exception as e:
             layout.label("No brick details available")

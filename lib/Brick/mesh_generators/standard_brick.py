@@ -107,6 +107,12 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
     denom = vec_mult(d.xy * 2,       brickSize[:2])
     if brickSize[0] != 1 or brickSize[1] != 1:
         bmesh.ops.scale(bme, verts=bme.verts, vec=(numer.x / denom.x, numer.y / denom.y, 1.0))
+        if brickSize[0] > 1:
+            for v in bme.verts:
+                v.co.x -= (gap.x * brickSize[0] - gap.x) / 2
+        if brickSize[1] > 1:
+            for v in bme.verts:
+                v.co.y -= (gap.y * brickSize[1] - gap.y) / 2
 
     # return bmesh
     return bme

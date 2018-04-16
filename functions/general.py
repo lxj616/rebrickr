@@ -256,7 +256,7 @@ def brick_materials_loaded():
 def getMatrixSettings(cm=None):
     cm = cm or getActiveContextInfo()[1]
     # TODO: Maybe remove custom object names from this?
-    return listToStr([cm.brickHeight, cm.gap, cm.brickType, cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ, cm.customObjectName1, cm.customObjectName2, cm.customObjectName3, cm.useNormals, cm.insidenessRayCastDir, cm.castDoubleCheckRays, cm.brickShell, cm.calculationAxes])
+    return listToStr([cm.brickHeight, cm.gap, cm.brickType, cm.distOffset, cm.customObjectName1, cm.customObjectName2, cm.customObjectName3, cm.useNormals, cm.insidenessRayCastDir, cm.castDoubleCheckRays, cm.brickShell, cm.calculationAxes])
 
 
 def matrixReallyIsDirty(cm):
