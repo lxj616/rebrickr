@@ -241,8 +241,9 @@ def brickAvail(cm, sourceBrick, brick):
     """ check brick is available to merge """
     if brick is None:
         return False
+
     # returns True if brick is present, brick isn't drawn already, and brick materials match or mergeInconsistentMats is True, or one of the mats is "" (internal)
-    return brick["draw"] and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats or cm.materialType == "NONE")
+    return brick["draw"] and mergableBrickType(typ=brick["type"], up=False) and not brick["attempted_merge"] and (sourceBrick["mat_name"] == brick["mat_name"] or sourceBrick["mat_name"] == "" or brick["mat_name"] == "" or cm.mergeInconsistentMats or cm.materialType == "NONE")
 
 
 def getMostCommonDir(i_s, i_e, norms):

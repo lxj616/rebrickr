@@ -157,7 +157,7 @@ def addEdgeSplitMod(obj):
 
 
 def mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, defaultSize, zStep, randS1, mergeVertical=True):
-    if brickD["size"] is None or (cm.buildIsDirty):
+    if brickD["size"] is None or cm.buildIsDirty:
         preferLargest = brickD["val"] > 0 and brickD["val"] < 1
         brickSize = attemptMerge(cm, bricksDict, key, keysNotChecked, defaultSize, zStep, randS1, preferLargest=preferLargest, mergeVertical=mergeVertical, height3Only=brickD["type"] in getBrickTypes(height=3))
     else:

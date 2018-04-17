@@ -75,6 +75,7 @@ class mergeBricks(Operator):
                 # initialize vars
                 bricksDict = self.bricksDicts[cm_id]
                 allSplitKeys = []
+                cm.customized = True
 
                 # iterate through cm_ids of selected objects
                 for obj_name in self.objNamesD[cm_id]:
@@ -93,9 +94,6 @@ class mergeBricks(Operator):
 
                 # draw modified bricks
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate)
-
-                # model is now customized
-                cm.customized = True
 
                 # add selected objects to objects to select at the end
                 objsToSelect += bpy.context.selected_objects

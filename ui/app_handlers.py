@@ -277,10 +277,18 @@ bpy.app.handlers.load_pre.append(clear_bfm_cache)
 
 # pull dicts from deep cache to light cache on load
 @persistent
-def handle_loading_to_light_cache(dummy):
+def handle_loading_to_light_cache(scene):
     if not brickerIsActive():
         return
     deepToLightCache(bricker_bfm_cache)
+    # verify caches loaded properly
+    for cm in bpy.context.scene.cmlist:
+        if not (cm.modelCreated or cm.animated):
+            continue
+        bricksDict = getBricksDict(cm=cm)[0]
+        if bricksDict is None:
+            cm.matrixLost = True
+            cm.matrixIsDirty = True
 
 
 bpy.app.handlers.load_post.append(handle_loading_to_light_cache)

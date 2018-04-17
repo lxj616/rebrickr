@@ -200,7 +200,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
                ("STUDS", "Studs", "Use this brick type to build the model"),
                # ("SLOPES", "Slopes (fast)", "Use this brick type to build the model"),
                ("PLATES", "Plates", "Use this brick type to build the model"),
-               ("CYLINDERS", "Cylinders (fast)", "Use this brick type to build the model"),
+               ("CYLINDERS", "Cylinders", "Use this brick type to build the model"),
                ("CUSTOM", "Custom", "Use custom object to build the model"),
                ("BRICKS AND PLATES", "Bricks and Plates", "Use this brick type to build the model"),
                ("BRICKS", "Bricks (fast)", "Use this brick type to build the model")],
@@ -564,6 +564,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     buildIsDirty = BoolProperty(default=True)
     bricksAreDirty = BoolProperty(default=True)
     matrixIsDirty = BoolProperty(default=True)
+    matrixLost = BoolProperty(default=False)
     internalIsDirty = BoolProperty(default=True)
     lastLogoDetail = StringProperty(default="NONE")
     lastSplitModel = BoolProperty(default=False)

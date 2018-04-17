@@ -95,7 +95,6 @@ class drawAdjacent(Operator):
             decriment = 0
             dimensions = Bricks.get_dimensions(cm.brickHeight, zStep, cm.gap)
             # check all 6 directions for action to be executed
-            print("*"*60)
             for i in range(6):
                 # if checking beneath obj, check 3 keys below instead of 1 key below
                 if i == 5 and flatBrickType(cm):
@@ -135,9 +134,6 @@ class drawAdjacent(Operator):
             # select original brick
             orig_obj = bpy.data.objects.get(initial_active_obj_name)
             if orig_obj: select(orig_obj, active=orig_obj)
-
-            # model is now customized
-            cm.customized = True
         except:
             handle_exception()
         return {'FINISHED'}
@@ -154,6 +150,7 @@ class drawAdjacent(Operator):
             self.orig_undo_stack_length = self.undo_stack.getLength()
             scn, cm, _ = getActiveContextInfo()
             obj = scn.objects.active
+            cm.customized = True
 
             # initialize self.bricksDict
             self.bricksDict, _ = getBricksDict(cm=cm)

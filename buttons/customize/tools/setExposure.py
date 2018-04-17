@@ -73,6 +73,7 @@ class setExposure(Operator):
                 self.undo_stack.iterateStates(cm)
                 bricksDict = json.loads(self.cached_bfm[cm_id])
                 keysToUpdate = []
+                cm.customized = True
 
                 # iterate through names of selected objects
                 for obj_name in self.objNamesD[cm_id]:
@@ -92,9 +93,6 @@ class setExposure(Operator):
 
                 # draw modified bricks
                 drawUpdatedBricks(cm, bricksDict, keysToUpdate)
-
-                # model is now customized
-                cm.customized = True
                 # add selected objects to objects to select at the end
                 objsToSelect += bpy.context.selected_objects
             # select the new objects created

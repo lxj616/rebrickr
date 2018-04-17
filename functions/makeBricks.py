@@ -45,7 +45,7 @@ from .makeBricks_utils import *
 
 
 @timed_call('Time Elapsed')
-def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=None, split=False, brickScale=None, customData=None, group_name=None, clearExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True):
+def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=None, split=False, brickScale=None, customData=None, group_name=None, clearExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True, redraw=False):
     # set up variables
     scn = bpy.context.scene
     cm = cm or scn.cmlist[scn.cmlist_index]
@@ -115,7 +115,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     numIters = 2 if cm.brickType == "BRICKS AND PLATES" else 1
     i = 0
     # if merging unnecessary, simply update bricksDict values
-    if not (mergableBrickType(cm, up=zStep == 1) and (cm.maxDepth != 1 or cm.maxWidth != 1)):
+    if not cm.customized and not (mergableBrickType(cm, up=zStep == 1) and (cm.maxDepth != 1 or cm.maxWidth != 1)):
         size = [1, 1, zStep]
         updateBrickSizesAndTypesUsed(cm, listToStr(size), bricksDict[keys[0]]["type"])
         availableKeys = keys

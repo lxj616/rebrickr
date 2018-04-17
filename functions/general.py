@@ -222,8 +222,13 @@ def flatBrickType(cm):
     return "PLATE" in cm.brickType or "STUD" in cm.brickType
 
 
-def mergableBrickType(cm, up=False):
-    return "PLATE" in cm.brickType or "BRICK" in cm.brickType or "SLOPE" in cm.brickType or (up and ("CYLINDER" in cm.brickType))
+def mergableBrickType(cm=None, typ=None, up=False):
+    if typ is not None:
+        return typ in ["PLATE", "BRICK", "SLOPE"] or (up and typ == "CYLINDER")
+    elif cm is not None:
+        return "PLATE" in cm.brickType or "BRICK" in cm.brickType or "SLOPE" in cm.brickType or (up and ("CYLINDER" in cm.brickType))
+    else:
+        return False
 
 
 def getTallType(cm, brickD, targetType=None):
@@ -260,7 +265,7 @@ def getMatrixSettings(cm=None):
 
 
 def matrixReallyIsDirty(cm):
-    return (cm.matrixIsDirty) and cm.lastMatrixSettings != getMatrixSettings()
+    return (cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings()) or cm.matrixLost
 
 
 def vecToStr(vec, separate_by=","):

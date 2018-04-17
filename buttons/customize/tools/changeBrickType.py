@@ -65,7 +65,8 @@ class changeBrickType(Operator):
         try:
             self.changeType()
         except:
-            scn.Bricker_runningBlockingOperation = False
+
+            context.scene.Bricker_runningBlockingOperation = False
             handle_exception()
         return {"FINISHED"}
 
@@ -162,6 +163,7 @@ class changeBrickType(Operator):
             bricksDict = self.bricksDicts[cm_id]
             keysToUpdate = []
             updateHasCustomObjs(cm, targetBrickType)
+            cm.customized = True
 
             # iterate through names of selected objects
             for obj_name in self.objNamesD[cm_id]:
@@ -207,7 +209,7 @@ class changeBrickType(Operator):
                     size = updateBrickSizeAndDict(dimensions, cm, bricksDict, size, dictKey, dictLoc, curHeight=size[2], targetType=targetBrickType)
 
                 # check if brick spans 3 matrix locations
-                bAndPBrick = "PLATES" in cm.brickType and size[2] == 3
+                bAndPBrick = flatBrickType(cm) and size[2] == 3
 
                 # verify exposure above and below
                 brickLocs = getLocsInBrick(cm, size, dictKey, dictLoc, zStep=3)
@@ -225,8 +227,6 @@ class changeBrickType(Operator):
 
             # draw updated brick
             drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=False)
-            # model is now customized
-            cm.customized = True
         # select original bricks
         orig_obj = bpy.data.objects.get(initial_active_obj_name)
         objsToSelect = [bpy.data.objects.get(n) for n in objNamesToSelect if bpy.data.objects.get(n) is not None]

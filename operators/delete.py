@@ -141,6 +141,7 @@ class delete_override(Operator):
             keysToUpdate = []
             zStep = getZStep(cm)
             deletedKeys = []
+            cm.customized = True
 
             for obj_name in objNamesD[cm_id]:
                 # get dict key details of current obj
@@ -191,8 +192,6 @@ class delete_override(Operator):
                 # iterate undo states
                 self.undo_stack.iterateStates(cm)
             self.iteratedStatesAtLeastOnce = True
-            # model is now customized
-            cm.customized = True
 
         # if nothing was done worth undoing but state was pushed
         if not self.iteratedStatesAtLeastOnce and self.undo_pushed:
