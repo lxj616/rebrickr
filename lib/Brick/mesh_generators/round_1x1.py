@@ -102,8 +102,7 @@ def makeRound1x1(dimensions:dict, circleVerts:int=None, type:str="CYLINDER", det
         selectVerts(lowerTubeVerts["outer"]["top"] + lowerTubeVerts["inner"]["top"])
 
     # add stud
-    studVerts = addStuds(dimensions, height, [1, 1, 1], type, circleVerts, bme, hollow=detail in ["MEDIUM", "HIGH"])
-    selectVerts(studVerts["bottom"] if detail in ["FLAT", "LOW"] else studVerts["outer"]["bottom"] + studVerts["inner"]["bottom"])
+    studVerts = addStuds(dimensions, height, [1, 1, 1], type, circleVerts, bme, hollow=detail in ["MEDIUM", "HIGH"], loopCutCylinders=False)
 
     # make pointers to appropriate vertex lists
     studVertsOuter = studVerts if detail in ["FLAT", "LOW"] else studVerts["outer"]

@@ -856,6 +856,8 @@ class DetailingPanel(Panel):
         row.label("Cylinders:")
         row = col.row(align=True)
         row.prop(cm, "circleVerts")
+        row = col.row(align=True)
+        row.prop(cm, "loopCutCylinders")
         row.active = not (cm.studDetail == "NONE" and cm.exposedUndersideDetail == "FLAT" and cm.hiddenUndersideDetail == "FLAT")
 
         row = col.row(align=True)

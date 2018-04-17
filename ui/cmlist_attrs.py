@@ -432,6 +432,11 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=updateCircleVerts,
         min=4, max=64,
         default=16)
+    loopCutCylinders = BoolProperty(
+        name="Loop Cut Cylinders",
+        description="Make loop cut on cylinders (improves bevel quality)",
+        update=dirtyBricks,
+        default=False)
     # BEVEL SETTINGS
     bevelWidth = FloatProperty(
         name="Bevel Width",
