@@ -217,7 +217,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBuild,
         step=1,
         min=0, max=2,
-        default=1)
+        default=0)
     maxWidth = IntProperty(
         name="Max Width",
         description="Maximum brick width",
