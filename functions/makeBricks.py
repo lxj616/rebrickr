@@ -121,7 +121,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
         availableKeys = keys
         for key in keys:
             bricksDict[key]["parent"] = "self"
-            bricksDict[key]["size"] = size
+            bricksDict[key]["size"] = size.copy()
             topExposed, botExposed = getBrickExposure(cm, bricksDict, key)
             bricksDict[key]["top_exposed"] = topExposed
             bricksDict[key]["bot_exposed"] = botExposed
