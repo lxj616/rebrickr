@@ -553,25 +553,26 @@ class BrickTypesPanel(Panel):
                 row = col.row(align=True)
                 row.prop(cm, "mergeInconsistentMats")
 
-        if cm.brickType != "CUSTOM":
-            col.label("Custom Brick Objects:")
-        else:
+        if cm.brickType == "CUSTOM":
             col = layout.column(align=True)
             col.label("Brick Type Object:")
-        for prop in ["customObjectName1", "customObjectName2", "customObjectName3"]:
-            if prop[-1] == "2" and cm.brickType == "CUSTOM":
-                col.label("Distance Offset:")
-                row = col.row(align=True)
-                row.prop(cm, "distOffset", text="")
-                col = layout.column(align=True)
-                col.label("Other Objects:")
-            split = col.split(align=True, percentage=0.65)
-            col1 = split.column(align=True)
-            col1.prop_search(cm, prop, scn, "objects", text="")
-            col1 = split.column(align=True)
-            col1.operator("bricker.eye_dropper", icon="EYEDROPPER", text="").target_prop = prop
-            col1 = split.column(align=True)
-            col1.operator("bricker.redraw_custom", icon="FILE_REFRESH", text="").target_prop = prop
+        elif cm.lastSplitModel:
+            col.label("Custom Brick Objects:")
+        if cm.brickType == "CUSTOM" or cm.lastSplitModel:
+            for prop in ["customObjectName1", "customObjectName2", "customObjectName3"]:
+                if prop[-1] == "2" and cm.brickType == "CUSTOM":
+                    col.label("Distance Offset:")
+                    row = col.row(align=True)
+                    row.prop(cm, "distOffset", text="")
+                    col = layout.column(align=True)
+                    col.label("Other Objects:")
+                split = col.split(align=True, percentage=0.65)
+                col1 = split.column(align=True)
+                col1.prop_search(cm, prop, scn, "objects", text="")
+                col1 = split.column(align=True)
+                col1.operator("bricker.eye_dropper", icon="EYEDROPPER", text="").target_prop = prop
+                col1 = split.column(align=True)
+                col1.operator("bricker.redraw_custom", icon="FILE_REFRESH", text="").target_prop = prop
 
 
 class CustomizeModel(Panel):

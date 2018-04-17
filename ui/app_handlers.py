@@ -386,7 +386,8 @@ def handle_upconversion(scene):
                         obj.name = rreplace(obj.name, "frame", "f")
                 # update storage scene name
                 sto_scn = bpy.data.scenes.get("Bricker_storage (DO NOT MODIFY)")
-                sto_scn.name.replace("RENAME", "MODIFY")
+                if sto_scn is not None:
+                    sto_scn.name.replace("RENAME", "MODIFY")
                 # create "Bricker_cm.id_mats" object for each cmlist idx
                 matObjNames = ["Bricker_{}_RANDOM_mats".format(cm.id), "Bricker_{}_ABS_mats".format(cm.id)]
                 for n in matObjNames:
@@ -394,14 +395,13 @@ def handle_upconversion(scene):
                     if matObj is None:
                         matObj = bpy.data.objects.new(n, bpy.data.meshes.new(n + "_mesh"))
                         sto_scn.objects.link(matObj)
-                for cm in scn.cmlist:
-                    # update names of Bricker source objects
-                    old_source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
-                    if old_source is not None:
-                        old_source.name = cm.source_name
-                    # transfer dist offset values to new prop locations
-                    if cm.distOffsetX != -1:
-                        cm.distOffset = (cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ)
+                # update names of Bricker source objects
+                old_source = bpy.data.objects.get(cm.source_name + " (DO NOT RENAME)")
+                if old_source is not None:
+                    old_source.name = cm.source_name
+                # transfer dist offset values to new prop locations
+                if cm.distOffsetX != -1:
+                    cm.distOffset = (cm.distOffsetX, cm.distOffsetY, cm.distOffsetZ)
 
 
 

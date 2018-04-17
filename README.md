@@ -35,3 +35,4 @@ Blender add-on for automated generation of Brick sculptures and simulations from
   * Known issues:
       * For models with thin outer shells, Bricker may use color of inside face instead of outside face for brick material (see snapchat hotdog file)
       * Applying model rotation when deleting brickified model whose source has rotated parent produces problematic results
+      * Changing type from stud (for plane generated with stud brick type) to cone/brick and back causes issues

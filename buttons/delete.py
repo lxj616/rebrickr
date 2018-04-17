@@ -210,6 +210,9 @@ class BrickerDelete(bpy.types.Operator):
 
         Caches.clearCache(cm, brick_mesh=False)
 
+        # Scale brick height according to scale value applied to source
+        cm.brickHeight = cm.brickHeight * cm.transformScale
+
         # reset default values for select items in cmlist
         cls.resetCmlistAttrs()
 
