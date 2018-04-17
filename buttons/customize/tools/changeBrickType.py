@@ -80,6 +80,7 @@ class changeBrickType(Operator):
         try:
             self.undo_stack = UndoStack.get_instance()
             self.orig_undo_stack_length = self.undo_stack.getLength()
+            self.aboveKeysParented = []
             scn = bpy.context.scene
             selected_objects = bpy.context.selected_objects
             # initialize self.flipBrick, self.rotateBrick, and self.brickType
@@ -160,7 +161,7 @@ class changeBrickType(Operator):
             cm = getItemByID(scn.cmlist, cm_id)
             self.undo_stack.iterateStates(cm)
             # initialize vars
-            bricksDict = self.bricksDicts[cm_id]
+            bricksDict = deepcopy(self.bricksDicts[cm_id])
             keysToUpdate = []
             updateHasCustomObjs(cm, targetBrickType)
             cm.customized = True
@@ -175,13 +176,12 @@ class changeBrickType(Operator):
                 size = bricksDict[dictKey]["size"]
                 typ = bricksDict[dictKey]["type"]
 
-                # NOTE: the following causes problems when the function is re-run. To fix this, store all types of objs in __init__ first.
-                # # skip bricks that are already of type self.brickType
-                # if (typ == targetBrickType and
-                #     (typ != "SLOPE" or
-                #      bricksDict[dictKey]["flipped"] == self.flipBrick and
-                #      bricksDict[dictKey]["rotated"] == self.rotateBrick)):
-                #     continue
+                # skip bricks that are already of type self.brickType
+                if (typ == targetBrickType and
+                    (typ != "SLOPE" or
+                     bricksDict[dictKey]["flipped"] == self.flipBrick and
+                     bricksDict[dictKey]["rotated"] == self.rotateBrick)):
+                    continue
                 # skip bricks that can't be turned into the chosen brick type
                 if size[:2] not in legalBrickSizes[3 if targetBrickType in getBrickTypes(height=3) else 1][targetBrickType]:
                     continue

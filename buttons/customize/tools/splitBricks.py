@@ -73,7 +73,7 @@ class splitBricks(Operator):
             cm = getItemByID(scn.cmlist, cm_id)
             if not flatBrickType(cm):
                 continue
-            bricksDict = self.bricksDicts[cm_id]
+            bricksDict = deepcopy(self.bricksDicts[cm_id])
             # iterate through names of selected objects
             for obj_name in self.objNamesD[cm_id]:
                 dictKey = getDictKey(obj_name)
