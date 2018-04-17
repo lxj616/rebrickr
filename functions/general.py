@@ -430,18 +430,24 @@ def getExportPath(cm, fn, ext):
             splitPath.pop(0)
             blendPathSplit.pop()
         newPath = "/".join(splitPath)
-        fullBlendPath = "/".join(blendPathSplit)
-        path = os.path.join(blendPath, newPath)
+        fullBlendPath = "/".join(blendPathSplit) if len(blendPathSplit) > 1 else "/"
+        path = os.path.join(fullBlendPath, newPath)
     # if path is blank at this point, use default render location
     if path == "":
         path = blendPath
-    # check to make sure dumpLoc exists on local machine
+    # check to make sure path exists on local machine
     if not os.path.exists(path):
-        os.mkdir(path)
+        return path, "Blender could not find the following path: '%(path)s'" % locals()
     # create full path from path and filename
     fn0 = "" if lastSlash == -1 else cm.exportPath[lastSlash + 1:len(cm.exportPath)]
     fullPath = os.path.join(path, (fn if fn0 == "" else fn0) + ext)
-    return fullPath
+    # ensure target folder has write permissions
+    try:
+        f = open(fullPath, "w")
+        f.close()
+    except PermissionError:
+        return path, "Blender does not have write permissions for the following path: '%(path)s'" % locals()
+    return fullPath, None
 
 
 def shortenName(string:str, max_len:int=30):
