@@ -149,7 +149,7 @@ class BrickModelsPanel(Panel):
                     col = layout.column(align=True)
                     row = col.row(align=True)
                     row.operator("bricker.brickify", text="Update Animation", icon="FILE_REFRESH")
-                    if createdWithUnsupportedVersion():
+                    if createdWithUnsupportedVersion(cm):
                         v_str = cm.version[:3]
                         col = layout.column(align=True)
                         col.scale_y = 0.7
@@ -179,7 +179,7 @@ class BrickModelsPanel(Panel):
                     row.operator("bricker.delete", text="Delete Brickified Model", icon="CANCEL")
                     col = layout.column(align=True)
                     col.operator("bricker.brickify", text="Update Model", icon="FILE_REFRESH")
-                    if createdWithUnsupportedVersion():
+                    if createdWithUnsupportedVersion(cm):
                         v_str = cm.version[:3]
                         col = layout.column(align=True)
                         col.scale_y = 0.7
@@ -589,7 +589,7 @@ class CustomizeModel(Panel):
         if not settingsCanBeDrawn():
             return False
         scn, cm, _ = getActiveContextInfo()
-        if createdWithUnsupportedVersion():
+        if createdWithUnsupportedVersion(cm):
             return False
         if not (cm.modelCreated or cm.animated):
             return False
@@ -990,7 +990,7 @@ class BrickDetailsPanel(Panel):
         if not settingsCanBeDrawn():
             return False
         scn, cm, _ = getActiveContextInfo()
-        if createdWithUnsupportedVersion():
+        if createdWithUnsupportedVersion(cm):
             return False
         if not (cm.modelCreated or cm.animated):
             return False
@@ -1070,7 +1070,7 @@ class ExportPanel(Panel):
         if not settingsCanBeDrawn():
             return False
         scn, cm, _ = getActiveContextInfo()
-        if createdWithUnsupportedVersion():
+        if createdWithUnsupportedVersion(cm):
             return False
         if not (cm.modelCreated or cm.animated):
             return False

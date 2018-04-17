@@ -187,7 +187,7 @@ def handle_selections(scene):
             scn.Bricker_active_object_name = scn.objects.active.name
         for i in range(len(scn.cmlist)):
             cm = scn.cmlist[i]
-            if createdWithUnsupportedVersion() or cm.source_name != scn.Bricker_active_object_name or (usingSource and cm.modelCreated):
+            if createdWithUnsupportedVersion(cm) or cm.source_name != scn.Bricker_active_object_name or (usingSource and cm.modelCreated):
                 continue
             scn.cmlist_index = i
             scn.Bricker_last_cmlist_index = scn.cmlist_index
@@ -375,6 +375,8 @@ def handle_upconversion(scene):
             # convert from v1_3 to v1_4
             if int(cm.version[2]) < 4:
                 # update "_frame_" to "_f_" in brick and group names
+                n = cm.source_name
+                Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
                 if cm.animated:
                     for i in range(cm.lastStartFrame, cm.lastStopFrame + 1):
                         Bricker_bricks_curF_gn = Bricker_bricks_gn + "_frame_" + str(i)
@@ -385,8 +387,6 @@ def handle_upconversion(scene):
                         for obj in bGroup.objects:
                             obj.name = rreplace(obj.name, "frame", "f")
                 elif cm.modelCreated:
-                    n = cm.source_name
-                    Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
                     bGroup = bpy.data.groups.get(Bricker_bricks_gn)
                     if bGroup is None:
                         continue

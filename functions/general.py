@@ -313,8 +313,7 @@ def getParentKey(bricksDict, key):
     return parent_key
 
 
-def createdWithUnsupportedVersion(cm=None):
-    cm = cm or getActiveContextInfo()[1]
+def createdWithUnsupportedVersion(cm):
     return cm.version[:3] != bpy.props.bricker_version[:3]
 
 
