@@ -552,6 +552,7 @@ class BrickTypesPanel(Panel):
                     row.prop(cm, "legalBricksOnly")
                 row = col.row(align=True)
                 row.prop(cm, "mergeInconsistentMats")
+        return
 
         if cm.brickType == "CUSTOM":
             col = layout.column(align=True)
@@ -586,6 +587,7 @@ class CustomizeModel(Panel):
 
     @classmethod
     def poll(self, context):
+        return False
         if not settingsCanBeDrawn():
             return False
         scn, cm, _ = getActiveContextInfo()
@@ -1067,6 +1069,7 @@ class ExportPanel(Panel):
 
     @classmethod
     def poll(self, context):
+        return False
         if not settingsCanBeDrawn():
             return False
         scn, cm, _ = getActiveContextInfo()

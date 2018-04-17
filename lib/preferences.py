@@ -66,5 +66,32 @@ class BrickerPreferences(AddonPreferences):
         row = col.row(align=True)
         # row.prop(self, "useCaching")
 
+        # trial version text
+        row.label("Trial Version – Please purchase the full version of Bricker for access to the addon updater along with these")
+        row = col.row(align=True)
+        row.label("great features:")
+
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.label("    - Customization tools including:")
+        row = col.row(align=True)
+        row.label("        - Split/merge bricks")
+        row = col.row(align=True)
+        row.label("        - Draw adjacent bricks")
+        row = col.row(align=True)
+        row.label("        - Toggle Exposure")
+        row = col.row(align=True)
+        row.label("        - Change brick type")
+        row = col.row(align=True)
+        row.label("        - Change brick material")
+        row = col.row(align=True)
+        row.label("    - Logo detailing (LEGO Logo or your own custom logo object)")
+        row = col.row(align=True)
+        row.label("    - Ldraw exporter")
+
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        row.label("Enjoy this trial version of Bricker!")
+
         # updater draw function
-        addon_updater_ops.update_settings_ui(self,context)
+        # addon_updater_ops.update_settings_ui(self,context)

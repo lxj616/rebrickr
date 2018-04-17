@@ -363,8 +363,8 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     logoDetail = EnumProperty(
         name="Logo Detailing",
         description="Choose logo type to draw on brick studs",
-        items=[("CUSTOM", "Custom Logo", "Choose a mesh object to use as the brick stud logo"),
-               ("LEGO", "LEGO Logo", "Include a LEGO logo on each stud"),
+        items=[# ("CUSTOM", "Custom Logo", "Choose a mesh object to use as the brick stud logo"),
+               # ("LEGO", "LEGO Logo", "Include a LEGO logo on each stud"),
                ("NONE", "None", "Don't include Brick Logo on bricks")],
         update=dirtyBricks,
         default="NONE")
