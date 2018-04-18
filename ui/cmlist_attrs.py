@@ -101,7 +101,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyMatrix,
         step=1,
         precision=3,
-        min=0, max=0.1,
+        min=0, max=1,
         default=0.01)
     mergeSeed = IntProperty(
         name="Random Seed",
