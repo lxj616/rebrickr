@@ -73,7 +73,7 @@ class splitBricks(Operator):
             cm = getItemByID(scn.cmlist, cm_id)
             if not flatBrickType(cm):
                 continue
-            bricksDict = deepcopy(self.bricksDicts[cm_id])
+            bricksDict = self.bricksDicts[cm_id]
             # iterate through names of selected objects
             for obj_name in self.objNamesD[cm_id]:
                 dictKey = getDictKey(obj_name)
@@ -161,10 +161,12 @@ class splitBricks(Operator):
                         # split the bricks in the matrix and set size of active brick's bricksDict entries to 1x1x[lastZSize]
                         splitKeys = Bricks.split(bricksDict, dictKey, loc=dictLoc, cm=cm, v=self.vertical, h=self.horizontal)
                         # append new splitKeys to keysToUpdate
-                        keysToUpdate = keysToUpdate + [k for k in splitKeys if k not in keysToUpdate]
+                        keysToUpdate += splitKeys
+                    else:
+                        keysToUpdate.append(dictKey)
 
                 # draw modified bricks
-                drawUpdatedBricks(cm, bricksDict, keysToUpdate)
+                drawUpdatedBricks(cm, bricksDict, uniquify1(keysToUpdate))
 
                 # add selected objects to objects to select at the end
                 objsToSelect += bpy.context.selected_objects

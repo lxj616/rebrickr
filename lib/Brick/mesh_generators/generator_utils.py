@@ -125,7 +125,7 @@ def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme
     connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, botVertsDofDs, xNum, yNum, bme, step=1)
 
 
-def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, v5=None, v6=None, v7=None, v8=None, hollow=False, loopCutCylinders=False):
+def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, v5=None, v6=None, v7=None, v8=None, hollow=False, botFace=True, loopCut=False):
     r = dimensions["bar_radius" if hollow else "stud_radius"]
     h = dimensions["stud_height"]
     t = dimensions["stud_radius"] - dimensions["bar_radius"]
@@ -137,18 +137,13 @@ def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, v5=None
             x = dimensions["width"] * xNum
             y = dimensions["width"] * yNum
             if hollow:
-                _, studVerts = makeTube(r, h, t, circleVerts, co=Vector((0, 0, z)), bme=bme)
+                _, studVerts = makeTube(r, h, t, circleVerts, co=Vector((0, 0, z)), loopCut=loopCut, botFace=botFace, bme=bme)
                 if v5 is not None: bme.faces.new(studVerts["inner"]["bottom"])
-                select(studVerts["inner"]["bottom"] + studVerts["outer"]["bottom"])
+                select(studVerts["inner"]["mid" if loopCut else "bottom"] + studVerts["outer"]["mid" if loopCut else "bottom"])
             else:
                 # split stud at center by creating cylinder and circle and joining them (allows Bevel to work correctly)
-                _, studVerts = makeCylinder(r, h/2 if loopCutCylinders else h, circleVerts, co=Vector((x, y, z + h/4 if loopCutCylinders else z)), botFace=False, bme=bme)
-                select(studVerts["bottom"])
-                if loopCutCylinders:
-                    circleStudVerts = makeCircle(r, circleVerts, co=Vector((x, y, z - h/2)), flipNormals=True, face=False, bme=bme)
-                    # create faces connecting bottom of stud to circle
-                    connectCircles(studVerts["bottom"], circleStudVerts[::-1], bme, smooth=True)
-                    studVerts["bottom"] = circleStudVerts[::-1]
+                _, studVerts = makeCylinder(r, h, circleVerts, co=Vector((x, y, z)), botFace=False, loopCut=loopCut, bme=bme)
+                select(studVerts["mid" if loopCut else "bottom"])
             if v5 is not None:
                 topVertsD = createVertListDict2(studVerts["outer"]["bottom"] if hollow else studVerts["bottom"])
                 topVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = topVertsD

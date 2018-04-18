@@ -193,17 +193,19 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=1)
 
     # BRICK TYPE SETTINGS
+    description = "Use this brick type to build the model"
     brickType = EnumProperty(
         name="Brick Type",
         description="Type of brick used to build the model",
-        items=[("STUD_HOLLOWS", "Hollow Studs", "Use this brick type to build the model"),
-               ("STUDS", "Studs", "Use this brick type to build the model"),
-               # ("SLOPES", "Slopes (fast)", "Use this brick type to build the model"),
-               ("PLATES", "Plates", "Use this brick type to build the model"),
-               ("CYLINDERS", "Cylinders", "Use this brick type to build the model"),
+        items=[("STUD_HOLLOWS", "Hollow Studs", description),
+               ("STUDS", "Studs", description),
+               # ("SLOPES", "Slopes (fast)", description),
+               ("PLATES", "Plates", description),
+               ("CYLINDERS", "Cylinders", description),
                ("CUSTOM", "Custom", "Use custom object to build the model"),
-               ("BRICKS AND PLATES", "Bricks and Plates", "Use this brick type to build the model"),
-               ("BRICKS", "Bricks (fast)", "Use this brick type to build the model")],
+               ("CONES", "Cones", description),
+               ("BRICKS AND PLATES", "Bricks and Plates", description),
+               ("BRICKS", "Bricks (fast)", description)],
         update=dirtyMatrix,
         default="BRICKS")
     alignBricks = BoolProperty(
@@ -432,7 +434,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=updateCircleVerts,
         min=4, max=64,
         default=16)
-    loopCutCylinders = BoolProperty(
+    loopCut = BoolProperty(
         name="Loop Cut Cylinders",
         description="Make loop cut on cylinders (improves bevel quality)",
         update=dirtyBricks,
