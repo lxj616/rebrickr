@@ -31,7 +31,6 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Bake run while brickifying cloth sim/soft body anim should stick around after brickified animation deleted
       * See if there's another way to calculate brickFreqMatrix for cloth sim/soft body anim besides baking and applying the modifier
       * Add customization for custom object offset, size, and brick scale (amount of bricksDict locations it takes up), default to scale/offset for 1x1 brick with stud
-      * Make loop cut cylinders work for all cylinders, not just stud (including hollow stud)
   * Known issues:
       * For models with thin outer shells, Bricker may use color of inside face instead of outside face for brick material (see snapchat hotdog file)
       * Applying model rotation when deleting brickified model whose source has rotated parent produces problematic results
