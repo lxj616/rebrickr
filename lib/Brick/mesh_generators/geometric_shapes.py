@@ -124,7 +124,7 @@ def makeCircle(r:float, N:int, co:Vector=Vector((0,0,0)), face:bool=True, flipNo
     return verts
 
 
-def makeCylinder(r:float, h:float, N:int, co:Vector=Vector((0,0,0)), botFace:bool=True, topFace:bool=True, flipNormals:bool=False, bme:bmesh=None):
+def makeCylinder(r:float, h:float, N:int, co:Vector=Vector((0,0,0)), botFace:bool=True, topFace:bool=True, flipNormals:bool=False, loopCut:bool=False, bme:bmesh=None):
     """
     create a cylinder with bmesh
 
@@ -136,6 +136,7 @@ def makeCylinder(r:float, h:float, N:int, co:Vector=Vector((0,0,0)), botFace:boo
         botFace     -- create face on bottom of cylinder
         topFace     -- create face on top of cylinder
         flipNormals -- flip normals of cylinder
+        loopCut     -- loop cut the cylinder in the center
         bme         -- bmesh object in which to create verts
 
     """
@@ -143,6 +144,7 @@ def makeCylinder(r:float, h:float, N:int, co:Vector=Vector((0,0,0)), botFace:boo
     bme = bme or bmesh.new()
     topVerts = []
     botVerts = []
+    midVerts = []
     sideFaces = []
 
     # create upper and lower circles
@@ -155,10 +157,18 @@ def makeCylinder(r:float, h:float, N:int, co:Vector=Vector((0,0,0)), botFace:boo
         coordB = co + Vector((x, y, -z))
         topVerts.append(bme.verts.new(coordT))
         botVerts.append(bme.verts.new(coordB))
+        if loopCut:
+            coordM = co + Vector((x, y, 0))
+            midVerts.append(bme.verts.new(coordM))
 
     # create faces on the sides
-    _, sideFaces = connectCircles(topVerts if flipNormals else botVerts, botVerts if flipNormals else topVerts, bme)
-    smoothBMFaces(sideFaces)
+    if loopCut:
+        _, sideFaces1 = connectCircles(topVerts if flipNormals else midVerts, midVerts if flipNormals else topVerts, bme)
+        _, sideFaces2 = connectCircles(midVerts if flipNormals else botVerts, botVerts if flipNormals else midVerts, bme)
+        smoothBMFaces(sideFaces1 + sideFaces2)
+    else:
+        _, sideFaces = connectCircles(topVerts if flipNormals else botVerts, botVerts if flipNormals else topVerts, bme)
+        smoothBMFaces(sideFaces)
 
     # create top and bottom faces
     if topFace:
@@ -167,10 +177,10 @@ def makeCylinder(r:float, h:float, N:int, co:Vector=Vector((0,0,0)), botFace:boo
         bme.faces.new(botVerts[::-1] if not flipNormals else botVerts)
 
     # return bme & dictionary with lists of top and bottom vertices
-    return bme, {"bottom":botVerts[::-1], "top":topVerts}
+    return bme, {"bottom":botVerts[::-1], "top":topVerts, "mid":midVerts}
 
 
-def makeTube(r:float, h:float, t:float, N:int, co:Vector=Vector((0,0,0)), topFace:bool=True, botFace:bool=True, bme:bmesh=None):
+def makeTube(r:float, h:float, t:float, N:int, co:Vector=Vector((0,0,0)), topFace:bool=True, botFace:bool=True, loopCut:bool=False, bme:bmesh=None):
     """
     create a tube with bmesh
 
@@ -190,8 +200,8 @@ def makeTube(r:float, h:float, t:float, N:int, co:Vector=Vector((0,0,0)), topFac
         bme = bmesh.new()
 
     # create upper and lower circles
-    bme, innerVerts = makeCylinder(r, h, N, co=co, botFace=False, topFace=False, flipNormals=True, bme=bme)
-    bme, outerVerts = makeCylinder(r + t, h, N, co=co, botFace=False, topFace=False, bme=bme)
+    bme, innerVerts = makeCylinder(r, h, N, co=co, botFace=False, topFace=False, flipNormals=True, loopCut=loopCut, bme=bme)
+    bme, outerVerts = makeCylinder(r + t, h, N, co=co, botFace=False, topFace=False, loopCut=loopCut, bme=bme)
     if topFace:
         connectCircles(outerVerts["top"], innerVerts["top"], bme)
     if botFace:

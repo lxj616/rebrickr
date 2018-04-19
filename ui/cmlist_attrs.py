@@ -101,7 +101,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyMatrix,
         step=1,
         precision=3,
-        min=0, max=0.1,
+        min=0, max=1,
         default=0.01)
     mergeSeed = IntProperty(
         name="Random Seed",
@@ -193,17 +193,19 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=1)
 
     # BRICK TYPE SETTINGS
+    description = "Use this brick type to build the model"
     brickType = EnumProperty(
         name="Brick Type",
         description="Type of brick used to build the model",
-        items=[("STUD_HOLLOWS", "Hollow Studs", "Use this brick type to build the model"),
-               ("STUDS", "Studs", "Use this brick type to build the model"),
-               # ("SLOPES", "Slopes (fast)", "Use this brick type to build the model"),
-               ("PLATES", "Plates", "Use this brick type to build the model"),
-               ("CYLINDERS", "Cylinders (fast)", "Use this brick type to build the model"),
+        items=[("STUD_HOLLOWS", "Hollow Studs", description),
+               ("STUDS", "Studs", description),
+               # ("SLOPES", "Slopes (fast)", description),
+               ("PLATES", "Plates", description),
+               ("CYLINDERS", "Cylinders", description),
                ("CUSTOM", "Custom", "Use custom object to build the model"),
-               ("BRICKS AND PLATES", "Bricks and Plates", "Use this brick type to build the model"),
-               ("BRICKS", "Bricks (fast)", "Use this brick type to build the model")],
+               ("CONES", "Cones", description),
+               ("BRICKS AND PLATES", "Bricks and Plates", description),
+               ("BRICKS", "Bricks (fast)", description)],
         update=dirtyMatrix,
         default="BRICKS")
     alignBricks = BoolProperty(
@@ -217,7 +219,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyBuild,
         step=1,
         min=0, max=2,
-        default=1)
+        default=0)
     maxWidth = IntProperty(
         name="Max Width",
         description="Maximum brick width",
@@ -432,6 +434,11 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=updateCircleVerts,
         min=4, max=64,
         default=16)
+    loopCut = BoolProperty(
+        name="Loop Cut Cylinders",
+        description="Make loop cut on cylinders (improves bevel quality)",
+        update=dirtyBricks,
+        default=False)
     # BEVEL SETTINGS
     bevelWidth = FloatProperty(
         name="Bevel Width",
@@ -564,6 +571,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     buildIsDirty = BoolProperty(default=True)
     bricksAreDirty = BoolProperty(default=True)
     matrixIsDirty = BoolProperty(default=True)
+    matrixLost = BoolProperty(default=False)
     internalIsDirty = BoolProperty(default=True)
     lastLogoDetail = StringProperty(default="NONE")
     lastSplitModel = BoolProperty(default=False)

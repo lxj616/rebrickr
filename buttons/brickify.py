@@ -101,7 +101,7 @@ class BrickerBrickify(bpy.types.Operator):
                 for n in self.createdObjects:
                     obj = bpy.data.objects.get(n)
                     if obj:
-                        bpy.data.objects.remove(obj)
+                        bpy.data.objects.remove(obj, True)
                 for n in self.createdGroups:
                     group = bpy.data.groups.get(n)
                     if group:
@@ -155,7 +155,7 @@ class BrickerBrickify(bpy.types.Operator):
             cm.matrixIsDirty = True
 
         # clear cache if updating from previous version
-        if createdWithUnsupportedVersion() and "UPDATE" in self.action:
+        if createdWithUnsupportedVersion(cm) and "UPDATE" in self.action:
             Caches.clearCache(cm)
             cm.matrixIsDirty = True
 
@@ -194,6 +194,7 @@ class BrickerBrickify(bpy.types.Operator):
         cm.buildIsDirty = False
         cm.bricksAreDirty = False
         cm.matrixIsDirty = False
+        cm.matrixLost = False
         cm.internalIsDirty = False
         cm.modelCreated = "ANIM" not in self.action
         cm.animated = "ANIM" in self.action
@@ -235,7 +236,7 @@ class BrickerBrickify(bpy.types.Operator):
         if sto_scn:
             sto_scn.update()
 
-        if matrixReallyIsDirty(cm) and cm.customized:
+        if (matrixReallyIsDirty(cm) or self.action != "UPDATE_MODEL") and cm.customized:
             cm.customized = False
 
         # delete old bricks if present
@@ -383,7 +384,6 @@ class BrickerBrickify(bpy.types.Operator):
             if self.updatedFramesOnly:
                 # preserve duplicates, parents, and bricks for frames that haven't changed
                 preservedFrames = [cm.startFrame, cm.stopFrame]
-                print(preservedFrames)
             BrickerDelete.cleanUp("ANIMATION", skipDupes=not self.updatedFramesOnly, skipParents=not self.updatedFramesOnly, preservedFrames=preservedFrames, source_name=self.source.name)
 
         # get or create duplicate and parent groups
@@ -530,7 +530,7 @@ class BrickerBrickify(bpy.types.Operator):
         if cm.materialType != "NONE" and (cm.materialIsDirty or cm.matrixIsDirty or cm.animIsDirty): bricksDict = updateMaterials(bricksDict, source, origSource, curFrame)
         # make bricks
         group_name = 'Bricker_%(n)s_bricks_f_%(curFrame)s' % locals() if curFrame is not None else "Bricker_%(n)s_bricks" % locals()
-        bricksCreated, bricksDict = makeBricks(source, parent, refLogo, logo_details, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, group_name=group_name, clearExistingGroup=clearExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus)
+        bricksCreated, bricksDict = makeBricks(source, parent, refLogo, logo_details, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, group_name=group_name, clearExistingGroup=clearExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus, redraw=redraw)
         if selectCreated and len(bricksCreated) > 0:
             select(bricksCreated, active=bricksCreated[0], only=True)
         # store current bricksDict to cache

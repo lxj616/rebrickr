@@ -73,7 +73,7 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
     v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [0 if stud else 1, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
 
     # add studs
-    if stud: addStuds(dimensions, height, brickSize, cm.brickType, circleVerts, bme, v5=v5, v6=v6, v7=v7, v8=v8, hollow=brickSize[2] > 3 or "HOLES" in type)
+    if stud: addStuds(dimensions, height, brickSize, cm.brickType, circleVerts, bme, v5=v5, v6=v6, v7=v7, v8=v8, hollow=brickSize[2] > 3 or "HOLES" in type, loopCut=cm.loopCut)
 
     # add details
     if detail != "FLAT":

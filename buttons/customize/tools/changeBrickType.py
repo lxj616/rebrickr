@@ -65,7 +65,8 @@ class changeBrickType(Operator):
         try:
             self.changeType()
         except:
-            scn.Bricker_runningBlockingOperation = False
+
+            context.scene.Bricker_runningBlockingOperation = False
             handle_exception()
         return {"FINISHED"}
 
@@ -79,6 +80,7 @@ class changeBrickType(Operator):
         try:
             self.undo_stack = UndoStack.get_instance()
             self.orig_undo_stack_length = self.undo_stack.getLength()
+            self.aboveKeysParented = []
             scn = bpy.context.scene
             selected_objects = bpy.context.selected_objects
             # initialize self.flipBrick, self.rotateBrick, and self.brickType
@@ -159,9 +161,10 @@ class changeBrickType(Operator):
             cm = getItemByID(scn.cmlist, cm_id)
             self.undo_stack.iterateStates(cm)
             # initialize vars
-            bricksDict = self.bricksDicts[cm_id]
+            bricksDict = deepcopy(self.bricksDicts[cm_id])
             keysToUpdate = []
             updateHasCustomObjs(cm, targetBrickType)
+            cm.customized = True
 
             # iterate through names of selected objects
             for obj_name in self.objNamesD[cm_id]:
@@ -173,13 +176,12 @@ class changeBrickType(Operator):
                 size = bricksDict[dictKey]["size"]
                 typ = bricksDict[dictKey]["type"]
 
-                # NOTE: the following causes problems when the function is re-run. To fix this, store all types of objs in __init__ first.
-                # # skip bricks that are already of type self.brickType
-                # if (typ == targetBrickType and
-                #     (typ != "SLOPE" or
-                #      bricksDict[dictKey]["flipped"] == self.flipBrick and
-                #      bricksDict[dictKey]["rotated"] == self.rotateBrick)):
-                #     continue
+                # skip bricks that are already of type self.brickType
+                if (typ == targetBrickType and
+                    (typ != "SLOPE" or
+                     bricksDict[dictKey]["flipped"] == self.flipBrick and
+                     bricksDict[dictKey]["rotated"] == self.rotateBrick)):
+                    continue
                 # skip bricks that can't be turned into the chosen brick type
                 if size[:2] not in legalBrickSizes[3 if targetBrickType in getBrickTypes(height=3) else 1][targetBrickType]:
                     continue
@@ -207,7 +209,7 @@ class changeBrickType(Operator):
                     size = updateBrickSizeAndDict(dimensions, cm, bricksDict, size, dictKey, dictLoc, curHeight=size[2], targetType=targetBrickType)
 
                 # check if brick spans 3 matrix locations
-                bAndPBrick = "PLATES" in cm.brickType and size[2] == 3
+                bAndPBrick = flatBrickType(cm) and size[2] == 3
 
                 # verify exposure above and below
                 brickLocs = getLocsInBrick(cm, size, dictKey, dictLoc, zStep=3)
@@ -225,8 +227,6 @@ class changeBrickType(Operator):
 
             # draw updated brick
             drawUpdatedBricks(cm, bricksDict, keysToUpdate, selectCreated=False)
-            # model is now customized
-            cm.customized = True
         # select original bricks
         orig_obj = bpy.data.objects.get(initial_active_obj_name)
         objsToSelect = [bpy.data.objects.get(n) for n in objNamesToSelect if bpy.data.objects.get(n) is not None]

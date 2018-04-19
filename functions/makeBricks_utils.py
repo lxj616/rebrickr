@@ -157,7 +157,7 @@ def addEdgeSplitMod(obj):
 
 
 def mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, defaultSize, zStep, randS1, mergeVertical=True):
-    if brickD["size"] is None or (cm.buildIsDirty):
+    if brickD["size"] is None or cm.buildIsDirty:
         preferLargest = brickD["val"] > 0 and brickD["val"] < 1
         brickSize = attemptMerge(cm, bricksDict, key, keysNotChecked, defaultSize, zStep, randS1, preferLargest=preferLargest, mergeVertical=mergeVertical, height3Only=brickD["type"] in getBrickTypes(height=3))
     else:
@@ -270,7 +270,7 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
                                       hash_object(logoToUse) if custom_logo_used else None,
                                       logo_scale if custom_logo_used else None,
                                       useStud, cm.circleVerts, brickD["type"],
-                                      dimensions["gap"],
+                                      cm.loopCut, dimensions["gap"],
                                       brickD["flipped"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None,
                                       brickD["rotated"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None))
 

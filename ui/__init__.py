@@ -149,7 +149,7 @@ class BrickModelsPanel(Panel):
                     col = layout.column(align=True)
                     row = col.row(align=True)
                     row.operator("bricker.brickify", text="Update Animation", icon="FILE_REFRESH")
-                    if createdWithUnsupportedVersion():
+                    if createdWithUnsupportedVersion(cm):
                         v_str = cm.version[:3]
                         col = layout.column(align=True)
                         col.scale_y = 0.7
@@ -179,7 +179,7 @@ class BrickModelsPanel(Panel):
                     row.operator("bricker.delete", text="Delete Brickified Model", icon="CANCEL")
                     col = layout.column(align=True)
                     col.operator("bricker.brickify", text="Update Model", icon="FILE_REFRESH")
-                    if createdWithUnsupportedVersion():
+                    if createdWithUnsupportedVersion(cm):
                         v_str = cm.version[:3]
                         col = layout.column(align=True)
                         col.scale_y = 0.7
@@ -591,7 +591,7 @@ class CustomizeModel(Panel):
         if not settingsCanBeDrawn():
             return False
         scn, cm, _ = getActiveContextInfo()
-        if createdWithUnsupportedVersion():
+        if createdWithUnsupportedVersion(cm):
             return False
         if not (cm.modelCreated or cm.animated):
             return False
@@ -601,7 +601,7 @@ class CustomizeModel(Panel):
         layout = self.layout
         scn, cm, _ = getActiveContextInfo()
 
-        if cm.matrixIsDirty and cm.lastMatrixSettings != getMatrixSettings():
+        if matrixReallyIsDirty(cm):
             layout.label("Matrix is dirty!")
             return
         if cm.animated:
@@ -858,6 +858,8 @@ class DetailingPanel(Panel):
         row.label("Cylinders:")
         row = col.row(align=True)
         row.prop(cm, "circleVerts")
+        row = col.row(align=True)
+        row.prop(cm, "loopCut")
         row.active = not (cm.studDetail == "NONE" and cm.exposedUndersideDetail == "FLAT" and cm.hiddenUndersideDetail == "FLAT")
 
         row = col.row(align=True)
@@ -992,7 +994,7 @@ class BrickDetailsPanel(Panel):
         if not settingsCanBeDrawn():
             return False
         scn, cm, _ = getActiveContextInfo()
-        if createdWithUnsupportedVersion():
+        if createdWithUnsupportedVersion(cm):
             return False
         if not (cm.modelCreated or cm.animated):
             return False
@@ -1073,7 +1075,7 @@ class ExportPanel(Panel):
         if not settingsCanBeDrawn():
             return False
         scn, cm, _ = getActiveContextInfo()
-        if createdWithUnsupportedVersion():
+        if createdWithUnsupportedVersion(cm):
             return False
         if not (cm.modelCreated or cm.animated):
             return False

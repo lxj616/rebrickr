@@ -11,7 +11,7 @@ bl_info = {
     "category"    : "Object"}
 
 developer_mode = 0  # NOTE: Set to 0 for release, 1 for exposed dictionary, 2 for testBrickGenerators button
-# NOTE: Disable "LEGO Logo" for releases?
+# NOTE: Disable "LEGO Logo" for releases
 
 """
 Copyright (C) 2017 Bricks Brought to Life

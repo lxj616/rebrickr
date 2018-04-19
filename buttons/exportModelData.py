@@ -49,13 +49,13 @@ class exportModelData(Operator):
     def execute(self, context):
         try:
             scn, cm, n = getActiveContextInfo()
-            path = getExportPath(cm, n, ".py")
-            if not os.access(path, os.W_OK):
-                self.report({"WARNING"}, "Blender does not have write permissions for the following path: " + path)
+            path, errorMsg = getExportPath(cm, n, ".py")
+            if errorMsg is not None:
+                self.report({"WARNING"}, errorMsg)
                 return {"CANCELLED"}
             bType = "Frames" if cm.animated else "Bricks"
             bricksDict, _ = getBricksDict(cm=cm)
-            numBs = len([b for b in bricksDict if not hasattr(b, "draw") or b.draw])
+            numBs = len([b for b in bricksDict.values() if b["draw"] and b["parent"] == "self"])
             # get model info
             modelInfoStrings = ["# Model Name:  " + cm.name,
                                 "# Bricker Version:  " + cm.version,
@@ -81,9 +81,9 @@ class exportModelData(Operator):
 
     def writeToFile(self, strings, filePath):
         # write error to log text object
-        f = open(filePath, "w")
+        file = open(filePath, "w")
         for string in strings:
-            f.write(string + "\n")
-        f.close()
+            file.write(string + "\n")
+        file.close()
 
     #############################################

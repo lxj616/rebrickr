@@ -120,7 +120,7 @@ class Bricks:
             for y0 in range(y, y + size[1]):
                 for z0 in range(z, z + size[2], zStep):
                     curKey = listToStr([x0,y0,z0])
-                    bricksDict[curKey]["size"] = newSize
+                    bricksDict[curKey]["size"] = newSize.copy()
                     bricksDict[curKey]["type"] = "BRICK" if newSize[2] == 3 else "PLATE"
                     bricksDict[curKey]["parent"] = "self"
                     bricksDict[curKey]["top_exposed"] = bricksDict[key]["top_exposed"]

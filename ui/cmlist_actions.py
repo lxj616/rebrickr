@@ -158,7 +158,7 @@ class cmlist_actions(bpy.types.Operator):
             for n in matObjNames:
                 matObj = bpy.data.objects.get(n)
                 if matObj is not None:
-                    bpy.data.objects.remove(matObj)
+                    bpy.data.objects.remove(matObj, True)
             scn.cmlist.remove(idx)
             if scn.cmlist_index == -1 and len(scn.cmlist) > 0:
                 scn.cmlist_index = 0
