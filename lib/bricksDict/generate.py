@@ -384,11 +384,7 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, source_details, curso
     xn0 = domain_res[0] / d.x
     yn0 = domain_res[1] / d.y
     zn0 = domain_res[2] / d.z
-    ave_denom = xn0 * yn0 * zn0
     denom = d.x * d.y * d.z
-
-    if ave_denom == 0:
-        return brickFreqMatrix, colorMatrix
 
     # set up brickFreqMatrix values
     for x in range(int(s_idx[0]), int(e_idx[0])):
@@ -407,6 +403,10 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, source_details, curso
                 xn = [int(xn0 * x0), int(xn0 * (x0 + 1))]
                 yn = [int(yn0 * y0), int(yn0 * (y0 + 1))]
                 zn = [int(zn0 * z0), int(zn0 * (z0 + 1))]
+                xn[1] += 1 if xn[1] - xn[0] == 0 else 0
+                yn[1] += 1 if yn[1] - yn[0] == 0 else 0
+                zn[1] += 1 if zn[1] - zn[0] == 0 else 0
+                ave_denom = (xn[1]-xn[0]) * (yn[1]-yn[0]) * (zn[1]-zn[0])
                 xn[1] = xn[1] + 1 if xn[1] == xn[0] and xn[0] < domain_res[0] else xn[1]
                 yn[1] = yn[1] + 1 if yn[1] == yn[0] and yn[0] < domain_res[1] else yn[1]
                 zn[1] = zn[1] + 1 if zn[1] == zn[0] and zn[0] < domain_res[2] else zn[1]
