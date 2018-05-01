@@ -416,7 +416,6 @@ def getSpace():
 
 
 def getExportPath(cm, fn, ext):
-    cm = getActiveContextInfo()[1]
     path = cm.exportPath
     lastSlash = path.rfind("/")
     path = path[:len(path) if lastSlash == -1 else lastSlash + 1]
@@ -438,8 +437,8 @@ def getExportPath(cm, fn, ext):
     if not os.path.exists(path):
         return path, "Blender could not find the following path: '%(path)s'" % locals()
     # create full path from path and filename
-    fn0 = "" if lastSlash == -1 else cm.exportPath[lastSlash + 1:len(cm.exportPath)]
-    fullPath = os.path.join(path, (fn if fn0 == "" else fn0) + ext)
+    fn0 = fn if lastSlash in [-1, len(cm.exportPath) - 1] else cm.exportPath[lastSlash + 1:]
+    fullPath = os.path.join(path, fn0 + ext)
     # ensure target folder has write permissions
     try:
         f = open(fullPath, "w")

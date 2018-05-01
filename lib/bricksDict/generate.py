@@ -355,6 +355,7 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, source_details, curso
     sg = (1 - s) * (0.6094 or 0.7154)
     sb = (1 - s) * (0.0820 or 0.0721)
     sat_mat = Matrix([[sr + s, sr, sr], [sg, sg + s, sg], [sb, sb, sb + s]])
+    step = cm.smokeStep
 
     # get starting and ending idx
     if adapt:
@@ -406,13 +407,13 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, source_details, curso
                 xn[1] += 1 if xn[1] - xn[0] == 0 else 0
                 yn[1] += 1 if yn[1] - yn[0] == 0 else 0
                 zn[1] += 1 if zn[1] - zn[0] == 0 else 0
-                ave_denom = (xn[1]-xn[0]) * (yn[1]-yn[0]) * (zn[1]-zn[0])
                 xn[1] = xn[1] + 1 if xn[1] == xn[0] and xn[0] < domain_res[0] else xn[1]
                 yn[1] = yn[1] + 1 if yn[1] == yn[0] and yn[0] < domain_res[1] else yn[1]
                 zn[1] = zn[1] + 1 if zn[1] == zn[0] and zn[0] < domain_res[2] else zn[1]
-                for x1 in range(xn[0], xn[1]):
-                    for y1 in range(yn[0], yn[1]):
-                        for z1 in range(zn[0], zn[1]):
+                ave_denom = 0
+                for x1 in range(xn[0], xn[1], step):
+                    for y1 in range(yn[0], yn[1], step):
+                        for z1 in range(zn[0], zn[1], step):
                             cur_idx = (z1 * domain_res[1] + y1) * domain_res[0] + x1
                             d = density_grid[cur_idx]
                             f = flame_grid[cur_idx]
@@ -420,6 +421,7 @@ def getBrickMatrixSmoke(source, faceIdxMatrix, brickShell, source_details, curso
                             f_acc += f
                             cs_acc += d * Vector((color_grid[cur_idx * 4], color_grid[cur_idx * 4 + 1], color_grid[cur_idx * 4 + 2]))
                             cf_acc += Vector(f * cm.flameIntensity * (cm.flameColor * f))
+                            ave_denom += 1
                 d_ave = d_acc / ave_denom
                 f_ave = f_acc / ave_denom
                 alpha = d_ave + f_ave

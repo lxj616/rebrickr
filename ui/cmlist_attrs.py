@@ -121,6 +121,12 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         update=dirtyMatrix,
         min=0, max=1,
         default=0.9)
+    smokeStep = IntProperty(
+        name="Smoke Step",
+        description="Amount of data to analyze for density and color of brickified smoke (higher values are faster, but lower quality)",
+        update=dirtyMatrix,
+        min=1, max=100,
+        default=1)
     smokeBrightness = FloatProperty(
         name="Smoke Brightness",
         description="Add brightness to smoke colors read from smoke data",

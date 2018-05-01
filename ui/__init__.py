@@ -485,6 +485,8 @@ class SmokeSettingsPanel(Panel):
         if is_smoke(source):
             row = col.row(align=True)
             row.prop(cm, "smokeDensity", text="Density")
+            row = col.row(align=True)
+            row.prop(cm, "smokeStep", text="Step")
 
         if is_smoke(source):
             col = layout.column(align=True)
