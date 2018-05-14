@@ -147,7 +147,7 @@ class cmlist_actions(bpy.types.Operator):
                 matObj = bpy.data.objects.new(n, bpy.data.meshes.new(n + "_mesh"))
                 getSafeScn().objects.link(matObj)
 
-    def removeItem(self, idx):
+    def removeItem(cls, idx):
         scn, cm, sn = getActiveContextInfo()
         n = cm.name
         if not cm.modelCreated and not cm.animated:
@@ -163,7 +163,7 @@ class cmlist_actions(bpy.types.Operator):
             if scn.cmlist_index == -1 and len(scn.cmlist) > 0:
                 scn.cmlist_index = 0
         else:
-            self.report({"WARNING"}, 'Please delete the Brickified model before attempting to remove this item.' % locals())
+            cls.report({"WARNING"}, 'Please delete the Brickified model before attempting to remove this item.' % locals())
 
     def moveDown(self, item):
         scn = bpy.context.scene

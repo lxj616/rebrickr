@@ -252,7 +252,7 @@ def getBrickMatrix(source, faceIdxMatrix, coordMatrix, brickShell, axes="xyz", c
     brickFreqMatrix = deepcopy(faceIdxMatrix)
     axes = axes.lower()
     dist = coordMatrix[1][1][1] - coordMatrix[0][0][0]
-    highEfficiency = cm.insidenessRayCastDir in ["HIGH EFFICIENCY", "XYZ"]
+    highEfficiency = cm.insidenessRayCastDir in ["HIGH EFFICIENCY", "XYZ"] and not cm.verifyExposure
 
     # initialize values used for printing status
     denom = (len(brickFreqMatrix[0][0]) + len(brickFreqMatrix[0]) + len(brickFreqMatrix))/100

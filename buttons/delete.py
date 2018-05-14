@@ -86,7 +86,7 @@ class BrickerDelete(bpy.types.Operator):
     # class methods
 
     @classmethod
-    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, skipTransAndAnimData=True, preservedFrames=None, source_name=None):
+    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, skipBricks=False, skipTransAndAnimData=True, preservedFrames=None, source_name=None):
         """ externally callable cleanup function for bricks, source, dupes, and parents """
         # set up variables
         scn = bpy.context.scene
@@ -122,7 +122,10 @@ class BrickerDelete(bpy.types.Operator):
         wm.progress_begin(0, 100)
         print()
 
-        trans_and_anim_data = cls.cleanBricks(scn, cm, n, preservedFrames, modelType, skipTransAndAnimData)
+        if not skipBricks:
+            trans_and_anim_data = cls.cleanBricks(scn, cm, n, preservedFrames, modelType, skipTransAndAnimData)
+        else:
+            trans_and_anim_data = []
 
         # set scene layers back to original layers
         setLayers(curLayers)

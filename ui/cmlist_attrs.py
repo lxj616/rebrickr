@@ -524,6 +524,11 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         description="Use normals to calculate insideness of bricks (WARNING: May produce inaccurate model if source is not single closed mesh)",
         default=False,
         update=dirtyMatrix)
+    verifyExposure = BoolProperty(
+        name="Verify Exposure",
+        description="Run insideness calculations on every brick location (slower, but may fix issue where row(s)/column(s) of extra bricks are drawn)",
+        default=False,
+        update=dirtyMatrix)
     useLocalOrient = BoolProperty(
         name="Use Local Orient",
         description="Generate bricks based on local orientation of source object",

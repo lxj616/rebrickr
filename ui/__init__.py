@@ -966,6 +966,8 @@ class AdvancedPanel(Panel):
         row.prop(cm, "castDoubleCheckRays")
         row = col.row(align=True)
         row.prop(cm, "useNormals")
+        row = col.row(align=True)
+        row.prop(cm, "verifyExposure")
         if not cm.useAnimation and not (cm.modelCreated or cm.animated):
             row = col.row(align=True)
             row.label("Model Orientation:")
@@ -1063,7 +1065,7 @@ class ExportPanel(Panel):
     """ Export Bricker Model """
     bl_space_type  = "VIEW_3D"
     bl_region_type = "TOOLS"
-    bl_label       = "Export"
+    bl_label       = "Bake/Export"
     bl_idname      = "VIEW3D_PT_tools_Bricker_export"
     bl_context     = "objectmode"
     bl_category    = "Bricker"
@@ -1084,6 +1086,8 @@ class ExportPanel(Panel):
         layout = self.layout
         scn, cm, _ = getActiveContextInfo()
 
+        col = layout.column(align=True)
+        col.operator("bricker.bake_model", icon="OBJECT_DATA")
         col = layout.column(align=True)
         col.prop(cm, "exportPath", text="")
         col = layout.column(align=True)
