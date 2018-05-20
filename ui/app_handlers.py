@@ -136,7 +136,7 @@ def handle_selections(scene):
                         break
             if not setIndex:
                 scn.cmlist_index = -1
-    # select and make source or Brick Model active if scn.cmlist_index changes
+    # if scn.cmlist_index changes, select and make source or Brick Model active
     elif scn.Bricker_last_cmlist_index != scn.cmlist_index and scn.cmlist_index != -1:
         scn.Bricker_last_cmlist_index = scn.cmlist_index
         cm = scn.cmlist[scn.cmlist_index]
@@ -146,7 +146,7 @@ def handle_selections(scene):
                 n = cm.source_name
                 bricks = getBricks()
                 if bricks and len(bricks) > 0:
-                    select(bricks, active=bricks[0])
+                    select(bricks, active=bricks[0], only=True)
                     scn.Bricker_last_active_object_name = scn.objects.active.name
             elif cm.animated:
                 n = cm.source_name
@@ -157,10 +157,10 @@ def handle_selections(scene):
                     cf = cm.startFrame
                 gn = "Bricker_%(n)s_bricks_f_%(cf)s" % locals()
                 if len(bpy.data.groups[gn].objects) > 0:
-                    select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0])
+                    select(list(bpy.data.groups[gn].objects), active=bpy.data.groups[gn].objects[0], only=True)
                     scn.Bricker_last_active_object_name = scn.objects.active.name
             else:
-                select(source, active=source)
+                select(source, active=source, only=True)
             scn.Bricker_last_active_object_name = source.name
         else:
             for i in range(len(scn.cmlist)):
@@ -168,7 +168,7 @@ def handle_selections(scene):
                 if cm.source_name == scn.Bricker_active_object_name:
                     select(None)
                     break
-    # open Brick Model settings for active object if active object changes
+    # if active object changes, open Brick Model settings for active object
     elif scn.objects.active and scn.Bricker_last_active_object_name != scn.objects.active.name and len(scn.cmlist) > 0 and (scn.cmlist_index == -1 or scn.cmlist[scn.cmlist_index].source_name != "") and scn.objects.active.type == "MESH":
         scn.Bricker_last_active_object_name = scn.objects.active.name
         beginningString = "Bricker_"

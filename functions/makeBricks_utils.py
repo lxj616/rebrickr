@@ -114,7 +114,9 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
         if len(m.materials) > 0 or len(brick.material_slots) > 0:
             m.materials.clear()
         if mat is not None or internalMat is not None:
-            brick.data.materials.append(mat or internalMat)
+            m.materials.append(mat or internalMat)
+            brick.material_slots[0].link = 'OBJECT'
+            brick.material_slots[0].material = mat or internalMat
         # append to bricksCreated
         bricksCreated.append(brick)
     else:
@@ -241,6 +243,7 @@ def prepareLogoAndGetDetails(scn, cm, logo, dimensions):
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
         # set scene layers back to original active layers
         setLayers(oldLayers)
+    safeUnlink(logo)
     # get logo details
     logo_details = bounds(logo)
     m = logo.data
