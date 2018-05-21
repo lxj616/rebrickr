@@ -253,7 +253,7 @@ class BrickerBrickify(bpy.types.Operator):
             dGroup = bpy.data.groups.new(Bricker_source_dupes_gn)
             self.createdGroups.append(dGroup.name)
             # duplicate source and add duplicate to group
-            sourceDup = duplicateObj(self.source, link_to_scene=True)
+            sourceDup = duplicateObj(self.source, link=True)
             dGroup.objects.link(sourceDup)
             sourceDup.name = self.source.name + "_duplicate"
             if cm.useLocalOrient:
@@ -754,7 +754,7 @@ class BrickerBrickify(bpy.types.Operator):
                     duplicates[curFrame] = {"obj":sourceDup, "isReused":True}
                     continue
             # duplicate source for current frame
-            sourceDup = duplicateObj(lastObj, link_to_scene=True)
+            sourceDup = duplicateObj(lastObj, link=True)
             sourceDup.name = "Bricker_" + cm.source_name + "_f_" + str(curFrame)
             for mod in sourceDup.modifiers:
                 if mod.type in ["SMOKE"]:

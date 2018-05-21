@@ -31,5 +31,6 @@ def addKeymaps(km):
     kmi = km.keymap_items.new("bricker.change_brick_material", 'M', 'PRESS', shift=True, alt=True)
     kmi = km.keymap_items.new("bricker.set_exposure", 'UP_ARROW', 'PRESS', shift=True, alt=True).properties.side = "TOP"
     kmi = km.keymap_items.new("bricker.set_exposure", 'DOWN_ARROW', 'PRESS', shift=True, alt=True).properties.side = "BOTTOM"
+    kmi = km.keymap_items.new("bricker.duplicate_baked", 'D', 'PRESS', shift=True, alt=True)
 
     kmi = km.keymap_items.new("bricker.initialize", 'I', 'PRESS', shift=True)

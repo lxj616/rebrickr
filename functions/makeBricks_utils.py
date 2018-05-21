@@ -230,7 +230,7 @@ def prepareLogoAndGetDetails(scn, cm, logo, dimensions):
         setLayers(logo.layers)
         logo.hide = False
     # duplicate logo object
-    logo = duplicateObj(logo, link_to_scene=True)
+    logo = duplicateObj(logo, link=True)
     if cm.logoDetail != "LEGO":
         # disable modifiers for logo object
         for mod in logo.modifiers:

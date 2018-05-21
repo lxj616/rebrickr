@@ -81,3 +81,39 @@ class bakeModel(bpy.types.Operator):
         cmlist_actions.removeItem(self, scn.cmlist_index)
         scn.cmlist_index = -1
         return{"FINISHED"}
+
+
+class duplicateBaked(bpy.types.Operator):
+    """Duplicate selected objects (selected Bricker bricks/models will be duplicated and baked)"""
+    bl_idname = "bricker.duplicate_baked"
+    bl_label = "Duplicate and Bake"
+    bl_options = {"REGISTER", "UNDO"}
+
+    ################################################
+    # Blender Operator methods
+
+    @classmethod
+    def poll(self, context):
+        """ ensures operator can execute (if not, returns false) """
+        return True
+
+    def execute(self, context):
+        newObjs = []
+        # set isBrick/isBrickifiedObject to False
+        for obj in bpy.context.selected_objects:
+            if obj.hide:
+                continue
+            obj0 = duplicateObj(obj, link=True)
+            if obj0.isBrick:
+                obj0.isBrick = False
+                obj0.name = obj0.name[8:]
+            elif obj0.isBrickifiedObject:
+                obj0.isBrickifiedObject = False
+                cm = getItemByID(scn.cmlist, obj0.cmlist_id)
+                n = cm.source_name
+                obj0.name = "%(n)s_bricks" % locals()
+            obj0.cmlist_id = -1
+            newObjs.append(obj0)
+        select(newObjs, only=True, active=True)
+        bpy.ops.transform.translate('INVOKE_DEFAULT')
+        return{"FINISHED"}

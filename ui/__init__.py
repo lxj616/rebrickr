@@ -1088,6 +1088,7 @@ class ExportPanel(Panel):
 
         col = layout.column(align=True)
         col.operator("bricker.bake_model", icon="OBJECT_DATA")
+        col.operator("bricker.duplicate_baked", icon="OBJECT_DATA")
         col = layout.column(align=True)
         col.prop(cm, "exportPath", text="")
         col = layout.column(align=True)
