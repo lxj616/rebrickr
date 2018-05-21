@@ -137,21 +137,21 @@ def makeLogoVariations(cm, dimensions, size, direction, all_vars, logo, logo_typ
     # get logo rotation angle based on size of brick
     rot_mult = 180
     rot_vars = 2
-    rot_add = 0
+    rot_add = 90
     if direction != "":
         directions = ["X+", "Y+", "X-", "Y-"]
-        rot_add = 90 * (directions.index(direction) + 1)
+        rot_add += 90 * (directions.index(direction) + 1)
         rot_vars = 1
     elif size[0] == 1 and size[1] == 1:
         rot_mult = 90
         rot_vars = 4
     elif size[0] == 2 and size[1] > 2:
-        rot_add = 90
+        rot_add += 90
     elif ((size[1] == 2 and size[0] > 2) or
           (size[0] == 2 and size[1] == 2)):
         pass
     elif size[0] == 1:
-        rot_add = 90
+        rot_add += 90
     # set zRot to random rotation angle
     if all_vars:
         zRots = [i * rot_mult + rot_add for i in range(rot_vars)]

@@ -241,6 +241,7 @@ def prepareLogoAndGetDetails(scn, cm, logo, dimensions):
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
         # set scene layers back to original active layers
         setLayers(oldLayers)
+    safeUnlink(logo)
     # get logo details
     logo_details = bounds(logo)
     m = logo.data

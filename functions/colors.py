@@ -42,7 +42,7 @@ def getColors():
         colors["ABS Plastic Dark Grey"] = [0.310, 0.349, 0.337, 1.0]
         colors["ABS Plastic Dark Red"] = [0.490, 0.098, 0.106, 1.0]
         colors["ABS Plastic Dark Tan"] = [0.467, 0.412, 0.267, 1.0]
-        colors["ABS Plastic Gold"] = [0.718, 0.522, 0.129, 1.0]
+        colors["ABS Plastic Pearl Gold"] = [0.718, 0.522, 0.129, 1.0]
         colors["ABS Plastic Green"] = [0.055, 0.463, 0.231, 1.0]
         colors["ABS Plastic Light Grey"] = [0.541, 0.537, 0.537, 1.0]
         colors["ABS Plastic Lime"] = [0.612, 0.745, 0.180, 1.0]

@@ -98,8 +98,7 @@ def register():
     wm = bpy.context.window_manager
     # Note that in background mode (no GUI available), keyconfigs are not available either, so we have
     # to check this to avoid nasty errors in background case.
-    kc = wm.keyconfigs.addon
-    if kc:
+    if wm.keyconfigs.addon:
         km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
         keymaps.addKeymaps(km)
         addon_keymaps.append(km)
