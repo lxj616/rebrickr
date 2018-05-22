@@ -197,7 +197,7 @@ def centerMeshOrigin(m, dimensions, size):
     scalar = Vector((size[0] * 2 - 1,
                      size[1] * 2 - 1,
                      0))
-    # calculate center and rotate bm about center
+    # calculate center
     center = (vec_mult(d0, scalar) - d0) / 2
     # apply translation matrix to center mesh
     m.transform(Matrix.Translation(-Vector(center)))
