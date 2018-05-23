@@ -181,6 +181,7 @@ def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, v
             verts = vertD["-%(sign)s" % locals()]
             if xNum > 0:
                 joinVerts[side].append(vertD["x-"][0])
+                vertD["x-"][0].select = True
                 for v in verts[::dir]:
                     joinVerts[side].append(v)
             else:
@@ -192,6 +193,7 @@ def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, v
                 for v in verts[::dir]:
                     joinVerts[side].append(v)
                 joinVerts[side].append(vertD["x+"][0])
+                vertD["x+"][0].select = True
             else:
                 for v in verts[::dir][:func(len(verts)/2) + (1 if dir == -1 else 0)]:
                     joinVerts[side].append(v)
@@ -204,7 +206,8 @@ def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, v
             verts = vertD["%(sign)s-" % locals()]
             if yNum > 0:
                 joinVerts[side].append(vertD["y-"][0])
-                for v in verts[::dir][len(verts)//2:]:
+                vertD["y-"][0].select = True
+                for v in verts[::dir]:
                     joinVerts[side].append(v)
             else:
                 for v in verts[::dir][func(len(verts)/2) - (1 if dir == 1 else 0):]:
@@ -215,6 +218,7 @@ def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, v
                 for v in verts[::dir]:
                     joinVerts[side].append(v)
                 joinVerts[side].append(vertD["y+"][0])
+                vertD["y+"][0].select = True
             else:
                 for v in verts[::dir][:func(len(verts)/2) + (1 if dir == -1 else 0)]:
                     joinVerts[side].append(v)
@@ -238,14 +242,14 @@ def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, v
             verts += vertsDofDs[l]["x+"]
     for yNum in range(sY):
         l = str(sX - 1) + "," + str(yNum)
-        if yNum < sY - 1:
-            verts += vertsDofDs[l]["y+"]
-        if yNum > 0 and yNum < sY - 1:
-            verts += vertsDofDs[l]["-+"]
-            verts += vertsDofDs[l]["x-"]
-            verts += vertsDofDs[l]["--"]
         if yNum > 0:
             verts += vertsDofDs[l]["y-"]
+        if yNum > 0 and yNum < sY - 1:
+            verts += vertsDofDs[l]["--"]
+            verts += vertsDofDs[l]["x-"]
+            verts += vertsDofDs[l]["-+"]
+        if yNum < sY - 1:
+            verts += vertsDofDs[l]["y+"]
     for xNum in range(sX - 1, -1, -1):
         l = str(xNum) + "," + str(sY - 1)
         if xNum < sX - 1:
@@ -258,14 +262,14 @@ def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, v
             verts += vertsDofDs[l]["x-"]
     for yNum in range(sY - 1, -1, -1):
         l = str(0) + "," + str(yNum)
-        if yNum > 0:
-            verts += vertsDofDs[l]["y-"]
-        if yNum > 0 and yNum < sY - 1:
-            verts += vertsDofDs[l]["+-"]
-            verts += vertsDofDs[l]["x+"]
-            verts += vertsDofDs[l]["++"]
         if yNum < sY - 1:
             verts += vertsDofDs[l]["y+"]
+        if yNum > 0 and yNum < sY - 1:
+            verts += vertsDofDs[l]["++"]
+            verts += vertsDofDs[l]["x+"]
+            verts += vertsDofDs[l]["+-"]
+        if yNum > 0:
+            verts += vertsDofDs[l]["y-"]
     bme.faces.new(verts[::-step])
 
 
