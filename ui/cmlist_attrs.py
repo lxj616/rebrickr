@@ -442,7 +442,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=16)
     loopCut = BoolProperty(
         name="Loop Cut Cylinders",
-        description="Make loop cut on cylinders (improves bevel quality)",
+        description="Make loop cut on cylinders so that bevel operation can bevel base of studs",
         update=dirtyBricks,
         default=False)
     # BEVEL SETTINGS

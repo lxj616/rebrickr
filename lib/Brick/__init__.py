@@ -186,7 +186,7 @@ def makeLogoVariations(cm, dimensions, size, direction, all_vars, logo, logo_typ
                 # create duplicate of rotated logo
                 m1 = m0.copy()
                 # translate logo into place
-                m1.transform(Matrix.Translation((x * xyOffset, y * xyOffset, zOffset)))
+                m1.transform(Matrix.Translation((x * xyOffset - dimensions["gap"] * ((xR1-xR0)/2), y * xyOffset - dimensions["gap"] * ((yR1-yR0)/2), zOffset)))
                 # add transformed mesh to bm mesh
                 bms[i].from_mesh(m1)
                 bpy.data.meshes.remove(m1, do_unlink=True)

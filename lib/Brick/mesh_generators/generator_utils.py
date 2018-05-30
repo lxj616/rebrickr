@@ -181,7 +181,6 @@ def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, v
             verts = vertD["-%(sign)s" % locals()]
             if xNum > 0:
                 joinVerts[side].append(vertD["x-"][0])
-                vertD["x-"][0].select = True
                 for v in verts[::dir]:
                     joinVerts[side].append(v)
             else:
@@ -193,7 +192,6 @@ def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, v
                 for v in verts[::dir]:
                     joinVerts[side].append(v)
                 joinVerts[side].append(vertD["x+"][0])
-                vertD["x+"][0].select = True
             else:
                 for v in verts[::dir][:func(len(verts)/2) + (1 if dir == -1 else 0)]:
                     joinVerts[side].append(v)
@@ -206,7 +204,6 @@ def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, v
             verts = vertD["%(sign)s-" % locals()]
             if yNum > 0:
                 joinVerts[side].append(vertD["y-"][0])
-                vertD["y-"][0].select = True
                 for v in verts[::dir]:
                     joinVerts[side].append(v)
             else:
@@ -218,7 +215,6 @@ def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, v
                 for v in verts[::dir]:
                     joinVerts[side].append(v)
                 joinVerts[side].append(vertD["y+"][0])
-                vertD["y+"][0].select = True
             else:
                 for v in verts[::dir][:func(len(verts)/2) + (1 if dir == -1 else 0)]:
                     joinVerts[side].append(v)
