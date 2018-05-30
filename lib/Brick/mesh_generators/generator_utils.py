@@ -224,135 +224,72 @@ def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, v
 
     if 1 in brickSize:
         return
-    # Make center face
-    verts = []
-    for xNum in range(sX):
-        l = str(xNum) + "," + str(0)
-        if xNum > 0:
-            verts += vertsDofDs[l]["x-"]
-            verts += vertsDofDs[l]["-+"]
-        if xNum > 0 and xNum < sX - 1:
+
+    # Make center faces
+    for yNum in range(sY - 1):
+        for xNum in range(sX - 1):
+            verts = []
+            l = str(xNum) + "," + str(yNum)
             verts += vertsDofDs[l]["y+"]
-        if xNum < sX - 1:
             verts += vertsDofDs[l]["++"]
             verts += vertsDofDs[l]["x+"]
-    for yNum in range(sY):
-        l = str(sX - 1) + "," + str(yNum)
-        if yNum > 0:
-            verts += vertsDofDs[l]["y-"]
-        if yNum > 0 and yNum < sY - 1:
-            verts += vertsDofDs[l]["--"]
+            l = str(xNum + 1) + "," + str(yNum)
             verts += vertsDofDs[l]["x-"]
             verts += vertsDofDs[l]["-+"]
-        if yNum < sY - 1:
             verts += vertsDofDs[l]["y+"]
-    for xNum in range(sX - 1, -1, -1):
-        l = str(xNum) + "," + str(sY - 1)
-        if xNum < sX - 1:
-            verts += vertsDofDs[l]["x+"]
-            verts += vertsDofDs[l]["+-"]
-        if xNum > 0 and xNum < sX - 1:
+            l = str(xNum + 1) + "," + str(yNum + 1)
             verts += vertsDofDs[l]["y-"]
-        if xNum > 0:
             verts += vertsDofDs[l]["--"]
             verts += vertsDofDs[l]["x-"]
-    for yNum in range(sY - 1, -1, -1):
-        l = str(0) + "," + str(yNum)
-        if yNum < sY - 1:
-            verts += vertsDofDs[l]["y+"]
-        if yNum > 0 and yNum < sY - 1:
-            verts += vertsDofDs[l]["++"]
+            l = str(xNum) + "," + str(yNum + 1)
             verts += vertsDofDs[l]["x+"]
             verts += vertsDofDs[l]["+-"]
-        if yNum > 0:
             verts += vertsDofDs[l]["y-"]
-    bme.faces.new(verts[::-step])
+            bme.faces.new(verts[::-step])
 
 
-    # for xNum in range(1, brickSize[0]):
-    #     for yNum in range(brickSize[1]):
-    #         vList1 = vertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"] + vertsDofDs[str(xNum-1) + "," + str(yNum)]["++"] + vertsDofDs[str(xNum-1) + "," + str(yNum)]["x+"] + vertsDofDs[str(xNum-1) + "," + str(yNum)]["+-"] + vertsDofDs[str(xNum-1) + "," + str(yNum)]["y-"]
-    #         vList2 = vertsDofDs[str(xNum) + "," + str(yNum)]["y+"] + vertsDofDs[str(xNum) + "," + str(yNum)]["-+"][::-1] + vertsDofDs[str(xNum) + "," + str(yNum)]["x-"] + vertsDofDs[str(xNum) + "," + str(yNum)]["--"][::-1] + vertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
-    #         if len(vList1) > len(vList2):
-    #             v1 = vList1[-1]
-    #             v2 = vList1[-2]
-    #             v3 = vList2[-1]
-    #             bme.faces.new([v1, v2, v3][::step])
-    #             numIters = len(vList2)
-    #         elif len(vList1) < len(vList2):
-    #             v1 = vList1[-1]
-    #             v2 = vList2[-2]
-    #             v3 = vList2[-1]
-    #             bme.faces.new([v1, v2, v3][::step])
-    #             numIters = len(vList1)
-    #         else:
-    #             numIters = len(vList1)
-    #         for i in range(1, numIters):
-    #             v1 = vList1[i]
-    #             v2 = vList1[i-1]
-    #             v3 = vList2[i-1]
-    #             v4 = vList2[i]
-    #             bme.faces.new([v1, v2, v3, v4][::step])
-
-    # # Make in-between-inset quads
-    # for yNum in range(1, brickSize[1]):
-    #     for xNum in range(1, brickSize[0]):
-    #         # try:
-    #         v1 = vertsDofDs[str(xNum-1) + "," + str(yNum)]["y-"][0]
-    #         v2 = vertsDofDs[str(xNum) + "," + str(yNum)]["y-"][0]
-    #         v3 = vertsDofDs[str(xNum) + "," + str(yNum-1)]["y+"][0]
-    #         v4 = vertsDofDs[str(xNum-1) + "," + str(yNum-1)]["y+"][0]
-    #         bme.faces.new([v1, v2, v3, v4][::step])
-    #         # except ???Error:
-    #         #     pass
-
-    # # Make final in-between-insets faces on extremes of x axis along y axis
-    # for yNum in range(1, brickSize[1]):
-    #     vList1 = vertsDofDs[str(0) + "," + str(yNum-1)]["x-"] + vertsDofDs[str(0) + "," + str(yNum-1)]["-+"] + vertsDofDs[str(0) + "," + str(yNum-1)]["y+"]
-    #     vList2 = vertsDofDs[str(0) + "," + str(yNum)]["x-"] + vertsDofDs[str(0) + "," + str(yNum)]["--"][::-1] + vertsDofDs[str(0) + "," + str(yNum)]["y-"]
-    #     if len(vList1) > len(vList2):
-    #         v1 = vList1[-1]
-    #         v2 = vList1[-2]
-    #         v3 = vList2[-1]
-    #         bme.faces.new([v1, v2, v3][::step])
-    #         numIters = len(vList2)
-    #     elif len(vList1) < len(vList2):
-    #         v1 = vList1[-1]
-    #         v2 = vList2[-2]
-    #         v3 = vList2[-1]
-    #         bme.faces.new([v1, v2, v3][::step])
-    #         numIters = len(vList1)
-    #     else:
-    #         numIters = len(vList1)
-    #     for i in range(1, numIters):
-    #         v1 = vList1[i]
-    #         v2 = vList1[i-1]
-    #         v3 = vList2[i-1]
-    #         v4 = vList2[i]
-    #         bme.faces.new([v1, v2, v3, v4][::step])
-    # for yNum in range(1, brickSize[1]):
-    #     vList1 = vertsDofDs[str(xNum) + "," + str(yNum-1)]["x+"] + vertsDofDs[str(xNum) + "," + str(yNum-1)]["++"][::-1] + vertsDofDs[str(xNum) + "," + str(yNum-1)]["y+"]
-    #     vList2 = vertsDofDs[str(xNum) + "," + str(yNum)]["x+"] + vertsDofDs[str(xNum) + "," + str(yNum)]["+-"] + vertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
-    #     if len(vList1) > len(vList2):
-    #         v1 = vList1[-1]
-    #         v2 = vList2[-1]
-    #         v3 = vList1[-2]
-    #         bme.faces.new([v1, v2, v3][::step])
-    #         numIters = len(vList2)
-    #     elif len(vList1) < len(vList2):
-    #         v1 = vList2[-1]
-    #         v2 = vList2[-2]
-    #         v3 = vList1[-1]
-    #         bme.faces.new([v1, v2, v3][::step])
-    #         numIters = len(vList1)
-    #     else:
-    #         numIters = len(vList1)
-    #     for i in range(1, numIters):
-    #         v1 = vList2[i]
-    #         v2 = vList2[i-1]
-    #         v3 = vList1[i-1]
-    #         v4 = vList1[i]
-    #         bme.faces.new([v1, v2, v3, v4][::step])
+    # verts = []
+    # for xNum in range(sX):
+    #     l = str(xNum) + "," + str(0)
+    #     if xNum > 0:
+    #         verts += vertsDofDs[l]["x-"]
+    #         verts += vertsDofDs[l]["-+"]
+    #     if xNum > 0 and xNum < sX - 1:
+    #         verts += vertsDofDs[l]["y+"]
+    #     if xNum < sX - 1:
+    #         verts += vertsDofDs[l]["++"]
+    #         verts += vertsDofDs[l]["x+"]
+    # for yNum in range(sY):
+    #     l = str(sX - 1) + "," + str(yNum)
+    #     if yNum > 0:
+    #         verts += vertsDofDs[l]["y-"]
+    #     if yNum > 0 and yNum < sY - 1:
+    #         verts += vertsDofDs[l]["--"]
+    #         verts += vertsDofDs[l]["x-"]
+    #         verts += vertsDofDs[l]["-+"]
+    #     if yNum < sY - 1:
+    #         verts += vertsDofDs[l]["y+"]
+    # for xNum in range(sX - 1, -1, -1):
+    #     l = str(xNum) + "," + str(sY - 1)
+    #     if xNum < sX - 1:
+    #         verts += vertsDofDs[l]["x+"]
+    #         verts += vertsDofDs[l]["+-"]
+    #     if xNum > 0 and xNum < sX - 1:
+    #         verts += vertsDofDs[l]["y-"]
+    #     if xNum > 0:
+    #         verts += vertsDofDs[l]["--"]
+    #         verts += vertsDofDs[l]["x-"]
+    # for yNum in range(sY - 1, -1, -1):
+    #     l = str(0) + "," + str(yNum)
+    #     if yNum < sY - 1:
+    #         verts += vertsDofDs[l]["y+"]
+    #     if yNum > 0 and yNum < sY - 1:
+    #         verts += vertsDofDs[l]["++"]
+    #         verts += vertsDofDs[l]["x+"]
+    #         verts += vertsDofDs[l]["+-"]
+    #     if yNum > 0:
+    #         verts += vertsDofDs[l]["y-"]
+    # bme.faces.new(verts[::-step])
 
 
 def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo, ppo, pno, nni, npi, ppi, pni, nnt, npt, ppt, pnt, bme):

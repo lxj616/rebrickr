@@ -92,8 +92,8 @@ def getFirstImgTexNode(obj):
     img = None
     for mat_slot in obj.material_slots:
         mat = mat_slot.material
-        if not mat.use_nodes:
-            return None
+        if mat is None or not mat.use_nodes:
+            continue
         active_node = mat.node_tree.nodes.active
         nodes_to_check = [active_node] + list(mat.node_tree.nodes)
         for node in nodes_to_check:
