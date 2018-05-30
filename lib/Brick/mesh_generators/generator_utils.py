@@ -248,50 +248,6 @@ def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, v
             bme.faces.new(verts[::-step])
 
 
-    # verts = []
-    # for xNum in range(sX):
-    #     l = str(xNum) + "," + str(0)
-    #     if xNum > 0:
-    #         verts += vertsDofDs[l]["x-"]
-    #         verts += vertsDofDs[l]["-+"]
-    #     if xNum > 0 and xNum < sX - 1:
-    #         verts += vertsDofDs[l]["y+"]
-    #     if xNum < sX - 1:
-    #         verts += vertsDofDs[l]["++"]
-    #         verts += vertsDofDs[l]["x+"]
-    # for yNum in range(sY):
-    #     l = str(sX - 1) + "," + str(yNum)
-    #     if yNum > 0:
-    #         verts += vertsDofDs[l]["y-"]
-    #     if yNum > 0 and yNum < sY - 1:
-    #         verts += vertsDofDs[l]["--"]
-    #         verts += vertsDofDs[l]["x-"]
-    #         verts += vertsDofDs[l]["-+"]
-    #     if yNum < sY - 1:
-    #         verts += vertsDofDs[l]["y+"]
-    # for xNum in range(sX - 1, -1, -1):
-    #     l = str(xNum) + "," + str(sY - 1)
-    #     if xNum < sX - 1:
-    #         verts += vertsDofDs[l]["x+"]
-    #         verts += vertsDofDs[l]["+-"]
-    #     if xNum > 0 and xNum < sX - 1:
-    #         verts += vertsDofDs[l]["y-"]
-    #     if xNum > 0:
-    #         verts += vertsDofDs[l]["--"]
-    #         verts += vertsDofDs[l]["x-"]
-    # for yNum in range(sY - 1, -1, -1):
-    #     l = str(0) + "," + str(yNum)
-    #     if yNum < sY - 1:
-    #         verts += vertsDofDs[l]["y+"]
-    #     if yNum > 0 and yNum < sY - 1:
-    #         verts += vertsDofDs[l]["++"]
-    #         verts += vertsDofDs[l]["x+"]
-    #         verts += vertsDofDs[l]["+-"]
-    #     if yNum > 0:
-    #         verts += vertsDofDs[l]["y-"]
-    # bme.faces.new(verts[::-step])
-
-
 def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo, ppo, pno, nni, npi, ppi, pni, nnt, npt, ppt, pnt, bme):
     # for edge vert refs, n=negative, p=positive, o=outer, i=inner, t=top
     joinVerts = {"X-":[npi, npo, nno, nni], "X+":[ppi, ppo, pno, pni], "Y-":[pni, pno, nno, nni], "Y+":[ppi, ppo, npo, npi]}

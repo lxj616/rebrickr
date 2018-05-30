@@ -89,7 +89,7 @@ class duplicateBaked(bpy.types.Operator):
     """Duplicate selected objects (selected Bricker bricks/models will be duplicated and baked)"""
     bl_idname = "bricker.duplicate_baked"
     bl_label = "Duplicate and Bake"
-    bl_options = {"REGISTER", "UNDO"}
+    bl_options = {"REGISTER"}
 
     ################################################
     # Blender Operator methods
