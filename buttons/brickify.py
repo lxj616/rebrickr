@@ -415,7 +415,6 @@ class BrickerBrickify(bpy.types.Operator):
                 m = bpy.data.meshes.new("%(p_name)s_mesh" % locals())
                 parent = bpy.data.objects.new(p_name, m)
                 parent.location = source_details.mid - parent0.location
-                print(source_details.mid, parent0.location)
                 parent.parent = parent0
                 scn.objects.link(parent)
                 scn.update()
@@ -424,9 +423,8 @@ class BrickerBrickify(bpy.types.Operator):
 
             # create new bricks
             try:
-                group_name = self.createNewBricks(source, parent0, source_details, dimensions, refLogo, logo_details, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame, origSource=self.source, selectCreated=False)
+                group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, logo_details, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame, origSource=self.source, selectCreated=False)
                 self.createdGroups.append(group_name)
-                bpy.data.groups.get(group_name).objects[0].location += source_details.mid - parent0.location
             except KeyboardInterrupt:
                 self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
                 if curFrame != cm.startFrame:
@@ -467,7 +465,7 @@ class BrickerBrickify(bpy.types.Operator):
             BrickerBevel.runBevelAction(bricks, cm)
 
     @classmethod
-    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, logo_details, action, cm=None, locOffset=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", clearExistingGroup=True, selectCreated=False, printStatus=True, redraw=False, origSource=None):
+    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, logo_details, action, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", clearExistingGroup=True, selectCreated=False, printStatus=True, redraw=False, origSource=None):
         """ gets/creates bricksDict, runs makeBricks, and caches the final bricksDict """
         scn = bpy.context.scene
         cm = cm or scn.cmlist[scn.cmlist_index]
