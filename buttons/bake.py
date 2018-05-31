@@ -58,7 +58,7 @@ class bakeModel(bpy.types.Operator):
         # set isBrick/isBrickifiedObject to False
         bricks = getBricks()
         # apply object transformation
-        select(bricks, only=True)
+        select(bricks, only=True, active=True)
         bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
         if cm.lastSplitModel:
             for brick in bricks:
