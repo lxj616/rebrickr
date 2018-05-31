@@ -290,7 +290,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
                 allBricksObj.data.materials.append(mat)
         # set parent
         allBricksObj.parent = parent
-        # add bricks obj to scene, bGroup, and bricksCreated
+        # add bricks obj to scene and bricksCreated
         bGroup.objects.link(allBricksObj)
         if not allBricksObj.isBrickifiedObject:
             scn.objects.link(allBricksObj)

@@ -174,13 +174,12 @@ def handle_selections(scene):
         beginningString = "Bricker_"
         if scn.objects.active.name.startswith(beginningString):
             usingSource = False
-            if "_bricks" in scn.objects.active.name:
-                frameLoc = scn.objects.active.name.rfind("_bricks")
-            elif "_brick_" in scn.objects.active.name:
+            frameLoc = scn.objects.active.name.rfind("_bricks")
+            if frameLoc == -1:
                 frameLoc = scn.objects.active.name.rfind("_brick_")
-            else:
-                frameLoc = None
-            if frameLoc is not None:
+                if frameLoc == -1:
+                    frameLoc = scn.objects.active.name.rfind("_parent")
+            if frameLoc != -1:
                 scn.Bricker_active_object_name = scn.objects.active.name[len(beginningString):frameLoc]
         else:
             usingSource = True
