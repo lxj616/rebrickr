@@ -314,6 +314,8 @@ class BrickerDelete(bpy.types.Operator):
         # clean up Bricker_parent objects
         parents = [p] + [bpy.data.objects.get(Bricker_parent_on + "_f_%(fn)s" % locals()) for fn in range(cm.lastStartFrame, cm.lastStopFrame + 1)]
         for parent in parents:
+            if parent is None:
+                continue
             # if preserve frames, skip those parents
             if modelType == "ANIMATION" and preservedFrames is not None:
                 frameNumIdx = parent.name.rfind("_") + 1
