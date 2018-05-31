@@ -60,7 +60,12 @@ class BrickerBevel(bpy.types.Operator):
         try:
             cm = getActiveContextInfo()[1]
             # set bevel action to add or remove
-            action = "REMOVE" if cm.bevelAdded else "ADD"
+            try:
+                testBrick = getBricks()[0]
+                testBrick.modifiers[testBrick.name + '_bvl']
+                action = "REMOVE" if cm.bevelAdded else "ADD"
+            except:
+                action = "ADD"
             # get bricks to bevel
             bricks = getBricks()
             # create or remove bevel
@@ -87,7 +92,10 @@ class BrickerBevel(bpy.types.Operator):
         """ removes bevel modifier 'obj.name + "_bvl"' for objects in 'objs' """
         objs = confirmList(objs)
         for obj in objs:
-            obj.modifiers.remove(obj.modifiers[obj.name + "_bvl"])
+            bvlMod = obj.modifiers.get(obj.name + "_bvl")
+            if bvlMod is None:
+                continue
+            obj.modifiers.remove(bvlMod)
 
     @classmethod
     def createBevelMods(self, cm, objs):

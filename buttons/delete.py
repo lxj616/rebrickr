@@ -86,7 +86,7 @@ class BrickerDelete(bpy.types.Operator):
     # class methods
 
     @classmethod
-    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParent=False, skipBricks=False, skipTransAndAnimData=True, preservedFrames=None, source_name=None):
+    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, skipBricks=False, skipTransAndAnimData=True, preservedFrames=None, source_name=None):
         """ externally callable cleanup function for bricks, source, dupes, and parents """
         # set up variables
         scn = bpy.context.scene
@@ -111,8 +111,8 @@ class BrickerDelete(bpy.types.Operator):
         if not skipDupes:
             cls.cleanDupes(cm, preservedFrames, modelType)
 
-        if not skipParent:
-            brickLoc, brickRot, brickScl = cls.cleanParent(cm, preservedFrames, modelType)
+        if not skipParents:
+            brickLoc, brickRot, brickScl = cls.cleanParents(cm, preservedFrames, modelType)
         else:
             brickLoc, brickRot, brickScl = None, None, None
 
@@ -285,7 +285,7 @@ class BrickerDelete(bpy.types.Operator):
             delete(dObjects)
 
     @classmethod
-    def cleanParent(cls, cm, preservedFrames, modelType):
+    def cleanParents(cls, cm, preservedFrames, modelType):
         scn = bpy.context.scene
         n = cm.source_name
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
@@ -310,9 +310,21 @@ class BrickerDelete(bpy.types.Operator):
                     brickLoc = b.matrix_world.to_translation().copy()
                     brickRot = b.matrix_world.to_euler().copy()
                     brickScl = b.matrix_world.to_scale().copy()  # currently unused
-        m = p.data
-        bpy.data.objects.remove(p, True)
-        bpy.data.meshes.remove(m, True)
+        # clean up Bricker_parent objects
+        parents = [p] + [bpy.data.objects.get(Bricker_parent_on + "_f_%(fn)s" % locals()) for fn in range(cm.lastStartFrame, cm.lastStopFrame + 1)]
+        for parent in parents:
+            # if preserve frames, skip those parents
+            if modelType == "ANIMATION" and preservedFrames is not None:
+                frameNumIdx = parent.name.rfind("_") + 1
+                try:
+                    curFrameNum = int(parent.name[frameNumIdx:])
+                    if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
+                        continue
+                except ValueError:
+                    continue
+            m = parent.data
+            bpy.data.objects.remove(parent, True)
+            bpy.data.meshes.remove(m, True)
         return brickLoc, brickRot, brickScl
 
     def updateAnimationData(objs, trans_and_anim_data):

@@ -875,7 +875,6 @@ class DetailingPanel(Panel):
             row.prop(cm, "bevelAdded", text="Bevel Bricks")
             return
         try:
-            ff = cm.lastStartFrame
             testBrick = getBricks()[0]
             testBrick.modifiers[testBrick.name + '_bvl']
             row.prop(cm, "bevelWidth", text="Width")
