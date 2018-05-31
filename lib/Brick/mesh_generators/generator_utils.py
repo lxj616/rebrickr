@@ -128,7 +128,7 @@ def cutVerts(dimensions, height, brickSize, verts, d, scalar, thick, bme):
         v.co.z = fac * minZ + (1-fac) * v.co.z
 
 
-def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme):
+def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme, loopCut=False):
     thickZ = dimensions["thickness"]
     # make small cylinders
     botVertsDofDs = {}
@@ -137,7 +137,9 @@ def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme
     h = thickZ * 0.99
     for xNum in range(brickSize[0]):
         for yNum in range(brickSize[1]):
-            bme, innerCylinderVerts = makeCylinder(r, h, N, co=Vector((xNum*d.x*2,yNum*d.y*2,d.z - thickZ + h/2)), botFace=False, flipNormals=True, bme=bme)
+            bme, innerCylinderVerts = makeCylinder(r, h, N, co=Vector((xNum*d.x*2,yNum*d.y*2,d.z - thickZ + h/2)), loopCut=loopCut, botFace=False, flipNormals=True, bme=bme)
+            if loopCut:
+                select(innerCylinderVerts["mid"])
             botVertsD = createVertListDict(innerCylinderVerts["bottom"])
             botVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = botVertsD
     connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, botVertsDofDs, xNum, yNum, bme, step=1)
@@ -177,16 +179,16 @@ def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, v
     # Make corner faces if few cylinder verts
     l = "0,0"
     if len(vertsDofDs[l]["--"]) == 0:
-        vList = bme.faces.new((vertsDofDs[l]["y-"][0], vertsDofDs[l]["x-"][0], v5)[::step])
+        vList = bme.faces.new((vertsDofDs[l]["y-"][0], vertsDofDs[l]["x-"][0], v5)[::-step])
     l = "%(xNum)s,0" % locals()
     if len(vertsDofDs[l]["+-"]) == 0:
-        vList = bme.faces.new((vertsDofDs[l]["x+"][0], vertsDofDs[l]["y-"][0], v6)[::step])
+        vList = bme.faces.new((vertsDofDs[l]["x+"][0], vertsDofDs[l]["y-"][0], v6)[::-step])
     l = "%(xNum)s,%(yNum)s" % locals()
     if len(vertsDofDs[l]["++"]) == 0:
-        vList = bme.faces.new((vertsDofDs[l]["y+"][0], vertsDofDs[l]["x+"][0], v7)[::step])
+        vList = bme.faces.new((vertsDofDs[l]["y+"][0], vertsDofDs[l]["x+"][0], v7)[::-step])
     l = "0,%(yNum)s" % locals()
     if len(vertsDofDs[l]["-+"]) == 0:
-        vList = bme.faces.new((vertsDofDs[l]["x-"][0], vertsDofDs[l]["y+"][0], v8)[::step])
+        vList = bme.faces.new((vertsDofDs[l]["x-"][0], vertsDofDs[l]["y+"][0], v8)[::-step])
 
     # Make edge faces
     joinVerts = {"Y+":[v7, v8], "Y-":[v6, v5], "X+":[v7, v6], "X-":[v8, v5]}

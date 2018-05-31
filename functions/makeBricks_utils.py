@@ -154,6 +154,7 @@ def useEdgeSplitMod(cm, brickD):
 def addEdgeSplitMod(obj):
     """ Add edge split modifier """
     eMod = obj.modifiers.new('Edge Split', 'EDGE_SPLIT')
+    eMod.split_angle = math.radians(44)
 
 
 def mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, defaultSize, zStep, randS1, mergeVertical=True):
