@@ -107,6 +107,7 @@ class BrickerDelete(bpy.types.Operator):
         if not skipSource:
             cls.cleanSource(cm, source, modelType)
 
+        print("*"*10, skipDupes, skipParents)
         # clean up 'Bricker_[source name]_dupes' group
         if not skipDupes:
             cls.cleanDupes(cm, preservedFrames, modelType)
@@ -264,23 +265,23 @@ class BrickerDelete(bpy.types.Operator):
     def cleanDupes(cls, cm, preservedFrames, modelType):
         scn = bpy.context.scene
         n = cm.source_name
-        if cm.animated:
+        if modelType == "ANIMATION":
             dupe_name = "Bricker_%(n)s_f_" % locals()
             dObjects = [bpy.data.objects.get(dupe_name + str(fn)) for fn in range(cm.lastStartFrame, cm.lastStopFrame + 1)]
         else:
             dObjects = [bpy.data.objects.get("%(n)s_duplicate" % locals())]
-        # if preserve frames, remove those objects from dObjects
-        objsToRemove = []
-        if modelType == "ANIMATION" and preservedFrames is not None:
-            for obj in dObjects:
-                if obj is None:
-                    continue
-                frameNumIdx = obj.name.rfind("_") + 1
-                curFrameNum = int(obj.name[frameNumIdx:])
-                if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
-                    objsToRemove.append(obj)
-            for obj in objsToRemove:
-                dObjects.remove(obj)
+        # # if preserve frames, remove those objects from dObjects
+        # objsToRemove = []
+        # if modelType == "ANIMATION" and preservedFrames is not None:
+        #     for obj in dObjects:
+        #         if obj is None:
+        #             continue
+        #         frameNumIdx = obj.name.rfind("_") + 1
+        #         curFrameNum = int(obj.name[frameNumIdx:])
+        #         if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
+        #             objsToRemove.append(obj)
+        #     for obj in objsToRemove:
+        #         dObjects.remove(obj)
         if len(dObjects) > 0:
             delete(dObjects)
 
