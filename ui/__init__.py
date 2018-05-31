@@ -324,7 +324,7 @@ class ModelTransformPanel(Panel):
         col = layout.column(align=True)
         row = col.row(align=True)
 
-        if not cm.lastSplitModel:
+        if not (cm.animated or cm.lastSplitModel):
             col.scale_y = 0.7
             row.label("Use Blender's built-in")
             row = col.row(align=True)

@@ -86,7 +86,7 @@ class BrickerDelete(bpy.types.Operator):
     # class methods
 
     @classmethod
-    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, skipBricks=False, skipTransAndAnimData=True, preservedFrames=None, source_name=None):
+    def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParent=False, skipBricks=False, skipTransAndAnimData=True, preservedFrames=None, source_name=None):
         """ externally callable cleanup function for bricks, source, dupes, and parents """
         # set up variables
         scn = bpy.context.scene
@@ -112,8 +112,8 @@ class BrickerDelete(bpy.types.Operator):
         if groupExists(Bricker_source_dupes_gn) and not skipDupes:
             cls.cleanDupes(cm, preservedFrames, modelType)
 
-        if not skipParents:
-            brickLoc, brickRot, brickScl = cls.cleanParents(cm, preservedFrames, modelType)
+        if not skipParent:
+            brickLoc, brickRot, brickScl = cls.cleanParent(cm, preservedFrames, modelType)
         else:
             brickLoc, brickRot, brickScl = None, None, None
 
@@ -284,7 +284,7 @@ class BrickerDelete(bpy.types.Operator):
             bpy.data.groups.remove(dGroup, do_unlink=True)
 
     @classmethod
-    def cleanParents(cls, cm, preservedFrames, modelType):
+    def cleanParent(cls, cm, preservedFrames, modelType):
         scn = bpy.context.scene
         n = cm.source_name
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
@@ -309,15 +309,6 @@ class BrickerDelete(bpy.types.Operator):
                     brickLoc = b.matrix_world.to_translation().copy()
                     brickRot = b.matrix_world.to_euler().copy()
                     brickScl = b.matrix_world.to_scale().copy()  # currently unused
-        # if preserve frames, skip those parents
-        if modelType == "ANIMATION" and preservedFrames is not None:
-            frameNumIdx = p.name.rfind("_") + 1
-            try:
-                curFrameNum = int(p.name[frameNumIdx:])
-                if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
-                    continue
-            except ValueError:
-                continue
         m = p.data
         bpy.data.objects.remove(p, True)
         bpy.data.meshes.remove(m, True)
