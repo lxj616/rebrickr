@@ -366,7 +366,7 @@ class BrickerBrickify(bpy.types.Operator):
             cm.splitModel = False
 
         # delete old bricks if present
-        if self.action.startswith("UPDATE") and (matrixReallyIsDirty(cm) or cm.buildIsDirty or cm.lastSplitModel != cm.splitModel):
+        if self.action.startswith("UPDATE") and (matrixReallyIsDirty(cm) or cm.buildIsDirty or cm.lastSplitModel != cm.splitModel or self.updatedFramesOnly):
             preservedFrames = None
             if self.updatedFramesOnly:
                 # preserve duplicates, parents, and bricks for frames that haven't changed
