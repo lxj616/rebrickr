@@ -215,12 +215,6 @@ class BrickerBrickify(bpy.types.Operator):
         source = None
         Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
 
-        # get or create parent group
-        pGroup = bpy.data.groups.get(Bricker_parent_on)
-        if pGroup is None:
-            pGroup = bpy.data.groups.new(Bricker_parent_on)
-            self.createdGroups.append(pGroup.name)
-
         if self.action == "CREATE":
             # set modelCreatedOnFrame
             cm.modelCreatedOnFrame = scn.frame_current
@@ -248,13 +242,8 @@ class BrickerBrickify(bpy.types.Operator):
             trans_and_anim_data = []
 
         if self.action == "CREATE":
-            # create dupes group
-            Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
-            dGroup = bpy.data.groups.new(Bricker_source_dupes_gn)
-            self.createdGroups.append(dGroup.name)
-            # duplicate source and add duplicate to group
+            # duplicate source
             sourceDup = duplicateObj(self.source, link=True)
-            dGroup.objects.link(sourceDup)
             sourceDup.name = self.source.name + "_duplicate"
             if cm.useLocalOrient:
                 sourceDup.rotation_mode = "XYZ"
@@ -307,7 +296,6 @@ class BrickerBrickify(bpy.types.Operator):
         if parent is None:
             parent = self.getNewParent(Bricker_parent_on, parentLoc)
             cm.parent_name = parent.name
-            pGroup.objects.link(parent)
         parent["loc_diff"] = self.source.location - parentLoc
         self.createdObjects.append(parent.name)
 
@@ -356,7 +344,6 @@ class BrickerBrickify(bpy.types.Operator):
         # set up variables
         scn, cm, n = getActiveContextInfo()
         Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
-        Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
         sceneCurFrame = scn.frame_current
         objsToSelect = []
 
@@ -386,21 +373,10 @@ class BrickerBrickify(bpy.types.Operator):
                 preservedFrames = [cm.startFrame, cm.stopFrame]
             BrickerDelete.cleanUp("ANIMATION", skipDupes=not self.updatedFramesOnly, skipParents=not self.updatedFramesOnly, preservedFrames=preservedFrames, source_name=self.source.name)
 
-        # get or create duplicate and parent groups
-        dGroup = bpy.data.groups.get(Bricker_source_dupes_gn)
-        if dGroup is None:
-            dGroup = bpy.data.groups.new(Bricker_source_dupes_gn)
-            self.createdGroups.append(dGroup.name)
-        pGroup = bpy.data.groups.get(Bricker_parent_on)
-        if pGroup is None:
-            pGroup = bpy.data.groups.new(Bricker_parent_on)
-            self.createdGroups.append(pGroup.name)
-
         # get parent object
         parent0 = bpy.data.objects.get(Bricker_parent_on)
         if parent0 is None:
             parent0 = self.getNewParent(Bricker_parent_on, self.source.location)
-            pGroup.objects.link(parent0)
             cm.parent_name = parent0.name
         self.createdObjects.append(parent0.name)
 
@@ -409,7 +385,7 @@ class BrickerBrickify(bpy.types.Operator):
         wm.progress_begin(0, cm.stopFrame + 1 - cm.startFrame)
 
         # prepare duplicate objects for animation
-        duplicates = self.getDuplicateObjects(scn, cm, dGroup, cm.source_name, cm.startFrame, cm.stopFrame)
+        duplicates = self.getDuplicateObjects(scn, cm, cm.source_name, cm.startFrame, cm.stopFrame)
 
         # iterate through frames of animation and generate Brick Model
         for curFrame in range(cm.startFrame, cm.stopFrame + 1):
@@ -433,7 +409,6 @@ class BrickerBrickify(bpy.types.Operator):
 
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
-            pGroup = bpy.data.groups[Bricker_parent_on]  # redefine pGroup since it was removed
             p_name = "%(Bricker_parent_on)s_f_%(curFrame)s" % locals()
             parent = bpy.data.objects.get(p_name)
             if parent is None:
@@ -441,7 +416,6 @@ class BrickerBrickify(bpy.types.Operator):
                 parent = bpy.data.objects.new(p_name, m)
                 parent.location = source_details.mid - parent0.location
                 parent.parent = parent0
-                pGroup.objects.link(parent)
                 scn.objects.link(parent)
                 scn.update()
                 safeUnlink(parent)
@@ -739,7 +713,7 @@ class BrickerBrickify(bpy.types.Operator):
             logo_details, refLogo = prepareLogoAndGetDetails(scn, cm, refLogo, dimensions)
         return logo_details, refLogo
 
-    def getDuplicateObjects(self, scn, cm, dGroup, source_name, startFrame, stopFrame):
+    def getDuplicateObjects(self, scn, cm, source_name, startFrame, stopFrame):
         """ returns list of duplicates from self.source with all traits applied """
         activeFrame = scn.frame_current
 
@@ -760,8 +734,6 @@ class BrickerBrickify(bpy.types.Operator):
                 if mod.type in ["SMOKE"]:
                     sourceDup.modifiers.remove(mod)
                     # mod.show_viewport = False
-            if sourceDup.name not in dGroup.objects.keys():
-                dGroup.objects.link(sourceDup)
             duplicates[curFrame] = {"obj":sourceDup, "isReused":False}
             lastObj = sourceDup
 

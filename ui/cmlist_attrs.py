@@ -62,8 +62,8 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=True)
     parent_name = StringProperty(default="")
     exposeParent = BoolProperty(
-        name="Expose parent object",
-        description="Expose the parent object for this model and make it active for simple transformations",
+        name="Show Manipulator",
+        description="Expose the parent object for this brick model for viewport manipulation",
         update=updateParentExposure,
         default=False)
 
