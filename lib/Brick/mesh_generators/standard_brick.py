@@ -99,7 +99,7 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
             addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
         # add small inner cylinders inside brick
         if detail in ["MEDIUM", "HIGH"]:
-            addInnerCylinders(dimensions, brickSize, circleVerts, d, v13, v14, v15, v16, bme)
+            addInnerCylinders(dimensions, brickSize, circleVerts, d, v13, v14, v15, v16, bme, loopCut=cm.loopCut)
 
 
     gap = Vector([dimensions["gap"]] * 2)
