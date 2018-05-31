@@ -290,8 +290,10 @@ class BrickerDelete(bpy.types.Operator):
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
         brickLoc, brickRot, brickScl = None, None, None
+        p = bpy.data.objects.get(Bricker_parent_on)
+        if p is None:
+            return brickLoc, brickRot, brickScl
         if preservedFrames is None:
-            p = bpy.data.objects.get(Bricker_parent_on)
             if modelType == "ANIMATION" or cm.lastSplitModel:
                 # store transform data of transformation parent object
                 try:
@@ -307,24 +309,18 @@ class BrickerDelete(bpy.types.Operator):
                     brickLoc = b.matrix_world.to_translation().copy()
                     brickRot = b.matrix_world.to_euler().copy()
                     brickScl = b.matrix_world.to_scale().copy()  # currently unused
-        # clean up Bricker_parent objects
-        pGroup = bpy.data.groups.get(Bricker_parent_on)
-        if pGroup:
-            for parent in pGroup.objects:
-                # if preserve frames, skip those parents
-                if modelType == "ANIMATION" and preservedFrames is not None:
-                    frameNumIdx = parent.name.rfind("_") + 1
-                    try:
-                        curFrameNum = int(parent.name[frameNumIdx:])
-                        if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
-                            continue
-                    except ValueError:
-                        continue
-                m = parent.data
-                bpy.data.objects.remove(parent, True)
-                bpy.data.meshes.remove(m, True)
-            if preservedFrames is None:
-                bpy.data.groups.remove(pGroup, do_unlink=True)
+        # if preserve frames, skip those parents
+        if modelType == "ANIMATION" and preservedFrames is not None:
+            frameNumIdx = p.name.rfind("_") + 1
+            try:
+                curFrameNum = int(p.name[frameNumIdx:])
+                if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
+                    continue
+            except ValueError:
+                continue
+        m = p.data
+        bpy.data.objects.remove(p, True)
+        bpy.data.meshes.remove(m, True)
         return brickLoc, brickRot, brickScl
 
     def updateAnimationData(objs, trans_and_anim_data):
