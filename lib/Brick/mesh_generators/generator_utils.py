@@ -40,8 +40,10 @@ def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d,
     if hollow is None:
         hollow = brickSize[2] == 1 or min(brickSize[:2]) != 1
     bAndPBrick = flatBrickType(cm) and brickSize[2] == 3
+    minS = min(brickSize[:2])
     sides = [0, 1] + ([0, 0, 1, 1] if brickSize[0] < brickSize[1] else [1, 1, 0, 0])
-    z1 = d.z - thick.z - dimensions["support_height_triple" if bAndPBrick else "support_height"]
+    sides2 = [0, 1] + ([1, 1, 0, 0] if brickSize[0] < brickSize[1] else [0, 0, 1, 1])
+    z1 = d.z - height * 0.99975 if minS > 2 else (d.z - thick.z - dimensions["support_height_triple" if bAndPBrick else "support_height"])
     z2 = d.z - thick.z
     r = dimensions["stud_radius"] if min(brickSize[:2]) != 1 else dimensions["bar_radius"] - (dimensions["tube_thickness"] if hollow else 0)
     h = height - thick.z
@@ -52,11 +54,11 @@ def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d,
     startY = -1 if brickSize[1] == 1 else 0
     startX = 1 if type == "SLOPE" and brickSize[:2] in [[3, 1], [4, 1]] else startX
     startY = 1 if type == "SLOPE" and brickSize[:2] in [[1, 3], [1, 4]] else startY
-    minS = min(brickSize[:2])
-    minSCap = min([minS, 2])
     # add supports for each appropriate underside location
     for xNum in range(startX, brickSize[0] - 1):
         for yNum in range(startY, brickSize[1] - 1):
+            if minS > 2 and (xNum + yNum) % 2 == 1:
+                continue
             # add support tubes
             tubeX = (xNum * d.x * 2) + d.x * (2 if brickSize[0] == 1 else 1)
             tubeY = (yNum * d.y * 2) + d.y * (2 if brickSize[1] == 1 else 1)
@@ -71,45 +73,45 @@ def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d,
             # add support beams next to odd tubes
             if not add_beams:
                 continue
-            if brickSize[0] > brickSize[1]:
+            if brickSize[0] > brickSize[1] or minS > 2:
                 if brickSize[0] == 3 or xNum % 2 == 1 or (brickSize == [8, 1, 3] and xNum in [0, brickSize[0] - 2]):
                     # initialize x, y
                     x1 = tubeX - (dimensions["support_width"] / 2)
                     x2 = tubeX + (dimensions["support_width"] / 2)
                     y1 = tubeY + r
-                    y2 = tubeY + d.y * minSCap - thick.y
-                    y2 = y2 if yNum == brickSize[1] - 2 or minS <= 2 else y2 - thick.y / 2
-                    y3 = tubeY - d.y * minSCap + thick.y
+                    y2 = tubeY + d.y * minS - thick.y - (0 if brickSize[0] > brickSize[1] or yNum >= max(brickSize[:2]) - 3 else dimensions["tube_thickness"])
+                    y3 = tubeY - d.y * minS + thick.y
                     y4 = tubeY - r
                     # create support beam
+                    curSides = sides if brickSize[0] > brickSize[1] else sides2
                     if minS == 1:
-                        cubeVerts = makeCube(Vector((x1, y3, z1)), Vector((x2, y2, z2)), sides=sides, bme=bme)
+                        cubeVerts = makeCube(Vector((x1, y3, z1)), Vector((x2, y2, z2)), sides=curSides, bme=bme)
                         allTopVerts += cubeVerts[4:]
                     else:
-                        cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=sides, bme=bme)
+                        cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=curSides, bme=bme)
                         allTopVerts += cubeVerts1[4:]
-                        if yNum == 0 or minS <= 2:
-                            cubeVerts2 = makeCube(Vector((x1, y3, z1)), Vector((x2, y4, z2)), sides=sides, bme=bme)
+                        if brickSize[0] > brickSize[1] or yNum <= 1:
+                            cubeVerts2 = makeCube(Vector((x1, y3, z1)), Vector((x2, y4, z2)), sides=curSides, bme=bme)
                             allTopVerts += cubeVerts2[4:]
-            if brickSize[1] > brickSize[0]:
+            if brickSize[1] > brickSize[0] or minS > 2:
                 if brickSize[1] == 3 or yNum % 2 == 1 or (brickSize == [1, 8, 3] and yNum in [0, brickSize[1] - 2]):
                     # initialize x, y
                     x1 = tubeX + r
-                    x2 = tubeX + d.x * minSCap - thick.x
-                    x2 = x2 if xNum == brickSize[0] - 2 or minS <= 2 else x2 - thick.x / 2
-                    x3 = tubeX - d.x * minSCap + thick.x
+                    x2 = tubeX + d.x * minS - thick.x - (0 if brickSize[1] > brickSize[0] or xNum >= max(brickSize[:2]) - 3 else dimensions["tube_thickness"])
+                    x3 = tubeX - d.x * minS + thick.x
                     x4 = tubeX - r
                     y1 = tubeY - (dimensions["support_width"] / 2)
                     y2 = tubeY + (dimensions["support_width"] / 2)
+                    curSides = sides if brickSize[1] > brickSize[0] else sides2
                     # create support beam
                     if minS == 1:
-                        cubeVerts = makeCube(Vector((x3, y1, z1)), Vector((x2, y2, z2)), sides=sides, bme=bme)
+                        cubeVerts = makeCube(Vector((x3, y1, z1)), Vector((x2, y2, z2)), sides=curSides, bme=bme)
                         allTopVerts += cubeVerts[4:]
                     else:
-                        cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=sides, bme=bme)
+                        cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=curSides, bme=bme)
                         allTopVerts += cubeVerts1[4:]
-                        if xNum == 0 or minS <= 2:
-                            cubeVerts2 = makeCube(Vector((x3, y1, z1)), Vector((x4, y2, z2)), sides=sides, bme=bme)
+                        if brickSize[1] > brickSize[0] or xNum <= 1:
+                            cubeVerts2 = makeCube(Vector((x3, y1, z1)), Vector((x4, y2, z2)), sides=curSides, bme=bme)
                             allTopVerts += cubeVerts2[4:]
     if type == "SLOPE":
         cutVerts(dimensions, height, brickSize, allTopVerts, d, scalar, thick, bme)
