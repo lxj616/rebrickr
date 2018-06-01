@@ -394,9 +394,7 @@ def handle_upconversion(scene):
                         obj.name = rreplace(obj.name, "frame", "f")
                 # rename storage scene
                 sto_scn_old = bpy.data.scenes.get("Bricker_storage (DO NOT RENAME)")
-                sto_scn_new = bpy.data.scenes.get("Bricker_storage (DO NOT MODIFY)")
-                if sto_scn_new is None:
-                    sto_scn_new = bpy.data.scenes.new("Bricker_storage (DO NOT MODIFY)")
+                sto_scn_new = getSafeScn()
                 if sto_scn_old is not None:
                     for obj in sto_scn_old.objects:
                         if obj.name.startswith("Bricker_refLogo"):

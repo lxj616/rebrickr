@@ -226,9 +226,7 @@ class BrickerBrickify(bpy.types.Operator):
         if self.action in ["UPDATE_MODEL"] and not updateCanRun("MODEL"):
             return{"FINISHED"}
 
-        sto_scn = bpy.data.scenes.get("Bricker_storage (DO NOT MODIFY)")
-        if sto_scn:
-            sto_scn.update()
+        getSafeScn().update()
 
         if (matrixReallyIsDirty(cm) or self.action != "UPDATE_MODEL") and cm.customized:
             cm.customized = False
@@ -737,40 +735,40 @@ class BrickerBrickify(bpy.types.Operator):
             duplicates[curFrame] = {"obj":sourceDup, "isReused":False}
             lastObj = sourceDup
 
-        # apply parent transformation and shape keys
-        for curFrame in range(startFrame, stopFrame + 1):
-            # skip reused duplicates
-            if duplicates[curFrame]["isReused"]:
-                continue
-            sourceDup = duplicates[curFrame]["obj"]
-            self.createdObjects.append(sourceDup.name)
-            if sourceDup.parent:
-                # apply parent transformation
-                select(sourceDup, active=True, only=True)
-                bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
-            # apply shape keys if existing
-            shapeKeys = sourceDup.data.shape_keys
-            if shapeKeys is not None and len(shapeKeys.key_blocks) > 0:
-                select(sourceDup, active=True, only=True)
-                bpy.ops.object.shape_key_add(from_mix=True)
-                for i in range(len(shapeKeys.key_blocks)):
-                    sourceDup.shape_key_remove(sourceDup.data.shape_keys.key_blocks[0])
-                # bpy.ops.object.shape_key_remove(all=True)
+        # # apply parent transformation
+        # for curFrame in range(startFrame, stopFrame + 1):
+        #     # skip reused duplicates
+        #     if duplicates[curFrame]["isReused"]:
+        #         continue
+        #     sourceDup = duplicates[curFrame]["obj"]
+        #     self.createdObjects.append(sourceDup.name)
+        #     if sourceDup.parent:
+        #         # apply parent transformation
+        #         select(sourceDup, active=True, only=True)
+        #         bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+        #     # apply shape keys if existing
+        #     shapeKeys = sourceDup.data.shape_keys
+        #     if shapeKeys is not None and len(shapeKeys.key_blocks) > 0:
+        #         select(sourceDup, active=True, only=True)
+        #         bpy.ops.object.shape_key_add(from_mix=True)
+        #         for i in range(len(shapeKeys.key_blocks)):
+        #             sourceDup.shape_key_remove(sourceDup.data.shape_keys.key_blocks[0])
+        #         # bpy.ops.object.shape_key_remove(all=True)
 
-        # bake & apply cloth and soft body modifiers
-        if lastObj != self.source:
-            for mod in lastObj.modifiers:
-                if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
-                    if not mod.point_cache.use_disk_cache:
-                        mod.point_cache.use_disk_cache = True
-                        mod.point_cache.use_library_path = True
-                    if mod.point_cache.frame_end >= stopFrame:
-                        mod.point_cache.frame_end = stopFrame
-                        override = {'scene': scn, 'active_object': lastObj, 'point_cache': mod.point_cache, 'window':bpy.context.window, 'blend_data':bpy.context.blend_data, 'region':bpy.context.region, 'area':bpy.context.area, 'screen':bpy.context.screen}
-                        sys.stdout.write("Baking...")
-                        sys.stdout.flush()
-                        bpy.ops.ptcache.bake(override, bake=True)
-                    update_progress("Baking", 1)
+        # # bake & apply cloth and soft body modifiers
+        # if lastObj != self.source:
+        #     for mod in lastObj.modifiers:
+        #         if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
+        #             if not mod.point_cache.use_disk_cache:
+        #                 mod.point_cache.use_disk_cache = True
+        #                 mod.point_cache.use_library_path = True
+        #             if mod.point_cache.frame_end >= stopFrame:
+        #                 mod.point_cache.frame_end = stopFrame
+        #                 override = {'scene': scn, 'active_object': lastObj, 'point_cache': mod.point_cache, 'window':bpy.context.window, 'blend_data':bpy.context.blend_data, 'region':bpy.context.region, 'area':bpy.context.area, 'screen':bpy.context.screen}
+        #                 sys.stdout.write("Baking...")
+        #                 sys.stdout.flush()
+        #                 bpy.ops.ptcache.bake(override, bake=True)
+        #             update_progress("Baking", 1)
 
         denom = stopFrame - startFrame
         update_progress("Applying Modifiers", 0)
@@ -784,20 +782,27 @@ class BrickerBrickify(bpy.types.Operator):
             if duplicates[curFrame]["isReused"]:
                 continue
             sourceDup = duplicates[curFrame]["obj"]
+            select(sourceDup, active=True, only=True)
             # set active frame for applying modifiers
             scn.frame_set(curFrame)
+            # apply parent transformation
+            if sourceDup.parent:
+                bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
             # apply animated transform data
             sourceDup.matrix_world = self.source.matrix_world
             sourceDup.animation_data_clear()
-            # apply sourceDup modifiers
-            cm.armature = applyModifiers(sourceDup)
-            scn.update()
+            # send to new mesh
+            # NOTE: should I use 'PREVIEW' or 'RENDER' here? https://docs.blender.org/api/blender_python_api_2_78_release/bpy.types.Object.html#bpy.types.Object.to_mesh
+            sourceDup.data = self.source.to_mesh(scn, True, 'PREVIEW')
+            # # apply sourceDup modifiers
+            # cm.armature = applyModifiers(sourceDup)
+            # scn.update()
             # apply transform data
-            select(sourceDup, active=True, only=True)
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
             scn.update()
             # unlink source duplicate
             safeUnlink(sourceDup)
+        # TODO: set cm.armature
         update_progress("Applying Modifiers", 1)
         return duplicates
 
