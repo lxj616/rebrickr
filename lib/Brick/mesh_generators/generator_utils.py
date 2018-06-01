@@ -63,7 +63,7 @@ def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d,
             tubeX = (xNum * d.x * 2) + d.x * (2 if brickSize[0] == 1 else 1)
             tubeY = (yNum * d.y * 2) + d.y * (2 if brickSize[1] == 1 else 1)
             if hollow:
-                bme, tubeVerts = makeTube(r, h, t, circleVerts, co=Vector((tubeX, tubeY, tubeZ)), botFace=True, topFace=False, bme=bme)
+                bme, tubeVerts = makeTube(r, h, t, circleVerts, co=Vector((tubeX, tubeY, tubeZ)), botFace=True, topFace=False, loopCutTop=cm.loopCut, bme=bme)
                 selectVerts(tubeVerts["outer"]["top"] + tubeVerts["inner"]["top"])
                 allTopVerts += tubeVerts["outer"]["top"] + tubeVerts["inner"]["top"]
             else:
@@ -292,7 +292,6 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo,
                 y2 = yNum * d.y * 2 + dimensions["tick_width"] / 2
                 # CREATING SUPPORT BEAM
                 v1, v2, _, _, v5, v6, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 0, 1, 1], bme=bme)
-                # selectVerts([v6, v7])
                 joinVerts["X-"] += [v1, v2]
                 bme.faces.new([v1, v5] + lastSideVerts["X-"])
                 lastSideVerts["X-"] = [v8, v2]
@@ -305,7 +304,6 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo,
                 y2 = yNum * d.y * 2 + dimensions["tick_width"] / 2
                 # CREATING SUPPORT BEAM
                 _, _, v3, v4, v5, v6, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 0, 1, 1, 1], bme=bme)
-                # selectVerts([v5, v8])
                 joinVerts["X+"] += [v4, v3]
                 bme.faces.new([v6, v4] + lastSideVerts["X+"])
                 lastSideVerts["X+"] = [v3, v7]
@@ -318,7 +316,6 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo,
                 x2 = xNum * d.x * 2 + dimensions["tick_width"] / 2
                 # CREATING SUPPORT BEAM
                 v1, _, _, v4, v5, v6, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 1, 1, 0], bme=bme)
-                # selectVerts([v7, v8])
                 joinVerts["Y-"] += [v1, v4]
                 bme.faces.new([v5, v1] + lastSideVerts["Y-"])
                 lastSideVerts["Y-"] = [v4, v6]
@@ -332,7 +329,6 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo,
                 # CREATING SUPPORT BEAM
                 _, v2, v3, _, v5, v6, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 1, 0, 1], bme=bme)
                 # select bottom connecting verts for exclusion from vertex group
-                # selectVerts([v5, v6])
                 joinVerts["Y+"] += [v2, v3]
                 bme.faces.new([v2, v8] + lastSideVerts["Y+"])
                 lastSideVerts["Y+"] = [v7, v3]
