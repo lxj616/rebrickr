@@ -91,7 +91,7 @@ def makeSlope(dimensions:dict, brickSize:list, direction:str=None, circleVerts:i
         # add face to opposite side from slope
         bme.faces.new((v1, v5, v8, v2))
         # create stud
-        if stud: addStuds(dimensions, height, [1] + adjustedBrickSize[1:], "CONE", circleVerts, bme, v5=v5, v6=v6, v7=v7, v8=v8, hollow=brickSize[2] > 3, loopCut=cm.loopCut)
+        if stud: addStuds(dimensions, height, [1] + adjustedBrickSize[1:], "CONE", circleVerts, bme, edgeXp=[v7, v6], edgeXn=[v8, v5], edgeYp=[v7, v8], edgeYn=[v6, v5], hollow=brickSize[2] > 3, loopCut=cm.loopCut)
 
     # make square at end of slope
     coord1 = Vector((d.x * scalar.x, -d.y, -d.z + (dimensions["slit_height"] if max(brickSize[:2]) == 1 else 0)))
