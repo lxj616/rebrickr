@@ -34,8 +34,11 @@ from ...functions import *
 def updateMaterials(bricksDict, source, origSource, curFrame=None):
     """ sets all matNames in bricksDict based on near_face """
     scn, cm, _ = getActiveContextInfo()
-    if cm.useUVMap and (len(source.data.uv_layers) > 0 or cm.uvImageName != ""):
+    useUVMap = cm.useUVMap and (len(source.data.uv_layers) > 0 or cm.uvImageName != "")
+    if useUVMap:
         uv_images = getUVImages(source)
+        if len(uv_images) == 0:
+            useUVMap = False
     else:
         uv_images = None
     rgba_vals = []
@@ -58,11 +61,11 @@ def updateMaterials(bricksDict, source, origSource, curFrame=None):
             rgba, matName = getBrickRGBA(scn, cm, source, nf, ni, uv_images)
         # get material with snapped RGBA value
         matObj = getMatObject(cm, typ="ABS")
-        if rgba is None:
+        if useUVMap and rgba is None:
             matName = ""
         elif cm.colorSnap == "ABS" and len(matObj.data.materials) > 0:
             matName = findNearestBrickColorName(rgba, matObj=matObj)
-        elif cm.colorSnap == "RGB" or (cm.useUVMap and len(source.data.uv_layers) > 0) or cm.isSmoke:
+        elif cm.colorSnap == "RGB" or cm.isSmoke or useUVMap:
             matName = createNewMaterial(cm.source_name, rgba, rgba_vals, cm.includeTransparency, curFrame)
         if rgba is not None:
             rgba_vals.append(rgba)
