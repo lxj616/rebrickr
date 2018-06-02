@@ -564,6 +564,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     animated = BoolProperty(default=False)
     materialApplied = BoolProperty(default=False)
     armature = BoolProperty(default=False)
+    # rigid_body = BoolProperty(default=False)
     bevelAdded = BoolProperty(default=False)
     customized = BoolProperty(default=True)
     brickSizesUsed = StringProperty(default="")  # list of brickSizes used separated by | (e.g. '5,4,3|7,4,5|8,6,5')

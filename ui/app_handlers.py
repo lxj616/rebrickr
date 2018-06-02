@@ -331,7 +331,7 @@ def safe_unlink_parent(scene):
             n = cm.source_name
             Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
             p = bpy.data.objects.get(Bricker_parent_on)
-            if (cm.modelCreated or cm.animated) and not cm.exposeParent:
+            if p is not None and (cm.modelCreated or cm.animated) and not cm.exposeParent:
                 try:
                     safeUnlink(p)
                 except RuntimeError:

@@ -31,6 +31,7 @@ props = bpy.props
 # Addon imports
 from ..functions import *
 from .cache import *
+# from ..lib.rigid_body_props import *
 
 
 def getModelType(cm=None):
@@ -260,6 +261,11 @@ class BrickerDelete(bpy.types.Operator):
         # reset source properties
         source.name = n
         source.cmlist_id = -1
+        # # restore rigid body settings
+        # if cm.rigid_body:
+        #     select(source, active=True)
+        #     bpy.ops.rigidbody.object_add()
+        #     retrieveRigidBodySettings(source)
 
     @classmethod
     def cleanDupes(cls, cm, preservedFrames, modelType):
@@ -405,6 +411,8 @@ class BrickerDelete(bpy.types.Operator):
         cm.matrixIsDirty = True
         cm.bricksAreDirty = True
         cm.armature = False
+        cm.rigid_body = False
+        cm.soft_body = False
         cm.exposeParent = False
         cm.version = bpy.props.bricker_version
         cm.activeKey = (-1, -1, -1)

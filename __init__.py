@@ -47,6 +47,7 @@ from .buttons import *
 from .buttons.customize import *
 from .operators import *
 from .lib.preferences import *
+# from .lib.rigid_body_props import *
 from .lib.Brick.legal_brick_sizes import getLegalBrickSizes
 from .lib import keymaps
 
@@ -74,6 +75,9 @@ def register():
     bpy.types.Object.isBrick = BoolProperty(name='Is Brick', default=False)
     bpy.types.Object.cmlist_id = IntProperty(name='Custom Model ID', description="ID of cmlist entry to which this object refers", default=-1)
     bpy.types.Material.num_averaged = IntProperty(name='Colors Averaged', description="Number of colors averaged together", default=0)
+
+    # # backup rigid body settings
+    # bpy.types.Object.rigid_body_settings = PointerProperty(type=Bricker_RigidBodySettings)
 
     bpy.types.Scene.Bricker_runningBlockingOperation = BoolProperty(default=False)
     bpy.types.Scene.Bricker_printTimes = BoolProperty(default=False)
