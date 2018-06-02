@@ -205,7 +205,7 @@ class BrickerDelete(bpy.types.Operator):
             setLayers(lastLayers)
 
             # delete custom properties from source
-            customPropNames = ["ignored_mods", "frame_parent_cleared", "old_parent"]
+            customPropNames = ["frame_parent_cleared", "old_parent"]
             for cPN in customPropNames:
                 try:
                     del source[cPN]
@@ -252,10 +252,6 @@ class BrickerDelete(bpy.types.Operator):
                 scn.frame_set(source["frame_parent_cleared"])
                 bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
                 scn.frame_set(origFrame)
-        # if modifiers were ignored/disabled from view, enable in view
-        if source["ignored_mods"] != "":
-            for mn in source["ignored_mods"]:
-                source.modifiers[mn].show_viewport = True
         # reset cm properties
         cm.modelHeight = -1
         # reset source properties

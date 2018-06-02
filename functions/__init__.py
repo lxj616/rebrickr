@@ -28,3 +28,4 @@ from .makeBricks import *
 from .transformData import *
 from .wrappers import *
 from .logo_obj import *
+from .point_cache import *

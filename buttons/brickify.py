@@ -509,27 +509,31 @@ class BrickerBrickify(bpy.types.Operator):
 
     def isValid(self, scn, cm, source, Bricker_bricks_gn):
         """ returns True if brickify action can run, else report WARNING/ERROR and return False """
+        # ensure custom object(s) are valid
         if (cm.brickType == "CUSTOM" or cm.hasCustomObj1 or cm.hasCustomObj2 or cm.hasCustomObj3):
             warningMsg = customValidObject(cm)
             if warningMsg is not None:
                 self.report({"WARNING"}, warningMsg)
                 return False
+        # ensure source name isn't too long
         if len(cm.source_name) > 30:
             self.report({"WARNING"}, "Source object name too long (must be <= 30 characters)")
+        # ensure custom material exists
         if cm.materialType == "CUSTOM" and cm.materialName != "" and bpy.data.materials.find(cm.materialName) == -1:
             n = cm.materialName
             self.report({"WARNING"}, "Custom material '%(n)s' could not be found" % locals())
             return False
         if cm.materialType == "SOURCE" and cm.colorSnap == "ABS":
+            # ensure ABS Plastic materials are installed
             if not hasattr(scn, "isBrickMaterialsInstalled") or not scn.isBrickMaterialsInstalled:
                 self.report({"WARNING"}, "ABS Plastic Materials must be installed from Blender Market")
                 return False
+            # ensure ABS Plastic materials UI list is populated
             matObj = getMatObject(cm, typ="ABS")
             if len(matObj.data.materials) == 0:
                 self.report({"WARNING"}, "No ABS Plastic Materials found in Materials to be used")
                 return False
 
-        source["ignored_mods"] = ""
         if self.action in ["CREATE", "ANIMATE"]:
             # verify function can run
             if groupExists(Bricker_bricks_gn):
@@ -539,13 +543,16 @@ class BrickerBrickify(bpy.types.Operator):
             if cm.source_name == "":
                 self.report({"WARNING"}, "Please select a mesh to Brickify")
                 return False
-            if cm.source_name[:9] == "Bricker_" and (cm.source_name[-7:] == "_bricks" or cm.source_name[-9:] == "_combined"):
-                self.report({"WARNING"}, "Cannot Brickify models created with the Bricker")
+            # ensure source is not bricker model
+            if source.isBrick or source.isBrickifiedObject:
+                self.report({"WARNING"}, "Please bake the 'Bricker' source model before brickifying (Bricker > Bake/Export > Bake Model).")
                 return False
+            # ensure source exists
             if source is None:
                 n = cm.source_name
                 self.report({"WARNING"}, "'%(n)s' could not be found" % locals())
                 return False
+            # ensure object data is mesh
             if source.type != "MESH":
                 self.report({"WARNING"}, "Only 'MESH' objects can be Brickified. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
@@ -553,13 +560,6 @@ class BrickerBrickify(bpy.types.Operator):
             if source.rigid_body is not None:
                 self.report({"WARNING"}, "First bake rigid body transformations to keyframes (SPACEBAR > Bake To Keyframes).")
                 return False
-
-        # Verify smoke simulation is set up correctly
-        for mod in source.modifiers:
-            if mod.type == "SMOKE" and mod.domain_settings and mod.show_viewport:
-                if not bpy.data.is_saved:
-                    self.report({"WARNING"}, "Blend file must be saved before brickifying '" + str(mod.type) + "' modifiers.")
-                    return False
 
         if self.action in ["ANIMATE", "UPDATE_ANIM"]:
             # verify start frame is less than stop frame
@@ -590,6 +590,7 @@ class BrickerBrickify(bpy.types.Operator):
                 self.report({"WARNING"}, "Custom logo object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
 
+        # check if source or brickified object is on active layer(s)
         success = False
         if cm.modelCreated or cm.animated:
             bricks = getBricks()
@@ -677,16 +678,18 @@ class BrickerBrickify(bpy.types.Operator):
                 cm.armature = True
             elif mod.type in ["CLOTH", "SOFT_BODY"]:
                 soft_body = True
+                point_cache = mod.point_cache
             elif mod.type == "SMOKE":
                 smoke = True
+                point_cache = mod.domain_settings.point_cache
         # if self.source.rigid_body is not None:
         #     cm.rigid_body = True
         #     storeRigidBodySettings(self.source)
 
+        # step through uncached frames to run simulation
         if soft_body or smoke:
-            # TODO: Figure out how to cut down on the amount of frames covered here. e.g. start at last baked frame or something
-            for curFrame in range(0, startFrame):
-                # set active frame for applying modifiers
+            firstUncachedFrame = getFirstUncachedFrame(self.source, point_cache)
+            for curFrame in range(firstUncachedFrame, startFrame):
                 scn.frame_set(curFrame)
 
         denom = stopFrame - startFrame
@@ -723,7 +726,6 @@ class BrickerBrickify(bpy.types.Operator):
             sourceDup.matrix_world = self.source.matrix_world
             sourceDup.animation_data_clear()
             # send to new mesh
-            # NOTE: should I use 'PREVIEW' or 'RENDER' here? https://docs.blender.org/api/blender_python_api_2_78_release/bpy.types.Object.html#bpy.types.Object.to_mesh
             sourceDup.data = self.source.to_mesh(scn, True, 'PREVIEW')
             # apply transform data
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)

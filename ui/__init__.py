@@ -165,7 +165,7 @@ class BrickModelsPanel(Panel):
                     else:
                         row.active = False
                     row.operator("bricker.brickify", text="Brickify Animation", icon="MOD_REMESH")
-                    if obj.rigid_body is not None:
+                    if obj and obj.rigid_body is not None:
                         col = layout.column(align=True)
                         col.scale_y = 0.7
                         col.label("Bake rigid body transforms")
@@ -180,7 +180,7 @@ class BrickModelsPanel(Panel):
                     else:
                         row.active = False
                     row.operator("bricker.brickify", text="Brickify Object", icon="MOD_REMESH")
-                    if obj.rigid_body is not None:
+                    if obj and obj.rigid_body is not None:
                         col = layout.column(align=True)
                         col.scale_y = 0.7
                         col.label("Bake rigid body transforms")
