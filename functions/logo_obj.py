@@ -53,7 +53,7 @@ def getLegoLogo(self, scn, cm, dimensions):
             refLogo.data = logo_txt_ref.data.copy()
             refLogo.name = refLogoName
             # convert text to mesh
-            safeLink(refLogo, unhide=True)
+            safeLink(refLogo)
             select(refLogo, active=True, only=True)
             bpy.ops.object.convert(target='MESH')
             # remove duplicate verts

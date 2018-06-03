@@ -391,7 +391,7 @@ class BrickerBrickify(bpy.types.Operator):
                 continue
             scn.frame_set(curFrame)
             # get duplicated source
-            source = duplicates[curFrame]["obj"]
+            source = duplicates[curFrame]
 
             # get source_details and dimensions
             source_details, dimensions = getDetailsAndBounds(source)
@@ -701,7 +701,8 @@ class BrickerBrickify(bpy.types.Operator):
             if self.action == "UPDATE_ANIM":
                 sourceDup = bpy.data.objects.get("Bricker_" + source_name + "_f_" + str(curFrame))
                 if sourceDup is not None:
-                    duplicates[curFrame] = {"obj":sourceDup, "isReused":True}
+                    duplicates[curFrame] = sourceDup
+                    safeLink(sourceDup)
                     continue
             # set active frame for applying modifiers
             scn.frame_set(curFrame)
@@ -729,16 +730,17 @@ class BrickerBrickify(bpy.types.Operator):
             sourceDup.data = self.source.to_mesh(scn, True, 'PREVIEW')
             # apply transform data
             bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-            scn.update()
-            duplicates[curFrame] = {"obj":sourceDup, "isReused":False}
-            # unlink source duplicate
-            safeUnlink(sourceDup)
+            duplicates[curFrame] = sourceDup
             # update progress bar
             percent = (curFrame - startFrame) / (denom + 1)
             if percent < 1:
                 update_progress("Applying Modifiers", percent)
         # update progress bar
         update_progress("Applying Modifiers", 1)
+        # unlink source duplicate
+        scn.update()
+        for obj in duplicates.values():
+            safeUnlink(obj)
         return duplicates
 
     def getObjectToBrickify(self, cm):

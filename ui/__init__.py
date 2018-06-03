@@ -986,7 +986,7 @@ class BrickDetailsPanel(Panel):
 
     @classmethod
     def poll(self, context):
-        if bpy.props.bricker_developer_mode < 1:
+        if bpy.props.Bricker_developer_mode < 1:
             return False
         if not settingsCanBeDrawn():
             return False
@@ -1087,7 +1087,7 @@ class ExportPanel(Panel):
         col = layout.column(align=True)
         col.prop(cm, "exportPath", text="")
         col = layout.column(align=True)
-        if bpy.props.bricker_developer_mode > 0:
+        if bpy.props.Bricker_developer_mode > 0:
             row = col.row(align=True)
             row.operator("bricker.export_model_data", text="Export Model Data", icon="EXPORT")
         if (cm.modelCreated or cm.animated) and cm.brickType != "CUSTOM":

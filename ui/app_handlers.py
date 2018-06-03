@@ -215,7 +215,7 @@ bpy.app.handlers.scene_update_pre.append(handle_selections)
 @persistent
 def prevent_user_from_viewing_storage_scene(scene):
     scn = bpy.context.scene
-    if not brickerIsActive() or brickerRunningBlockingOp():
+    if not brickerIsActive() or brickerRunningBlockingOp() or bpy.props.Bricker_developer_mode != 0:
         return
     if scn.name == "Bricker_storage (DO NOT MODIFY)":
         i = 0

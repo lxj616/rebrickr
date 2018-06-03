@@ -48,7 +48,7 @@ class testBrickGenerators(bpy.types.Operator):
 
     @staticmethod
     def drawUIButton():
-        return bpy.props.bricker_developer_mode > 1
+        return bpy.props.Bricker_developer_mode > 1
 
 
 def newObjFromBmesh(layer, bme, meshName, objName=None, loc=(0,0,0), edgeSplit=True):
