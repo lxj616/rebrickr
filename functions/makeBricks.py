@@ -227,7 +227,7 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     # end progress bars
     updateProgressBars(printStatus, cursorStatus, 1, 0, "Building", end=True)
 
-    # remove duplicate of original logoDetail
+    # remove duplicate of original logo
     if cm.logoDetail != "LEGO" and logo is not None:
         bpy.data.objects.remove(logo)
 

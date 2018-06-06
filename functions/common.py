@@ -35,7 +35,7 @@ from math import *
 
 # Blender imports
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Euler, Matrix
 from bpy.types import Object, Scene
 props = bpy.props
 
@@ -582,6 +582,20 @@ def update_progress(job_title, progress):
         msg += " DONE\r\n"
     sys.stdout.write(msg)
     sys.stdout.flush()
+
+
+def apply_transform(obj):
+    # select(obj, only=True, active=True)
+    # bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    loc, rot, scale = obj.matrix_world.decompose()
+    obj.matrix_world = Matrix.Identity(4)
+    m = obj.data
+    s_mat_x = Matrix.Scale(scale.x, 4, Vector((1, 0, 0)))
+    s_mat_y = Matrix.Scale(scale.y, 4, Vector((0, 1, 0)))
+    s_mat_z = Matrix.Scale(scale.z, 4, Vector((0, 0, 1)))
+    m.transform(s_mat_x * s_mat_y * s_mat_z)
+    m.transform(rot.to_matrix().to_4x4())
+    m.transform(Matrix.Translation(loc))
 
 
 def writeErrorToFile(errorReportPath, txtName, addonVersion):

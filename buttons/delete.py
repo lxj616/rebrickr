@@ -108,7 +108,6 @@ class BrickerDelete(bpy.types.Operator):
         if not skipSource:
             cls.cleanSource(cm, source, modelType)
 
-        print("*"*10, skipDupes, skipParents)
         # clean up 'Bricker_[source name]_dupes' group
         if not skipDupes:
             cls.cleanDupes(cm, preservedFrames, modelType)

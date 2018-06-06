@@ -316,10 +316,8 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
             # duplicate custom object
             customObj0 = duplicateObj(customObj, link=True)
             customObj0.parent = None
-            select(customObj0, active=True, only=True)
             # apply transformation to custom object
-            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-            select(source, active=True, only=True)
+            apply_transform(customObj0)
             # get custom object details
             curCustomObj_details = bounds(customObj0)
             # set brick scale
