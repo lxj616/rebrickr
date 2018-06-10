@@ -598,6 +598,23 @@ def apply_transform(obj):
     m.transform(Matrix.Translation(loc))
 
 
+def parent_clear(objs, apply_transform=True):
+    # select(objs, only=True, active=True)
+    # bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+    objs = confirmList(objs)
+    if apply_transform:
+        for obj in objs:
+            obj.rotation_mode = "XYZ"
+            loc = obj.matrix_world.to_translation()
+            rot = obj.matrix_world.to_euler()
+            scale = obj.matrix_world.to_scale()
+            obj.location = loc
+            obj.rotation_euler = rot
+            obj.scale = scale
+    for obj in objs:
+        obj.parent = None
+
+
 def writeErrorToFile(errorReportPath, txtName, addonVersion):
     # write error to log text object
     if not os.path.exists(errorReportPath):

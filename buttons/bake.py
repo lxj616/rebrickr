@@ -58,8 +58,7 @@ class bakeModel(bpy.types.Operator):
         # set isBrick/isBrickifiedObject to False
         bricks = getBricks()
         # apply object transformation
-        select(bricks, only=True, active=True)
-        bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+        parent_clear(bricks)
         if cm.lastSplitModel:
             for brick in bricks:
                 brick.isBrick = False
@@ -117,7 +116,6 @@ class duplicateBaked(bpy.types.Operator):
                 obj0.name = "%(n)s_bricks" % locals()
             obj0.cmlist_id = -1
             newObjs.append(obj0)
-        select(newObjs, only=True, active=True)
-        bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+        parent_clear(newObjs)
         bpy.ops.transform.translate('INVOKE_DEFAULT')
         return{"FINISHED"}

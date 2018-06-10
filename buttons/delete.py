@@ -202,15 +202,7 @@ class BrickerDelete(bpy.types.Operator):
 
             # return open layers to original
             setLayers(lastLayers)
-
-            # delete custom properties from source
-            customPropNames = ["frame_parent_cleared", "old_parent"]
-            for cPN in customPropNames:
-                try:
-                    del source[cPN]
-                except KeyError:
-                    pass
-
+            
         Caches.clearCache(cm, brick_mesh=False)
 
         # Scale brick height according to scale value applied to source
@@ -242,15 +234,6 @@ class BrickerDelete(bpy.types.Operator):
             bGroup = bpy.data.groups.get(Bricker_bricks_gn + "_f_" + str(cm.lastStartFrame))
         if bGroup and len(bGroup.objects) > 0:
             source.layers = list(bGroup.objects[0].layers)
-        # reset source parent to original parent object
-        old_parent = bpy.data.objects.get(source["old_parent"])
-        if old_parent:
-            select([source, old_parent], active=old_parent, only=True)
-            if source["frame_parent_cleared"] != -1:
-                origFrame = scn.frame_current
-                scn.frame_set(source["frame_parent_cleared"])
-                bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
-                scn.frame_set(origFrame)
         # reset cm properties
         cm.modelHeight = -1
         # reset source properties

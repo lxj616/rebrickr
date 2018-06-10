@@ -136,7 +136,6 @@ class BrickerBrickify(bpy.types.Operator):
 
         # get source and initialize values
         source = self.getObjectToBrickify(cm)
-        source["old_parent"] = ""
         source.cmlist_id = cm.id
         matrixDirty = matrixReallyIsDirty(cm)
         skipTransAndAnimData = cm.animated or (cm.splitModel or cm.lastSplitModel) and (matrixDirty or cm.buildIsDirty)
@@ -252,13 +251,9 @@ class BrickerBrickify(bpy.types.Operator):
                 sourceDup.constraints.remove(constraint)
             stopWatch(2, time.time()-ct, precision=5)
             ct = time.time()
-            # set up sourceDup["old_parent"] and remove sourceDup parent
-            sourceDup["frame_parent_cleared"] = -1
+            # remove sourceDup parent
             if sourceDup.parent:
-                sourceDup["old_parent"] = sourceDup.parent.name
-                sourceDup["frame_parent_cleared"] = scn.frame_current
-                select(sourceDup, active=True)
-                bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+                parent_clear(sourceDup)
             stopWatch(3, time.time()-ct, precision=5)
             ct = time.time()
             # send to new mesh
@@ -721,9 +716,9 @@ class BrickerBrickify(bpy.types.Operator):
             # duplicate source for current frame
             sourceDup = duplicateObj(self.source, link=True)
             sourceDup.name = "Bricker_" + cm.source_name + "_f_" + str(curFrame)
-            select(sourceDup, active=True, only=True)
             # # apply rigid body transform data
             # if cm.rigid_body:
+            #     select(sourceDup, active=True, only=True)
             #     bpy.ops.object.visual_transform_apply()
             #     bpy.ops.rigidbody.object_remove()
             #     scn.update()
@@ -734,7 +729,7 @@ class BrickerBrickify(bpy.types.Operator):
                 sourceDup.constraints.remove(constraint)
             # apply parent transformation
             if sourceDup.parent:
-                bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+                parent_clear(sourceDup)
             # apply animated transform data
             sourceDup.matrix_world = self.source.matrix_world
             sourceDup.animation_data_clear()
