@@ -55,7 +55,7 @@ class addAbsToMatObj(bpy.types.Operator):
             for mat_name in bpy.props.abs_plastic_materials:
                 mat = bpy.data.materials.get(mat_name)
                 if mat is not None and mat_name not in matObj.data.materials:
-                    matObj.material.append(mat)
+                    matObj.data.materials.append(mat)
 
         except:
             handle_exception()

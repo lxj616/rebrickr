@@ -19,14 +19,25 @@ Created by Christopher Gearhart
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from .colors import *
+# System imports
+# NONE!
+
+# Addon imports
 from .common import *
 from .general import *
-from .generate_lattice import *
-from .hashObject import *
-from .makeBricks import *
-from .transformData import *
-from .wrappers import *
-from .logo_obj import *
-from .mat_utils import *
-from .point_cache import *
+
+def clearExistingMaterials(obj, from_idx=0, from_data=False):
+    if from_data:
+        brick.data.materials.clear(1)
+    else:
+        select(obj, active=True)
+        obj.active_material_index = from_idx
+        for i in range(from_idx, len(obj.material_slots)):
+            # remove material slots
+            bpy.ops.object.material_slot_remove()
+
+def addMaterial(obj, mat, to_data=False):
+    obj.data.materials.append(mat)
+    if not to_data:
+        obj.material_slots[-1].link = 'OBJECT'
+        obj.material_slots[-1].material = mat

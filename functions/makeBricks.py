@@ -42,6 +42,7 @@ from .general import bounds
 from ..lib.caches import bricker_bm_cache
 from ..lib.abs_plastic_materials import getAbsPlasticMaterialNames
 from .makeBricks_utils import *
+from .mat_utils import *
 
 
 @timed_call('Time Elapsed')
@@ -217,12 +218,13 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
 
     # draw merged bricks
     for i, k2 in enumerate(keys):
-        if bricksDict[k2]["draw"] and bricksDict[k2]["parent"] == "self":
-            loc = strToList(k2)
-            # create brick based on the current brick info
-            drawBrick(cm, bricksDict, k2, loc, i, dimensions, zStep, bricksDict[k2]["size"], split, customData, brickScale, bricksCreated, allMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3)
-            # print status to terminal and cursor
-            old_percent = updateProgressBars(printStatus, cursorStatus, i/len(bricksDict.keys()), old_percent, "Building")
+        if bricksDict[k2]["parent"] != "self" or not bricksDict[k2]["draw"]:
+            continue
+        loc = strToList(k2)
+        # create brick based on the current brick info
+        drawBrick(cm, bricksDict, k2, loc, i, dimensions, zStep, bricksDict[k2]["size"], split, customData, brickScale, bricksCreated, allMeshes, logo, logo_details, mats, brick_mats, internalMat, randS1, randS2, randS3)
+        # print status to terminal and cursor
+        old_percent = updateProgressBars(printStatus, cursorStatus, i/len(bricksDict.keys()), old_percent, "Building")
 
     # end progress bars
     updateProgressBars(printStatus, cursorStatus, 1, 0, "Building", end=True)
@@ -239,23 +241,24 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
             # print status to terminal and cursor
             old_percent = updateProgressBars(printStatus, cursorStatus, i/len(bricksDict), old_percent, "Linking to Scene")
 
-            if bricksDict[key]["parent"] == "self" and bricksDict[key]["draw"]:
-                name = bricksDict[key]["name"]
-                brick = bpy.data.objects.get(name)
-                # create vert group for bevel mod (assuming only logo verts are selected):
-                vg = brick.vertex_groups.get("%(name)s_bvl" % locals())
-                if vg:
-                    brick.vertex_groups.remove(vg)
-                vg = brick.vertex_groups.new("%(name)s_bvl" % locals())
-                vertList = [v.index for v in brick.data.vertices if not v.select]
-                vg.add(vertList, 1, "ADD")
-                # set up remaining brick info if brick object just created
-                if clearExistingGroup or brick.name not in bGroup.objects.keys():
-                    bGroup.objects.link(brick)
-                brick.parent = parent
-                if not brick.isBrick:
-                    scn.objects.link(brick)
-                    brick.isBrick = True
+            if bricksDict[key]["parent"] != "self" or not bricksDict[key]["draw"]:
+                continue
+            name = bricksDict[key]["name"]
+            brick = bpy.data.objects.get(name)
+            # create vert group for bevel mod (assuming only logo verts are selected):
+            vg = brick.vertex_groups.get("%(name)s_bvl" % locals())
+            if vg:
+                brick.vertex_groups.remove(vg)
+            vg = brick.vertex_groups.new("%(name)s_bvl" % locals())
+            vertList = [v.index for v in brick.data.vertices if not v.select]
+            vg.add(vertList, 1, "ADD")
+            # set up remaining brick info if brick object just created
+            if clearExistingGroup or brick.name not in bGroup.objects.keys():
+                bGroup.objects.link(brick)
+            brick.parent = parent
+            if not brick.isBrick:
+                scn.objects.link(brick)
+                brick.isBrick = True
         # end progress bars
         updateProgressBars(printStatus, cursorStatus, 1, 0, "Linking to Scene", end=True)
     else:
@@ -284,10 +287,10 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
         if cm.materialType == "CUSTOM":
             mat = bpy.data.materials.get(cm.materialName)
             if mat is not None:
-                allBricksObj.data.materials.append(mat)
+                addMaterial(allBricksObj, mat)
         elif cm.materialType == "SOURCE" or (cm.materialType == "RANDOM" and len(brick_mats) > 0):
             for mat in mats:
-                allBricksObj.data.materials.append(mat)
+                addMaterial(allBricksObj, mat)
         # set parent
         allBricksObj.parent = parent
         # add bricks obj to scene and bricksCreated

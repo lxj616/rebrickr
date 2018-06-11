@@ -104,24 +104,20 @@ class BrickerApplyMaterial(bpy.types.Operator):
             BrickerApplyMaterial.applyRandomMaterial(scn, cm, context, bricks, bricksDict)
 
         if self.action != "RANDOM":
+            # get material from matName
             mat = bpy.data.materials.get(matName)
             if mat is None: self.report({"WARNING"}, "Specified material doesn't exist")
 
             for brick in bricks:
-                if self.action == "CUSTOM":
-                    if brick.data.materials:
-                        # clear existing materials
-                        brick.data.materials.clear(1)
-                    # Assign it to object
-                    brick.data.materials.append(mat)
-                elif self.action == "INTERNAL" and not isOnShell(cm, bricksDict, brick.name.split("__")[-1], zStep=zStep, shellDepth=cm.matShellDepth) and cm.matShellDepth <= cm.lastMatShellDepth:
-                    if len(brick.data.materials) > 0:
-                        brick.data.materials.pop(0)
-                    # Assign it to object
-                    brick.data.materials.append(mat)
-                    for i in range(len(brick.data.materials)-1):
-                        brick.data.materials.append(brick.data.materials.pop(0))
-
+                if self.action == "CUSTOM" or (self.action == "INTERNAL" and not isOnShell(cm, bricksDict, brick.name.split("__")[-1], zStep=zStep, shellDepth=cm.matShellDepth) and cm.matShellDepth <= cm.lastMatShellDepth):
+                    if len(brick.material_slots) == 0:
+                        # Assign material to object data
+                        brick.data.materials.append(mat)
+                        brick.material_slots[0].link = 'OBJECT'
+                    elif self.action == "CUSTOM" and len(brick.material_slots) > 1:
+                        clearExistingMaterials(brick, from_idx=1)
+                    # assign material to mat slot
+                    brick.material_slots[0].material = mat
                 # update bricksDict mat_name values for split models
                 if cm.lastSplitModel:
                     bricksDict[brick.name.split("__")[-1]]["mat_name"] = matName
@@ -143,23 +139,25 @@ class BrickerApplyMaterial(bpy.types.Operator):
         matObj = getMatObject(cm, typ="RANDOM")
         for color in matObj.data.materials.keys():
             brick_mats.append(color)
+        if len(brick_mats) == 0:
+            return
         randS0 = np.random.RandomState(0)
         # if model is split, apply a random material to each brick
         for i, brick in enumerate(bricks):
             lastMatSlots = list(brick.material_slots.keys())
 
-            if (cm.lastSplitModel or len(lastMatSlots) == 0) and len(brick_mats) > 0:
-                # clear existing materials
-                brick.data.materials.clear(1)
+            if cm.lastSplitModel or len(lastMatSlots) == 0:
                 # iterate seed and set random index
                 randS0.seed(cm.randomMatSeed + i)
                 randIdx = randS0.randint(0, len(brick_mats)) if len(brick_mats) > 1 else 0
                 # Assign random material to object
                 mat = bpy.data.materials.get(brick_mats[randIdx])
-                brick.data.materials.append(mat)
+                if len(lastMatSlots) == 0:
+                    addMaterial(brick, mat)
+                else:
+                    brick.material_slots[0].material = mat
                 if cm.lastSplitModel:
                     bricksDict[brick.name.split("__")[-1]]["mat_name"] = mat.name
-                continue
             elif len(lastMatSlots) == len(brick_mats):
                 brick_mats_dup = brick_mats.copy()
                 for i in range(len(lastMatSlots)):
@@ -172,4 +170,4 @@ class BrickerApplyMaterial(bpy.types.Operator):
                     # Assign random material to object
                     matName = brick_mats_dup.pop(randIdx)
                     mat = bpy.data.materials.get(matName)
-                    brick.data.materials[i] = mat
+                    brick.material_slots[i].material = mat
