@@ -65,26 +65,15 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
     ### CREATE BRICK ###
 
     # add brick with new mesh data at original location
-    if brickD["type"] == "CUSTOM 1":
-        m = customData[0].copy()
-    elif brickD["type"] == "CUSTOM 2":
-        m = customData[1].copy()
-    elif brickD["type"] == "CUSTOM 3":
-        m = customData[2].copy()
+    if brickD["type"].startswith("CUSTOM"):
+        m = customData[int(brickD["type"][-1]) - 1]
     else:
         # get brick mesh
-        bm = getBrickMesh(cm, brickD, randS3, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.circleVerts)
-        # create new mesh and send bm to it
-        meshName = brickD["name"] + 'Mesh' if split else "Bricker_junkMesh"
-        m = bpy.data.meshes.get(meshName)
-        if m is None:
-            m = bpy.data.meshes.new(meshName)
-        # send bmesh data to 'm' edit mesh
-        bm.to_mesh(m)
-    # center mesh origin
-    centerMeshOrigin(m, dimensions, brickSize)
+        m = getBrickData(cm, brickD, randS3, dimensions, brickSize, undersideDetail, logoToUse, cm.logoDetail, logo_details, cm.logoScale, cm.logoInset, useStud, cm.circleVerts)
+    if not split:
+        m = m.copy()
     # apply random rotation to edit mesh according to parameters
-    if cm.randomRot > 0: randomizeRot(cm.randomRot, randS2, brickSize, m)
+    randomRotMatrix = getRandomRotMatrix(cm.randomRot, randS2, brickSize, m) if cm.randomRot > 0 else None
     # get brick location
     locOffset = getRandomLoc(cm.randomLoc, randS2, dimensions["width"], dimensions["height"]) if cm.randomLoc > 0 else Vector((0, 0, 0))
     brickLoc = getBrickCenter(cm, bricksDict, key, loc, zStep) + locOffset
@@ -108,6 +97,9 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
             # add edge split modifier
             if useEdgeSplitMod(cm, brickD):
                 addEdgeSplitMod(brick)
+        # rotate brick by random rotation
+        if randomRotMatrix is not None:
+            brick.matrix_world = brick.matrix_world * randomRotMatrix
         # set brick location
         brick.location = brickLoc
         # set brick material
@@ -120,6 +112,9 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
         # append to bricksCreated
         bricksCreated.append(brick)
     else:
+        # apply rotation matrices to edit mesh
+        if randomRotMatrix is not None:
+            m.transform(randomRotMatrix)
         # transform brick mesh to coordinate on matrix
         m.transform(Matrix.Translation(brickLoc))
         # keep track of mats already use
@@ -206,8 +201,8 @@ def centerMeshOrigin(m, dimensions, size):
     m.transform(Matrix.Translation(-Vector(center)))
 
 
-def randomizeRot(randomRot, rand, brickSize, m):
-    """ rotate edit mesh 'm' randomized by randomRot """
+def getRandomRotMatrix(randomRot, rand, brickSize, m):
+    """ get rotation matrix randomized by randomRot """
     denom = 0.75 if max(brickSize) == 0 else brickSize[0] * brickSize[1]
     mult = randomRot / denom
     # calculate rotation angles in radians
@@ -219,8 +214,7 @@ def randomizeRot(randomRot, rand, brickSize, m):
     y_mat = Matrix.Rotation(y, 4, 'Y')
     z_mat = Matrix.Rotation(z, 4, 'Z')
     combined_mat = x_mat * y_mat * z_mat
-    # apply rotation matrices to edit mesh
-    m.transform(combined_mat)
+    return combined_mat
 
 
 def prepareLogoAndGetDetails(scn, cm, logo, dimensions):
@@ -290,6 +284,52 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
         bm = bms[rand.randint(0, len(bms))]
 
     return bm
+
+
+def getBrickData(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoToUse, logo_type, logo_details, logo_scale, logo_inset, useStud, circleVerts):
+    # get bm_cache_string
+    bm_cache_string = ""
+    if "CUSTOM" not in cm.brickType:
+        custom_logo_used = logoToUse is not None and logo_type == "CUSTOM"
+        bm_cache_string = json.dumps((cm.brickHeight, brickSize, undersideDetail,
+                                      cm.logoResolution if logoToUse is not None else None,
+                                      cm.logoDecimate if logoToUse is not None else None,
+                                      logo_inset if logoToUse is not None else None,
+                                      hash_object(logoToUse) if custom_logo_used else None,
+                                      logo_scale if custom_logo_used else None,
+                                      logo_type, useStud, cm.circleVerts,
+                                      brickD["type"], cm.loopCut, dimensions["gap"],
+                                      brickD["flipped"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None,
+                                      brickD["rotated"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None))
+
+    print(bm_cache_string)
+    # check for bmesh in cache
+    bms = bricker_bm_cache.get(bm_cache_string)
+    # if not found in bricker_bm_cache, create new brick mesh(es) and store to cache
+    if bms is None:
+        bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, type=brickD["type"], undersideDetail=undersideDetail, flip=brickD["flipped"], rotate90=brickD["rotated"], logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_inset=cm.logoInset, stud=useStud, circleVerts=cm.circleVerts, cm=cm)
+        if cm.brickType != "CUSTOM":
+            bricker_bm_cache[bm_cache_string] = bms
+
+    # create edit mesh for each bmesh
+    meshes = []
+    for i,bm in enumerate(bms):
+        # create new mesh and send bm to it
+        bmcs_hash = hash_str(bm_cache_string)
+        meshName = "%(bmcs_hash)s_%(i)s" % locals()
+        m = bpy.data.meshes.get(meshName)
+        # create new edit mesh and send bmesh data to it
+        if m is None:
+            m = bpy.data.meshes.new(meshName)
+            bm.to_mesh(m)
+            # center mesh origin
+            centerMeshOrigin(m, dimensions, brickSize)
+        meshes.append(m)
+
+    # pick edit mesh randomly from options
+    m0 = meshes[rand.randint(0, len(bms))] if len(bms) > 1 else meshes[0]
+
+    return m0
 
 
 def getMaterial(cm, bricksDict, key, size, brick_mats=None, seedInc=None):

@@ -300,7 +300,7 @@ def getDetailsAndBounds(source, cm=None):
     return source_details, dimensions
 
 
-def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=None):
+def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=None, brickSize=[1, 1, 3]):
     """ returns arguments for makeBricksDict function """
     source = source or bpy.data.objects.get(cm.source_name)
     customData = [None] * 3
@@ -314,10 +314,15 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
             # get custom object
             customObj = bpy.data.objects[customObjName]
             oldLayers = list(scn.layers) # store scene layers for later reset
-            setLayers(customObj.layers)
             # duplicate custom object
-            customObj0 = duplicate(customObj, link_to_scene=True)
+            customObjName = customObj.name + "_duplicate"
+            customObj1 = bpy.data.objects.get(customObjName)
+            customObj0 = duplicate(customObj)
+            # TODO: remove this object on delete action
+            safeUnlink(customObj0)
+            customObj0.name = customObjName
             customObj0.parent = None
+            # TODO: apply modifiers & shape keys here with Object.to_mesh?
             # apply transformation to custom object
             apply_transform(customObj0)
             # get custom object details
@@ -336,11 +341,14 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
             # apply transformation to custom object dup mesh
             customObj0.data.transform(t_mat)
             customObj0.data.transform(s_mat_x * s_mat_y * s_mat_z)
-            curCustomData = customObj0.data
-            # remove duplicate of custom object
-            bpy.data.objects.remove(customObj0, True)
-            setLayers(oldLayers)
-            customData[i] = curCustomData
+            # center mesh origin
+            centerMeshOrigin(customObj0.data, dimensions, brickSize)
+            # store fresh data to customData variable
+            customData[i] = customObj0.data
+            # remove extra object and replace old custom data
+            if customObj1 is not None:
+                customObj1.data = customObj0.data
+                bpy.data.objects.remove(customObj0)
     if cm.brickType != "CUSTOM":
         brickScale = Vector((dimensions["width"] + dimensions["gap"],
                     dimensions["width"] + dimensions["gap"],

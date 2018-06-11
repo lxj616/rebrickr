@@ -155,6 +155,7 @@ class BrickerApplyMaterial(bpy.types.Operator):
                 if len(lastMatSlots) == 0:
                     addMaterial(brick, mat)
                 else:
+                    brick.material_slots[0].link = 'OBJECT'
                     brick.material_slots[0].material = mat
                 if cm.lastSplitModel:
                     bricksDict[brick.name.split("__")[-1]]["mat_name"] = mat.name

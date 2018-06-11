@@ -231,13 +231,9 @@ class BrickerBrickify(bpy.types.Operator):
             storeTransformData(cm, None)
             trans_and_anim_data = []
 
-        ct = time.time()
-
         if self.action == "CREATE":
             # duplicate source
             sourceDup = duplicate(self.source, link_to_scene=True)
-            stopWatch(1, time.time()-ct, precision=5)
-            ct = time.time()
             sourceDup.name = self.source.name + "_duplicate"
             if cm.useLocalOrient:
                 sourceDup.rotation_mode = "XYZ"
@@ -249,13 +245,9 @@ class BrickerBrickify(bpy.types.Operator):
                 sourceDup.modifiers.remove(mod)
             for constraint in sourceDup.constraints:
                 sourceDup.constraints.remove(constraint)
-            stopWatch(2, time.time()-ct, precision=5)
-            ct = time.time()
             # remove sourceDup parent
             if sourceDup.parent:
                 parent_clear(sourceDup)
-            stopWatch(3, time.time()-ct, precision=5)
-            ct = time.time()
             # send to new mesh
             sourceDup.data = self.source.to_mesh(scn, True, 'PREVIEW')
             # apply transformation data
@@ -267,9 +259,6 @@ class BrickerBrickify(bpy.types.Operator):
             sourceDup = bpy.data.objects.get(n + "_duplicate")
         # if duplicate not created, sourceDup is just original source
         sourceDup = sourceDup or self.source
-
-        stopWatch(4, time.time()-ct, precision=5)
-        ct = time.time()
 
         # link sourceDup if it isn't in scene
         if sourceDup.name not in scn.objects.keys():
@@ -283,9 +272,6 @@ class BrickerBrickify(bpy.types.Operator):
             # set sourceDup model height for display in UI
             cm.modelHeight = sourceDup_details.dist.z
 
-        stopWatch(5, time.time()-ct, precision=5)
-        ct = time.time()
-
         # get parent object
         parent = bpy.data.objects.get(Bricker_parent_on)
         # if parent doesn't exist, get parent with new location
@@ -296,17 +282,11 @@ class BrickerBrickify(bpy.types.Operator):
         parent["loc_diff"] = self.source.location - parentLoc
         self.createdObjects.append(parent.name)
 
-        stopWatch(6, time.time()-ct, precision=5)
-        ct = time.time()
-
         # update refLogo
         logo_details, refLogo = self.getLogo(scn, cm, dimensions)
 
-        stopWatch(7, time.time()-ct, precision=5)
-        ct = time.time()
-
         # create new bricks
-        group_name = self.createNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, logo_details, self.action, curFrame=None, sceneCurFrame=None, origSource=self.source)
+        group_name = self.createNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, logo_details, self.action, split=cm.splitModel, curFrame=None, sceneCurFrame=None, origSource=self.source)
 
         bGroup = bpy.data.groups.get(group_name)
         if bGroup:
@@ -426,7 +406,7 @@ class BrickerBrickify(bpy.types.Operator):
 
             # create new bricks
             try:
-                group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, logo_details, self.action, curFrame=curFrame, sceneCurFrame=sceneCurFrame, origSource=self.source, selectCreated=False)
+                group_name = self.createNewBricks(source, parent, source_details, dimensions, refLogo, logo_details, self.action, split=cm.splitModel, curFrame=curFrame, sceneCurFrame=sceneCurFrame, origSource=self.source, selectCreated=False)
                 self.createdGroups.append(group_name)
             except KeyboardInterrupt:
                 self.report({"WARNING"}, "Process forcably interrupted with 'KeyboardInterrupt'")
@@ -468,7 +448,7 @@ class BrickerBrickify(bpy.types.Operator):
             BrickerBevel.runBevelAction(bricks, cm)
 
     @classmethod
-    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, logo_details, action, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", clearExistingGroup=True, selectCreated=False, printStatus=True, redraw=False, origSource=None):
+    def createNewBricks(self, source, parent, source_details, dimensions, refLogo, logo_details, action, split=True, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", clearExistingGroup=True, selectCreated=False, printStatus=True, redraw=False, origSource=None):
         """ gets/creates bricksDict, runs makeBricks, and caches the final bricksDict """
         scn = bpy.context.scene
         cm = cm or scn.cmlist[scn.cmlist_index]
@@ -507,7 +487,7 @@ class BrickerBrickify(bpy.types.Operator):
         if cm.materialType != "NONE" and (cm.materialIsDirty or cm.matrixIsDirty or cm.animIsDirty): bricksDict = updateMaterials(bricksDict, source, origSource, curFrame)
         # make bricks
         group_name = 'Bricker_%(n)s_bricks_f_%(curFrame)s' % locals() if curFrame is not None else "Bricker_%(n)s_bricks" % locals()
-        bricksCreated, bricksDict = makeBricks(source, parent, refLogo, logo_details, dimensions, bricksDict, cm=cm, split=cm.splitModel, brickScale=brickScale, customData=customData, group_name=group_name, clearExistingGroup=clearExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus, redraw=redraw)
+        bricksCreated, bricksDict = makeBricks(source, parent, refLogo, logo_details, dimensions, bricksDict, cm=cm, split=split, brickScale=brickScale, customData=customData, group_name=group_name, clearExistingGroup=clearExistingGroup, frameNum=curFrame, cursorStatus=updateCursor, keys=keys, printStatus=printStatus, redraw=redraw)
         if selectCreated and len(bricksCreated) > 0:
             select(bricksCreated, active=bricksCreated[0], only=True)
         # store current bricksDict to cache
