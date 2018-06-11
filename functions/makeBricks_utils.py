@@ -156,6 +156,7 @@ def useEdgeSplitMod(cm, brickD):
 def addEdgeSplitMod(obj):
     """ Add edge split modifier """
     eMod = obj.modifiers.new('Edge Split', 'EDGE_SPLIT')
+    eMod.split_angle = math.radians(44)
 
 
 def mergeWithAdjacentBricks(cm, brickD, bricksDict, key, keysNotChecked, defaultSize, zStep, randS1, mergeVertical=True):
@@ -199,7 +200,7 @@ def centerMeshOrigin(m, dimensions, size):
     scalar = Vector((size[0] * 2 - 1,
                      size[1] * 2 - 1,
                      0))
-    # calculate center and rotate bm about center
+    # calculate center
     center = (vec_mult(d0, scalar) - d0) / 2
     # apply translation matrix to center mesh
     m.transform(Matrix.Translation(-Vector(center)))
@@ -232,15 +233,14 @@ def prepareLogoAndGetDetails(scn, cm, logo, dimensions):
         setLayers(logo.layers)
         logo.hide = False
     # duplicate logo object
-    logo = duplicateObj(logo, link_to_scene=True)
+    logo = duplicate(logo, link_to_scene=True)
     if cm.logoDetail != "LEGO":
         # disable modifiers for logo object
         for mod in logo.modifiers:
             mod.show_viewport = False
         # apply logo object transformation
         logo.parent = None
-        select(logo, active=True, only=True)
-        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        apply_transform(logo)
         # set scene layers back to original active layers
         setLayers(oldLayers)
     safeUnlink(logo)
@@ -272,8 +272,8 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
                                       logo_inset if logoToUse is not None else None,
                                       hash_object(logoToUse) if custom_logo_used else None,
                                       logo_scale if custom_logo_used else None,
-                                      useStud, cm.circleVerts, brickD["type"],
-                                      cm.loopCut, dimensions["gap"],
+                                      logo_type, useStud, cm.circleVerts,
+                                      brickD["type"], cm.loopCut, dimensions["gap"],
                                       brickD["flipped"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None,
                                       brickD["rotated"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None))
 
@@ -314,7 +314,7 @@ def getMaterial(cm, bricksDict, key, size, brick_mats=None, seedInc=None):
         if len(matsL) > 1:
             matName = most_common(matsL)
         mat = bpy.data.materials.get(matName)
-    elif cm.materialType == "RANDOM" and len(brick_mats) > 0:
+    elif cm.materialType == "RANDOM" and brick_mats is not None and len(brick_mats) > 0:
         if len(brick_mats) > 1:
             randState = np.random.RandomState(0)
             randState.seed(cm.randomMatSeed + seedInc)

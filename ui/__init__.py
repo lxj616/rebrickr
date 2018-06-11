@@ -161,19 +161,31 @@ class BrickModelsPanel(Panel):
                 else:
                     row = col1.row(align=True)
                     if obj:
-                        row.active = obj.type == 'MESH'
+                        row.active = obj.type == 'MESH' and obj.rigid_body is None
                     else:
                         row.active = False
                     row.operator("bricker.brickify", text="Brickify Animation", icon="MOD_REMESH")
+                    if obj and obj.rigid_body is not None:
+                        col = layout.column(align=True)
+                        col.scale_y = 0.7
+                        col.label("Bake rigid body transforms")
+                        col.label("to keyframes (SPACEBAR >")
+                        col.label("Bake To Keyframes).")
             # if use animation is not selected, draw modeling options
             else:
                 if not cm.animated and not cm.modelCreated:
                     row = col1.row(align=True)
                     if obj:
-                        row.active = obj.type == 'MESH'
+                        row.active = obj.type == 'MESH' and obj.rigid_body is None
                     else:
                         row.active = False
                     row.operator("bricker.brickify", text="Brickify Object", icon="MOD_REMESH")
+                    if obj and obj.rigid_body is not None:
+                        col = layout.column(align=True)
+                        col.scale_y = 0.7
+                        col.label("Bake rigid body transforms")
+                        col.label("to keyframes (SPACEBAR >")
+                        col.label("Bake To Keyframes).")
                 else:
                     row = col1.row(align=True)
                     row.operator("bricker.delete", text="Delete Brickified Model", icon="CANCEL")
@@ -273,22 +285,6 @@ class AnimationPanel(Panel):
                         if totalSkipped > 0:
                             row = col1.row(align=True)
                             row.label("Frames %(s)s-%(e)s outside of %(t)s simulation" % locals())
-                        numF = (int(e))-(int(s))+1
-                        numF = (cm.stopFrame - cm.startFrame + 1) - totalSkipped
-                        if numF == 1:
-                            numTimes = "once"
-                        elif numF == 2:
-                            numTimes = "twice"
-                        else:
-                            numTimes = "%(numF)s times" % locals()
-                        row = col1.row(align=True)
-                        row.label("%(t)s simulation will bake %(numTimes)s" % locals())
-                        # calculate number of frames to bake
-                        totalFramesToBake = 0
-                        for i in range(cm.startFrame, cm.stopFrame + 1):
-                            totalFramesToBake += i - mod.point_cache.frame_start + 1
-                        row = col1.row(align=True)
-                        row.label("Num frames to bake: %(totalFramesToBake)s" % locals())
             if (cm.stopFrame - cm.startFrame > 10 and not cm.animated) or self.appliedMods:
                 col = layout.column(align=True)
                 col.scale_y = 0.7
@@ -324,7 +320,7 @@ class ModelTransformPanel(Panel):
         col = layout.column(align=True)
         row = col.row(align=True)
 
-        if not cm.lastSplitModel:
+        if not (cm.animated or cm.lastSplitModel):
             col.scale_y = 0.7
             row.label("Use Blender's built-in")
             row = col.row(align=True)
@@ -875,7 +871,6 @@ class DetailingPanel(Panel):
             row.prop(cm, "bevelAdded", text="Bevel Bricks")
             return
         try:
-            ff = cm.lastStartFrame
             testBrick = getBricks()[0]
             testBrick.modifiers[testBrick.name + '_bvl']
             row.prop(cm, "bevelWidth", text="Width")
@@ -991,7 +986,7 @@ class BrickDetailsPanel(Panel):
 
     @classmethod
     def poll(self, context):
-        if bpy.props.bricker_developer_mode < 1:
+        if bpy.props.Bricker_developer_mode < 1:
             return False
         if not settingsCanBeDrawn():
             return False
@@ -1088,10 +1083,11 @@ class ExportPanel(Panel):
 
         col = layout.column(align=True)
         col.operator("bricker.bake_model", icon="OBJECT_DATA")
+        col.operator("bricker.duplicate_baked", icon="OBJECT_DATA")
         col = layout.column(align=True)
         col.prop(cm, "exportPath", text="")
         col = layout.column(align=True)
-        if bpy.props.bricker_developer_mode > 0:
+        if bpy.props.Bricker_developer_mode > 0:
             row = col.row(align=True)
             row.operator("bricker.export_model_data", text="Export Model Data", icon="EXPORT")
         if (cm.modelCreated or cm.animated) and cm.brickType != "CUSTOM":

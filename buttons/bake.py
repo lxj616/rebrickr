@@ -55,15 +55,10 @@ class bakeModel(bpy.types.Operator):
 
     def execute(self, context):
         scn, cm, n = getActiveContextInfo()
-        # delete parent/source/dup
-        objsToDelete = [bpy.data.objects.get("Bricker_%(n)s_parent" % locals()),
-                        bpy.data.objects.get(n),
-                        bpy.data.objects.get("%(n)s_duplicate" % locals())]
-        for obj in objsToDelete:
-            bpy.data.objects.remove(obj, do_unlink=True)
         # set isBrick/isBrickifiedObject to False
         bricks = getBricks()
-        select(bricks, only=True)
+        # apply object transformation
+        parent_clear(bricks)
         if cm.lastSplitModel:
             for brick in bricks:
                 brick.isBrick = False
@@ -71,6 +66,12 @@ class bakeModel(bpy.types.Operator):
         else:
             bricks[0].isBrickifiedObject = False
             bricks[0].name = "%(n)s_bricks" % locals()
+        # delete parent/source/dup
+        objsToDelete = [bpy.data.objects.get("Bricker_%(n)s_parent" % locals()),
+                        bpy.data.objects.get(n),
+                        bpy.data.objects.get("%(n)s_duplicate" % locals())]
+        for obj in objsToDelete:
+            bpy.data.objects.remove(obj, do_unlink=True)
         # delete brick group
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         brickGroup = bpy.data.groups.get(Bricker_bricks_gn)
@@ -80,4 +81,41 @@ class bakeModel(bpy.types.Operator):
         cm.modelCreated = False
         cmlist_actions.removeItem(self, scn.cmlist_index)
         scn.cmlist_index = -1
+        return{"FINISHED"}
+
+
+class duplicateBaked(bpy.types.Operator):
+    """Duplicate selected objects (selected Bricker bricks/models will be duplicated and baked)"""
+    bl_idname = "bricker.duplicate_baked"
+    bl_label = "Duplicate and Bake"
+    bl_options = {"REGISTER"}
+
+    ################################################
+    # Blender Operator methods
+
+    @classmethod
+    def poll(self, context):
+        """ ensures operator can execute (if not, returns false) """
+        return True
+
+    def execute(self, context):
+        scn = bpy.context.scene
+        newObjs = []
+        # set isBrick/isBrickifiedObject to False
+        for obj in bpy.context.selected_objects:
+            if obj.hide:
+                continue
+            obj0 = duplicate(obj, link_to_scene=True)
+            if obj0.isBrick:
+                obj0.isBrick = False
+                obj0.name = obj0.name[8:]
+            elif obj0.isBrickifiedObject:
+                obj0.isBrickifiedObject = False
+                cm = getItemByID(scn.cmlist, obj0.cmlist_id)
+                n = cm.source_name
+                obj0.name = "%(n)s_bricks" % locals()
+            obj0.cmlist_id = -1
+            newObjs.append(obj0)
+        parent_clear(newObjs)
+        bpy.ops.transform.translate('INVOKE_DEFAULT')
         return{"FINISHED"}

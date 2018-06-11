@@ -137,21 +137,21 @@ def makeLogoVariations(cm, dimensions, size, direction, all_vars, logo, logo_typ
     # get logo rotation angle based on size of brick
     rot_mult = 180
     rot_vars = 2
-    rot_add = 0
+    rot_add = 90
     if direction != "":
         directions = ["X+", "Y+", "X-", "Y-"]
-        rot_add = 90 * (directions.index(direction) + 1)
+        rot_add += 90 * (directions.index(direction) + 1)
         rot_vars = 1
     elif size[0] == 1 and size[1] == 1:
         rot_mult = 90
         rot_vars = 4
     elif size[0] == 2 and size[1] > 2:
-        rot_add = 90
+        rot_add += 90
     elif ((size[1] == 2 and size[0] > 2) or
           (size[0] == 2 and size[1] == 2)):
         pass
     elif size[0] == 1:
-        rot_add = 90
+        rot_add += 90
     # set zRot to random rotation angle
     if all_vars:
         zRots = [i * rot_mult + rot_add for i in range(rot_vars)]
@@ -181,12 +181,15 @@ def makeLogoVariations(cm, dimensions, size, direction, all_vars, logo, logo_typ
         # rotate logo around stud
         if zRot != 0: m0.transform(Matrix.Rotation(math.radians(zRot), 4, 'Z'))
         # create logo for each stud and append to bm
+        gap_base = dimensions["gap"] * Vector(((xR1 - xR0 - 1) / 2, (yR1 - yR0 - 1) / 2))
         for x in range(xR0, xR1):
             for y in range(yR0, yR1):
                 # create duplicate of rotated logo
                 m1 = m0.copy()
+                # adjust gap based on distance from first stud
+                gap = gap_base + dimensions["gap"] * Vector((x / xR1, y / yR1))
                 # translate logo into place
-                m1.transform(Matrix.Translation((x * xyOffset, y * xyOffset, zOffset)))
+                m1.transform(Matrix.Translation((x * xyOffset - gap.x, y * xyOffset - gap.y, zOffset)))
                 # add transformed mesh to bm mesh
                 bms[i].from_mesh(m1)
                 bpy.data.meshes.remove(m1, do_unlink=True)

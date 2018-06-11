@@ -1,7 +1,7 @@
 bl_info = {
     "name"        : "Bricker",
     "author"      : "Christopher Gearhart <chris@bblanimation.com>",
-    "version"     : (1, 4, 0),
+    "version"     : (1, 4, 2),
     "blender"     : (2, 79, 0),
     "description" : "Turn any mesh into a 3D brick sculpture or simulation with the click of a button",
     "location"    : "View3D > Tools > Bricker",
@@ -10,7 +10,7 @@ bl_info = {
     "tracker_url" : "https://github.com/bblanimation/rebrickr/issues",
     "category"    : "Object"}
 
-developer_mode = 1  # NOTE: Set to 0 for release, 1 for exposed dictionary, 2 for testBrickGenerators button
+developer_mode = 1  # NOTE: Set to 0 for release, 1 for exposed dictionary and access to safe scene, 2 for testBrickGenerators button
 # NOTE: Disable "LEGO Logo" for releases
 
 """
@@ -47,6 +47,7 @@ from .buttons import *
 from .buttons.customize import *
 from .operators import *
 from .lib.preferences import *
+# from .lib.rigid_body_props import *
 from .lib.Brick.legal_brick_sizes import getLegalBrickSizes
 from .lib import keymaps
 
@@ -67,13 +68,16 @@ def register():
 
     bpy.props.bricker_version = str(bl_info["version"])[1:-1].replace(", ", ".")
 
-    bpy.props.bricker_developer_mode = developer_mode
+    bpy.props.Bricker_developer_mode = developer_mode
 
     bpy.types.Object.protected = BoolProperty(name='protected', default=False)
     bpy.types.Object.isBrickifiedObject = BoolProperty(name='Is Brickified Object', default=False)
     bpy.types.Object.isBrick = BoolProperty(name='Is Brick', default=False)
     bpy.types.Object.cmlist_id = IntProperty(name='Custom Model ID', description="ID of cmlist entry to which this object refers", default=-1)
     bpy.types.Material.num_averaged = IntProperty(name='Colors Averaged', description="Number of colors averaged together", default=0)
+
+    # # backup rigid body settings
+    # bpy.types.Object.rigid_body_settings = PointerProperty(type=Bricker_RigidBodySettings)
 
     bpy.types.Scene.Bricker_runningBlockingOperation = BoolProperty(default=False)
     bpy.types.Scene.Bricker_printTimes = BoolProperty(default=False)
@@ -98,8 +102,7 @@ def register():
     wm = bpy.context.window_manager
     # Note that in background mode (no GUI available), keyconfigs are not available either, so we have
     # to check this to avoid nasty errors in background case.
-    kc = wm.keyconfigs.addon
-    if kc:
+    if wm.keyconfigs.addon:
         km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
         keymaps.addKeymaps(km)
         addon_keymaps.append(km)
@@ -134,7 +137,7 @@ def unregister():
     del bpy.types.Object.isBrick
     del bpy.types.Object.isBrickifiedObject
     del bpy.types.Object.protected
-    del bpy.props.bricker_developer_mode
+    del bpy.props.Bricker_developer_mode
     del bpy.props.bricker_version
     del bpy.props.bricker_undoUpdating
     del bpy.props.bricker_initialized

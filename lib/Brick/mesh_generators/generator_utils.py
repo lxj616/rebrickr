@@ -40,8 +40,10 @@ def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d,
     if hollow is None:
         hollow = brickSize[2] == 1 or min(brickSize[:2]) != 1
     bAndPBrick = flatBrickType(cm) and brickSize[2] == 3
+    minS = min(brickSize[:2])
     sides = [0, 1] + ([0, 0, 1, 1] if brickSize[0] < brickSize[1] else [1, 1, 0, 0])
-    z1 = -d.z if not hollow else d.z - thick.z - dimensions["support_height_triple" if bAndPBrick else "support_height"]
+    sides2 = [0, 1] + ([1, 1, 0, 0] if brickSize[0] < brickSize[1] else [0, 0, 1, 1])
+    z1 = d.z - height * 0.99975 if minS > 2 else (d.z - thick.z - dimensions["support_height_triple" if bAndPBrick else "support_height"])
     z2 = d.z - thick.z
     r = dimensions["stud_radius"] if min(brickSize[:2]) != 1 else dimensions["bar_radius"] - (dimensions["tube_thickness"] if hollow else 0)
     h = height - thick.z
@@ -55,11 +57,13 @@ def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d,
     # add supports for each appropriate underside location
     for xNum in range(startX, brickSize[0] - 1):
         for yNum in range(startY, brickSize[1] - 1):
+            if minS > 2 and (xNum + yNum) % 2 == 1:
+                continue
             # add support tubes
             tubeX = (xNum * d.x * 2) + d.x * (2 if brickSize[0] == 1 else 1)
             tubeY = (yNum * d.y * 2) + d.y * (2 if brickSize[1] == 1 else 1)
             if hollow:
-                bme, tubeVerts = makeTube(r, h, t, circleVerts, co=Vector((tubeX, tubeY, tubeZ)), botFace=True, topFace=False, bme=bme)
+                bme, tubeVerts = makeTube(r, h, t, circleVerts, co=Vector((tubeX, tubeY, tubeZ)), botFace=True, topFace=False, loopCutTop=cm.loopCut, bme=bme)
                 selectVerts(tubeVerts["outer"]["top"] + tubeVerts["inner"]["top"])
                 allTopVerts += tubeVerts["outer"]["top"] + tubeVerts["inner"]["top"]
             else:
@@ -69,32 +73,46 @@ def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d,
             # add support beams next to odd tubes
             if not add_beams:
                 continue
-            if brickSize[0] > brickSize[1]:
-                if brickSize[0] == 3 or xNum % 2 == brickSize[1] - min(brickSize[:2]) + 1 or (brickSize == [8, 1, 3] and xNum in [0, brickSize[0] - 2]):
+            if minS % 2 == 0 and (brickSize[0] > brickSize[1] or minS > 2):
+                if brickSize[0] == 3 or xNum % 2 == 1 or (brickSize == [8, 1, 3] and xNum in [0, brickSize[0] - 2]):
                     # initialize x, y
                     x1 = tubeX - (dimensions["support_width"] / 2)
                     x2 = tubeX + (dimensions["support_width"] / 2)
                     y1 = tubeY + r
-                    y2 = tubeY + d.y * min(brickSize[:2]) - thick.x
-                    y3 = tubeY - d.y * min(brickSize[:2]) + thick.y
+                    y2 = tubeY + d.y * min([minS, 4]) - thick.y - (0 if yNum >= brickSize[1] - 3 else dimensions["tube_thickness"])
+                    y3 = tubeY - d.y * min([minS, 4]) + thick.y
                     y4 = tubeY - r
-                    # CREATING SUPPORT BEAM
-                    cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=sides, bme=bme)
-                    cubeVerts2 = makeCube(Vector((x1, y3, z1)), Vector((x2, y4, z2)), sides=sides, bme=bme)
-                    allTopVerts += cubeVerts1[4:] + cubeVerts2[4:]
-            if brickSize[1] > brickSize[0]:
-                if brickSize[1] == 3 or yNum % 2 == brickSize[0] - min(brickSize[:2]) + 1 or (brickSize == [1, 8, 3] and yNum in [0, brickSize[1] - 2]):
+                    # create support beam
+                    curSides = sides if brickSize[0] > brickSize[1] else sides2
+                    if minS == 1:
+                        cubeVerts = makeCube(Vector((x1, y3, z1)), Vector((x2, y2, z2)), sides=curSides, bme=bme)
+                        allTopVerts += cubeVerts[4:]
+                    else:
+                        cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=curSides, bme=bme)
+                        allTopVerts += cubeVerts1[4:]
+                        if yNum <= 1:
+                            cubeVerts2 = makeCube(Vector((x1, y3, z1)), Vector((x2, y4, z2)), sides=curSides, bme=bme)
+                            allTopVerts += cubeVerts2[4:]
+            if minS % 2 == 0 and (brickSize[1] > brickSize[0] or minS > 2):
+                if brickSize[1] == 3 or yNum % 2 == 1 or (brickSize == [1, 8, 3] and yNum in [0, brickSize[1] - 2]):
                     # initialize x, y
                     x1 = tubeX + r
-                    x2 = tubeX + d.x * min(brickSize[:2]) - thick.x
-                    x3 = tubeX - d.x * min(brickSize[:2]) + thick.y
+                    x2 = tubeX + d.x * min([minS, 4]) - thick.x - (0 if xNum >= brickSize[0] - 3 else dimensions["tube_thickness"])
+                    x3 = tubeX - d.x * min([minS, 4]) + thick.x
                     x4 = tubeX - r
                     y1 = tubeY - (dimensions["support_width"] / 2)
                     y2 = tubeY + (dimensions["support_width"] / 2)
-                    # CREATING SUPPORT BEAM
-                    cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=sides, bme=bme)
-                    cubeVerts2 = makeCube(Vector((x3, y1, z1)), Vector((x4, y2, z2)), sides=sides, bme=bme)
-                    allTopVerts += cubeVerts1[4:] + cubeVerts2[4:]
+                    curSides = sides if brickSize[1] > brickSize[0] else sides2
+                    # create support beam
+                    if minS == 1:
+                        cubeVerts = makeCube(Vector((x3, y1, z1)), Vector((x2, y2, z2)), sides=curSides, bme=bme)
+                        allTopVerts += cubeVerts[4:]
+                    else:
+                        cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=curSides, bme=bme)
+                        allTopVerts += cubeVerts1[4:]
+                        if xNum <= 1:
+                            cubeVerts2 = makeCube(Vector((x3, y1, z1)), Vector((x4, y2, z2)), sides=curSides, bme=bme)
+                            allTopVerts += cubeVerts2[4:]
     if type == "SLOPE":
         cutVerts(dimensions, height, brickSize, allTopVerts, d, scalar, thick, bme)
 
@@ -110,7 +128,7 @@ def cutVerts(dimensions, height, brickSize, verts, d, scalar, thick, bme):
         v.co.z = fac * minZ + (1-fac) * v.co.z
 
 
-def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme):
+def addInnerCylinders(dimensions, brickSize, circleVerts, d, edgeXp, edgeXn, edgeYp, edgeYn, bme, loopCut=False):
     thickZ = dimensions["thickness"]
     # make small cylinders
     botVertsDofDs = {}
@@ -119,13 +137,15 @@ def addInnerCylinders(dimensions, brickSize, circleVerts, d, v5, v6, v7, v8, bme
     h = thickZ * 0.99
     for xNum in range(brickSize[0]):
         for yNum in range(brickSize[1]):
-            bme, innerCylinderVerts = makeCylinder(r, h, N, co=Vector((xNum*d.x*2,yNum*d.y*2,d.z - thickZ + h/2)), botFace=False, flipNormals=True, bme=bme)
+            bme, innerCylinderVerts = makeCylinder(r, h, N, co=Vector((xNum*d.x*2,yNum*d.y*2,d.z - thickZ + h/2)), loopCut=loopCut, botFace=False, flipNormals=True, bme=bme)
+            if loopCut:
+                select(innerCylinderVerts["mid"])
             botVertsD = createVertListDict(innerCylinderVerts["bottom"])
             botVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = botVertsD
-    connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, botVertsDofDs, xNum, yNum, bme, step=1)
+    connectCirclesToSquare(dimensions, brickSize, circleVerts, edgeXp, edgeXn, edgeYp, edgeYn, botVertsDofDs, xNum, yNum, bme, step=1)
 
 
-def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, v5=None, v6=None, v7=None, v8=None, hollow=False, botFace=True, loopCut=False):
+def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, edgeXp=None, edgeXn=None, edgeYp=None, edgeYn=None, hollow=False, botFace=True, loopCut=False):
     r = dimensions["bar_radius" if hollow else "stud_radius"]
     h = dimensions["stud_height"]
     t = dimensions["stud_radius"] - dimensions["bar_radius"]
@@ -138,143 +158,126 @@ def addStuds(dimensions, height, brickSize, brickType, circleVerts, bme, v5=None
             y = dimensions["width"] * yNum
             if hollow:
                 _, studVerts = makeTube(r, h, t, circleVerts, co=Vector((0, 0, z)), loopCut=loopCut, botFace=botFace, bme=bme)
-                if v5 is not None: bme.faces.new(studVerts["inner"]["bottom"])
+                if edgeXp is not None: bme.faces.new(studVerts["inner"]["bottom"])
                 select(studVerts["inner"]["mid" if loopCut else "bottom"] + studVerts["outer"]["mid" if loopCut else "bottom"])
             else:
                 # split stud at center by creating cylinder and circle and joining them (allows Bevel to work correctly)
                 _, studVerts = makeCylinder(r, h, circleVerts, co=Vector((x, y, z)), botFace=False, loopCut=loopCut, bme=bme)
                 select(studVerts["mid" if loopCut else "bottom"])
-            if v5 is not None:
+            if edgeXp is not None:
                 topVertsD = createVertListDict2(studVerts["outer"]["bottom"] if hollow else studVerts["bottom"])
                 topVertsDofDs["%(xNum)s,%(yNum)s" % locals()] = topVertsD
-    if v5 is not None:
-        connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, topVertsDofDs, xNum, yNum, bme, step=-1)
+    if edgeXp is not None:
+        connectCirclesToSquare(dimensions, brickSize, circleVerts, edgeXp, edgeXn, edgeYp, edgeYn, topVertsDofDs, xNum, yNum, bme, step=-1)
     return studVerts
 
 
-def connectCirclesToSquare(dimensions, brickSize, circleVerts, v5, v6, v7, v8, vertsDofDs, xNum, yNum, bme, step=1):
+def connectCirclesToSquare(dimensions, brickSize, circleVerts, edgeXp, edgeXn, edgeYp, edgeYn, vertsDofDs, xNum, yNum, bme, step=1):
+    # joinVerts = {"Y+":[v7, v8], "Y-":[v6, v5], "X+":[v7, v6], "X-":[v8, v5]}
     thickZ = dimensions["thickness"]
-    # Make corner faces
-    vList = vertsDofDs["0,0"]["y-"] + vertsDofDs["0,0"]["--"] + vertsDofDs["0,0"]["x-"]
-    for i in range(1, len(vList)):
-        bme.faces.new([vList[i], vList[i-1], v5][::step])
-    vList = vertsDofDs[str(xNum) + "," + str(0)]["x+"] + vertsDofDs[str(xNum) + "," + str(0)]["+-"] + vertsDofDs[str(xNum) + "," + str(0)]["y-"]
-    for i in range(1, len(vList)):
-        bme.faces.new([vList[i], vList[i-1], v6][::step])
-    vList = vertsDofDs[str(xNum) + "," + str(yNum)]["y+"] + vertsDofDs[str(xNum) + "," + str(yNum)]["++"] + vertsDofDs[str(xNum) + "," + str(yNum)]["x+"]
-    for i in range(1, len(vList)):
-        bme.faces.new([vList[i], vList[i-1], v7][::step])
-    vList = vertsDofDs[str(0) + "," + str(yNum)]["x-"] + vertsDofDs[str(0) + "," + str(yNum)]["-+"] + vertsDofDs[str(0) + "," + str(yNum)]["y+"]
-    for i in range(1, len(vList)):
-        bme.faces.new([vList[i], vList[i-1], v8][::step])
+    sX = brickSize[0]
+    sY = brickSize[1]
+    # Make corner faces if few cylinder verts
+    v5 = edgeYn[-1]
+    v6 = edgeYn[0]
+    v7 = edgeYp[0]
+    v8 = edgeYp[-1]
+    l = "0,0"
+    if len(vertsDofDs[l]["--"]) == 0:
+        vList = bme.faces.new((vertsDofDs[l]["y-"][0], vertsDofDs[l]["x-"][0], v5)[::-step])
+    l = "%(xNum)s,0" % locals()
+    if len(vertsDofDs[l]["+-"]) == 0:
+        vList = bme.faces.new((vertsDofDs[l]["x+"][0], vertsDofDs[l]["y-"][0], v6)[::-step])
+    l = "%(xNum)s,%(yNum)s" % locals()
+    if len(vertsDofDs[l]["++"]) == 0:
+        vList = bme.faces.new((vertsDofDs[l]["y+"][0], vertsDofDs[l]["x+"][0], v7)[::-step])
+    l = "0,%(yNum)s" % locals()
+    if len(vertsDofDs[l]["-+"]) == 0:
+        vList = bme.faces.new((vertsDofDs[l]["x-"][0], vertsDofDs[l]["y+"][0], v8)[::-step])
 
     # Make edge faces
-    joinVerts = {"Y+":[v7, v8], "Y-":[v6, v5], "X+":[v7, v6], "X-":[v8, v5]}
-    for xNum in range(brickSize[0]):
-        vertD = vertsDofDs[str(xNum) + "," + str(yNum)]
-        joinVerts["Y+"].append(vertD["y+"][0])
-        vertD = vertsDofDs[str(xNum) + "," + str(0)]
-        joinVerts["Y-"].append(vertD["y-"][0])
-    for yNum in range(brickSize[1]):
-        vertD = vertsDofDs[str(xNum) + "," + str(yNum)]
-        joinVerts["X+"].append(vertD["x+"][0])
-        vertD = vertsDofDs[str(0) + "," + str(yNum)]
-        joinVerts["X-"].append(vertD["x-"][0])
+    joinVerts = {"Y+":edgeYp, "Y-":edgeYn, "X+":edgeXp, "X-":edgeXn}
+    # Make edge faces on Y- and Y+ sides
+    for xNum in range(sX):
+        vertDpos = vertsDofDs[str(xNum) + "," + str(yNum)]
+        vertDneg = vertsDofDs[str(xNum) + "," + str(0)]
+        for sign, vertD, dir, func in [["+", vertDpos, 1, math.ceil], ["-", vertDneg, -1, math.floor]]:
+            side = "Y%(sign)s" % locals()
+            verts = vertD["-%(sign)s" % locals()]
+            if xNum > 0:
+                joinVerts[side].append(vertD["x-"][0])
+                for v in verts[::dir]:
+                    joinVerts[side].append(v)
+            else:
+                for v in verts[::dir][func(len(verts)/2) - (1 if dir == 1 else 0):]:
+                    joinVerts[side].append(v)
+            joinVerts[side].append(vertD["y%(sign)s" % locals()][0])
+            verts = vertD["+%(sign)s" % locals()]
+            if xNum < sX - 1:
+                for v in verts[::dir]:
+                    joinVerts[side].append(v)
+                joinVerts[side].append(vertD["x+"][0])
+            else:
+                for v in verts[::dir][:func(len(verts)/2) + (1 if dir == -1 else 0)]:
+                    joinVerts[side].append(v)
+    # Make edge faces on X- and X+ sides
+    for yNum in range(sY):
+        vertDpos = vertsDofDs[str(xNum) + "," + str(yNum)]
+        vertDneg = vertsDofDs[str(0) + "," + str(yNum)]
+        for sign, vertD, dir, func in [["+", vertDpos, -1, math.floor], ["-", vertDneg, 1, math.ceil]]:
+            side = "X%(sign)s" % locals()
+            verts = vertD["%(sign)s-" % locals()]
+            if yNum > 0:
+                joinVerts[side].append(vertD["y-"][0])
+                for v in verts[::dir]:
+                    joinVerts[side].append(v)
+            else:
+                for v in verts[::dir][func(len(verts)/2) - (1 if dir == 1 else 0):]:
+                    joinVerts[side].append(v)
+            joinVerts[side].append(vertD["x%(sign)s" % locals()][0])
+            verts = vertD["%(sign)s+" % locals()]
+            if yNum < sY - 1:
+                for v in verts[::dir]:
+                    joinVerts[side].append(v)
+                joinVerts[side].append(vertD["y+"][0])
+            else:
+                for v in verts[::dir][:func(len(verts)/2) + (1 if dir == -1 else 0)]:
+                    joinVerts[side].append(v)
     for item in joinVerts:
         step0 = -step if item in ["Y+", "X-"] else step
         bme.faces.new(joinVerts[item][::step0])
 
-    # Make in-between-insets faces along x axis
-    for xNum in range(1, brickSize[0]):
-        for yNum in range(brickSize[1]):
-            vList1 = vertsDofDs[str(xNum-1) + "," + str(yNum)]["y+"] + vertsDofDs[str(xNum-1) + "," + str(yNum)]["++"] + vertsDofDs[str(xNum-1) + "," + str(yNum)]["x+"] + vertsDofDs[str(xNum-1) + "," + str(yNum)]["+-"] + vertsDofDs[str(xNum-1) + "," + str(yNum)]["y-"]
-            vList2 = vertsDofDs[str(xNum) + "," + str(yNum)]["y+"] + vertsDofDs[str(xNum) + "," + str(yNum)]["-+"][::-1] + vertsDofDs[str(xNum) + "," + str(yNum)]["x-"] + vertsDofDs[str(xNum) + "," + str(yNum)]["--"][::-1] + vertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
-            if len(vList1) > len(vList2):
-                v1 = vList1[-1]
-                v2 = vList1[-2]
-                v3 = vList2[-1]
-                bme.faces.new([v1, v2, v3][::step])
-                numIters = len(vList2)
-            elif len(vList1) < len(vList2):
-                v1 = vList1[-1]
-                v2 = vList2[-2]
-                v3 = vList2[-1]
-                bme.faces.new([v1, v2, v3][::step])
-                numIters = len(vList1)
-            else:
-                numIters = len(vList1)
-            for i in range(1, numIters):
-                v1 = vList1[i]
-                v2 = vList1[i-1]
-                v3 = vList2[i-1]
-                v4 = vList2[i]
-                bme.faces.new([v1, v2, v3, v4][::step])
+    if 1 in brickSize[:2]:
+        return
 
-    # Make in-between-inset quads
-    for yNum in range(1, brickSize[1]):
-        for xNum in range(1, brickSize[0]):
-            # try:
-            v1 = vertsDofDs[str(xNum-1) + "," + str(yNum)]["y-"][0]
-            v2 = vertsDofDs[str(xNum) + "," + str(yNum)]["y-"][0]
-            v3 = vertsDofDs[str(xNum) + "," + str(yNum-1)]["y+"][0]
-            v4 = vertsDofDs[str(xNum-1) + "," + str(yNum-1)]["y+"][0]
-            bme.faces.new([v1, v2, v3, v4][::step])
-            # except ???Error:
-            #     pass
-
-    # Make final in-between-insets faces on extremes of x axis along y axis
-    for yNum in range(1, brickSize[1]):
-        vList1 = vertsDofDs[str(0) + "," + str(yNum-1)]["x-"] + vertsDofDs[str(0) + "," + str(yNum-1)]["-+"] + vertsDofDs[str(0) + "," + str(yNum-1)]["y+"]
-        vList2 = vertsDofDs[str(0) + "," + str(yNum)]["x-"] + vertsDofDs[str(0) + "," + str(yNum)]["--"][::-1] + vertsDofDs[str(0) + "," + str(yNum)]["y-"]
-        if len(vList1) > len(vList2):
-            v1 = vList1[-1]
-            v2 = vList1[-2]
-            v3 = vList2[-1]
-            bme.faces.new([v1, v2, v3][::step])
-            numIters = len(vList2)
-        elif len(vList1) < len(vList2):
-            v1 = vList1[-1]
-            v2 = vList2[-2]
-            v3 = vList2[-1]
-            bme.faces.new([v1, v2, v3][::step])
-            numIters = len(vList1)
-        else:
-            numIters = len(vList1)
-        for i in range(1, numIters):
-            v1 = vList1[i]
-            v2 = vList1[i-1]
-            v3 = vList2[i-1]
-            v4 = vList2[i]
-            bme.faces.new([v1, v2, v3, v4][::step])
-    for yNum in range(1, brickSize[1]):
-        vList1 = vertsDofDs[str(xNum) + "," + str(yNum-1)]["x+"] + vertsDofDs[str(xNum) + "," + str(yNum-1)]["++"][::-1] + vertsDofDs[str(xNum) + "," + str(yNum-1)]["y+"]
-        vList2 = vertsDofDs[str(xNum) + "," + str(yNum)]["x+"] + vertsDofDs[str(xNum) + "," + str(yNum)]["+-"] + vertsDofDs[str(xNum) + "," + str(yNum)]["y-"]
-        if len(vList1) > len(vList2):
-            v1 = vList1[-1]
-            v2 = vList2[-1]
-            v3 = vList1[-2]
-            bme.faces.new([v1, v2, v3][::step])
-            numIters = len(vList2)
-        elif len(vList1) < len(vList2):
-            v1 = vList2[-1]
-            v2 = vList2[-2]
-            v3 = vList1[-1]
-            bme.faces.new([v1, v2, v3][::step])
-            numIters = len(vList1)
-        else:
-            numIters = len(vList1)
-        for i in range(1, numIters):
-            v1 = vList2[i]
-            v2 = vList2[i-1]
-            v3 = vList1[i-1]
-            v4 = vList1[i]
-            bme.faces.new([v1, v2, v3, v4][::step])
+    # Make center faces
+    for yNum in range(sY - 1):
+        for xNum in range(sX - 1):
+            verts = []
+            l = str(xNum) + "," + str(yNum)
+            verts += vertsDofDs[l]["y+"]
+            verts += vertsDofDs[l]["++"]
+            verts += vertsDofDs[l]["x+"]
+            l = str(xNum + 1) + "," + str(yNum)
+            verts += vertsDofDs[l]["x-"]
+            verts += vertsDofDs[l]["-+"]
+            verts += vertsDofDs[l]["y+"]
+            l = str(xNum + 1) + "," + str(yNum + 1)
+            verts += vertsDofDs[l]["y-"]
+            verts += vertsDofDs[l]["--"]
+            verts += vertsDofDs[l]["x-"]
+            l = str(xNum) + "," + str(yNum + 1)
+            verts += vertsDofDs[l]["x+"]
+            verts += vertsDofDs[l]["+-"]
+            verts += vertsDofDs[l]["y-"]
+            bme.faces.new(verts[::-step])
 
 
 def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo, ppo, pno, nni, npi, ppi, pni, nnt, npt, ppt, pnt, bme):
     # for edge vert refs, n=negative, p=positive, o=outer, i=inner, t=top
     joinVerts = {"X-":[npi, npo, nno, nni], "X+":[ppi, ppo, pno, pni], "Y-":[pni, pno, nno, nni], "Y+":[ppi, ppo, npo, npi]}
     lastSideVerts = {"X-":[nnt, nni], "X+":[pni, pnt], "Y-":[nni, nnt], "Y+":[npt, npi]}
+    bottomVerts = {"X-":[], "X+":[], "Y-":[], "Y+":[]}
     # make tick marks
     for xNum in range(brickSize[0]):
         for yNum in range(brickSize[1]):
@@ -289,10 +292,10 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo,
                 y2 = yNum * d.y * 2 + dimensions["tick_width"] / 2
                 # CREATING SUPPORT BEAM
                 v1, v2, _, _, v5, v6, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 0, 1, 1], bme=bme)
-                selectVerts([v6, v7])
                 joinVerts["X-"] += [v1, v2]
                 bme.faces.new([v1, v5] + lastSideVerts["X-"])
                 lastSideVerts["X-"] = [v8, v2]
+                bottomVerts["X-"] += [v5, v6, v7, v8]
             elif xNum == brickSize[0]-1:
                 # initialize x, y
                 x1 = xNum * d.x * 2 + d.x - thick.x - dimensions["tick_depth"]
@@ -301,10 +304,10 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo,
                 y2 = yNum * d.y * 2 + dimensions["tick_width"] / 2
                 # CREATING SUPPORT BEAM
                 _, _, v3, v4, v5, v6, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 0, 1, 1, 1], bme=bme)
-                selectVerts([v5, v8])
                 joinVerts["X+"] += [v4, v3]
                 bme.faces.new([v6, v4] + lastSideVerts["X+"])
                 lastSideVerts["X+"] = [v3, v7]
+                bottomVerts["X+"] += [v6, v5, v8, v7]
             if yNum == 0:
                 # initialize x, y
                 y1 = -d.y + thick.y
@@ -313,10 +316,10 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo,
                 x2 = xNum * d.x * 2 + dimensions["tick_width"] / 2
                 # CREATING SUPPORT BEAM
                 v1, _, _, v4, v5, v6, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 1, 1, 0], bme=bme)
-                selectVerts([v7, v8])
                 joinVerts["Y-"] += [v1, v4]
                 bme.faces.new([v5, v1] + lastSideVerts["Y-"])
                 lastSideVerts["Y-"] = [v4, v6]
+                bottomVerts["Y-"] += [v5, v8, v7, v6]
             elif yNum == brickSize[1]-1:
                 # initialize x, y
                 x1 = xNum * d.x * 2 - dimensions["tick_width"] / 2
@@ -326,10 +329,10 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo,
                 # CREATING SUPPORT BEAM
                 _, v2, v3, _, v5, v6, v7, v8 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=[0, 1, 1, 1, 0, 1], bme=bme)
                 # select bottom connecting verts for exclusion from vertex group
-                selectVerts([v5, v6])
                 joinVerts["Y+"] += [v2, v3]
                 bme.faces.new([v2, v8] + lastSideVerts["Y+"])
                 lastSideVerts["Y+"] = [v7, v3]
+                bottomVerts["Y+"] += [v8, v5, v6, v7]
 
     # draw faces between ticks and base
     bme.faces.new(joinVerts["X-"][::-1])
@@ -340,6 +343,8 @@ def addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno, npo,
     bme.faces.new([ppt, ppi] + lastSideVerts["X+"])
     bme.faces.new([pnt, pni] + lastSideVerts["Y-"])
     bme.faces.new([ppi, ppt] + lastSideVerts["Y+"])
+
+    return bottomVerts
 
 
 def createVertListDict(verts):

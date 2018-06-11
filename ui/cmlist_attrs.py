@@ -62,8 +62,8 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=True)
     parent_name = StringProperty(default="")
     exposeParent = BoolProperty(
-        name="Expose parent object",
-        description="Expose the parent object for this model and make it active for simple transformations",
+        name="Show Manipulator",
+        description="Expose the parent object for this brick model for viewport manipulation",
         update=updateParentExposure,
         default=False)
 
@@ -442,7 +442,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
         default=16)
     loopCut = BoolProperty(
         name="Loop Cut Cylinders",
-        description="Make loop cut on cylinders (improves bevel quality)",
+        description="Make loop cut on cylinders so that bevel operation can bevel base of studs",
         update=dirtyBricks,
         default=False)
     # BEVEL SETTINGS
@@ -564,6 +564,7 @@ class Bricker_CreatedModels(bpy.types.PropertyGroup):
     animated = BoolProperty(default=False)
     materialApplied = BoolProperty(default=False)
     armature = BoolProperty(default=False)
+    # rigid_body = BoolProperty(default=False)
     bevelAdded = BoolProperty(default=False)
     customized = BoolProperty(default=True)
     brickSizesUsed = StringProperty(default="")  # list of brickSizes used separated by | (e.g. '5,4,3|7,4,5|8,6,5')

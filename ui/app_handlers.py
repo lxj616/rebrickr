@@ -174,13 +174,12 @@ def handle_selections(scene):
         beginningString = "Bricker_"
         if scn.objects.active.name.startswith(beginningString):
             usingSource = False
-            if "_bricks" in scn.objects.active.name:
-                frameLoc = scn.objects.active.name.rfind("_bricks")
-            elif "_brick_" in scn.objects.active.name:
+            frameLoc = scn.objects.active.name.rfind("_bricks")
+            if frameLoc == -1:
                 frameLoc = scn.objects.active.name.rfind("_brick_")
-            else:
-                frameLoc = None
-            if frameLoc is not None:
+                if frameLoc == -1:
+                    frameLoc = scn.objects.active.name.rfind("_parent")
+            if frameLoc != -1:
                 scn.Bricker_active_object_name = scn.objects.active.name[len(beginningString):frameLoc]
         else:
             usingSource = True
@@ -216,7 +215,7 @@ bpy.app.handlers.scene_update_pre.append(handle_selections)
 @persistent
 def prevent_user_from_viewing_storage_scene(scene):
     scn = bpy.context.scene
-    if not brickerIsActive() or brickerRunningBlockingOp():
+    if not brickerIsActive() or brickerRunningBlockingOp() or bpy.props.Bricker_developer_mode != 0:
         return
     if scn.name == "Bricker_storage (DO NOT MODIFY)":
         i = 0
@@ -332,7 +331,7 @@ def safe_unlink_parent(scene):
             n = cm.source_name
             Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
             p = bpy.data.objects.get(Bricker_parent_on)
-            if (cm.modelCreated or cm.animated) and not cm.exposeParent:
+            if p is not None and (cm.modelCreated or cm.animated) and not cm.exposeParent:
                 try:
                     safeUnlink(p)
                 except RuntimeError:
@@ -395,9 +394,7 @@ def handle_upconversion(scene):
                         obj.name = rreplace(obj.name, "frame", "f")
                 # rename storage scene
                 sto_scn_old = bpy.data.scenes.get("Bricker_storage (DO NOT RENAME)")
-                sto_scn_new = bpy.data.scenes.get("Bricker_storage (DO NOT MODIFY)")
-                if sto_scn_new is None:
-                    sto_scn_new = bpy.data.scenes.new("Bricker_storage (DO NOT MODIFY)")
+                sto_scn_new = getSafeScn()
                 if sto_scn_old is not None:
                     for obj in sto_scn_old.objects:
                         if obj.name.startswith("Bricker_refLogo"):

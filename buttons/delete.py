@@ -31,6 +31,7 @@ props = bpy.props
 # Addon imports
 from ..functions import *
 from .cache import *
+# from ..lib.rigid_body_props import *
 
 
 def getModelType(cm=None):
@@ -92,7 +93,6 @@ class BrickerDelete(bpy.types.Operator):
         scn = bpy.context.scene
         cm = cm or scn.cmlist[scn.cmlist_index]
         n = cm.source_name
-        Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
         source = bpy.data.objects.get(source_name or n)
 
         # set all layers active temporarily
@@ -109,7 +109,7 @@ class BrickerDelete(bpy.types.Operator):
             cls.cleanSource(cm, source, modelType)
 
         # clean up 'Bricker_[source name]_dupes' group
-        if groupExists(Bricker_source_dupes_gn) and not skipDupes:
+        if not skipDupes:
             cls.cleanDupes(cm, preservedFrames, modelType)
 
         if not skipParents:
@@ -202,15 +202,7 @@ class BrickerDelete(bpy.types.Operator):
 
             # return open layers to original
             setLayers(lastLayers)
-
-            # delete custom properties from source
-            customPropNames = ["ignored_mods", "frame_parent_cleared", "old_parent"]
-            for cPN in customPropNames:
-                try:
-                    del source[cPN]
-                except KeyError:
-                    pass
-
+            
         Caches.clearCache(cm, brick_mesh=False)
 
         # Scale brick height according to scale value applied to source
@@ -242,46 +234,40 @@ class BrickerDelete(bpy.types.Operator):
             bGroup = bpy.data.groups.get(Bricker_bricks_gn + "_f_" + str(cm.lastStartFrame))
         if bGroup and len(bGroup.objects) > 0:
             source.layers = list(bGroup.objects[0].layers)
-        # reset source parent to original parent object
-        old_parent = bpy.data.objects.get(source["old_parent"])
-        if old_parent:
-            select([source, old_parent], active=old_parent, only=True)
-            if source["frame_parent_cleared"] != -1:
-                origFrame = scn.frame_current
-                scn.frame_set(source["frame_parent_cleared"])
-                bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
-                scn.frame_set(origFrame)
-        # if modifiers were ignored/disabled from view, enable in view
-        if source["ignored_mods"] != "":
-            for mn in source["ignored_mods"]:
-                source.modifiers[mn].show_viewport = True
         # reset cm properties
         cm.modelHeight = -1
         # reset source properties
         source.name = n
         source.cmlist_id = -1
+        # # restore rigid body settings
+        # if cm.rigid_body:
+        #     select(source, active=True)
+        #     bpy.ops.rigidbody.object_add()
+        #     retrieveRigidBodySettings(source)
 
     @classmethod
     def cleanDupes(cls, cm, preservedFrames, modelType):
         scn = bpy.context.scene
         n = cm.source_name
-        Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
-        dGroup = bpy.data.groups[Bricker_source_dupes_gn]
-        dObjects = list(dGroup.objects)
-        # if preserve frames, remove those objects from dObjects
-        objsToRemove = []
-        if modelType == "ANIMATION" and preservedFrames is not None:
-            for obj in dObjects:
-                frameNumIdx = obj.name.rfind("_") + 1
-                curFrameNum = int(obj.name[frameNumIdx:])
-                if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
-                    objsToRemove.append(obj)
-            for obj in objsToRemove:
-                dObjects.remove(obj)
+        if modelType == "ANIMATION":
+            dupe_name = "Bricker_%(n)s_f_" % locals()
+            dObjects = [bpy.data.objects.get(dupe_name + str(fn)) for fn in range(cm.lastStartFrame, cm.lastStopFrame + 1)]
+        else:
+            dObjects = [bpy.data.objects.get("%(n)s_duplicate" % locals())]
+        # # if preserve frames, remove those objects from dObjects
+        # objsToRemove = []
+        # if modelType == "ANIMATION" and preservedFrames is not None:
+        #     for obj in dObjects:
+        #         if obj is None:
+        #             continue
+        #         frameNumIdx = obj.name.rfind("_") + 1
+        #         curFrameNum = int(obj.name[frameNumIdx:])
+        #         if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
+        #             objsToRemove.append(obj)
+        #     for obj in objsToRemove:
+        #         dObjects.remove(obj)
         if len(dObjects) > 0:
             delete(dObjects)
-        if preservedFrames is None:
-            bpy.data.groups.remove(dGroup, do_unlink=True)
 
     @classmethod
     def cleanParents(cls, cm, preservedFrames, modelType):
@@ -290,8 +276,10 @@ class BrickerDelete(bpy.types.Operator):
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
         Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
         brickLoc, brickRot, brickScl = None, None, None
+        p = bpy.data.objects.get(Bricker_parent_on)
+        if p is None:
+            return brickLoc, brickRot, brickScl
         if preservedFrames is None:
-            p = bpy.data.objects.get(Bricker_parent_on)
             if modelType == "ANIMATION" or cm.lastSplitModel:
                 # store transform data of transformation parent object
                 try:
@@ -308,23 +296,22 @@ class BrickerDelete(bpy.types.Operator):
                     brickRot = b.matrix_world.to_euler().copy()
                     brickScl = b.matrix_world.to_scale().copy()  # currently unused
         # clean up Bricker_parent objects
-        pGroup = bpy.data.groups.get(Bricker_parent_on)
-        if pGroup:
-            for parent in pGroup.objects:
-                # if preserve frames, skip those parents
-                if modelType == "ANIMATION" and preservedFrames is not None:
-                    frameNumIdx = parent.name.rfind("_") + 1
-                    try:
-                        curFrameNum = int(parent.name[frameNumIdx:])
-                        if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
-                            continue
-                    except ValueError:
+        parents = [p] + [bpy.data.objects.get(Bricker_parent_on + "_f_%(fn)s" % locals()) for fn in range(cm.lastStartFrame, cm.lastStopFrame + 1)]
+        for parent in parents:
+            if parent is None:
+                continue
+            # if preserve frames, skip those parents
+            if modelType == "ANIMATION" and preservedFrames is not None:
+                frameNumIdx = parent.name.rfind("_") + 1
+                try:
+                    curFrameNum = int(parent.name[frameNumIdx:])
+                    if curFrameNum >= preservedFrames[0] and curFrameNum <= preservedFrames[1]:
                         continue
-                m = parent.data
-                bpy.data.objects.remove(parent, True)
-                bpy.data.meshes.remove(m, True)
-            if preservedFrames is None:
-                bpy.data.groups.remove(pGroup, do_unlink=True)
+                except ValueError:
+                    continue
+            m = parent.data
+            bpy.data.objects.remove(parent, True)
+            bpy.data.meshes.remove(m, True)
         return brickLoc, brickRot, brickScl
 
     def updateAnimationData(objs, trans_and_anim_data):
@@ -402,6 +389,8 @@ class BrickerDelete(bpy.types.Operator):
         cm.matrixIsDirty = True
         cm.bricksAreDirty = True
         cm.armature = False
+        cm.rigid_body = False
+        cm.soft_body = False
         cm.exposeParent = False
         cm.version = bpy.props.bricker_version
         cm.activeKey = (-1, -1, -1)

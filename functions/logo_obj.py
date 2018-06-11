@@ -53,7 +53,7 @@ def getLegoLogo(self, scn, cm, dimensions):
             refLogo.data = logo_txt_ref.data.copy()
             refLogo.name = refLogoName
             # convert text to mesh
-            safeLink(refLogo, unhide=True)
+            safeLink(refLogo)
             select(refLogo, active=True, only=True)
             bpy.ops.object.convert(target='MESH')
             # remove duplicate verts
@@ -62,10 +62,10 @@ def getLegoLogo(self, scn, cm, dimensions):
             if cm.logoDecimate != 0:
                 dMod = refLogo.modifiers.new('Decimate', type='DECIMATE')
                 dMod.ratio = 1 - (cm.logoDecimate / 10)
-                select(refLogo, active=True, only=True)
-                bpy.ops.object.modifier_apply(apply_as='DATA', modifier='Decimate')
+                m = refLogo.to_mesh(scn, True, 'PREVIEW')
+                refLogo.modifiers.remove(dMod)
+                refLogo.data = m
             safeUnlink(refLogo)
-
     return refLogo
 
 

@@ -19,4 +19,4 @@
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
     """
 
-__all__ = ["addAbsToMatObj", "bakeModel", "customize", "bevel", "brickify", "cache", "delete", "exportLdraw", "eyedropper", "materials", "redrawCustomBricks", "reportError", "exportModelData"]
+__all__ = ["addAbsToMatObj", "bake", "customize", "bevel", "brickify", "cache", "delete", "exportLdraw", "eyedropper", "materials", "redrawCustomBricks", "reportError", "exportModelData"]

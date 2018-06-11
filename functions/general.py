@@ -76,7 +76,7 @@ def safeUnlink(obj, hide=True, protect=True):
         obj.hide = True
 
 
-def safeLink(obj, unhide=False, protect=False):
+def safeLink(obj, unhide=True, protect=False):
     scn = bpy.context.scene
     safeScn = getSafeScn()
     scn.objects.link(obj)

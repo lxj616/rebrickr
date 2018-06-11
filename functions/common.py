@@ -35,7 +35,7 @@ from math import *
 
 # Blender imports
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Euler, Matrix
 from bpy.types import Object, Scene
 props = bpy.props
 
@@ -412,9 +412,10 @@ def delete(objList):
         objs.remove(obj, True)
 
 
-def duplicateObj(obj, link_to_scene=False):
+def duplicate(obj, linked=False, link_to_scene=False):
     copy = obj.copy()
-    copy.data = copy.data.copy() # also duplicate mesh, remove for linked duplicate
+    if not linked:
+        copy.data = copy.data.copy()
     copy.hide = False
     if link_to_scene:
         bpy.context.scene.objects.link(copy)
@@ -582,6 +583,37 @@ def update_progress(job_title, progress):
         msg += " DONE\r\n"
     sys.stdout.write(msg)
     sys.stdout.flush()
+
+
+def apply_transform(obj):
+    # select(obj, only=True, active=True)
+    # bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    loc, rot, scale = obj.matrix_world.decompose()
+    obj.matrix_world = Matrix.Identity(4)
+    m = obj.data
+    s_mat_x = Matrix.Scale(scale.x, 4, Vector((1, 0, 0)))
+    s_mat_y = Matrix.Scale(scale.y, 4, Vector((0, 1, 0)))
+    s_mat_z = Matrix.Scale(scale.z, 4, Vector((0, 0, 1)))
+    m.transform(s_mat_x * s_mat_y * s_mat_z)
+    m.transform(rot.to_matrix().to_4x4())
+    m.transform(Matrix.Translation(loc))
+
+
+def parent_clear(objs, apply_transform=True):
+    # select(objs, only=True, active=True)
+    # bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+    objs = confirmList(objs)
+    if apply_transform:
+        for obj in objs:
+            obj.rotation_mode = "XYZ"
+            loc = obj.matrix_world.to_translation()
+            rot = obj.matrix_world.to_euler()
+            scale = obj.matrix_world.to_scale()
+            obj.location = loc
+            obj.rotation_euler = rot
+            obj.scale = scale
+    for obj in objs:
+        obj.parent = None
 
 
 def writeErrorToFile(errorReportPath, txtName, addonVersion):

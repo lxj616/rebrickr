@@ -40,6 +40,7 @@ from .delete import BrickerDelete
 from .bevel import BrickerBevel
 from .cache import *
 from ..lib.bricksDict import *
+# from ..lib.rigid_body_props import *
 from ..functions import *
 
 
@@ -56,16 +57,6 @@ def updateCanRun(type):
         elif type == "MODEL":
             Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
             return commonNeedsUpdate or (groupExists(Bricker_bricks_gn) and len(bpy.data.groups[Bricker_bricks_gn].objects) == 0) or (cm.materialType != "CUSTOM" and (cm.materialType != "RANDOM" or cm.splitModel or cm.lastMaterialType != cm.materialType or cm.materialIsDirty) and cm.materialIsDirty)
-
-
-def importLogo():
-    """ import logo object from Bricker addon folder """
-    addonsPath = bpy.utils.user_resource('SCRIPTS', "addons")
-    Bricker = bpy.props.bricker_module_name
-    logoObjPath = "%(addonsPath)s/%(Bricker)s/lego_logo.obj" % locals()
-    bpy.ops.import_scene.obj(filepath=logoObjPath)
-    logoObj = bpy.context.selected_objects[0]
-    return logoObj
 
 
 class BrickerBrickify(bpy.types.Operator):
@@ -145,9 +136,9 @@ class BrickerBrickify(bpy.types.Operator):
 
         # get source and initialize values
         source = self.getObjectToBrickify(cm)
-        source["old_parent"] = ""
         source.cmlist_id = cm.id
-        skipTransAndAnimData = cm.animated or (cm.splitModel or cm.lastSplitModel) and (matrixReallyIsDirty(cm) or cm.buildIsDirty)
+        matrixDirty = matrixReallyIsDirty(cm)
+        skipTransAndAnimData = cm.animated or (cm.splitModel or cm.lastSplitModel) and (matrixDirty or cm.buildIsDirty)
 
         # # check if source object is smoke simulation domain
         cm.isSmoke = is_smoke(source)
@@ -162,16 +153,16 @@ class BrickerBrickify(bpy.types.Operator):
         # make sure matrix really is dirty
         if cm.matrixIsDirty:
             _, loadedFromCache = getBricksDict(dType="MODEL", cm=cm)
-            if not matrixReallyIsDirty(cm) and loadedFromCache:
+            if not matrixDirty and loadedFromCache:
                 cm.matrixIsDirty = False
 
         if not self.isValid(scn, cm, source, Bricker_bricks_gn):
             return {"CANCELLED"}
 
         if "ANIM" not in self.action:
-            self.brickifyModel(skipTransAndAnimData)
+            self.brickifyModel(scn, cm, n, matrixDirty, skipTransAndAnimData)
         else:
-            self.brickifyAnimation()
+            self.brickifyAnimation(scn, cm, n, matrixDirty)
             cm.animIsDirty = False
 
         # set cmlist_id for all created objects
@@ -207,86 +198,78 @@ class BrickerBrickify(bpy.types.Operator):
 
         disableRelationshipLines()
 
-    def brickifyModel(self, skipTransAndAnimData=False):
+    def brickifyModel(self, scn, cm, n, matrixDirty, skipTransAndAnimData):
         """ create brick model """
         # set up variables
-        scn, cm, n = getActiveContextInfo()
         origFrame = None
         source = None
         Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
-
-        # get or create parent group
-        pGroup = bpy.data.groups.get(Bricker_parent_on)
-        if pGroup is None:
-            pGroup = bpy.data.groups.new(Bricker_parent_on)
-            self.createdGroups.append(pGroup.name)
 
         if self.action == "CREATE":
             # set modelCreatedOnFrame
             cm.modelCreatedOnFrame = scn.frame_current
         else:
             origFrame = scn.frame_current
-            scn.frame_set(cm.modelCreatedOnFrame)
+            if origFrame != cm.modelCreatedOnFrame:
+                scn.frame_set(cm.modelCreatedOnFrame)
 
         # if there are no changes to apply, simply return "FINISHED"
-        if self.action in ["UPDATE_MODEL"] and not updateCanRun("MODEL"):
+        if self.action == "UPDATE_MODEL" and not updateCanRun("MODEL"):
             return{"FINISHED"}
 
-        sto_scn = bpy.data.scenes.get("Bricker_storage (DO NOT MODIFY)")
-        if sto_scn:
-            sto_scn.update()
+        # if self.action == "UPDATE_MODEL":
+        #     getSafeScn().update()
 
-        if (matrixReallyIsDirty(cm) or self.action != "UPDATE_MODEL") and cm.customized:
+        if (matrixDirty or self.action != "UPDATE_MODEL") and cm.customized:
             cm.customized = False
 
         # delete old bricks if present
-        if self.action.startswith("UPDATE") and (matrixReallyIsDirty(cm) or cm.buildIsDirty or cm.lastSplitModel != cm.splitModel):
+        if self.action.startswith("UPDATE") and (matrixDirty or cm.buildIsDirty or cm.lastSplitModel != cm.splitModel):
             # skip source, dupes, and parents
             trans_and_anim_data = BrickerDelete.cleanUp("MODEL", skipDupes=True, skipParents=True, skipSource=True, skipTransAndAnimData=skipTransAndAnimData)[4]
         else:
             storeTransformData(cm, None)
             trans_and_anim_data = []
 
+        ct = time.time()
+
         if self.action == "CREATE":
-            # create dupes group
-            Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
-            dGroup = bpy.data.groups.new(Bricker_source_dupes_gn)
-            self.createdGroups.append(dGroup.name)
-            # duplicate source and add duplicate to group
-            sourceDup = duplicateObj(self.source, link_to_scene=True)
-            dGroup.objects.link(sourceDup)
+            # duplicate source
+            sourceDup = duplicate(self.source, link_to_scene=True)
+            stopWatch(1, time.time()-ct, precision=5)
+            ct = time.time()
             sourceDup.name = self.source.name + "_duplicate"
             if cm.useLocalOrient:
                 sourceDup.rotation_mode = "XYZ"
                 sourceDup.rotation_euler = Euler((0, 0, 0))
             self.createdObjects.append(sourceDup.name)
             self.source.select = False
-            # set up sourceDup["old_parent"] and remove sourceDup parent
-            sourceDup["frame_parent_cleared"] = -1
+            # remove modifiers and constraints
+            for mod in sourceDup.modifiers:
+                sourceDup.modifiers.remove(mod)
+            for constraint in sourceDup.constraints:
+                sourceDup.constraints.remove(constraint)
+            stopWatch(2, time.time()-ct, precision=5)
+            ct = time.time()
+            # remove sourceDup parent
             if sourceDup.parent:
-                sourceDup["old_parent"] = sourceDup.parent.name
-                sourceDup["frame_parent_cleared"] = scn.frame_current
-                select(sourceDup, active=True)
-                bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
-            # apply shape keys if existing
-            shapeKeys = sourceDup.data.shape_keys
-            if shapeKeys and len(shapeKeys.key_blocks) > 0:
-                select(sourceDup, active=True)
-                bpy.ops.object.shape_key_add(from_mix=True)
-                for i in range(len(shapeKeys.key_blocks)):
-                    sourceDup.shape_key_remove(sourceDup.data.shape_keys.key_blocks[0])
-                # bpy.ops.object.shape_key_remove(all=True)
-            # apply modifiers for source duplicate
-            cm.armature = applyModifiers(sourceDup)
+                parent_clear(sourceDup)
+            stopWatch(3, time.time()-ct, precision=5)
+            ct = time.time()
+            # send to new mesh
+            sourceDup.data = self.source.to_mesh(scn, True, 'PREVIEW')
             # apply transformation data
-            select(sourceDup, active=True)
-            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            # TODO: rewrite the transform apply operator myself
+            apply_transform(sourceDup)
             scn.update()
         else:
             # get previously created source duplicate
             sourceDup = bpy.data.objects.get(n + "_duplicate")
         # if duplicate not created, sourceDup is just original source
         sourceDup = sourceDup or self.source
+
+        stopWatch(4, time.time()-ct, precision=5)
+        ct = time.time()
 
         # link sourceDup if it isn't in scene
         if sourceDup.name not in scn.objects.keys():
@@ -300,6 +283,9 @@ class BrickerBrickify(bpy.types.Operator):
             # set sourceDup model height for display in UI
             cm.modelHeight = sourceDup_details.dist.z
 
+        stopWatch(5, time.time()-ct, precision=5)
+        ct = time.time()
+
         # get parent object
         parent = bpy.data.objects.get(Bricker_parent_on)
         # if parent doesn't exist, get parent with new location
@@ -307,12 +293,17 @@ class BrickerBrickify(bpy.types.Operator):
         if parent is None:
             parent = self.getNewParent(Bricker_parent_on, parentLoc)
             cm.parent_name = parent.name
-            pGroup.objects.link(parent)
         parent["loc_diff"] = self.source.location - parentLoc
         self.createdObjects.append(parent.name)
 
+        stopWatch(6, time.time()-ct, precision=5)
+        ct = time.time()
+
         # update refLogo
         logo_details, refLogo = self.getLogo(scn, cm, dimensions)
+
+        stopWatch(7, time.time()-ct, precision=5)
+        ct = time.time()
 
         # create new bricks
         group_name = self.createNewBricks(sourceDup, parent, sourceDup_details, dimensions, refLogo, logo_details, self.action, curFrame=None, sceneCurFrame=None, origSource=self.source)
@@ -346,17 +337,16 @@ class BrickerBrickify(bpy.types.Operator):
             BrickerBevel.runBevelAction(bricks, cm)
 
         # set active frame to original active frame
-        if origFrame:
+        if origFrame and scn.frame_current != origFrame:
             scn.frame_set(origFrame)
 
         cm.lastSourceMid = vecToStr(parentLoc)
 
-    def brickifyAnimation(self):
+    def brickifyAnimation(self, scn, cm, n, matrixDirty):
         """ create brick animation """
         # set up variables
         scn, cm, n = getActiveContextInfo()
         Bricker_parent_on = "Bricker_%(n)s_parent" % locals()
-        Bricker_source_dupes_gn = "Bricker_%(n)s_dupes" % locals()
         sceneCurFrame = scn.frame_current
         objsToSelect = []
 
@@ -379,28 +369,17 @@ class BrickerBrickify(bpy.types.Operator):
             cm.splitModel = False
 
         # delete old bricks if present
-        if self.action.startswith("UPDATE") and (matrixReallyIsDirty(cm) or cm.buildIsDirty or cm.lastSplitModel != cm.splitModel):
+        if self.action.startswith("UPDATE") and (matrixDirty or cm.buildIsDirty or cm.lastSplitModel != cm.splitModel or self.updatedFramesOnly):
             preservedFrames = None
             if self.updatedFramesOnly:
                 # preserve duplicates, parents, and bricks for frames that haven't changed
                 preservedFrames = [cm.startFrame, cm.stopFrame]
             BrickerDelete.cleanUp("ANIMATION", skipDupes=not self.updatedFramesOnly, skipParents=not self.updatedFramesOnly, preservedFrames=preservedFrames, source_name=self.source.name)
 
-        # get or create duplicate and parent groups
-        dGroup = bpy.data.groups.get(Bricker_source_dupes_gn)
-        if dGroup is None:
-            dGroup = bpy.data.groups.new(Bricker_source_dupes_gn)
-            self.createdGroups.append(dGroup.name)
-        pGroup = bpy.data.groups.get(Bricker_parent_on)
-        if pGroup is None:
-            pGroup = bpy.data.groups.new(Bricker_parent_on)
-            self.createdGroups.append(pGroup.name)
-
         # get parent object
         parent0 = bpy.data.objects.get(Bricker_parent_on)
         if parent0 is None:
             parent0 = self.getNewParent(Bricker_parent_on, self.source.location)
-            pGroup.objects.link(parent0)
             cm.parent_name = parent0.name
         self.createdObjects.append(parent0.name)
 
@@ -409,7 +388,7 @@ class BrickerBrickify(bpy.types.Operator):
         wm.progress_begin(0, cm.stopFrame + 1 - cm.startFrame)
 
         # prepare duplicate objects for animation
-        duplicates = self.getDuplicateObjects(scn, cm, dGroup, cm.source_name, cm.startFrame, cm.stopFrame)
+        duplicates = self.getDuplicateObjects(scn, cm, cm.source_name, cm.startFrame, cm.stopFrame)
 
         # iterate through frames of animation and generate Brick Model
         for curFrame in range(cm.startFrame, cm.stopFrame + 1):
@@ -419,7 +398,7 @@ class BrickerBrickify(bpy.types.Operator):
                 continue
             scn.frame_set(curFrame)
             # get duplicated source
-            source = duplicates[curFrame]["obj"]
+            source = duplicates[curFrame]
 
             # get source_details and dimensions
             source_details, dimensions = getDetailsAndBounds(source)
@@ -433,7 +412,6 @@ class BrickerBrickify(bpy.types.Operator):
 
             # set up parent for this layer
             # TODO: Remove these from memory in the delete function, or don't use them at all
-            pGroup = bpy.data.groups[Bricker_parent_on]  # redefine pGroup since it was removed
             p_name = "%(Bricker_parent_on)s_f_%(curFrame)s" % locals()
             parent = bpy.data.objects.get(p_name)
             if parent is None:
@@ -441,7 +419,6 @@ class BrickerBrickify(bpy.types.Operator):
                 parent = bpy.data.objects.new(p_name, m)
                 parent.location = source_details.mid - parent0.location
                 parent.parent = parent0
-                pGroup.objects.link(parent)
                 scn.objects.link(parent)
                 scn.update()
                 safeUnlink(parent)
@@ -539,28 +516,31 @@ class BrickerBrickify(bpy.types.Operator):
 
     def isValid(self, scn, cm, source, Bricker_bricks_gn):
         """ returns True if brickify action can run, else report WARNING/ERROR and return False """
+        # ensure custom object(s) are valid
         if (cm.brickType == "CUSTOM" or cm.hasCustomObj1 or cm.hasCustomObj2 or cm.hasCustomObj3):
             warningMsg = customValidObject(cm)
             if warningMsg is not None:
                 self.report({"WARNING"}, warningMsg)
                 return False
+        # ensure source name isn't too long
         if len(cm.source_name) > 30:
             self.report({"WARNING"}, "Source object name too long (must be <= 30 characters)")
+        # ensure custom material exists
         if cm.materialType == "CUSTOM" and cm.materialName != "" and bpy.data.materials.find(cm.materialName) == -1:
             n = cm.materialName
             self.report({"WARNING"}, "Custom material '%(n)s' could not be found" % locals())
             return False
         if cm.materialType == "SOURCE" and cm.colorSnap == "ABS":
+            # ensure ABS Plastic materials are installed
             if not hasattr(scn, "isBrickMaterialsInstalled") or not scn.isBrickMaterialsInstalled:
                 self.report({"WARNING"}, "ABS Plastic Materials must be installed from Blender Market")
                 return False
+            # ensure ABS Plastic materials UI list is populated
             matObj = getMatObject(cm, typ="ABS")
             if len(matObj.data.materials) == 0:
                 self.report({"WARNING"}, "No ABS Plastic Materials found in Materials to be used")
                 return False
 
-        self.clothMod = False
-        source["ignored_mods"] = ""
         if self.action in ["CREATE", "ANIMATE"]:
             # verify function can run
             if groupExists(Bricker_bricks_gn):
@@ -570,76 +550,29 @@ class BrickerBrickify(bpy.types.Operator):
             if cm.source_name == "":
                 self.report({"WARNING"}, "Please select a mesh to Brickify")
                 return False
-            if cm.source_name[:9] == "Bricker_" and (cm.source_name[-7:] == "_bricks" or cm.source_name[-9:] == "_combined"):
-                self.report({"WARNING"}, "Cannot Brickify models created with the Bricker")
+            # ensure source is not bricker model
+            if source.isBrick or source.isBrickifiedObject:
+                self.report({"WARNING"}, "Please bake the 'Bricker' source model before brickifying (Bricker > Bake/Export > Bake Model).")
                 return False
+            # ensure source exists
             if source is None:
                 n = cm.source_name
                 self.report({"WARNING"}, "'%(n)s' could not be found" % locals())
                 return False
+            # ensure object data is mesh
             if source.type != "MESH":
                 self.report({"WARNING"}, "Only 'MESH' objects can be Brickified. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
             # verify source is not a rigid body
             if source.rigid_body is not None:
-                self.report({"WARNING"}, "Bricker: Rigid body physics not supported")
+                self.report({"WARNING"}, "First bake rigid body transformations to keyframes (SPACEBAR > Bake To Keyframes).")
                 return False
-            # verify all appropriate modifiers have been applied
-            ignoredMods = []
-            for mod in source.modifiers:
-                # abort render if these modifiers are enabled but not applied
-                # if mod.type in ["ARRAY", "BEVEL", "BOOLEAN", "SKIN", "OCEAN"] and mod.show_viewport:
-                #     self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier(s) or disable from view before Brickifying the object.")
-                #     return False
-                # ignore these modifiers (disable from view until Brickified model deleted)
-                if mod.type in ["BUILD"] and mod.show_viewport:
-                    mod.show_viewport = False
-                    ignoredMods.append(mod.name)
-                # these modifiers are unsupported - abort render if enabled
-                # if mod.type in ["SMOKE"] and mod.show_viewport:
-                #     self.report({"WARNING"}, "'" + str(mod.type) + "' modifier not supported by the Bricker.")
-                #     return False
-                # handle cloth modifier
-                if mod.type == "CLOTH" and mod.show_viewport:
-                    self.clothMod = mod
-            if len(ignoredMods) > 0:
-                # store disabled mods to source so they can be enabled in delete operation
-                source["ignored_mods"] = ignoredMods
-                # warn user that modifiers were ignored
-                warningMsg = "The following modifiers were ignored (apply to respect changes): "
-                for i in ignoredMods:
-                    warningMsg += "'%(i)s', " % locals()
-                self.report({"WARNING"}, warningMsg[:-2])
-
-        # Verify smoke simulation is set up correctly
-        for mod in source.modifiers:
-            if mod.type == "SMOKE" and mod.domain_settings and mod.show_viewport:
-                if not bpy.data.is_saved:
-                    self.report({"WARNING"}, "Blend file must be saved before brickifying '" + str(mod.type) + "' modifiers.")
-                    return False
-                if len(mod.domain_settings.density_grid) == 0 or (self.action == "ANIMATE" and not mod.domain_settings.point_cache.is_baked):
-                    self.report({"WARNING"}, "Please bake the smoke simulation before Brickifying")
-                    return False
-
-
-        if self.action == "CREATE":
-            # if source is soft body or cloth and is enabled, prompt user to apply the modifiers
-            for mod in source.modifiers:
-                if mod.type in ["SOFT_BODY", "CLOTH"] and mod.show_viewport:
-                    self.report({"WARNING"}, "Please apply '" + str(mod.type) + "' modifier or disable from view before Brickifying the object.")
-                    return False
 
         if self.action in ["ANIMATE", "UPDATE_ANIM"]:
-            # if source is soft body or cloth and is enabled and file not saved, prompt user to save the file
-            for mod in source.modifiers:
-                if mod.type in ["SOFT_BODY", "CLOTH"] and mod.show_viewport and not bpy.data.is_saved:
-                    self.report({"WARNING"}, "Blend file must be saved before brickifying '" + str(mod.type) + "' modifiers.")
-                    return False
             # verify start frame is less than stop frame
             if cm.startFrame > cm.stopFrame:
                 self.report({"ERROR"}, "Start frame must be less than or equal to stop frame (see animation tab below).")
                 return False
-            # TODO: Alert user to bake fluid/cloth simulation before attempting to Brickify
 
         if self.action in ["UPDATE_MODEL"]:
             # make sure 'Bricker_[source name]_bricks' group exists
@@ -664,6 +597,7 @@ class BrickerBrickify(bpy.types.Operator):
                 self.report({"WARNING"}, "Custom logo object is not of type 'MESH'. Please select another object (or press 'ALT-C to convert object to mesh).")
                 return False
 
+        # check if source or brickified object is on active layer(s)
         success = False
         if cm.modelCreated or cm.animated:
             bricks = getBricks()
@@ -739,94 +673,81 @@ class BrickerBrickify(bpy.types.Operator):
             logo_details, refLogo = prepareLogoAndGetDetails(scn, cm, refLogo, dimensions)
         return logo_details, refLogo
 
-    def getDuplicateObjects(self, scn, cm, dGroup, source_name, startFrame, stopFrame):
+    def getDuplicateObjects(self, scn, cm, source_name, startFrame, stopFrame):
         """ returns list of duplicates from self.source with all traits applied """
         activeFrame = scn.frame_current
+        soft_body = False
+        smoke = False
 
-        duplicates = {}
-        lastObj = self.source
-        for curFrame in range(startFrame, stopFrame + 1):
-            sourceDup = None
-            if self.action == "UPDATE_ANIM":
-                # retrieve previously duplicated source
-                sourceDup = bpy.data.objects.get("Bricker_" + source_name + "_f_" + str(curFrame))
-                if sourceDup is not None:
-                    duplicates[curFrame] = {"obj":sourceDup, "isReused":True}
-                    continue
-            # duplicate source for current frame
-            sourceDup = duplicateObj(lastObj, link_to_scene=True)
-            sourceDup.name = "Bricker_" + cm.source_name + "_f_" + str(curFrame)
-            for mod in sourceDup.modifiers:
-                if mod.type in ["SMOKE"]:
-                    sourceDup.modifiers.remove(mod)
-                    # mod.show_viewport = False
-            if sourceDup.name not in dGroup.objects.keys():
-                dGroup.objects.link(sourceDup)
-            duplicates[curFrame] = {"obj":sourceDup, "isReused":False}
-            lastObj = sourceDup
+        # set cm.armature and cm.physics
+        for mod in self.source.modifiers:
+            if mod.type == "ARMATURE":
+                cm.armature = True
+            elif mod.type in ["CLOTH", "SOFT_BODY"]:
+                soft_body = True
+                point_cache = mod.point_cache
+            elif mod.type == "SMOKE":
+                smoke = True
+                point_cache = mod.domain_settings.point_cache
+        # if self.source.rigid_body is not None:
+        #     cm.rigid_body = True
+        #     storeRigidBodySettings(self.source)
 
-        # apply parent transformation and shape keys
-        for curFrame in range(startFrame, stopFrame + 1):
-            # skip reused duplicates
-            if duplicates[curFrame]["isReused"]:
-                continue
-            sourceDup = duplicates[curFrame]["obj"]
-            self.createdObjects.append(sourceDup.name)
-            if sourceDup.parent:
-                # apply parent transformation
-                select(sourceDup, active=True, only=True)
-                bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
-            # apply shape keys if existing
-            shapeKeys = sourceDup.data.shape_keys
-            if shapeKeys is not None and len(shapeKeys.key_blocks) > 0:
-                select(sourceDup, active=True, only=True)
-                bpy.ops.object.shape_key_add(from_mix=True)
-                for i in range(len(shapeKeys.key_blocks)):
-                    sourceDup.shape_key_remove(sourceDup.data.shape_keys.key_blocks[0])
-                # bpy.ops.object.shape_key_remove(all=True)
-
-        # bake & apply cloth and soft body modifiers
-        if lastObj != self.source:
-            for mod in lastObj.modifiers:
-                if mod.type in ["CLOTH", "SOFT_BODY"] and mod.show_viewport:
-                    if not mod.point_cache.use_disk_cache:
-                        mod.point_cache.use_disk_cache = True
-                        mod.point_cache.use_library_path = True
-                    if mod.point_cache.frame_end >= stopFrame:
-                        mod.point_cache.frame_end = stopFrame
-                        override = {'scene': scn, 'active_object': lastObj, 'point_cache': mod.point_cache, 'window':bpy.context.window, 'blend_data':bpy.context.blend_data, 'region':bpy.context.region, 'area':bpy.context.area, 'screen':bpy.context.screen}
-                        sys.stdout.write("Baking...")
-                        sys.stdout.flush()
-                        bpy.ops.ptcache.bake(override, bake=True)
-                    update_progress("Baking", 1)
+        # step through uncached frames to run simulation
+        if soft_body or smoke:
+            firstUncachedFrame = getFirstUncachedFrame(self.source, point_cache)
+            for curFrame in range(firstUncachedFrame, startFrame):
+                scn.frame_set(curFrame)
 
         denom = stopFrame - startFrame
         update_progress("Applying Modifiers", 0)
 
+        duplicates = {}
         for curFrame in range(startFrame, stopFrame + 1):
-            # print status
-            percent = (curFrame - startFrame) / (denom + 1)
-            if percent < 1:
-                update_progress("Applying Modifiers", percent)
-            # skip reused duplicates
-            if duplicates[curFrame]["isReused"]:
-                continue
-            sourceDup = duplicates[curFrame]["obj"]
+            # retrieve previously duplicated source if possible
+            if self.action == "UPDATE_ANIM":
+                sourceDup = bpy.data.objects.get("Bricker_" + source_name + "_f_" + str(curFrame))
+                if sourceDup is not None:
+                    duplicates[curFrame] = sourceDup
+                    safeLink(sourceDup)
+                    continue
             # set active frame for applying modifiers
             scn.frame_set(curFrame)
+            # duplicate source for current frame
+            sourceDup = duplicate(self.source, link_to_scene=True)
+            sourceDup.name = "Bricker_" + cm.source_name + "_f_" + str(curFrame)
+            # # apply rigid body transform data
+            # if cm.rigid_body:
+            #     select(sourceDup, active=True, only=True)
+            #     bpy.ops.object.visual_transform_apply()
+            #     bpy.ops.rigidbody.object_remove()
+            #     scn.update()
+            # remove modifiers and constraints
+            for mod in sourceDup.modifiers:
+                sourceDup.modifiers.remove(mod)
+            for constraint in sourceDup.constraints:
+                sourceDup.constraints.remove(constraint)
+            # apply parent transformation
+            if sourceDup.parent:
+                parent_clear(sourceDup)
             # apply animated transform data
             sourceDup.matrix_world = self.source.matrix_world
             sourceDup.animation_data_clear()
-            # apply sourceDup modifiers
-            cm.armature = applyModifiers(sourceDup)
-            scn.update()
+            # send to new mesh
+            sourceDup.data = self.source.to_mesh(scn, True, 'PREVIEW')
             # apply transform data
-            select(sourceDup, active=True, only=True)
-            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-            scn.update()
-            # unlink source duplicate
-            safeUnlink(sourceDup)
+            apply_transform(sourceDup)
+            duplicates[curFrame] = sourceDup
+            # update progress bar
+            percent = (curFrame - startFrame) / (denom + 1)
+            if percent < 1:
+                update_progress("Applying Modifiers", percent)
+        # update progress bar
         update_progress("Applying Modifiers", 1)
+        # unlink source duplicate
+        scn.update()
+        for obj in duplicates.values():
+            safeUnlink(obj)
         return duplicates
 
     def getObjectToBrickify(self, cm):

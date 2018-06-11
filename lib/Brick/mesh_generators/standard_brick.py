@@ -73,7 +73,7 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
     v1, v2, v3, v4, v5, v6, v7, v8 = makeCube(coord1, coord2, [0 if stud else 1, 1 if detail == "FLAT" else 0, 1, 1, 1, 1], bme=bme)
 
     # add studs
-    if stud: addStuds(dimensions, height, brickSize, cm.brickType, circleVerts, bme, v5=v5, v6=v6, v7=v7, v8=v8, hollow=brickSize[2] > 3 or "HOLES" in type, loopCut=cm.loopCut)
+    if stud: addStuds(dimensions, height, brickSize, cm.brickType, circleVerts, bme, edgeXp=[v7, v6], edgeXn=[v8, v5], edgeYp=[v7, v8], edgeYn=[v6, v5], hollow=brickSize[2] > 3 or "HOLES" in type, loopCut=cm.loopCut)
 
     # add details
     if detail != "FLAT":
@@ -85,7 +85,7 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
         v9, v10, v11, v12, v13, v14, v15, v16 = makeCube(coord1, coord2, sides, flipNormals=True, bme=bme)
         # make tick marks inside 2 by x bricks
         if drawTickMarks:
-            addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno=v1, npo=v2, ppo=v3, pno=v4, nni=v9, npi=v10, ppi=v11, pni=v12, nnt=v13, npt=v16, ppt=v15, pnt=v14, bme=bme)
+            bottomVerts = addTickMarks(dimensions, brickSize, circleVerts, detail, d, thick, nno=v1, npo=v2, ppo=v3, pno=v4, nni=v9, npi=v10, ppi=v11, pni=v12, nnt=v13, npt=v16, ppt=v15, pnt=v14, bme=bme)
         else:
             # make faces on bottom edges of brick
             bme.faces.new((v1,  v9,  v12, v4))
@@ -99,9 +99,13 @@ def makeStandardBrick(dimensions:dict, brickSize:list, type:str, circleVerts:int
             addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d, scalar, thick, bme)
         # add small inner cylinders inside brick
         if detail in ["MEDIUM", "HIGH"]:
-            addInnerCylinders(dimensions, brickSize, circleVerts, d, v13, v14, v15, v16, bme)
+            edgeXp = [v15] + (bottomVerts["X+"][::-1] if drawTickMarks else []) + [v14]
+            edgeXn = [v16] + (bottomVerts["X-"][::-1] if drawTickMarks else []) + [v13]
+            edgeYp = [v15] + (bottomVerts["Y+"][::-1] if drawTickMarks else []) + [v16]
+            edgeYn = [v14] + (bottomVerts["Y-"][::-1] if drawTickMarks else []) + [v13]
+            addInnerCylinders(dimensions, brickSize, circleVerts, d, edgeXp, edgeXn, edgeYp, edgeYn, bme, loopCut=cm.loopCut)
 
-
+    # transform final mesh
     gap = Vector([dimensions["gap"]] * 2)
     numer = vec_mult(d.xy * 2 + gap, brickSize[:2]) - gap
     denom = vec_mult(d.xy * 2,       brickSize[:2])
