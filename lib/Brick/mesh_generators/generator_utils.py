@@ -73,14 +73,14 @@ def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d,
             # add support beams next to odd tubes
             if not add_beams:
                 continue
-            if brickSize[0] > brickSize[1] or minS > 2:
+            if minS % 2 == 0 and (brickSize[0] > brickSize[1] or minS > 2):
                 if brickSize[0] == 3 or xNum % 2 == 1 or (brickSize == [8, 1, 3] and xNum in [0, brickSize[0] - 2]):
                     # initialize x, y
                     x1 = tubeX - (dimensions["support_width"] / 2)
                     x2 = tubeX + (dimensions["support_width"] / 2)
                     y1 = tubeY + r
-                    y2 = tubeY + d.y * minS - thick.y - (0 if brickSize[0] > brickSize[1] or yNum >= max(brickSize[:2]) - 3 else dimensions["tube_thickness"])
-                    y3 = tubeY - d.y * minS + thick.y
+                    y2 = tubeY + d.y * min([minS, 4]) - thick.y - (0 if yNum >= brickSize[1] - 3 else dimensions["tube_thickness"])
+                    y3 = tubeY - d.y * min([minS, 4]) + thick.y
                     y4 = tubeY - r
                     # create support beam
                     curSides = sides if brickSize[0] > brickSize[1] else sides2
@@ -90,15 +90,15 @@ def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d,
                     else:
                         cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=curSides, bme=bme)
                         allTopVerts += cubeVerts1[4:]
-                        if brickSize[0] > brickSize[1] or yNum <= 1:
+                        if yNum <= 1:
                             cubeVerts2 = makeCube(Vector((x1, y3, z1)), Vector((x2, y4, z2)), sides=curSides, bme=bme)
                             allTopVerts += cubeVerts2[4:]
-            if brickSize[1] > brickSize[0] or minS > 2:
+            if minS % 2 == 0 and (brickSize[1] > brickSize[0] or minS > 2):
                 if brickSize[1] == 3 or yNum % 2 == 1 or (brickSize == [1, 8, 3] and yNum in [0, brickSize[1] - 2]):
                     # initialize x, y
                     x1 = tubeX + r
-                    x2 = tubeX + d.x * minS - thick.x - (0 if brickSize[1] > brickSize[0] or xNum >= max(brickSize[:2]) - 3 else dimensions["tube_thickness"])
-                    x3 = tubeX - d.x * minS + thick.x
+                    x2 = tubeX + d.x * min([minS, 4]) - thick.x - (0 if xNum >= brickSize[0] - 3 else dimensions["tube_thickness"])
+                    x3 = tubeX - d.x * min([minS, 4]) + thick.x
                     x4 = tubeX - r
                     y1 = tubeY - (dimensions["support_width"] / 2)
                     y2 = tubeY + (dimensions["support_width"] / 2)
@@ -110,7 +110,7 @@ def addSupports(cm, dimensions, height, brickSize, circleVerts, type, detail, d,
                     else:
                         cubeVerts1 = makeCube(Vector((x1, y1, z1)), Vector((x2, y2, z2)), sides=curSides, bme=bme)
                         allTopVerts += cubeVerts1[4:]
-                        if brickSize[1] > brickSize[0] or xNum <= 1:
+                        if xNum <= 1:
                             cubeVerts2 = makeCube(Vector((x3, y1, z1)), Vector((x4, y2, z2)), sides=curSides, bme=bme)
                             allTopVerts += cubeVerts2[4:]
     if type == "SLOPE":
