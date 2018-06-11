@@ -314,7 +314,7 @@ def getArgumentsForBricksDict(cm, source=None, source_details=None, dimensions=N
             oldLayers = list(scn.layers) # store scene layers for later reset
             setLayers(customObj.layers)
             # duplicate custom object
-            customObj0 = duplicateObj(customObj, link=True)
+            customObj0 = duplicate(customObj, link_to_scene=True)
             customObj0.parent = None
             # apply transformation to custom object
             apply_transform(customObj0)

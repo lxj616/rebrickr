@@ -105,7 +105,7 @@ class duplicateBaked(bpy.types.Operator):
         for obj in bpy.context.selected_objects:
             if obj.hide:
                 continue
-            obj0 = duplicateObj(obj, link=True)
+            obj0 = duplicate(obj, link_to_scene=True)
             if obj0.isBrick:
                 obj0.isBrick = False
                 obj0.name = obj0.name[8:]

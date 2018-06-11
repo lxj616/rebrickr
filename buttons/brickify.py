@@ -235,7 +235,7 @@ class BrickerBrickify(bpy.types.Operator):
 
         if self.action == "CREATE":
             # duplicate source
-            sourceDup = duplicateObj(self.source, link=True)
+            sourceDup = duplicate(self.source, link_to_scene=True)
             stopWatch(1, time.time()-ct, precision=5)
             ct = time.time()
             sourceDup.name = self.source.name + "_duplicate"
@@ -714,7 +714,7 @@ class BrickerBrickify(bpy.types.Operator):
             # set active frame for applying modifiers
             scn.frame_set(curFrame)
             # duplicate source for current frame
-            sourceDup = duplicateObj(self.source, link=True)
+            sourceDup = duplicate(self.source, link_to_scene=True)
             sourceDup.name = "Bricker_" + cm.source_name + "_f_" + str(curFrame)
             # # apply rigid body transform data
             # if cm.rigid_body:
