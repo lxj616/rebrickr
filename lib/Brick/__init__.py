@@ -181,12 +181,15 @@ def makeLogoVariations(cm, dimensions, size, direction, all_vars, logo, logo_typ
         # rotate logo around stud
         if zRot != 0: m0.transform(Matrix.Rotation(math.radians(zRot), 4, 'Z'))
         # create logo for each stud and append to bm
+        gap_base = dimensions["gap"] * Vector(((xR1 - xR0 - 1) / 2, (yR1 - yR0 - 1) / 2))
         for x in range(xR0, xR1):
             for y in range(yR0, yR1):
                 # create duplicate of rotated logo
                 m1 = m0.copy()
+                # adjust gap based on distance from first stud
+                gap = gap_base + dimensions["gap"] * Vector((x / xR1, y / yR1))
                 # translate logo into place
-                m1.transform(Matrix.Translation((x * xyOffset - dimensions["gap"] * ((xR1-xR0)/2), y * xyOffset - dimensions["gap"] * ((yR1-yR0)/2), zOffset)))
+                m1.transform(Matrix.Translation((x * xyOffset - gap.x, y * xyOffset - gap.y, zOffset)))
                 # add transformed mesh to bm mesh
                 bms[i].from_mesh(m1)
                 bpy.data.meshes.remove(m1, do_unlink=True)

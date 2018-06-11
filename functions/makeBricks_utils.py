@@ -270,8 +270,8 @@ def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
                                       logo_inset if logoToUse is not None else None,
                                       hash_object(logoToUse) if custom_logo_used else None,
                                       logo_scale if custom_logo_used else None,
-                                      useStud, cm.circleVerts, brickD["type"],
-                                      cm.loopCut, dimensions["gap"],
+                                      logo_type, useStud, cm.circleVerts,
+                                      brickD["type"], cm.loopCut, dimensions["gap"],
                                       brickD["flipped"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None,
                                       brickD["rotated"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None))
 
@@ -312,7 +312,7 @@ def getMaterial(cm, bricksDict, key, size, brick_mats=None, seedInc=None):
         if len(matsL) > 1:
             matName = most_common(matsL)
         mat = bpy.data.materials.get(matName)
-    elif cm.materialType == "RANDOM" and len(brick_mats) > 0:
+    elif cm.materialType == "RANDOM" and brick_mats is not None and len(brick_mats) > 0:
         if len(brick_mats) > 1:
             randState = np.random.RandomState(0)
             randState.seed(cm.randomMatSeed + seedInc)
