@@ -255,37 +255,6 @@ def prepareLogoAndGetDetails(scn, cm, logo, dimensions):
     return logo_details, logo
 
 
-def getBrickMesh(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoToUse, logo_type, logo_details, logo_scale, logo_inset, useStud, circleVerts):
-    # get bm_cache_string
-    bm_cache_string = ""
-    if "CUSTOM" not in cm.brickType:
-        custom_logo_used = logoToUse is not None and logo_type == "CUSTOM"
-        bm_cache_string = json.dumps((cm.brickHeight, brickSize, undersideDetail,
-                                      cm.logoResolution if logoToUse is not None else None,
-                                      cm.logoDecimate if logoToUse is not None else None,
-                                      logo_inset if logoToUse is not None else None,
-                                      hash_object(logoToUse) if custom_logo_used else None,
-                                      logo_scale if custom_logo_used else None,
-                                      logo_type, useStud, cm.circleVerts,
-                                      brickD["type"], cm.loopCut, dimensions["gap"],
-                                      brickD["flipped"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None,
-                                      brickD["rotated"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None))
-
-    # check for bmesh in cache
-    bms = bricker_bm_cache.get(bm_cache_string)
-    # if bmesh in cache
-    if bms is not None:
-        bm = bms[rand.randint(0, len(bms))] if len(bms) > 1 else bms[0]
-    # if not found in bricker_bm_cache, create new brick mesh(es) and store to cache
-    else:
-        bms = Bricks.new_mesh(dimensions=dimensions, size=brickSize, type=brickD["type"], undersideDetail=undersideDetail, flip=brickD["flipped"], rotate90=brickD["rotated"], logo=logoToUse, logo_type=logo_type, all_vars=logoToUse is not None, logo_details=logo_details, logo_inset=cm.logoInset, stud=useStud, circleVerts=cm.circleVerts, cm=cm)
-        if cm.brickType != "CUSTOM":
-            bricker_bm_cache[bm_cache_string] = bms
-        bm = bms[rand.randint(0, len(bms))]
-
-    return bm
-
-
 def getBrickData(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoToUse, logo_type, logo_details, logo_scale, logo_inset, useStud, circleVerts):
     # get bm_cache_string
     bm_cache_string = ""
@@ -302,7 +271,6 @@ def getBrickData(cm, brickD, rand, dimensions, brickSize, undersideDetail, logoT
                                       brickD["flipped"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None,
                                       brickD["rotated"] if brickD["type"] in ["SLOPE", "SLOPE_INVERTED"] else None))
 
-    print(bm_cache_string)
     # check for bmesh in cache
     bms = bricker_bm_cache.get(bm_cache_string)
     # if not found in bricker_bm_cache, create new brick mesh(es) and store to cache
