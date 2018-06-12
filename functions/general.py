@@ -319,6 +319,21 @@ def gammaCorrect(rgba, val):
     return [r, g, b, a]
 
 
+def getKeysDict(bricksDict, keys=None):
+    """ get dictionary of bricksDict keys based on z value """
+    keys = keys or list(bricksDict.keys())
+    keys.sort(key=lambda x: (strToList(x)[0], strToList(x)[1]))
+    keysDict = {}
+    for k0 in keys:
+        z = strToList(k0)[2]
+        if bricksDict[k0]["draw"]:
+            if z in keysDict:
+                keysDict[z].append(k0)
+            else:
+                keysDict[z] = [k0]
+    return keysDict
+
+
 def getParentKey(bricksDict, key):
     if key not in bricksDict:
         return None

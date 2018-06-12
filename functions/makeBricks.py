@@ -63,16 +63,8 @@ def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=No
     # get bricksDict keys in sorted order
     if keys == "ALL":
         keys = list(bricksDict.keys())
-    keys.sort(key=lambda x: (strToList(x)[0], strToList(x)[1]))
     # get dictionary of keys based on z value
-    keysDict = {}
-    for k0 in keys:
-        z = strToList(k0)[2]
-        if bricksDict[k0]["draw"]:
-            if z in keysDict:
-                keysDict[z].append(k0)
-            else:
-                keysDict[z] = [k0]
+    keysDict = getKeysDict(bricksDict, keys)
     denom = sum([len(keysDict[z0]) for z0 in keysDict.keys()])
     # store first key to active keys
     if cm.activeKey[0] == -1 and len(keys) > 0:
