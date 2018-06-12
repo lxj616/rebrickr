@@ -99,7 +99,7 @@ def drawBrick(cm, bricksDict, key, loc, i, dimensions, zStep, brickSize, split, 
                 addEdgeSplitMod(brick)
         # rotate brick by random rotation
         if randomRotMatrix is not None:
-            brick.matrix_world = brick.matrix_world * randomRotMatrix
+            brick.matrix_world = Matrix.Identity(4) * randomRotMatrix
         # set brick location
         brick.location = brickLoc
         # set brick material
@@ -186,19 +186,6 @@ def getRandomLoc(randomLoc, rand, width, height):
     loc.xy = [rand.uniform(-(width/2) * randomLoc, (width/2) * randomLoc)]*2
     loc.z = rand.uniform(-(height/2) * randomLoc, (height/2) * randomLoc)
     return loc
-
-
-def centerMeshOrigin(m, dimensions, size):
-    # get half width
-    d0 = Vector((dimensions["width"] / 2, dimensions["width"] / 2, 0))
-    # get scalar for d0 in positive xy directions
-    scalar = Vector((size[0] * 2 - 1,
-                     size[1] * 2 - 1,
-                     0))
-    # calculate center
-    center = (vec_mult(d0, scalar) - d0) / 2
-    # apply translation matrix to center mesh
-    m.transform(Matrix.Translation(-Vector(center)))
 
 
 def getRandomRotMatrix(randomRot, rand, brickSize, m):

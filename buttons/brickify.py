@@ -56,7 +56,7 @@ def updateCanRun(type):
             return commonNeedsUpdate or (cm.materialType != "CUSTOM" and cm.materialIsDirty)
         elif type == "MODEL":
             Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
-            return commonNeedsUpdate or (groupExists(Bricker_bricks_gn) and len(bpy.data.groups[Bricker_bricks_gn].objects) == 0) or (cm.materialType != "CUSTOM" and (cm.materialType != "RANDOM" or cm.splitModel or cm.lastMaterialType != cm.materialType or cm.materialIsDirty) and cm.materialIsDirty)
+            return commonNeedsUpdate or (groupExists(Bricker_bricks_gn) and len(bpy.data.groups[Bricker_bricks_gn].objects) == 0) or (cm.materialType != "CUSTOM" and (cm.materialType != "RANDOM" or cm.splitModel or cm.lastMaterialType != cm.materialType or cm.materialIsDirty) and cm.materialIsDirty) or cm.hasCustomObj1 or cm.hasCustomObj2 or cm.hasCustomObj3
 
 
 class BrickerBrickify(bpy.types.Operator):
@@ -132,7 +132,6 @@ class BrickerBrickify(bpy.types.Operator):
         scn, cm, n = getActiveContextInfo()
         self.undo_stack.iterateStates(cm)
         Bricker_bricks_gn = "Bricker_%(n)s_bricks" % locals()
-        # ensureObjNamesUnique(getSafeScn())
 
         # get source and initialize values
         source = self.getObjectToBrickify(cm)

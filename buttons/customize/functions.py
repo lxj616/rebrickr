@@ -299,7 +299,7 @@ def removeUnusedFromList(cm, brickType="NULL", brickSize="NULL", selectedSomethi
     if selectedSomething or item == "NULL":
         return None
     # turn brickTypesUsed into list of sizes
-    lst = (cm.brickTypesUsed if brickType is not None else cm.brickSizesUsed).split("|")
+    lst = (cm.brickTypesUsed if brickType != "NULL" else cm.brickSizesUsed).split("|")
     # remove unused item
     if item in lst:
         lst.remove(item)

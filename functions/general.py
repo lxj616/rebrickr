@@ -49,6 +49,19 @@ def getActiveContextInfo(cm_idx=None):
     return scn, cm, n
 
 
+def centerMeshOrigin(m, dimensions, size):
+    # get half width
+    d0 = Vector((dimensions["width"] / 2, dimensions["width"] / 2, 0))
+    # get scalar for d0 in positive xy directions
+    scalar = Vector((size[0] * 2 - 1,
+                     size[1] * 2 - 1,
+                     0))
+    # calculate center
+    center = (vec_mult(d0, scalar) - d0) / 2
+    # apply translation matrix to center mesh
+    m.transform(Matrix.Translation(-Vector(center)))
+
+
 def ensureObjNamesUnique(scn, throwError=False):
     cm = getActiveContextInfo()[1]
     # for object in scene
