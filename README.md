@@ -19,7 +19,6 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Add mode for selecting verts at locations next to bricks and adding bricks there
       * For animation, if last frame's brickFreqMatrix matches current frame's brickFreqMatrix, save time by just keeping that model around for another frame or duplicating it for the next frame or something
       * New feature: SNOT (studs not on top) functionality
-      * Add support for rigid bodies
       * Write override for 'object.move_to_layer' that moves all frames from animation to another layer
       * Add 'exclusion' functionality so that one model doesn’t create bricks where another model already did
       * Add many more brick types, including inverted sloped bricks and tiles
@@ -27,11 +26,7 @@ Blender add-on for automated generation of Brick sculptures and simulations from
       * Transfer matObj functionality to new custom list property
       * Rewrite top and bottom exposure to only include current brick (not exposure of whole brick). Checking exposure of brick then should be function that checks each location in brick
       * Compute top and bottom exposure when generating bricksDict
-      * If cloth sim/soft body anim already baked before Brickify action, no need to run bake again
-      * Bake run while brickifying cloth sim/soft body anim should stick around after brickified animation deleted
-      * See if there's another way to calculate brickFreqMatrix for cloth sim/soft body anim besides baking and applying the modifier
       * Add customization for custom object offset, size, and brick scale (amount of bricksDict locations it takes up), default to scale/offset for 1x1 brick with stud
-      * Link same-brick data
   * Known issues:
       * For models with thin outer shells, Bricker may use color of inside face instead of outside face for brick material (see snapchat hotdog file)
       * Applying model rotation when deleting brickified model whose source has rotated parent produces problematic results
