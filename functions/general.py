@@ -41,11 +41,14 @@ def getSafeScn():
     return safeScn
 
 
-def getActiveContextInfo(cm_idx=None):
+def getActiveContextInfo(cm=None, cm_idx=None, cm_id=None):
     scn = bpy.context.scene
     cm_idx = cm_idx or scn.cmlist_index
-    cm = scn.cmlist[cm_idx]
-    n = cm.source_name
+    if cm_id is not None:
+        cm = getItemByID(scn.cmlist, cm_id)
+    else:
+        cm = cm or scn.cmlist[cm_idx]
+    n = getSourceName(cm)
     return scn, cm, n
 
 
@@ -202,9 +205,8 @@ def setOriginToObjOrigin(toObj, fromObj=None, fromLoc=None, deleteFromObj=False)
 
 def getBricks(cm=None, typ=None):
     """ get bricks in 'cm' model """
-    cm = cm or getActiveContextInfo()[1]
+    scn, cm, n = getActiveContextInfo(cm=cm)
     typ = typ or ("MODEL" if cm.modelCreated else "ANIM")
-    n = cm.source_name
     if typ == "MODEL":
         gn = "Bricker_%(n)s_bricks" % locals()
         bGroup = bpy.data.groups[gn]
@@ -221,8 +223,8 @@ def getBricks(cm=None, typ=None):
 
 def getMatObject(cm=None, typ="RANDOM"):
     cm = cm or getActiveContextInfo()[1]
-    n = cm.id
-    Bricker_mat_on = "Bricker_%(n)s_%(typ)s_mats" % locals()
+    mat_n = cm.id
+    Bricker_mat_on = "Bricker_%(mat_n)s_%(typ)s_mats" % locals()
     matObj = bpy.data.objects.get(Bricker_mat_on)
     return matObj
 

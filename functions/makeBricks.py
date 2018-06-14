@@ -48,9 +48,7 @@ from .mat_utils import *
 @timed_call('Time Elapsed')
 def makeBricks(source, parent, logo, logo_details, dimensions, bricksDict, cm=None, split=False, brickScale=None, customData=None, group_name=None, clearExistingGroup=True, frameNum=None, cursorStatus=False, keys="ALL", printStatus=True, redraw=False):
     # set up variables
-    scn = bpy.context.scene
-    cm = cm or scn.cmlist[scn.cmlist_index]
-    n = cm.source_name
+    scn, cm, n = getActiveContextInfo(cm=cm)
     zStep = getZStep(cm)
 
     # reset brickSizes/TypesUsed

@@ -449,9 +449,7 @@ class BrickerBrickify(bpy.types.Operator):
     @classmethod
     def createNewBricks(self, source, parent, source_details, dimensions, refLogo, logo_details, action, split=True, cm=None, curFrame=None, sceneCurFrame=None, bricksDict=None, keys="ALL", clearExistingGroup=True, selectCreated=False, printStatus=True, redraw=False, origSource=None):
         """ gets/creates bricksDict, runs makeBricks, and caches the final bricksDict """
-        scn = bpy.context.scene
-        cm = cm or scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
+        scn, cm, n = getActiveContextInfo(cm=cm)
         _, _, _, brickScale, customData = getArgumentsForBricksDict(cm, source=source, source_details=source_details, dimensions=dimensions)
         updateCursor = action in ["CREATE", "UPDATE_MODEL"]  # evaluates to boolean value
         if bricksDict is None:
@@ -506,8 +504,8 @@ class BrickerBrickify(bpy.types.Operator):
             self.report({"WARNING"}, "Source object name too long (must be <= 30 characters)")
         # ensure custom material exists
         if cm.materialType == "CUSTOM" and cm.materialName != "" and bpy.data.materials.find(cm.materialName) == -1:
-            n = cm.materialName
-            self.report({"WARNING"}, "Custom material '%(n)s' could not be found" % locals())
+            mn = cm.materialName
+            self.report({"WARNING"}, "Custom material '%(mn)s' could not be found" % locals())
             return False
         if cm.materialType == "SOURCE" and cm.colorSnap == "ABS":
             # ensure ABS Plastic materials are installed
@@ -566,8 +564,8 @@ class BrickerBrickify(bpy.types.Operator):
                 return False
             logoObject = bpy.data.objects.get(cm.logoObjectName)
             if logoObject is None:
-                n = cm.logoObjectName
-                self.report({"WARNING"}, "Custom logo object '%(n)s' could not be found" % locals())
+                lon = cm.logoObjectName
+                self.report({"WARNING"}, "Custom logo object '%(lon)s' could not be found" % locals())
                 return False
             if cm.logoObjectName == cm.source_name and (not (cm.animated or cm.modelCreated) or logoObject.protected):
                 self.report({"WARNING"}, "Source object cannot be its own logo.")

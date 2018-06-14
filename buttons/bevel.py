@@ -46,12 +46,10 @@ class BrickerBevel(bpy.types.Operator):
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
-        scn = context.scene
         try:
-            cm = scn.cmlist[scn.cmlist_index]
+            scn, cm, n = getActiveContextInfo()
         except IndexError:
             return False
-        n = cm.source_name
         if cm.modelCreated or cm.animated:
             return True
         return False

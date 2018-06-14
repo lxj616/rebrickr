@@ -66,8 +66,6 @@ def updateBevel(self, context):
     # get bricks to bevel
     try:
         scn, cm, n = getActiveContextInfo()
-        cm = scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
         if cm.lastBevelWidth != cm.bevelWidth or cm.lastBevelSegments != cm.bevelSegments or cm.lastBevelProfile != cm.bevelProfile:
             bricks = getBricks()
             BrickerBevel.createBevelMods(cm, bricks)

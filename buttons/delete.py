@@ -90,9 +90,7 @@ class BrickerDelete(bpy.types.Operator):
     def cleanUp(cls, modelType, cm=None, skipSource=False, skipDupes=False, skipParents=False, skipBricks=False, skipTransAndAnimData=True, preservedFrames=None, source_name=None):
         """ externally callable cleanup function for bricks, source, dupes, and parents """
         # set up variables
-        scn = bpy.context.scene
-        cm = cm or scn.cmlist[scn.cmlist_index]
-        n = cm.source_name
+        scn, cm, n = getActiveContextInfo(cm=cm)
         source = bpy.data.objects.get(source_name or n)
 
         # set all layers active temporarily
@@ -135,10 +133,8 @@ class BrickerDelete(bpy.types.Operator):
     @classmethod
     def runFullDelete(cls, cm=None):
         """ externally callable cleanup function for full delete action (clears everything from memory) """
-        scn = bpy.context.scene
-        cm = cm or scn.cmlist[scn.cmlist_index]
+        scn, cm, n = getActiveContextInfo(cm=cm)
         modelType = getModelType(cm)
-        n = cm.source_name
         source = bpy.data.objects.get(n)
         origFrame = scn.frame_current
         scn.frame_set(cm.modelCreatedOnFrame)
@@ -202,7 +198,7 @@ class BrickerDelete(bpy.types.Operator):
 
             # return open layers to original
             setLayers(lastLayers)
-            
+
         Caches.clearCache(cm, brick_mesh=False)
 
         # Scale brick height according to scale value applied to source

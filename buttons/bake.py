@@ -43,12 +43,10 @@ class bakeModel(bpy.types.Operator):
     @classmethod
     def poll(self, context):
         """ ensures operator can execute (if not, returns false) """
-        scn = context.scene
         try:
-            cm = scn.cmlist[scn.cmlist_index]
+            scn, cm, n = getActiveContextInfo()
         except IndexError:
             return False
-        n = cm.source_name
         if cm.modelCreated:
             return True
         return False
@@ -111,8 +109,7 @@ class duplicateBaked(bpy.types.Operator):
                 obj0.name = obj0.name[8:]
             elif obj0.isBrickifiedObject:
                 obj0.isBrickifiedObject = False
-                cm = getItemByID(scn.cmlist, obj0.cmlist_id)
-                n = cm.source_name
+                cm, n = getActiveContextInfo(cm_id=obj0.cmlist_id)[1:]
                 obj0.name = "%(n)s_bricks" % locals()
             obj0.cmlist_id = -1
             newObjs.append(obj0)

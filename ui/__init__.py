@@ -116,8 +116,7 @@ class BrickModelsPanel(Panel):
         if scn.cmlist_index == -1:
             layout.operator("cmlist.list_action" if bpy.props.bricker_initialized else "bricker.initialize", text="New Brick Model", icon="ZOOMIN").action = 'ADD'
         else:
-            cm = scn.cmlist[scn.cmlist_index]
-            n = cm.source_name
+            cm, n = getActiveContextInfo()[1:]
             # first, draw source object text
             source_name = " %(n)s" % locals() if cm.animated or cm.modelCreated else ""
             col1 = layout.column(align=True)
@@ -236,16 +235,9 @@ class AnimationPanel(Panel):
     def poll(self, context):
         if not settingsCanBeDrawn():
             return False
-        scn, cm, _ = getActiveContextInfo()
+        scn, cm, n = getActiveContextInfo()
         if cm.modelCreated:
             return False
-        # groupExistsBool = groupExists(Bricker_bricks) or groupExists("Bricker_%(n)s" % locals()) or groupExists("Bricker_%(n)s_refBricks" % locals())
-        # if groupExistsBool:
-        #     return False
-        # cm = scn.cmlist[scn.cmlist_index]
-        # n = cm.source_name
-        # if not groupExists('Bricker_%(n)s' % locals()):
-        #     return False
         return True
 
     def draw(self, context):
