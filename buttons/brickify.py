@@ -136,6 +136,8 @@ class BrickerBrickify(bpy.types.Operator):
         # get source and initialize values
         source = self.getObjectToBrickify(cm)
         source.cmlist_id = cm.id
+        oldLayers = list(scn.layers)
+        scn.layers = source.layers
         matrixDirty = matrixReallyIsDirty(cm)
         skipTransAndAnimData = cm.animated or (cm.splitModel or cm.lastSplitModel) and (matrixDirty or cm.buildIsDirty)
 
@@ -194,6 +196,7 @@ class BrickerBrickify(bpy.types.Operator):
         # unlink source from scene and link to safe scene
         if source.name in scn.objects.keys():
             safeUnlink(source, hide=False)
+        scn.layers = oldLayers
 
         disableRelationshipLines()
 
@@ -289,12 +292,11 @@ class BrickerBrickify(bpy.types.Operator):
 
         bGroup = bpy.data.groups.get(group_name)
         if bGroup:
+            ct = time.time()
             self.createdGroups.append(group_name)
             # transform bricks to appropriate location
             self.transformBricks(bGroup, cm, parent, self.source, sourceDup_details, self.action)
-            # match brick layers to source layers
-            for obj in bGroup.objects:
-                obj.layers = self.source.layers
+            ct = stopWatch(1, time.time()-ct, precision=5)
             # apply old animation data to objects
             for d0 in trans_and_anim_data:
                 obj = bpy.data.objects.get(d0["name"])
@@ -307,7 +309,7 @@ class BrickerBrickify(bpy.types.Operator):
                         obj.animation_data.action = d0["action"]
 
         # unlink source duplicate if created
-        if sourceDup != self.source and sourceDup.name in scn.objects.keys():
+        if sourceDup != self.source:
             safeUnlink(sourceDup)
 
         # add bevel if it was previously added
@@ -428,8 +430,6 @@ class BrickerBrickify(bpy.types.Operator):
             obj.lock_location = [True, True, True]
             obj.lock_rotation = [True, True, True]
             obj.lock_scale    = [True, True, True]
-            # match brick layers to source layers
-            obj.layers = self.source.layers
 
             wm.progress_update(curFrame-cm.startFrame)
             print('-'*100)
