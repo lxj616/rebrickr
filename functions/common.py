@@ -270,6 +270,10 @@ def vec_conv(v1, innerType=int, outerType=Vector):
     return outerType([innerType(x) for x in v1])
 
 
+def vec_round(v1, precision=0):
+    return Vector(round(e1, precision) for e1 in v1)
+
+
 def mean(lst):
     return sum(lst)/len(lst)
 

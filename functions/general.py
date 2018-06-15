@@ -411,15 +411,8 @@ def getNormalDirection(normal, maxDist=0.77):
 
 
 def getFlipRot(dir):
-    flip = False
-    rot = False
-    if dir == "X-":
-        flip = True
-    elif dir == "Y+":
-        rot = True
-    elif dir == "Y-":
-        flip = True
-        rot = True
+    flip = dir in ["X-", "Y-"]
+    rot = dir in ["Y+", "Y-"]
     return flip, rot
 
 

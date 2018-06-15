@@ -202,7 +202,7 @@ def updateBrickSizeAndDict(dimensions, cm, bricksDict, brickSize, key, loc, dec=
                     bricksDict[newKey]["draw"] = True
                     bricksDict[newKey]["mat_name"] = brickD["mat_name"] if bricksDict[newKey]["mat_name"] == "" else bricksDict[newKey]["mat_name"]
                     bricksDict[newKey]["near_face"] = bricksDict[newKey]["near_face"] or brickD["near_face"]
-                    bricksDict[newKey]["near_intersection"] = bricksDict[newKey]["near_intersection"] or brickD["near_intersection"]
+                    bricksDict[newKey]["near_intersection"] = bricksDict[newKey]["near_intersection"] or brickD["near_intersection"].copy()
                     if bricksDict[newKey]["val"] == 0:
                         setCurBrickVal(bricksDict, strToList(newKey))
     return brickSize
@@ -219,7 +219,7 @@ def createAddlBricksDictEntry(cm, bricksDict, source_key, key, full_d, x, y, z):
         name=              newName,
         co=                newCO,
         near_face=         brickD["near_face"],
-        near_intersection= brickD["near_intersection"],
+        near_intersection= brickD["near_intersection"].copy(),
         mat_name=          brickD["mat_name"],
     )
     return bricksDict

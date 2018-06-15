@@ -511,10 +511,10 @@ def adjustBFM(brickFreqMatrix, axes=""):
 def updateInternals(brickFreqMatrix, cm=None, faceIdxMatrix=None):
     """ set up brickFreqMatrix values for bricks inside shell (-1) """
     j = 1
-    # NOTE: Following two lines are alternative for calculating partial brickFreqMatrix (insideness only calculated as deep as necessary)
+    # NOTE: Following two lines calculate partial brickFreqMatrix (insideness only calculated as deep as necessary)
     # denom = min([(cm.shellThickness-1), max(len(brickFreqMatrix)-2, len(brickFreqMatrix[0])-2, len(brickFreqMatrix[0][0])-2)])/2
     # for idx in range(cm.shellThickness-1):
-    # NOTE: Following two lines are alternative for calculating full brickFreqMatrix
+    # NOTE: Following two lines calculate full brickFreqMatrix
     denom = max(len(brickFreqMatrix)-2, len(brickFreqMatrix[0])-2, len(brickFreqMatrix[0][0])-2)/2
     old_percent = 0
     old_percent = updateProgressBars(True, False, 0, -1, "Internal")
@@ -555,7 +555,7 @@ def getThreshold(cm):
     """ returns threshold (draw bricks if returned val >= threshold) """
     return 1.01 - (cm.shellThickness / 100)
 
-def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0, 0, 0), near_face:int=None, near_intersection:str=None, near_normal:tuple=None, rgba:tuple=None, mat_name:str=None, custom_mat_name:bool=False, parent:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, obscures:list=[False]*6, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
+def createBricksDictEntry(name:str, val:float=0, draw:bool=False, co:tuple=(0, 0, 0), near_face:int=None, near_intersection:str=None, near_normal:tuple=None, rgba:tuple=None, mat_name:str="", custom_mat_name:bool=False, parent:str=None, size:list=None, attempted_merge:bool=False, top_exposed:bool=None, bot_exposed:bool=None, obscures:list=[False]*6, bType:str=None, flipped:bool=False, rotated:bool=False, created_from:str=None):
     """
     create an entry in the dictionary of brick locations
 
@@ -628,10 +628,11 @@ def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=
     # set up faceIdxMatrix and brickFreqMatrix
     faceIdxMatrix = np.zeros((len(coordMatrix), len(coordMatrix[0]), len(coordMatrix[0][0]))).tolist()
     if cm.isSmoke:
-        brickFreqMatrix, rgbaMatrix = getBrickMatrixSmoke(origSource, faceIdxMatrix, cm.brickShell, source_details, cursorStatus=cursorStatus)
+        brickFreqMatrix, smokeColors = getBrickMatrixSmoke(origSource, faceIdxMatrix, cm.brickShell, source_details, cursorStatus=cursorStatus)
     else:
         brickFreqMatrix = getBrickMatrix(source, faceIdxMatrix, coordMatrix, cm.brickShell, axes=calculationAxes, cursorStatus=cursorStatus)
-        rgbaMatrix = None
+        smokeColors = None
+
     # initialize active keys
     cm.activeKey = (-1, -1, -1)
 
@@ -640,7 +641,9 @@ def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=
     bricksDict = {}
     threshold = getThreshold(cm)
     brickType = cm.brickType  # prevents cm.brickType update function from running over and over in for loop
+    noOffset = vec_round(offset, precision=5) == Vector((0, 0, 0))
     # get uv_texture image and pixels for material calculation
+    ct = time.time()
     uv_images = getUVImages(source)
     for x in range(len(coordMatrix)):
         for y in range(len(coordMatrix[0])):
@@ -651,34 +654,37 @@ def makeBricksDict(source, source_details, brickScale, origSource, cursorStatus=
 
                 # initialize variables
                 bKey = "{x},{y},{z}".format(x=x, y=y, z=z)
-                co = Vector(coordMatrix[x][y][z])
+                co = coordMatrix[x][y][z].to_tuple() if noOffset else (Vector(coordMatrix[x][y][z]) - source_details.mid).to_tuple()
                 i += 1
 
                 # get material from nearest face intersection point
                 nf = faceIdxMatrix[x][y][z]["idx"] if type(faceIdxMatrix[x][y][z]) == dict else None
-                ni = faceIdxMatrix[x][y][z]["loc"] if type(faceIdxMatrix[x][y][z]) == dict else None
+                ni = faceIdxMatrix[x][y][z]["loc"].to_tuple() if type(faceIdxMatrix[x][y][z]) == dict else None
                 nn = faceIdxMatrix[x][y][z]["normal"] if type(faceIdxMatrix[x][y][z]) == dict else None
                 norm_dir = getNormalDirection(nn)
                 bType = "PLATE" if brickType == "BRICKS AND PLATES" else (brickType[:-1] if brickType.endswith("S") else ("CUSTOM 1" if brickType == "CUSTOM" else brickType))
                 flipped, rotated = getFlipRot("" if norm_dir is None else norm_dir[1:])
-                rgba = rgbaMatrix[x][y][z] if rgbaMatrix else getUVPixelColor(scn, cm, source, nf, ni, uv_images)
+                rgba = smokeColors[x][y][z] if smokeColors else getUVPixelColor(scn, cm, source, nf, ni, uv_images)
                 draw = brickFreqMatrix[x][y][z] >= threshold
+                # ct = stopWatch(1, time.time()-ct, precision=7)
                 # create bricksDict entry for current brick
                 bricksDict[bKey] = createBricksDictEntry(
                     name= 'Bricker_%(n)s_brick__%(bKey)s' % locals(),
                     val= brickFreqMatrix[x][y][z],
                     draw= draw,
-                    co= (co - source_details.mid).to_tuple(),
+                    co= co,
                     near_face= nf,
-                    near_intersection= ni if ni is None else vecToStr(ni),
+                    near_intersection= ni,
                     near_normal= norm_dir,
                     rgba= rgba,
-                    mat_name= "",  # defined in 'updateMaterials' function
-                    obscures= [brickFreqMatrix[x][y][z] != 0]*6,
+                    # mat_name= "",  # defined in 'updateMaterials' function
+                    # obscures= [brickFreqMatrix[x][y][z] != 0]*6,
                     bType= bType,
                     flipped= flipped,
                     rotated= rotated,
                 )
+                # ct = stopWatch(2, time.time()-ct, precision=7)
+    ct = stopWatch(3, time.time()-ct, precision=7)
     cm.numBricksGenerated = i
 
     # return list of created Brick objects

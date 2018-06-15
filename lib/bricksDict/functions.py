@@ -283,7 +283,7 @@ def getBrickRGBA(scn, cm, obj, face_idx, point, uv_images):
     # get material based on rgba value of UV image at face index
     if uv_images:
         origMatName = ""
-        rgba = getUVPixelColor(scn, cm, obj, face_idx, Vector(point), uv_images)
+        rgba = getUVPixelColor(scn, cm, obj, face_idx, point, uv_images)
     else:
         # get closest material using material slot of face
         origMatName = getMatAtFaceIdx(obj, face_idx)

@@ -274,7 +274,7 @@ class drawAdjacent(Operator):
                 name=              'Bricker_%(n)s_brick__%(adjacent_key)s' % locals(),
                 co=                co,
                 near_face=         self.bricksDict[dictKey]["near_face"],
-                near_intersection= self.bricksDict[dictKey]["near_intersection"],
+                near_intersection= self.bricksDict[dictKey]["near_intersection"].copy(),
                 mat_name=          self.bricksDict[dictKey]["mat_name"],
             )
             adjBrickD = self.bricksDict[adjacent_key]
@@ -345,7 +345,7 @@ class drawAdjacent(Operator):
             adjBrickD["parent"] = "self"
             adjBrickD["mat_name"] = self.bricksDict[dictKey]["mat_name"] if adjBrickD["mat_name"] == "" else adjBrickD["mat_name"]
             adjBrickD["near_face"] = adjBrickD["near_face"] or self.bricksDict[dictKey]["near_face"]
-            adjBrickD["near_intersection"] = adjBrickD["near_intersection"] or self.bricksDict[dictKey]["near_intersection"]
+            adjBrickD["near_intersection"] = adjBrickD["near_intersection"] or self.bricksDict[dictKey]["near_intersection"].copy()
             topExposed, botExposed = getBrickExposure(cm, self.bricksDict, adjacent_key)
             adjBrickD["top_exposed"] = topExposed
             adjBrickD["bot_exposed"] = botExposed
