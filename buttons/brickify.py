@@ -137,7 +137,7 @@ class BrickerBrickify(bpy.types.Operator):
         source = self.getObjectToBrickify(cm)
         source.cmlist_id = cm.id
         oldLayers = list(scn.layers)
-        scn.layers = source.layers
+        setLayers(source.layers)
         matrixDirty = matrixReallyIsDirty(cm)
         skipTransAndAnimData = cm.animated or (cm.splitModel or cm.lastSplitModel) and (matrixDirty or cm.buildIsDirty)
 
@@ -196,7 +196,7 @@ class BrickerBrickify(bpy.types.Operator):
         # unlink source from scene and link to safe scene
         if source.name in scn.objects.keys():
             safeUnlink(source, hide=False)
-        scn.layers = oldLayers
+        setLayers(oldLayers)
 
         disableRelationshipLines()
 
@@ -292,11 +292,9 @@ class BrickerBrickify(bpy.types.Operator):
 
         bGroup = bpy.data.groups.get(group_name)
         if bGroup:
-            ct = time.time()
             self.createdGroups.append(group_name)
             # transform bricks to appropriate location
             self.transformBricks(bGroup, cm, parent, self.source, sourceDup_details, self.action)
-            ct = stopWatch(1, time.time()-ct, precision=5)
             # apply old animation data to objects
             for d0 in trans_and_anim_data:
                 obj = bpy.data.objects.get(d0["name"])
