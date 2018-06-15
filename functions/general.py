@@ -48,7 +48,7 @@ def getActiveContextInfo(cm=None, cm_idx=None, cm_id=None):
         cm = getItemByID(scn.cmlist, cm_id)
     else:
         cm = cm or scn.cmlist[cm_idx]
-    n = getSourceName(cm)
+    n = cm.source_name
     return scn, cm, n
 
 
